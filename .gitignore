@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__/
+*.pyc
+build/*
+!build/.gitkeep
+.env
+.env.*
+zowe.config*.json
