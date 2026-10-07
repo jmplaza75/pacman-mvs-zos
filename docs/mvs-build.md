@@ -16,3 +16,15 @@ Build/run: `python3 tools/make_deck.py MVS1 && ./tools/submit.sh build/MVS1.jcl`
 `./tools/job_output.py PACBLD01 > build/PACBLD01.txt && python3 tests/test_map.py build/PACBLD01.txt`.
 Result: PACBLD01 JOB 114, all RC 0000, SYSOUT identical to tests/expected/MVS1.txt (no corruption).
 Evidence: docs/evidence/mvs1-static-map.txt. No movement or ghosts yet.
+
+## MVS-2: player by turns (2026-10-07)
+`src/cobol/PACMAIN.cob` now reads U/D/L/R/Q (any case), one per SYSIN card; start (2,2); walls and map
+bounds block; blocked moves count as a turn, invalid commands do not; Q or EOF ends. Pellets are not
+consumed yet (MVS-3). Build: `python3 tools/make_deck.py MVS2 && ./tools/submit.sh build/MVS2.jcl`, then
+`./tools/job_output.py PACBLD02 > build/PACBLD02.txt && python3 tests/test_mvs2.py build/PACBLD02.txt`.
+Tests: `tests/cases/MOVES.txt` (moves, 3 wall bumps, invalid `X`, lowercase, QUIT with trailing command
+ignored) and `EOF.txt`; expected output comes from the independent model `tests/ref_mvs2.py`.
+Result: PACBLD02 JOB 117, SRC1/COB1/LINK/RUN1/RUN2 RC 0000, no warnings; SYSOUT equals expected.
+Evidence: docs/evidence/mvs2-player.txt. Dialect notes: no reference modification (`X(1:1)`) - use
+REDEFINES; end conditional performed paragraphs with `PERFORM ... THRU ...-EXIT`.
+`tests/test_map.py` remains the local map-sync check; its MVS-1 runtime mode is superseded.
