@@ -1,0 +1,164 @@
+****A  START  JOB  137  PACMAC00  PACMAN MAC PROBE      ROOM        7.32.50 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  137  START  A****
+****A  START  JOB  137  PACMAC00  PACMAN MAC PROBE      ROOM        7.32.50 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  137  START  A****
+****A  START  JOB  137  PACMAC00  PACMAN MAC PROBE      ROOM        7.32.50 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  137  START  A****
+****A  START  JOB  137  PACMAC00  PACMAN MAC PROBE      ROOM        7.32.50 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  137  START  A****
+                                                J E S 2   J O B   L O G
+
+
+19.32.50 JOB  137  $HASP373 PACMAC00 STARTED - INIT  1 - CLASS A - SYS TK4-
+19.32.50 JOB  137  IEF403I PACMAC00 - STARTED - TIME=19.32.50
+19.32.50 JOB  137  IEFACTRT - Stepname  Procstep  Program   Retcode
+19.32.50 JOB  137  PACMAC00   ASM                 IFOX00    RC= 0000
+19.32.50 JOB  137  IEF404I PACMAC00 - ENDED - TIME=19.32.50
+19.32.50 JOB  137  $HASP395 PACMAC00 ENDED
+
+
+------ JES2 JOB STATISTICS ------
+
+
+ 07 OCT 26 JOB EXECUTION DATE
+
+
+        20 CARDS READ
+
+
+       102 SYSOUT PRINT RECORDS
+
+
+         0 SYSOUT PUNCH RECORDS
+
+
+      0.00 MINUTES EXECUTION TIME
+    1     //PACMAC00 JOB (1),'PACMAN MAC PROBE',CLASS=A,MSGCLASS=A,               JOB  137
+          //             MSGLEVEL=(1,1),REGION=4096K,
+          //             USER=HERC01,PASSWORD=<REDACTED>
+    2     //ASM      EXEC PGM=IFOX00,PARM='NOOBJECT,NODECK,LIST'
+    3     //SYSLIB   DD DSN=SYS1.MACLIB,DISP=SHR
+    4     //         DD DSN=SYS1.AMODGEN,DISP=SHR
+    5     //SYSUT1   DD UNIT=SYSDA,SPACE=(CYL,(3,1))
+    6     //SYSUT2   DD UNIT=SYSDA,SPACE=(CYL,(3,1))
+    7     //SYSUT3   DD UNIT=SYSDA,SPACE=(CYL,(3,1))
+    8     //SYSPRINT DD SYSOUT=A
+    9     //SYSGO    DD DUMMY
+   10     //SYSIN    DD *
+          //
+IEF236I ALLOC. FOR PACMAC00 ASM
+IEF237I 148  ALLOCATED TO SYSLIB
+IEF237I 248  ALLOCATED TO
+IEF237I 140  ALLOCATED TO SYSUT1
+IEF237I 180  ALLOCATED TO SYSUT2
+IEF237I 190  ALLOCATED TO SYSUT3
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I DMY  ALLOCATED TO SYSGO
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF142I PACMAC00 ASM - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   SYS1.MACLIB                                  KEPT          *-------10
+IEF285I   VOL SER NOS= MVSRES.
+IEF285I   SYS1.AMODGEN                                 KEPT          *--------0
+IEF285I   VOL SER NOS= MVSDLB.
+IEF285I   SYS26280.T193250.RA000.PACMAC00.R0000001     DELETED       *-------35
+IEF285I   VOL SER NOS= WORK00.
+IEF285I   SYS26280.T193250.RA000.PACMAC00.R0000002     DELETED       *--------9
+IEF285I   VOL SER NOS= WORK02.
+IEF285I   SYS26280.T193250.RA000.PACMAC00.R0000003     DELETED       *--------8
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   JES2.JOB00137.SO0102                         SYSOUT
+IEF285I   JES2.JOB00137.SI0101                         SYSIN
+IEF373I STEP /ASM     / START 26280.1932
+IEF374I STEP /ASM     / STOP  26280.1932 CPU    0MIN 00.05SEC SRB    0MIN 00.00SEC VIRT  2108K SYS   168K
+************************************************************************************************************************************
+*     1. Jobstep of job: PACMAC00    Stepname: ASM         Program name: IFOX00     Executed on 07.10.26 from 19.32.50 to 19.32.50 *
+*         elapsed time  00:00:00,09                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,05               Virtual Storage used:   2108K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,05   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      6                                                                           *
+*     148......10 248.......0 140......35 180.......9 190.......8 DMY.......0 DMY.......0 DMY.......0                              *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,08                                             *
+************************************************************************************************************************************
+IEF375I  JOB /PACMAC00/ START 26280.1932
+IEF376I  JOB /PACMAC00/ STOP  26280.1932 CPU    0MIN 00.05SEC SRB    0MIN 00.00SEC
+                                               EXTERNAL SYMBOL DICTIONARY                                      PAGE    1
+
+
+SYMBOL   TYPE  ID   ADDR  LENGTH LDID                                                            ASM 0201 19.32 10/07/26
+
+PROBE     SD  0001 000000 00003C                                                                                                               PAGE    2
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 19.32 10/07/26
+
+000000                                1 PROBE    CSECT
+                                      2          STLINENO LINE=1
+000000 4110 0001      00001           3+         LA    1,1                      PUT LINE NUM IN PARM REG        01400000
+000004 1B00                           4+         SR    0,0                      PREPARE FLAG BYTE               02130000
+000006 1610                           5+         OR    1,0                      SET MODE=OFF FLAG IN REG 1      02140000
+000008 4100 0013      00013           6+         LA    0,19                     LOAD ENTRY CODE                 02200000
+00000C 8900 0018      00018           7+         SLL   0,24                     SHIFT TO HIGH ORDER BYTE        02250000
+000010 0A5E                           8+         SVC   94                       TERMINAL CONTROL MACRO SVC      02300000
+                                      9          STFSMODE ON,INITIAL=YES
+000012 4110 00C0      000C0          10+         LA    1,128+64+0                  MODE/INITIAL/NOEDIT  ZP60009 01400000
+000016 8910 0018      00018          11+         SLL   1,24                     SHIFT TO HIGH ORDER BYTE        01450000
+00001A 4100 0012      00012          12+         LA    0,18                     LOAD ENTRY CODE                 01700000
+00001E 8900 0018      00018          13+         SLL   0,24                     SHIFT TO HIGH ORDER BYTE        01750000
+000022 0A5E                          14+         SVC   94                       TERMINAL CONTROL MACRO SVC      01800000
+                                     15          STFSMODE OFF
+000024 1B11                          16+         SR    1,1                      CLEAR PARAMETER REGISTER        01600000
+000026 4100 0012      00012          17+         LA    0,18                     LOAD ENTRY CODE                 01700000
+00002A 8900 0018      00018          18+         SLL   0,24                     SHIFT TO HIGH ORDER BYTE        01750000
+00002E 0A5E                          19+         SVC   94                       TERMINAL CONTROL MACRO SVC      01800000
+                                     20          TCLEARQ OUTPUT
+000030 4100 0001      00001          21+         LA    0,1                      SET ENTRY CODE                  58000020
+000034 1B11                          22+         SR    1,1                      INDICATE OUTPUT                 66000020
+000036 8D00 0018      00018          23+         SLDL  0,24                     MOVE TO HI-ORDER BYTES          68000020
+00003A 0A5E                          24+         SVC   94                       ISSUE SVC                       70000020
+                                     25          END                                                  ASSEMBLER DIAGNOSTICS AND STATISTICS                         PAGE    3
+
+
+                                                                                                 ASM 0201 19.32 10/07/26
+
+NO STATEMENTS FLAGGED IN THIS ASSEMBLY
+HIGHEST SEVERITY WAS    0
+OPTIONS FOR THIS ASSEMBLY
+  ALIGN, ALOGIC, BUFSIZE(STD), NODECK, ESD, FLAG(0), LINECOUNT(55), LIST, NOMCALL, YFLAG, WORKSIZE(2097152)
+  NOMLOGIC, NONUMBER, NOOBJECT, NORENT, RLD, NOSTMT, NOLIBMAC, NOTERMINAL, NOTEST, XREF(SHORT)
+  SYSPARM()
+WORK FILE BUFFER SIZE/NUMBER =19066/ 1
+TOTAL RECORDS READ FROM SYSTEM INPUT          6
+TOTAL RECORDS READ FROM SYSTEM LIBRARY      791
+TOTAL RECORDS PUNCHED                         0
+TOTAL RECORDS PRINTED                        43                 PPPPPPPPPPP    AAAAAAAAAA    CCCCCCCCCC   MM        MM   AAAAAAAAAA    CCCCCCCCCC     00000000      00000000
+                PPPPPPPPPPPP  AAAAAAAAAAAA  CCCCCCCCCCCC  MMM      MMM  AAAAAAAAAAAA  CCCCCCCCCCCC   0000000000    0000000000
+               PP        PP  AA        AA  CC        CC  MMMM    MMMM  AA        AA  CC        CC  00      0000  00      0000
+              PP        PP  AA        AA  CC            MM MM  MM MM  AA        AA  CC            00     00 00  00     00 00
+             PP        PP  AA        AA  CC            MM  MMMM  MM  AA        AA  CC            00    00  00  00    00  00
+            PPPPPPPPPPPP  AAAAAAAAAAAA  CC            MM   MM   MM  AAAAAAAAAAAA  CC            00   00   00  00   00   00
+           PPPPPPPPPPP   AAAAAAAAAAAA  CC            MM        MM  AAAAAAAAAAAA  CC            00  00    00  00  00    00
+          PP            AA        AA  CC            MM        MM  AA        AA  CC            00 00     00  00 00     00
+         PP            AA        AA  CC            MM        MM  AA        AA  CC            0000      00  0000      00
+        PP            AA        AA  CC        CC  MM        MM  AA        AA  CC        CC  000       00  000       00
+       PP            AA        AA  CCCCCCCCCCCC  MM        MM  AA        AA  CCCCCCCCCCCC   0000000000    0000000000
+      PP            AA        AA   CCCCCCCCCC   MM        MM  AA        AA   CCCCCCCCCC     00000000      00000000
+
+
+
+                    JJJJJJJJJJ       11        3333333333   777777777777                               AAAAAAAAAA
+                    JJJJJJJJJJ      111       333333333333  77777777777                               AAAAAAAAAAAA
+                        JJ         1111       33        33  77      77                                AA        AA
+                        JJ           11                 33         77                                 AA        AA
+                        JJ           11                 33        77                                  AA        AA
+                        JJ           11              3333        77                                   AAAAAAAAAAAA
+                        JJ           11              3333        77                                   AAAAAAAAAAAA
+                        JJ           11                 33       77                                   AA        AA
+                  JJ    JJ           11                 33       77                                   AA        AA
+                  JJ    JJ           11       33        33       77                                   AA        AA
+                  JJJJJJJJ       1111111111   333333333333       77                                   AA        AA
+                   JJJJJJ        1111111111    3333333333        77                                   AA        AA
+
+
+****A   END   JOB  137  PACMAC00  PACMAN MAC PROBE      ROOM        7.32.50 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  137   END   A****
+****A   END   JOB  137  PACMAC00  PACMAN MAC PROBE      ROOM        7.32.50 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  137   END   A****
+****A   END   JOB  137  PACMAC00  PACMAN MAC PROBE      ROOM        7.32.50 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  137   END   A****
+****A   END   JOB  137  PACMAC00  PACMAN MAC PROBE      ROOM        7.32.50 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  137   END   A****

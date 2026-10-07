@@ -104,3 +104,15 @@ Earlier phase checkers now read the map literals from PACMAP.cob (moved there in
   1000 points). Evidence: docs/evidence/mvs9-fresh-r10-build.txt, mvs9-fresh-r10-install.txt.
 - Default prefix: RELEASE JOB 143 PASS (docs/evidence/mvs9-release-build.txt); CLIST JOB 144 RC 0.
 - Release decks and checksums: releases/1.0-MVS/. README rewritten with install, build, use and test instructions.
+
+## MVS-G0: stable visual baseline (2026-10-07)
+- Core frozen (D22): tests/core_baseline.json, tests/test_core_frozen.py, tools/core_baseline.py, docs/CORE_CHANGES.md.
+- Oracle: `python3 tools/make_deck.py G0 && python3 tools/run_deck.py build/G0.jcl` (job PACBLDG0, = RELEASE content)
+  must reproduce every 1.0-MVS block byte for byte. JOB 145: 43 steps RC 0000 + ASM RC 0, identical.
+- Metrics and display replaceability: `python3 tools/make_deck.py G0X && python3 tools/run_deck.py build/G0X.jcl`
+  (job PACG0X01, uses the installed load module). JOB 146: 10 steps RC 0000; METRICS lines match the values computed
+  from the oracle output; PACALT (alternative display linked over PACMAIN) plays MOVES, MULTI and TSORDR with status
+  lines identical to the oracle; core CSECT lengths identical (PACGAME FF8, PACMAP 858, PACAI E20).
+- Check both: `python3 tests/test_g0.py build/PACBLDG0-<n>.txt build/PACG0X01-<n>.txt` -> MVS-G0 PASS.
+- Capability matrix and cost baseline: docs/CAPABILITIES.md. Evidence: docs/evidence/g0-*.txt.
+- Manual c3270 validation: docs/evidence/g0-manual-c3270.md (METRICS live 0004/00057/0001195/0003). G0 closed.

@@ -1,0 +1,1910 @@
+****A  START  JOB  146  PACG0X01  PACMAN G0 CHECKS      ROOM        8.15.56 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  146  START  A****
+****A  START  JOB  146  PACG0X01  PACMAN G0 CHECKS      ROOM        8.15.56 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  146  START  A****
+****A  START  JOB  146  PACG0X01  PACMAN G0 CHECKS      ROOM        8.15.56 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  146  START  A****
+****A  START  JOB  146  PACG0X01  PACMAN G0 CHECKS      ROOM        8.15.56 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  146  START  A****
+                                                J E S 2   J O B   L O G
+
+
+20.15.56 JOB  146  $HASP373 PACG0X01 STARTED - INIT  1 - CLASS A - SYS TK4-
+20.15.56 JOB  146  IEF403I PACG0X01 - STARTED - TIME=20.15.56
+20.15.56 JOB  146  IEFACTRT - Stepname  Procstep  Program   Retcode
+20.15.56 JOB  146  PACG0X01   MET1                PACMAIN   RC= 0000
+20.15.56 JOB  146  PACG0X01   MET2                PACMAIN   RC= 0000
+20.15.56 JOB  146  PACG0X01   MET3                PACMAIN   RC= 0000
+20.15.56 JOB  146  PACG0X01   MET4                PACMAIN   RC= 0000
+20.15.56 JOB  146  PACG0X01   SRCX                IEBGENER  RC= 0000
+20.15.56 JOB  146  PACG0X01   COBX                IKFCBL00  RC= 0000
+20.15.56 JOB  146  PACG0X01   LINKALT             IEWL      RC= 0000
+20.15.56 JOB  146  PACG0X01   ALT1                PACALT    RC= 0000
+20.15.56 JOB  146  PACG0X01   ALT2                PACALT    RC= 0000
+20.15.56 JOB  146  PACG0X01   ALT3                PACALT    RC= 0000
+20.15.56 JOB  146  IEF404I PACG0X01 - ENDED - TIME=20.15.56
+20.15.56 JOB  146  $HASP395 PACG0X01 ENDED
+
+
+------ JES2 JOB STATISTICS ------
+
+
+ 07 OCT 26 JOB EXECUTION DATE
+
+
+       300 CARDS READ
+
+
+     1,842 SYSOUT PRINT RECORDS
+
+
+         0 SYSOUT PUNCH RECORDS
+
+
+      0.00 MINUTES EXECUTION TIME
+    1     //PACG0X01 JOB (1),'PACMAN G0 CHECKS',CLASS=A,MSGCLASS=A,               JOB  146
+          //             MSGLEVEL=(1,1),REGION=4096K,
+          //             USER=HERC01,PASSWORD=<REDACTED>
+          *** PREFIX HERC01.PACMAN
+    2     //MET1     EXEC PGM=PACMAIN,COND=(0,NE),PARM='BAT       M'
+    3     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+    4     //SYSIN    DD *
+    5     //SYSOUT   DD SYSOUT=A
+    6     //SYSUDUMP DD SYSOUT=A
+    7     //MET2     EXEC PGM=PACMAIN,COND=(0,NE),PARM='BAT       M'
+    8     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+    9     //SYSIN    DD *
+   10     //SYSOUT   DD SYSOUT=A
+   11     //SYSUDUMP DD SYSOUT=A
+   12     //MET3     EXEC PGM=PACMAIN,COND=(0,NE),PARM='TSO AI3 3 M'
+   13     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   14     //SYSIN    DD *
+   15     //SYSOUT   DD SYSOUT=A
+   16     //SYSUDUMP DD SYSOUT=A
+   17     //MET4     EXEC PGM=PACMAIN,COND=(0,NE),PARM='TSO AI1 1 M'
+   18     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   19     //SYSIN    DD *
+   20     //SYSOUT   DD SYSOUT=A
+   21     //SYSUDUMP DD SYSOUT=A
+   22     //SRCX     EXEC PGM=IEBGENER,COND=(0,NE)
+   23     //SYSPRINT DD SYSOUT=A
+   24     //SYSUT2   DD DSN=HERC01.PACMAN.COBOL(PACDSPX),DISP=OLD
+   25     //SYSIN    DD DUMMY
+   26     //SYSUT1   DD DATA,DLM=ZZ
+   27     //COBX     EXEC PGM=IKFCBL00,COND=(0,NE),
+          //         PARM='LOAD,LIB,SUPMAP,SIZE=2048K,BUF=1024K'
+   28     //SYSPRINT DD SYSOUT=A
+   29     //SYSPUNCH DD DUMMY
+   30     //SYSUT1   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   31     //SYSUT2   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   32     //SYSUT3   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   33     //SYSUT4   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   34     //SYSLIN   DD DSN=&&OBJX,DISP=(NEW,PASS),UNIT=SYSDA,
+          //            SPACE=(80,(500,100)),
+          //            DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)
+   35     //SYSIN    DD DSN=HERC01.PACMAN.COBOL(PACDSPX),DISP=SHR
+   36     //SYSLIB   DD DSN=HERC01.PACMAN.COPY,DISP=SHR
+   37     //LINKALT  EXEC PGM=IEWL,COND=(0,NE),PARM='LIST,XREF'
+   38     //SYSLIN   DD DSN=&&OBJX,DISP=(OLD,DELETE)
+   39     //         DD DDNAME=SYSIN
+   40     //LOADIN   DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   41     //SYSLMOD  DD DSN=HERC01.PACMAN.LOAD(PACALT),DISP=OLD
+   42     //SYSLIB   DD DSN=SYS1.COBLIB,DISP=SHR
+   43     //SYSUT1   DD UNIT=SYSDA,SPACE=(1024,(50,20))
+   44     //SYSPRINT DD SYSOUT=A
+   45     //SYSIN    DD *
+   46     //ALT1     EXEC PGM=PACALT,COND=(0,NE),PARM='BAT'
+   47     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   48     //SYSIN    DD *
+   49     //SYSOUT   DD SYSOUT=A
+   50     //SYSUDUMP DD SYSOUT=A
+   51     //ALT2     EXEC PGM=PACALT,COND=(0,NE),PARM='BAT'
+   52     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   53     //SYSIN    DD *
+   54     //SYSOUT   DD SYSOUT=A
+   55     //SYSUDUMP DD SYSOUT=A
+   56     //ALT3     EXEC PGM=PACALT,COND=(0,NE),PARM='TSO AI1 1'
+   57     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   58     //SYSIN    DD *
+   59     //SYSOUT   DD SYSOUT=A
+   60     //SYSUDUMP DD SYSOUT=A
+          //
+IEF236I ALLOC. FOR PACG0X01 MET1
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS01604
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACG0X01 MET1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00146.SI0101                         SYSIN
+IEF285I   JES2.JOB00146.SO0110                         SYSOUT
+IEF285I   JES2.JOB00146.SO0111                         SYSOUT
+IEF373I STEP /MET1    / START 26280.2015
+IEF374I STEP /MET1    / STOP  26280.2015 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT    28K SYS   236K
+************************************************************************************************************************************
+*     1. Jobstep of job: PACG0X01    Stepname: MET1        Program name: PACMAIN    Executed on 07.10.26 from 20.15.56 to 20.15.56 *
+*         elapsed time  00:00:00,03                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:     28K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:     16                                                                           *
+*     270.......0 240.......0 DMY.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACG0X01 MET2
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS01606
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACG0X01 MET2 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00146.SI0102                         SYSIN
+IEF285I   JES2.JOB00146.SO0112                         SYSOUT
+IEF285I   JES2.JOB00146.SO0113                         SYSOUT
+IEF373I STEP /MET2    / START 26280.2015
+IEF374I STEP /MET2    / STOP  26280.2015 CPU    0MIN 00.02SEC SRB    0MIN 00.00SEC VIRT    28K SYS   244K
+************************************************************************************************************************************
+*     2. Jobstep of job: PACG0X01    Stepname: MET2        Program name: PACMAIN    Executed on 07.10.26 from 20.15.56 to 20.15.56 *
+*         elapsed time  00:00:00,03                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,02               Virtual Storage used:     28K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,02   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:     65                                                                           *
+*     270.......0 240.......0 DMY.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,03                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACG0X01 MET3
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS01608
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACG0X01 MET3 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00146.SI0103                         SYSIN
+IEF285I   JES2.JOB00146.SO0114                         SYSOUT
+IEF285I   JES2.JOB00146.SO0115                         SYSOUT
+IEF373I STEP /MET3    / START 26280.2015
+IEF374I STEP /MET3    / STOP  26280.2015 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT    28K SYS   244K
+************************************************************************************************************************************
+*     3. Jobstep of job: PACG0X01    Stepname: MET3        Program name: PACMAIN    Executed on 07.10.26 from 20.15.56 to 20.15.56 *
+*         elapsed time  00:00:00,02                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:     28K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:     18                                                                           *
+*     270.......0 240.......0 DMY.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACG0X01 MET4
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS01610
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACG0X01 MET4 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00146.SI0104                         SYSIN
+IEF285I   JES2.JOB00146.SO0116                         SYSOUT
+IEF285I   JES2.JOB00146.SO0117                         SYSOUT
+IEF373I STEP /MET4    / START 26280.2015
+IEF374I STEP /MET4    / STOP  26280.2015 CPU    0MIN 00.00SEC SRB    0MIN 00.00SEC VIRT    28K SYS   240K
+IEF236I ALLOC. FOR PACG0X01 SRCX
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I 191  ALLOCATED TO SYSUT2
+IEF237I 240  ALLOCATED TO SYS01612
+IEF237I DMY  ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSUT1
+IEF142I PACG0X01 SRCX - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00146.SO0118                         SYSOUT
+IEF285I   HERC01.PACMAN.COBOL                          KEPT          *--------5
+IEF285I   VOL SER NOS= MVSCAT.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00146.SI0105                         SYSIN
+IEF373I STEP /SRCX    / START 26280.2015
+IEF374I STEP /SRCX    / STOP  26280.2015 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT    44K SYS   240K
+************************************************************************************************************************************
+*     5. Jobstep of job: PACG0X01    Stepname: SRCX        Program name: IEBGENER   Executed on 07.10.26 from 20.15.56 to 20.15.56 *
+*         elapsed time  00:00:00,01                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:     44K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:     78                                                                           *
+*     DMY.......0 191.......5 240.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACG0X01 COBX
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I DMY  ALLOCATED TO SYSPUNCH
+IEF237I 180  ALLOCATED TO SYSUT1
+IEF237I 190  ALLOCATED TO SYSUT2
+IEF237I 140  ALLOCATED TO SYSUT3
+IEF237I 170  ALLOCATED TO SYSUT4
+IEF237I 140  ALLOCATED TO SYSLIN
+IEF237I 191  ALLOCATED TO SYSIN
+IEF237I 240  ALLOCATED TO SYS01614
+IEF237I 290  ALLOCATED TO SYSLIB
+IEF142I PACG0X01 COBX - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00146.SO0119                         SYSOUT
+IEF285I   SYS26280.T201556.RA000.PACG0X01.R0000001     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK02.
+IEF285I   SYS26280.T201556.RA000.PACG0X01.R0000002     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   SYS26280.T201556.RA000.PACG0X01.R0000003     DELETED       *--------9
+IEF285I   VOL SER NOS= WORK00.
+IEF285I   SYS26280.T201556.RA000.PACG0X01.R0000004     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK01.
+IEF285I   SYS26280.T201556.RA000.PACG0X01.OBJX         PASSED        *--------2
+IEF285I   VOL SER NOS= WORK00.
+IEF285I   HERC01.PACMAN.COBOL                          KEPT          *--------3
+IEF285I   VOL SER NOS= MVSCAT.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   HERC01.PACMAN.COPY                           KEPT          *--------6
+IEF285I   VOL SER NOS= PUB003.
+IEF373I STEP /COBX    / START 26280.2015
+IEF374I STEP /COBX    / STOP  26280.2015 CPU    0MIN 00.04SEC SRB    0MIN 00.01SEC VIRT  2076K SYS   248K
+************************************************************************************************************************************
+*     6. Jobstep of job: PACG0X01    Stepname: COBX        Program name: IKFCBL00   Executed on 07.10.26 from 20.15.56 to 20.15.56 *
+*         elapsed time  00:00:00,08                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,05               Virtual Storage used:   2076K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,05   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      0                                                                           *
+*     DMY.......0 DMY.......0 180.......6 190.......6 140.......9 170.......6 140.......2 191.......3 240.......0 290.......6      *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,08                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACG0X01 LINKALT
+IEF237I 140  ALLOCATED TO SYSLIN
+IEF237I JES2 ALLOCATED TO
+IEF237I 270  ALLOCATED TO LOADIN
+IEF237I 240  ALLOCATED TO SYS01616
+IEF237I 270  ALLOCATED TO SYSLMOD
+IEF237I 148  ALLOCATED TO SYSLIB
+IEF237I 190  ALLOCATED TO SYSUT1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF142I PACG0X01 LINKALT - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   SYS26280.T201556.RA000.PACG0X01.OBJX         DELETED       *--------3
+IEF285I   VOL SER NOS= WORK00.
+IEF285I   JES2.JOB00146.SI0106                         SYSIN
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *-------19
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *-------19
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.COBLIB                                  KEPT          *--------0
+IEF285I   VOL SER NOS= MVSRES.
+IEF285I   SYS26280.T201556.RA000.PACG0X01.R0000005     DELETED       *--------0
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   JES2.JOB00146.SO0120                         SYSOUT
+IEF373I STEP /LINKALT / START 26280.2015
+IEF374I STEP /LINKALT / STOP  26280.2015 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT   264K SYS   248K
+************************************************************************************************************************************
+*     7. Jobstep of job: PACG0X01    Stepname: LINKALT     Program name: IEWL       Executed on 07.10.26 from 20.15.56 to 20.15.56 *
+*         elapsed time  00:00:00,02                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:    264K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      2                                                                           *
+*     140.......3 DMY.......0 270......19 240.......0 270......19 148.......0 190.......0 DMY.......0                              *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACG0X01 ALT1
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS01618
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACG0X01 ALT1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00146.SI0107                         SYSIN
+IEF285I   JES2.JOB00146.SO0121                         SYSOUT
+IEF285I   JES2.JOB00146.SO0122                         SYSOUT
+IEF373I STEP /ALT1    / START 26280.2015
+IEF374I STEP /ALT1    / STOP  26280.2015 CPU    0MIN 00.00SEC SRB    0MIN 00.00SEC VIRT    28K SYS   244K
+IEF236I ALLOC. FOR PACG0X01 ALT2
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS01620
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACG0X01 ALT2 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00146.SI0108                         SYSIN
+IEF285I   JES2.JOB00146.SO0123                         SYSOUT
+IEF285I   JES2.JOB00146.SO0124                         SYSOUT
+IEF373I STEP /ALT2    / START 26280.2015
+IEF374I STEP /ALT2    / STOP  26280.2015 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT    28K SYS   244K
+************************************************************************************************************************************
+*     9. Jobstep of job: PACG0X01    Stepname: ALT2        Program name: PACALT     Executed on 07.10.26 from 20.15.56 to 20.15.56 *
+*         elapsed time  00:00:00,02                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:     28K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:     19                                                                           *
+*     270.......0 240.......0 DMY.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACG0X01 ALT3
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS01622
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACG0X01 ALT3 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00146.SI0109                         SYSIN
+IEF285I   JES2.JOB00146.SO0125                         SYSOUT
+IEF285I   JES2.JOB00146.SO0126                         SYSOUT
+IEF373I STEP /ALT3    / START 26280.2015
+IEF374I STEP /ALT3    / STOP  26280.2015 CPU    0MIN 00.00SEC SRB    0MIN 00.00SEC VIRT    28K SYS   244K
+IEF375I  JOB /PACG0X01/ START 26280.2015
+IEF376I  JOB /PACG0X01/ STOP  26280.2015 CPU    0MIN 00.11SEC SRB    0MIN 00.01SEC
+
+PACMAN MVS-6 SMART GHOSTS
+T000   START   X=02 Y=02 S=0000 L=100 G=19,09 V=3 ST=READY
+####################
+#P.......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#.................G#
+####################
+T001 R MOVED   X=03 Y=02 S=0010 L=099 G=18,09 V=3 ST=RUNNING
+####################
+# P......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#................G #
+####################
+T002 R MOVED   X=04 Y=02 S=0020 L=098 G=19,09 V=3 ST=RUNNING
+####################
+#  P.....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#.................G#
+####################
+T003 U BLOCKED X=04 Y=02 S=0020 L=098 G=19,08 V=3 ST=RUNNING
+####################
+#  P.....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#.................G#
+#................. #
+####################
+T004 L MOVED   X=03 Y=02 S=0020 L=098 G=19,09 V=3 ST=RUNNING
+####################
+# P .....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#.................G#
+####################
+T005 L MOVED   X=02 Y=02 S=0020 L=098 G=19,08 V=3 ST=RUNNING
+####################
+#P  .....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#.................G#
+#................. #
+####################
+T006 L BLOCKED X=02 Y=02 S=0020 L=098 G=19,09 V=3 ST=RUNNING
+####################
+#P  .....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#.................G#
+####################
+T007 D MOVED   X=02 Y=03 S=0030 L=097 G=18,09 V=3 ST=RUNNING
+####################
+#   .....##........#
+#P##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#................G #
+####################
+T008 D MOVED   X=02 Y=04 S=0040 L=096 G=17,09 V=3 ST=RUNNING
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#P.................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#...............G. #
+####################
+T009 R MOVED   X=03 Y=04 S=0050 L=095 G=16,09 V=3 ST=RUNNING
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+# P................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..............G.. #
+####################
+INVALID COMMAND X
+T010 r MOVED   X=04 Y=04 S=0060 L=094 G=17,09 V=3 ST=RUNNING
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#  P...............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#...............G. #
+####################
+T011 R MOVED   X=05 Y=04 S=0070 L=093 G=16,09 V=3 ST=RUNNING
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#   P..............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..............G.. #
+####################
+T012 R MOVED   X=06 Y=04 S=0080 L=092 G=15,09 V=3 ST=RUNNING
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#    P.............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#.............G... #
+####################
+T013 D BLOCKED X=06 Y=04 S=0080 L=092 G=16,09 V=3 ST=RUNNING
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#    P.............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..............G.. #
+####################
+QUIT
+TURNS 013
+SCORE 0080
+LIVES 3
+METRICS FRAMES=0014 LINES=00160 CHARS=0003726 CLEARS=0000
+
+PACMAN MVS-6 SMART GHOSTS
+T000   START   X=02 Y=02 S=0000 L=098 G=19,09 V=3 ST=READY
+G2=02,09 G3=19,02
+####################
+#P.......##.......G#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#G................G#
+####################
+T001 L BLOCKED X=02 Y=02 S=0000 L=098 G=18,09 V=3 ST=RUNNING
+G2=02,08 G3=19,03
+####################
+#P.......##....... #
+#.##.###.##.###.##G#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#G.................#
+# ...............G #
+####################
+T002 L BLOCKED X=02 Y=02 S=0000 L=098 G=17,09 V=3 ST=RUNNING
+G2=02,07 G3=19,04
+####################
+#P.......##....... #
+#.##.###.##.###.##.#
+#.................G#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#G##.###.##.###.##.#
+#..................#
+# ..............G. #
+####################
+T003 U BLOCKED X=02 Y=02 S=0000 L=098 G=17,08 V=3 ST=RUNNING
+G2=02,06 G3=18,04
+####################
+#P.......##....... #
+#.##.###.##.###.##.#
+#................G.#
+#.##.#.######.#.##.#
+#G...#...##...#....#
+#.##.###.##.###.##.#
+#...............G..#
+# ................ #
+####################
+T004 R MOVED   X=03 Y=02 S=0010 L=097 G=18,08 V=3 ST=RUNNING
+G2=03,06 G3=17,04
+####################
+# P......##....... #
+#.##.###.##.###.##.#
+#...............G..#
+#.##.#.######.#.##.#
+#.G..#...##...#....#
+#.##.###.##.###.##.#
+#................G.#
+# ................ #
+####################
+T005 D BLOCKED X=03 Y=02 S=0010 L=097 G=19,08 V=3 ST=RUNNING
+G2=04,06 G3=16,04
+####################
+# P......##....... #
+#.##.###.##.###.##.#
+#..............G...#
+#.##.#.######.#.##.#
+#..G.#...##...#....#
+#.##.###.##.###.##.#
+#.................G#
+# ................ #
+####################
+T006 U BLOCKED X=03 Y=02 S=0010 L=097 G=19,09 V=3 ST=RUNNING
+G2=05,06 G3=16,05
+####################
+# P......##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#G##.#
+#...G#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................G#
+####################
+T007 D BLOCKED X=03 Y=02 S=0010 L=097 G=18,09 V=3 ST=RUNNING
+G2=05,07 G3=16,06
+####################
+# P......##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#G...#
+#.##G###.##.###.##.#
+#..................#
+# ...............G #
+####################
+T008 U BLOCKED X=03 Y=02 S=0010 L=097 G=18,08 V=3 ST=RUNNING
+G2=05,08 G3=16,07
+####################
+# P......##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###G##.#
+#...G............G.#
+# ................ #
+####################
+T009 L MOVED   X=02 Y=02 S=0010 L=097 G=19,08 V=3 ST=RUNNING
+G2=06,08 G3=16,08
+####################
+#P ......##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#....G.........G..G#
+# ................ #
+####################
+T010 R MOVED   X=03 Y=02 S=0010 L=097 G=19,09 V=3 ST=RUNNING
+G2=06,09 G3=17,08
+####################
+# P......##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#...............G..#
+# ...G............G#
+####################
+T011 D BLOCKED X=03 Y=02 S=0010 L=097 G=18,09 V=3 ST=RUNNING
+G2=05,09 G3=18,08
+####################
+# P......##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#................G.#
+# ..G............G #
+####################
+T012 R MOVED   X=04 Y=02 S=0020 L=096 G=18,08 V=3 ST=RUNNING
+G2=04,09 G3=18,09
+####################
+#  P.....##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#................G.#
+# .G.............G #
+####################
+T013 U BLOCKED X=04 Y=02 S=0020 L=096 G=19,08 V=3 ST=RUNNING
+G2=03,09 G3=17,09
+####################
+#  P.....##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#.................G#
+# G.............G. #
+####################
+T014 D BLOCKED X=04 Y=02 S=0020 L=096 G=19,09 V=3 ST=RUNNING
+G2=02,09 G3=17,08
+####################
+#  P.....##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#...............G..#
+#G................G#
+####################
+T015 U BLOCKED X=04 Y=02 S=0020 L=096 G=18,09 V=3 ST=RUNNING
+G2=02,08 G3=16,08
+####################
+#  P.....##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#G.............G...#
+# ...............G #
+####################
+T016 D BLOCKED X=04 Y=02 S=0020 L=096 G=18,08 V=3 ST=RUNNING
+G2=02,07 G3=16,07
+####################
+#  P.....##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#G##.###.##.###G##.#
+#................G.#
+# ................ #
+####################
+T017 R MOVED   X=05 Y=02 S=0030 L=095 G=17,08 V=3 ST=RUNNING
+G2=02,06 G3=16,06
+####################
+#   P....##....... #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#G...#...##...#G...#
+#.##.###.##.###.##.#
+#...............G..#
+# ................ #
+####################
+T018 L MOVED   X=04 Y=02 S=0030 L=095 G=17,09 V=3 ST=RUNNING
+G2=02,05 G3=17,06
+####################
+#  P ....##....... #
+#.##.###.##.###.##.#
+#..................#
+#G##.#.######.#.##.#
+#....#...##...#.G..#
+#.##.###.##.###.##.#
+#..................#
+# ..............G. #
+####################
+T019 D BLOCKED X=04 Y=02 S=0030 L=095 G=16,09 V=3 ST=RUNNING
+G2=02,04 G3=18,06
+####################
+#  P ....##....... #
+#.##.###.##.###.##.#
+#G.................#
+#.##.#.######.#.##.#
+#....#...##...#..G.#
+#.##.###.##.###.##.#
+#..................#
+# .............G.. #
+####################
+T020 R MOVED   X=05 Y=02 S=0030 L=095 G=15,09 V=3 ST=RUNNING
+G2=03,04 G3=19,06
+####################
+#   P....##....... #
+#.##.###.##.###.##.#
+#.G................#
+#.##.#.######.#.##.#
+#....#...##...#...G#
+#.##.###.##.###.##.#
+#..................#
+# ............G... #
+####################
+T021 D MOVED   X=05 Y=03 S=0040 L=094 G=15,08 V=3 ST=RUNNING
+G2=04,04 G3=19,07
+####################
+#    ....##....... #
+#.##P###.##.###.##.#
+#..G...............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##G#
+#.............G....#
+# ................ #
+####################
+T022 U MOVED   X=05 Y=02 S=0040 L=094 G=14,08 V=3 ST=RUNNING
+G2=05,04 G3=19,08
+####################
+#   P....##....... #
+#.## ###.##.###.##.#
+#...G..............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#............G....G#
+# ................ #
+####################
+T023 D MOVED   X=05 Y=03 S=0040 L=094 G=14,09 V=3 ST=RUNNING
+G2=06,04 G3=18,08
+####################
+#    ....##....... #
+#.##P###.##.###.##.#
+#....G.............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#................G.#
+# ...........G.... #
+####################
+T024 R BLOCKED X=05 Y=03 S=0040 L=094 G=15,09 V=3 ST=RUNNING
+G2=07,04 G3=18,09
+####################
+#    ....##....... #
+#.##P###.##.###.##.#
+#.....G............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ............G..G #
+####################
+T025 D MOVED   X=05 Y=04 S=0050 L=093 G=16,09 V=3 ST=RUNNING
+G2=08,04 G3=17,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#...P..G...........#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# .............GG. #
+####################
+T026 D MOVED   X=05 Y=05 S=0060 L=092 G=17,09 V=3 ST=RUNNING
+G2=09,04 G3=17,08
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ...G..........#
+#.##P#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#...............G..#
+# ..............G. #
+####################
+T027 U MOVED   X=05 Y=04 S=0060 L=092 G=17,08 V=3 ST=RUNNING
+G2=10,04 G3=18,08
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#...P....G.........#
+#.## #.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#...............GG.#
+# ................ #
+####################
+T028 U MOVED   X=05 Y=03 S=0060 L=092 G=18,08 V=3 ST=RUNNING
+G2=11,04 G3=18,09
+####################
+#    ....##....... #
+#.##P###.##.###.##.#
+#... .....G........#
+#.## #.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#................G.#
+# ...............G #
+####################
+T029 D MOVED   X=05 Y=04 S=0060 L=092 G=19,08 V=3 ST=RUNNING
+G2=12,04 G3=19,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#...P......G.......#
+#.## #.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#.................G#
+# ................G#
+####################
+T030 D MOVED   X=05 Y=05 S=0060 L=092 G=19,09 V=3 ST=RUNNING
+G2=13,04 G3=19,08
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... .......G......#
+#.##P#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#.................G#
+# ................G#
+####################
+T031 D MOVED   X=05 Y=06 S=0070 L=091 G=18,09 V=3 ST=RUNNING
+G2=14,04 G3=18,08
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ........G.....#
+#.## #.######.#.##.#
+#...P#...##...#....#
+#.##.###.##.###.##.#
+#................G.#
+# ...............G #
+####################
+T032 D MOVED   X=05 Y=07 S=0080 L=090 G=18,08 V=3 ST=RUNNING
+G2=14,05 G3=18,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######G#.##.#
+#... #...##...#....#
+#.##P###.##.###.##.#
+#................G.#
+# ...............G #
+####################
+T033 L BLOCKED X=05 Y=07 S=0080 L=090 G=19,08 V=3 ST=RUNNING
+G2=14,06 G3=17,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #...##..G#....#
+#.##P###.##.###.##.#
+#.................G#
+# ..............G. #
+####################
+T034 L BLOCKED X=05 Y=07 S=0080 L=090 G=19,09 V=3 ST=RUNNING
+G2=13,06 G3=17,08
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #...##.G.#....#
+#.##P###.##.###.##.#
+#...............G..#
+# ................G#
+####################
+T035 D MOVED   X=05 Y=08 S=0090 L=089 G=18,09 V=3 ST=RUNNING
+G2=12,06 G3=18,08
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #...##G..#....#
+#.## ###.##.###.##.#
+#...P............G.#
+# ...............G #
+####################
+T036 D MOVED   X=05 Y=09 S=0100 L=088 G=18,08 V=3 ST=RUNNING
+G2=12,07 G3=19,08
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #...##...#....#
+#.## ###.##G###.##.#
+#... ............GG#
+# ..P............. #
+####################
+T037 D BLOCKED X=05 Y=09 S=0100 L=088 G=17,08 V=3 ST=RUNNING
+G2=12,08 G3=19,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #...##...#....#
+#.## ###.##.###.##.#
+#... ......G....G..#
+# ..P.............G#
+####################
+T038 D BLOCKED X=05 Y=09 S=0100 L=088 G=16,08 V=3 ST=RUNNING
+G2=11,08 G3=18,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #...##...#....#
+#.## ###.##.###.##.#
+#... .....G....G...#
+# ..P............G #
+####################
+T039 R MOVED   X=06 Y=09 S=0110 L=087 G=16,07 V=3 ST=RUNNING
+G2=10,08 G3=17,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #...##...#....#
+#.## ###.##.###G##.#
+#... ....G.........#
+# .. P..........G. #
+####################
+T040 L MOVED   X=05 Y=09 S=0110 L=087 G=16,06 V=3 ST=RUNNING
+G2=09,08 G3=16,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #...##...#G...#
+#.## ###.##.###.##.#
+#... ...G..........#
+# ..P .........G.. #
+####################
+T041 U MOVED   X=05 Y=08 S=0110 L=087 G=16,05 V=3 ST=RUNNING
+G2=09,07 G3=15,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#G##.#
+#... #...##...#....#
+#.## ###G##.###.##.#
+#...P..............#
+# ..  ........G... #
+####################
+T042 L MOVED   X=04 Y=08 S=0120 L=086 G=16,04 V=3 ST=RUNNING
+G2=09,06 G3=14,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ..........G...#
+#.## #.######.#.##.#
+#... #..G##...#....#
+#.## ###.##.###.##.#
+#..P ..............#
+# ..  .......G.... #
+####################
+T043 R MOVED   X=05 Y=08 S=0120 L=086 G=16,03 V=3 ST=RUNNING
+G2=08,06 G3=14,08
+####################
+#    ....##....... #
+#.## ###.##.###G##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #.G.##...#....#
+#.## ###.##.###.##.#
+#.. P........G.....#
+# ..  ............ #
+####################
+T044 D MOVED   X=05 Y=09 S=0120 L=086 G=16,02 V=3 ST=RUNNING
+G2=07,06 G3=13,08
+####################
+#    ....##....G.. #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#... #G..##...#....#
+#.## ###.##.###.##.#
+#..  .......G......#
+# ..P ............ #
+####################
+T045 D BLOCKED X=05 Y=09 S=0120 L=086 G=15,02 V=3 ST=RUNNING
+G2=07,05 G3=13,09
+####################
+#    ....##...G... #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #G######.#.##.#
+#... #...##...#....#
+#.## ###.##.###.##.#
+#..  ..............#
+# ..P ......G..... #
+####################
+T046 L MOVED   X=04 Y=09 S=0130 L=085 G=14,02 V=3 ST=RUNNING
+G2=07,04 G3=14,09
+####################
+#    ....##..G.... #
+#.## ###.##.###.##.#
+#... .G............#
+#.## #.######.#.##.#
+#... #...##...#....#
+#.## ###.##.###.##.#
+#..  ..............#
+# .P  .......G.... #
+####################
+T047 U MOVED   X=04 Y=08 S=0130 L=085 G=13,02 V=3 ST=RUNNING
+G2=08,04 G3=15,09
+####################
+#    ....##.G..... #
+#.## ###.##.###.##.#
+#... ..G...........#
+#.## #.######.#.##.#
+#... #...##...#....#
+#.## ###.##.###.##.#
+#..P ..............#
+# .   ........G... #
+####################
+T048 L MOVED   X=03 Y=08 S=0140 L=084 G=12,02 V=3 ST=RUNNING
+G2=09,04 G3=16,09
+####################
+#    ....##G...... #
+#.## ###.##.###.##.#
+#... ...G..........#
+#.## #.######.#.##.#
+#... #...##...#....#
+#.## ###.##.###.##.#
+#.P  ..............#
+# .   .........G.. #
+####################
+T049 L MOVED   X=02 Y=08 S=0150 L=083 G=12,03 V=3 ST=RUNNING
+G2=10,04 G3=17,09
+####################
+#    ....##....... #
+#.## ###.##G###.##.#
+#... ....G.........#
+#.## #.######.#.##.#
+#... #...##...#....#
+#.## ###.##.###.##.#
+#P   ..............#
+# .   ..........G. #
+####################
+T050 U MOVED   X=02 Y=07 S=0160 L=082 G=12,04 V=3 ST=RUNNING
+G2=11,04 G3=18,09
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... .....GG.......#
+#.## #.######.#.##.#
+#... #...##...#....#
+#P## ###.##.###.##.#
+#    ..............#
+# .   ...........G #
+####################
+T051 L BLOCKED X=02 Y=07 S=0160 L=082 G=13,04 V=3 ST=RUNNING
+G2=12,04 G3=18,08
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ......GG......#
+#.## #.######.#.##.#
+#... #...##...#....#
+#P## ###.##.###.##.#
+#    ............G.#
+# .   ............ #
+####################
+T052 U MOVED   X=02 Y=06 S=0170 L=081 G=14,04 V=3 ST=RUNNING
+G2=12,03 G3=17,08
+####################
+#    ....##....... #
+#.## ###.##G###.##.#
+#... ........G.....#
+#.## #.######.#.##.#
+#P.. #...##...#....#
+# ## ###.##.###.##.#
+#    ...........G..#
+# .   ............ #
+####################
+T053 L BLOCKED X=02 Y=06 S=0170 L=081 G=15,04 V=3 ST=RUNNING
+G2=12,02 G3=16,08
+####################
+#    ....##G...... #
+#.## ###.##.###.##.#
+#... .........G....#
+#.## #.######.#.##.#
+#P.. #...##...#....#
+# ## ###.##.###.##.#
+#    ..........G...#
+# .   ............ #
+####################
+T054 L BLOCKED X=02 Y=06 S=0170 L=081 G=16,04 V=3 ST=RUNNING
+G2=13,02 G3=16,09
+####################
+#    ....##.G..... #
+#.## ###.##.###.##.#
+#... ..........G...#
+#.## #.######.#.##.#
+#P.. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+# .   .........G.. #
+####################
+T055 L BLOCKED X=02 Y=06 S=0170 L=081 G=16,03 V=3 ST=RUNNING
+G2=14,02 G3=15,09
+####################
+#    ....##..G.... #
+#.## ###.##.###G##.#
+#... ..............#
+#.## #.######.#.##.#
+#P.. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+# .   ........G... #
+####################
+T056 R MOVED   X=03 Y=06 S=0180 L=080 G=16,02 V=3 ST=RUNNING
+G2=15,02 G3=14,09
+####################
+#    ....##...GG.. #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+# P. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+# .   .......G.... #
+####################
+T057 L MOVED   X=02 Y=06 S=0180 L=080 G=17,02 V=3 ST=RUNNING
+G2=16,02 G3=13,09
+####################
+#    ....##....GG. #
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######.#.##.#
+#P . #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+# .   ......G..... #
+####################
+T058 D MOVED   X=02 Y=07 S=0180 L=080 G=18,02 V=3 ST=RUNNING
+G2=16,03 G3=12,09
+####################
+#    ....##......G #
+#.## ###.##.###G##.#
+#... ..............#
+#.## #.######.#.##.#
+#  . #...##...#....#
+#P## ###.##.###.##.#
+#    ..............#
+# .   .....G...... #
+####################
+T059 R BLOCKED X=02 Y=07 S=0180 L=080 G=19,02 V=3 ST=RUNNING
+G2=16,04 G3=12,08
+####################
+#    ....##.......G#
+#.## ###.##.###.##.#
+#... ..........G...#
+#.## #.######.#.##.#
+#  . #...##...#....#
+#P## ###.##.###.##.#
+#    ......G.......#
+# .   ............ #
+####################
+T060 R BLOCKED X=02 Y=07 S=0180 L=080 G=19,03 V=3 ST=RUNNING
+G2=17,04 G3=12,07
+####################
+#    ....##....... #
+#.## ###.##.###.##G#
+#... ...........G..#
+#.## #.######.#.##.#
+#  . #...##...#....#
+#P## ###.##G###.##.#
+#    ..............#
+# .   ............ #
+####################
+T061 D MOVED   X=02 Y=08 S=0180 L=080 G=19,04 V=3 ST=RUNNING
+G2=18,04 G3=12,06
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... ............GG#
+#.## #.######.#.##.#
+#  . #...##G..#....#
+# ## ###.##.###.##.#
+#P   ..............#
+# .   ............ #
+####################
+T062 U MOVED   X=02 Y=07 S=0180 L=080 G=19,05 V=3 ST=RUNNING
+G2=19,04 G3=13,06
+####################
+#    ....##....... #
+#.## ###.##.###.##.#
+#... .............G#
+#.## #.######.#.##G#
+#  . #...##.G.#....#
+#P## ###.##.###.##.#
+#    ..............#
+# .   ............ #
+####################
+T063 L BLOCKED X=02 Y=07 S=0180 L=080 G=19,06 V=3 ST=RUNNING
+G2=19,03 G3=14,06
+####################
+#    ....##....... #
+#.## ###.##.###.##G#
+#... ..............#
+#.## #.######.#.##.#
+#  . #...##..G#...G#
+#P## ###.##.###.##.#
+#    ..............#
+# .   ............ #
+####################
+T064 U MOVED   X=02 Y=06 S=0180 L=080 G=19,07 V=3 ST=RUNNING
+G2=19,02 G3=14,05
+####################
+#    ....##.......G#
+#.## ###.##.###.##.#
+#... ..............#
+#.## #.######G#.##.#
+#P . #...##...#....#
+# ## ###.##.###.##G#
+#    ..............#
+# .   ............ #
+####################
+EOF
+TURNS 064
+SCORE 0180
+LIVES 3
+METRICS FRAMES=0065 LINES=00785 CHARS=0018124 CLEARS=0000
+
+PACMAN MVS-6 SMART GHOSTS
+T000   START   X=02 Y=02 S=0000 L=098 G=19,09 V=3 ST=READY
+G2=02,09 G3=19,02
+####################
+#P.......##.......G#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#G................G#
+####################
+CMD (U/D/L/R/Q)?
+T001 R MOVED   X=03 Y=02 S=0010 L=097 G=19,08 V=3 ST=RUNNING
+G2=02,08 G3=18,02
+####################
+# P......##......G #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#G................G#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T002 D BLOCKED X=03 Y=02 S=0010 L=097 G=19,07 V=3 ST=RUNNING
+G2=02,07 G3=17,02
+####################
+# P......##.....G. #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#G##.###.##.###.##G#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T003 R MOVED   X=04 Y=02 S=0020 L=096 G=19,06 V=3 ST=RUNNING
+G2=02,06 G3=16,02
+####################
+#  P.....##....G.. #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#G...#...##...#...G#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T004 R MOVED   X=05 Y=02 S=0030 L=095 G=19,05 V=3 ST=RUNNING
+G2=02,05 G3=15,02
+####################
+#   P....##...G... #
+#.##.###.##.###.##.#
+#..................#
+#G##.#.######.#.##G#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T005 R MOVED   X=06 Y=02 S=0040 L=094 G=19,04 V=3 ST=RUNNING
+G2=02,04 G3=14,02
+####################
+#    P...##..G.... #
+#.##.###.##.###.##.#
+#G................G#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T006 U BLOCKED X=06 Y=02 S=0040 L=094 G=19,03 V=3 ST=RUNNING
+G2=02,03 G3=13,02
+####################
+#    P...##.G..... #
+#G##.###.##.###.##G#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T007 R MOVED   X=07 Y=02 S=0050 L=093 G=19,02 V=3 ST=RUNNING
+G2=02,02 G3=12,02
+####################
+#G    P..##G......G#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T008 R MOVED   X=08 Y=02 S=0060 L=092 G=18,02 V=3 ST=RUNNING
+G2=03,02 G3=12,03
+####################
+# G    P.##......G #
+#.##.###.##G###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T009 U BLOCKED X=08 Y=02 S=0060 L=092 G=17,02 V=3 ST=RUNNING
+G2=04,02 G3=12,04
+####################
+#  G   P.##.....G. #
+#.##.###.##.###.##.#
+#..........G.......#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T010 R MOVED   X=09 Y=02 S=0070 L=091 G=16,02 V=3 ST=RUNNING
+G2=05,02 G3=11,04
+####################
+#   G   P##....G.. #
+#.##.###.##.###.##.#
+#.........G........#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T011 L MOVED   X=08 Y=02 S=0070 L=091 G=15,02 V=3 ST=RUNNING
+G2=06,02 G3=10,04
+####################
+#    G P ##...G... #
+#.##.###.##.###.##.#
+#........G.........#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T012 D BLOCKED X=08 Y=02 S=0070 L=091 G=14,02 V=3 ST=RUNNING
+G2=07,02 G3=09,04
+####################
+#     GP ##..G.... #
+#.##.###.##.###.##.#
+#.......G..........#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T013 R MOVED   X=09 Y=02 S=0070 L=091 G=13,02 V=3 ST=RUNNING
+G2=08,02 G3=09,03
+####################
+#      GP##.G..... #
+#.##.###G##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T014 R DIED    X=02 Y=02 S=0070 L=091 G=19,09 V=2 ST=RUNNING
+G2=02,09 G3=19,02
+####################
+#P       ##.......G#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#G................G#
+####################
+CMD (U/D/L/R/Q)?
+T015 R MOVED   X=03 Y=02 S=0070 L=091 G=19,08 V=2 ST=RUNNING
+G2=02,08 G3=18,02
+####################
+# P      ##......G #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#G................G#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T016 D BLOCKED X=03 Y=02 S=0070 L=091 G=19,07 V=2 ST=RUNNING
+G2=02,07 G3=17,02
+####################
+# P      ##.....G. #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#G##.###.##.###.##G#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T017 R MOVED   X=04 Y=02 S=0070 L=091 G=19,06 V=2 ST=RUNNING
+G2=02,06 G3=16,02
+####################
+#  P     ##....G.. #
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#G...#...##...#...G#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+T018 R MOVED   X=05 Y=02 S=0070 L=091 G=19,05 V=2 ST=RUNNING
+G2=02,05 G3=15,02
+####################
+#   P    ##...G... #
+#.##.###.##.###.##.#
+#..................#
+#G##.#.######.#.##G#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+# ................ #
+####################
+CMD (U/D/L/R/Q)?
+EOF
+TURNS 018
+SCORE 0070
+LIVES 2
+METRICS FRAMES=0019 LINES=00252 CHARS=0005640 CLEARS=0018
+
+PACMAN MVS-6 SMART GHOSTS
+T000   START   X=02 Y=02 S=0000 L=100 G=19,09 V=3 ST=READY
+####################
+#P.......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#.................G#
+####################
+CMD (U/D/L/R/Q)?
+T001 R MOVED   X=03 Y=02 S=0010 L=099 G=18,09 V=3 ST=RUNNING
+####################
+# P......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#................G #
+####################
+CMD (U/D/L/R/Q)?
+T001 R MOVED   X=03 Y=02 S=0010 L=099 G=18,09 V=3 ST=RUNNING
+####################
+# P......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#................G #
+####################
+CMD (U/D/L/R/Q)?
+T002 D BLOCKED X=03 Y=02 S=0010 L=099 G=19,09 V=3 ST=RUNNING
+####################
+# P......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#.................G#
+####################
+CMD (U/D/L/R/Q)?
+QUIT
+TURNS 002
+SCORE 0010
+LIVES 3
+METRICS FRAMES=0004 LINES=00053 CHARS=0001163 CLEARS=0003
+DATA SET UTILITY - GENERATE                                                                       PAGE 0001
+
+
+
+PROCESSING ENDED AT EOD  CB545 V2 LVL78 01MAY72                 IBM OS AMERICAN NATIONAL STANDARD COBOL                       DATE OCT  7,2026
+
+
+   1
+
+
+00001         * PACDSPX : ALTERNATIVE DISPLAY (MVS-G0 PROOF OF REPLACEABILITY).
+00002         * SAME CONTRACT AS PACDISP (OPS HEAD STAT INVL END PRMT) BUT ONLY
+00003         * THE STATUS LINE PER FRAME, NO BOARD. LINKED OVER THE 1.0 LOAD
+00004         * MODULE AS CSECT PACDISP; THE CORE IS NOT RECOMPILED.
+00005          IDENTIFICATION DIVISION.
+00006          PROGRAM-ID. PACDISP.
+00007          ENVIRONMENT DIVISION.
+00008          CONFIGURATION SECTION.
+00009          SOURCE-COMPUTER. IBM-370.
+00010          OBJECT-COMPUTER. IBM-370.
+00011          DATA DIVISION.
+00012          WORKING-STORAGE SECTION.
+00013          01  WS-STATUS-LINE.
+00014              05  FILLER            PIC X VALUE 'T'.
+00015              05  ST-TURN           PIC 999.
+00016              05  FILLER            PIC X VALUE ' '.
+00017              05  ST-CMD            PIC X.
+00018              05  FILLER            PIC X VALUE ' '.
+00019              05  ST-RESULT         PIC X(7).
+00020              05  FILLER            PIC X(3) VALUE ' X='.
+00021              05  ST-X              PIC 99.
+00022              05  FILLER            PIC X(3) VALUE ' Y='.
+00023              05  ST-Y              PIC 99.
+00024              05  FILLER            PIC X(3) VALUE ' S='.
+00025              05  ST-SCORE          PIC 9(4).
+00026              05  FILLER            PIC X(3) VALUE ' L='.
+00027              05  ST-LEFT           PIC 999.
+00028              05  FILLER            PIC X(3) VALUE ' G='.
+00029              05  ST-GX             PIC 99.
+00030              05  FILLER            PIC X VALUE ','.
+00031              05  ST-GY             PIC 99.
+00032              05  FILLER            PIC X(3) VALUE ' V='.
+00033              05  ST-LIVES          PIC 9.
+00034              05  FILLER            PIC X(4) VALUE ' ST='.
+00035              05  ST-STATE          PIC X(7).
+00036          LINKAGE SECTION.
+00037          01  PAC-STATE COPY PACSTATE.
+00038 C       * SHARED GAME STATE. NO VALUE CLAUSES (USED IN LINKAGE TOO).
+00039 C       * ONLY PACGAME/PACMAP/PACAI MODIFY IT; PACDISP READS IT.
+00040 C        01  PAC-STATE.
+00041 C            05  MAP-AREA.
+00042 C                10  MAP-ROW           OCCURS 10 TIMES.
+00043 C                    15  MAP-CELL      PIC X OCCURS 20 TIMES.
+00044 C            05  PLAYER-X              PIC 99.
+00045 C            05  PLAYER-Y              PIC 99.
+00046 C            05  TICK-COUNT            PIC 999.
+00047 C            05  SCORE                 PIC 9(4).
+00048 C            05  PELLETS-LEFT          PIC 999.
+00049 C            05  LIVES                 PIC 9.
+00050 C            05  GAME-STATE            PIC X(7).
+00051 C            05  LAST-CMD              PIC X.
+00052 C            05  LAST-RESULT           PIC X(7).
+00053 C            05  F-WON                 PIC 9.
+00054 C            05  F-LOST                PIC 9.   2
+
+
+00055 C            05  F-QUIT                PIC 9.
+00056 C            05  F-EOF                 PIC 9.
+00057 C            05  F-HIT                 PIC 9.
+00058 C            05  AI-LEVEL              PIC 9.
+00059 C            05  GHOST-COUNT           PIC 9.
+00060 C            05  GHOST-SEED            PIC 9(5).
+00061 C            05  GH-ENTRY              OCCURS 3 TIMES.
+00062 C                10  GH-X              PIC 99.
+00063 C                10  GH-Y              PIC 99.
+00064 C                10  GH-DIR            PIC 9.
+00065          01  PAC-REQ COPY PACREQ.
+00066 C       * DRIVER REQUEST BLOCK: OP CODE IN, INPUT RESULT OUT.
+00067 C        01  PAC-REQ.
+00068 C            05  REQ-OP                PIC X(4).
+00069 C            05  REQ-KIND              PIC X(3).
+00070 C            05  REQ-DIR               PIC X.
+00071 C            05  REQ-CHAR              PIC X.
+00072 C            05  REQ-LEVEL             PIC 9.
+00073 C            05  REQ-COUNT             PIC 9.
+00074 C            05  REQ-MODE              PIC X(3).
+00075 C            05  REQ-TEXT              PIC X(8).
+00076 C            05  REQ-METRIC            PIC X.
+00077          PROCEDURE DIVISION USING PAC-STATE PAC-REQ.
+00078          MAIN-PARA.
+00079              IF REQ-OP = 'HEAD'
+00080                  DISPLAY 'PACMAN ALT DISPLAY'
+00081              ELSE IF REQ-OP = 'STAT'
+00082                  PERFORM SHOW-STATE
+00083              ELSE IF REQ-OP = 'INVL'
+00084                  DISPLAY 'INVALID COMMAND ' REQ-CHAR
+00085              ELSE IF REQ-OP = 'END '
+00086                  PERFORM SHOW-END THRU SHOW-END-EXIT
+00087              ELSE IF REQ-OP = 'PRMT' AND REQ-MODE = 'TSO'
+00088                  DISPLAY 'CMD (U/D/L/R/Q)?'.
+00089              GOBACK.
+00090          SHOW-END.
+00091              IF F-LOST = 1
+00092                  DISPLAY 'LOST'
+00093              ELSE IF F-WON = 1
+00094                  DISPLAY 'WIN'
+00095              ELSE IF F-QUIT = 1
+00096                  DISPLAY 'QUIT'
+00097              ELSE
+00098                  DISPLAY 'EOF'.
+00099              DISPLAY 'TURNS ' TICK-COUNT.
+00100              DISPLAY 'SCORE ' SCORE.
+00101              DISPLAY 'LIVES ' LIVES.
+00102          SHOW-END-EXIT.
+00103              EXIT.
+00104          SHOW-STATE.
+00105              MOVE TICK-COUNT TO ST-TURN.
+00106              MOVE LAST-CMD TO ST-CMD.
+00107              MOVE LAST-RESULT TO ST-RESULT.
+00108              MOVE PLAYER-X TO ST-X.
+00109              MOVE PLAYER-Y TO ST-Y.
+00110              MOVE SCORE TO ST-SCORE.
+00111              MOVE GH-X (1) TO ST-GX.   3
+
+
+00112              MOVE GH-Y (1) TO ST-GY.
+00113              MOVE LIVES TO ST-LIVES.
+00114              MOVE GAME-STATE TO ST-STATE.
+00115              MOVE PELLETS-LEFT TO ST-LEFT.
+00116              DISPLAY WS-STATUS-LINE.   4
+
+
+
+*STATISTICS*     SOURCE RECORDS =   116     DATA DIVISION STATEMENTS =    60     PROCEDURE DIVISION STATEMENTS =    41
+*OPTIONS IN EFFECT*     SIZE = 2097152  BUF = 1048576  LINECNT = 57  SPACE1, FLAGW,   SEQ,   SOURCE
+*OPTIONS IN EFFECT*     NODMAP, NOPMAP, NOCLIST,   SUPMAP, NOXREF,   LOAD, NODECK, APOST, NOTRUNC,   LIB, NOVERB
+*OPTIONS IN EFFECT*       ZWB
+ F64-LEVEL LINKAGE EDITOR OPTIONS SPECIFIED LIST,XREF
+          DEFAULT OPTION(S) USED -  SIZE=(231424,55296)
+IEW0000     INCLUDE LOADIN(PACMAIN)
+IEW0000     ENTRY PACMAIN
+
+
+
+                                                CROSS REFERENCE TABLE
+
+
+  CONTROL SECTION                       ENTRY
+
+    NAME    ORIGIN  LENGTH                NAME   LOCATION     NAME   LOCATION     NAME   LOCATION     NAME   LOCATION
+  PACDISP       00     6E6
+  PACMAIN      6E8     CC2
+  PACGAME     13B0     FF8
+  PACMAP      23A8     858
+  PACAI       2C00     E20
+  PACINPT     3A20     C6A
+  PACPLAT     4690     456
+  PACTSO      4AE8      AC
+  ILBODSP0    4B98     700
+  ILBOSTP0    5298      35
+                                        ILBOSTP1    52AE
+
+
+
+  LOCATION  REFERS TO SYMBOL  IN CONTROL SECTION             LOCATION  REFERS TO SYMBOL  IN CONTROL SECTION
+      2B8            ILBOSTP0        ILBOSTP0                     2BC            ILBODSP0        ILBODSP0
+      2C0            ILBOSTP1        ILBOSTP0                     AF0            ILBOSTP0        ILBOSTP0
+      AF4            PACPLAT         PACPLAT                      AF8            PACGAME         PACGAME
+      AFC            PACINPT         PACINPT                      B00            PACDISP         PACDISP
+      B04            ILBOSTP1        ILBOSTP0                    16F0            ILBOSTP0        ILBOSTP0
+     16F4            ILBOSTP1        ILBOSTP0                    16F8            PACMAP          PACMAP
+     16FC            PACAI           PACAI                       2710            ILBOSTP0        ILBOSTP0
+     2714            ILBOSTP1        ILBOSTP0                    2F98            ILBOSTP0        ILBOSTP0
+     2F9C            ILBOSTP1        ILBOSTP0                    2FA0            PACMAP          PACMAP
+     3E70            ILBOSTP0        ILBOSTP0                    3E74            ILBOSTP1        ILBOSTP0
+     4908            ILBOSTP0        ILBOSTP0                    490C            PACTSO          PACTSO
+     4910            ILBOSTP1        ILBOSTP0
+ ENTRY ADDRESS      6E8
+
+ TOTAL LENGTH      52D0
+****PACALT    DOES NOT EXIST BUT HAS BEEN ADDED TO DATA SET
+AUTHORIZATION CODE IS         0.
+
+PACMAN ALT DISPLAY
+T000   START   X=02 Y=02 S=0000 L=100 G=19,09 V=3 ST=READY
+T001 R MOVED   X=03 Y=02 S=0010 L=099 G=18,09 V=3 ST=RUNNING
+T002 R MOVED   X=04 Y=02 S=0020 L=098 G=19,09 V=3 ST=RUNNING
+T003 U BLOCKED X=04 Y=02 S=0020 L=098 G=19,08 V=3 ST=RUNNING
+T004 L MOVED   X=03 Y=02 S=0020 L=098 G=19,09 V=3 ST=RUNNING
+T005 L MOVED   X=02 Y=02 S=0020 L=098 G=19,08 V=3 ST=RUNNING
+T006 L BLOCKED X=02 Y=02 S=0020 L=098 G=19,09 V=3 ST=RUNNING
+T007 D MOVED   X=02 Y=03 S=0030 L=097 G=18,09 V=3 ST=RUNNING
+T008 D MOVED   X=02 Y=04 S=0040 L=096 G=17,09 V=3 ST=RUNNING
+T009 R MOVED   X=03 Y=04 S=0050 L=095 G=16,09 V=3 ST=RUNNING
+INVALID COMMAND X
+T010 r MOVED   X=04 Y=04 S=0060 L=094 G=17,09 V=3 ST=RUNNING
+T011 R MOVED   X=05 Y=04 S=0070 L=093 G=16,09 V=3 ST=RUNNING
+T012 R MOVED   X=06 Y=04 S=0080 L=092 G=15,09 V=3 ST=RUNNING
+T013 D BLOCKED X=06 Y=04 S=0080 L=092 G=16,09 V=3 ST=RUNNING
+QUIT
+TURNS 013
+SCORE 0080
+LIVES 3
+
+PACMAN ALT DISPLAY
+T000   START   X=02 Y=02 S=0000 L=098 G=19,09 V=3 ST=READY
+T001 R MOVED   X=03 Y=02 S=0010 L=097 G=19,08 V=3 ST=RUNNING
+T002 D BLOCKED X=03 Y=02 S=0010 L=097 G=19,07 V=3 ST=RUNNING
+T003 R MOVED   X=04 Y=02 S=0020 L=096 G=19,06 V=3 ST=RUNNING
+T004 R MOVED   X=05 Y=02 S=0030 L=095 G=19,05 V=3 ST=RUNNING
+T005 R MOVED   X=06 Y=02 S=0040 L=094 G=19,04 V=3 ST=RUNNING
+T006 U BLOCKED X=06 Y=02 S=0040 L=094 G=19,03 V=3 ST=RUNNING
+T007 R MOVED   X=07 Y=02 S=0050 L=093 G=19,02 V=3 ST=RUNNING
+T008 R MOVED   X=08 Y=02 S=0060 L=092 G=18,02 V=3 ST=RUNNING
+T009 U BLOCKED X=08 Y=02 S=0060 L=092 G=17,02 V=3 ST=RUNNING
+T010 R MOVED   X=09 Y=02 S=0070 L=091 G=16,02 V=3 ST=RUNNING
+T011 L MOVED   X=08 Y=02 S=0070 L=091 G=15,02 V=3 ST=RUNNING
+T012 D BLOCKED X=08 Y=02 S=0070 L=091 G=14,02 V=3 ST=RUNNING
+T013 R MOVED   X=09 Y=02 S=0070 L=091 G=13,02 V=3 ST=RUNNING
+T014 R DIED    X=02 Y=02 S=0070 L=091 G=19,09 V=2 ST=RUNNING
+T015 R MOVED   X=03 Y=02 S=0070 L=091 G=19,08 V=2 ST=RUNNING
+T016 D BLOCKED X=03 Y=02 S=0070 L=091 G=19,07 V=2 ST=RUNNING
+T017 R MOVED   X=04 Y=02 S=0070 L=091 G=19,06 V=2 ST=RUNNING
+T018 R MOVED   X=05 Y=02 S=0070 L=091 G=19,05 V=2 ST=RUNNING
+EOF
+TURNS 018
+SCORE 0070
+LIVES 2
+
+PACMAN ALT DISPLAY
+T000   START   X=02 Y=02 S=0000 L=100 G=19,09 V=3 ST=READY
+CMD (U/D/L/R/Q)?
+T001 R MOVED   X=03 Y=02 S=0010 L=099 G=18,09 V=3 ST=RUNNING
+CMD (U/D/L/R/Q)?
+T001 R MOVED   X=03 Y=02 S=0010 L=099 G=18,09 V=3 ST=RUNNING
+CMD (U/D/L/R/Q)?
+T002 D BLOCKED X=03 Y=02 S=0010 L=099 G=19,09 V=3 ST=RUNNING
+CMD (U/D/L/R/Q)?
+QUIT
+TURNS 002
+SCORE 0010
+LIVES 3
+                 PPPPPPPPPPP    AAAAAAAAAA    CCCCCCCCCC    GGGGGGGGGG     00000000    XX        XX    00000000         11
+                PPPPPPPPPPPP  AAAAAAAAAAAA  CCCCCCCCCCCC  GGGGGGGGGGGG   0000000000   XX        XX   0000000000       111
+               PP        PP  AA        AA  CC        CC  GG        GG  00      0000   XX      XX   00      0000     1111
+              PP        PP  AA        AA  CC            GG            00     00 00    XX    XX    00     00 00       11
+             PP        PP  AA        AA  CC            GG            00    00  00     XX  XX     00    00  00       11
+            PPPPPPPPPPPP  AAAAAAAAAAAA  CC            GG            00   00   00      XXXX      00   00   00       11
+           PPPPPPPPPPP   AAAAAAAAAAAA  CC            GG     GGGGG  00  00    00      XXXX      00  00    00       11
+          PP            AA        AA  CC            GG     GGGGG  00 00     00     XX  XX     00 00     00       11
+         PP            AA        AA  CC            GG        GG  0000      00    XX    XX    0000      00       11
+        PP            AA        AA  CC        CC  GG        GG  000       00   XX      XX   000       00       11
+       PP            AA        AA  CCCCCCCCCCCC  GGGGGGGGGGGG   0000000000   XX        XX   0000000000    1111111111
+      PP            AA        AA   CCCCCCCCCC    GGGGGGGGGG     00000000    XX        XX    00000000     1111111111
+
+
+
+                    JJJJJJJJJJ       11             444      6666666666                                AAAAAAAAAA
+                    JJJJJJJJJJ      111            4444     666666666666                              AAAAAAAAAAAA
+                        JJ         1111           44 44     66        66                              AA        AA
+                        JJ           11          44  44     66                                        AA        AA
+                        JJ           11         44   44     66                                        AA        AA
+                        JJ           11        44444444444  66666666666                               AAAAAAAAAAAA
+                        JJ           11       444444444444  666666666666                              AAAAAAAAAAAA
+                        JJ           11              44     66        66                              AA        AA
+                  JJ    JJ           11              44     66        66                              AA        AA
+                  JJ    JJ           11              44     66        66                              AA        AA
+                  JJJJJJJJ       1111111111          44     666666666666                              AA        AA
+                   JJJJJJ        1111111111          44      6666666666                               AA        AA
+
+
+****A   END   JOB  146  PACG0X01  PACMAN G0 CHECKS      ROOM        8.15.56 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  146   END   A****
+****A   END   JOB  146  PACG0X01  PACMAN G0 CHECKS      ROOM        8.15.56 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  146   END   A****
+****A   END   JOB  146  PACG0X01  PACMAN G0 CHECKS      ROOM        8.15.56 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  146   END   A****
+****A   END   JOB  146  PACG0X01  PACMAN G0 CHECKS      ROOM        8.15.56 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  146   END   A****

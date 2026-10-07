@@ -30,6 +30,8 @@ DECKS = {
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'RELEASE': ('PACREL10', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
                 ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'G0': ('PACBLDG0', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -79,7 +81,7 @@ def run_step(step, pfx, load, sysin, parm=None):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -94,7 +96,8 @@ def asm_step(step, obj, text):
 
 
 TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
-       'RELEASE': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}   # replayed in interactive mode (PARM='TSO')
+       'RELEASE': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'G0': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}   # replayed in interactive mode (PARM='TSO')
 
 
 def tso_parm_and_cards(case):
@@ -164,9 +167,43 @@ def run_deck(pfx, cards):
             + run_step('PLAY', pfx, 'PACMAIN', text_of(cards)) + '//\n')
 
 
+# MVS-G0 extra checks on the installed load module: optional metrics, and the display replaced without recompiling
+# the core (alternative PACDISP linked over LOAD(PACMAIN) into LOAD(PACALT)).
+G0_METRICS = [('MET1', 'MOVES', 'BAT'), ('MET2', 'P2N3', 'BAT'), ('MET3', 'MULTI', 'TSO'), ('MET4', 'TSORDR', 'TSO')]
+G0_ALT = [('ALT1', 'MOVES', 'BAT'), ('ALT2', 'MULTI', 'BAT'), ('ALT3', 'TSORDR', 'TSO')]
+
+
+def mode_run(step, pfx, load, case, mode, metric):
+    flag = 'M' if metric else ''
+    if mode == 'TSO':
+        parm, cards = tso_parm_and_cards(case)
+        parm = (parm + ' AI1 1' if parm == 'TSO' else parm).ljust(10) + flag
+    else:
+        parm, cards = 'BAT'.ljust(10) + flag, text_of(ROOT / f'tests/cases/{case}.txt')
+    return run_step(step, pfx, load, cards, parm=parm.rstrip() or None)
+
+
+def g0x_deck(pfx):
+    out = job_card('PACG0X01', 'PACMAN G0 CHECKS') + f'//* PREFIX {pfx}\n'
+    for step, case, mode in G0_METRICS:
+        out += mode_run(step, pfx, 'PACMAIN', case, mode, True)
+    out += upload('SRCX', pfx, 'COBOL', 'PACDSPX', text_of(ROOT / 'src/cobol/alt/PACDSPX.cob'))
+    out += compile_step('COBX', pfx, 'PACDSPX', 'OBJX')
+    out += ("//LINKALT  EXEC PGM=IEWL,COND=(0,NE),PARM='LIST,XREF'\n"
+            '//SYSLIN   DD DSN=&&OBJX,DISP=(OLD,DELETE)\n//         DD DDNAME=SYSIN\n'
+            f'//LOADIN   DD DSN={pfx}.LOAD,DISP=SHR\n'
+            f'//SYSLMOD  DD DSN={pfx}.LOAD(PACALT),DISP=OLD\n'
+            '//SYSLIB   DD DSN=SYS1.COBLIB,DISP=SHR\n'
+            '//SYSUT1   DD UNIT=SYSDA,SPACE=(1024,(50,20))\n'
+            '//SYSPRINT DD SYSOUT=A\n//SYSIN    DD *\n INCLUDE LOADIN(PACMAIN)\n ENTRY PACMAIN\n/*\n')
+    for step, case, mode in G0_ALT:
+        out += mode_run(step, pfx, 'PACALT', case, mode, False)
+    return out + '//\n'
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -177,6 +214,8 @@ if __name__ == '__main__':
         text = alloc_deck(pfx)
     elif a.deck == 'CLIST':
         text = clist_deck(pfx)
+    elif a.deck == 'G0X':
+        text = g0x_deck(pfx)
     elif a.deck == 'RUN':
         text = run_deck(pfx, ROOT / a.cards)
     else:

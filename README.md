@@ -74,5 +74,7 @@ row can still fill the screen once. Validated live in c3270.
 - `docs/mvs-build.md` holds the per-phase build history and evidence, and `docs/CURRENT_PHASE.md` the status.
 
 ## Phases
+MVS-G0 (stable visual baseline: core frozen, 1.0-MVS oracle, optional METRICS, replaceable display, capability
+matrix `docs/CAPABILITIES.md`) is complete (tag `mvs-g0`).
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

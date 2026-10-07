@@ -5,6 +5,8 @@
       * (MVS-8): CONFIG COMES FROM THE PARM, THE BOARD IS SHOWN BEFORE
       * THE FIRST PROMPT. NO PARM = BATCH CARD MODE (REFERENCE).
       * NO INPUT IS READ ONCE THE GAME HAS ENDED (QUIT, WON, LOST).
+      * OPTIONAL 'M' IN PARM COLUMN 11 (E.G. 'BAT       M' OR
+      * 'TSO AI3 2 M') MAKES PACDISP PRINT A FINAL METRICS LINE.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -24,9 +26,14 @@
            05  PARM-MODE         PIC X(3).
            05  FILLER            PIC X.
            05  PARM-CFG          PIC X(5).
+           05  FILLER            PIC X.
+           05  PARM-MET          PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
+           MOVE SPACE TO REQ-METRIC.
+           IF PARM-LEN > 10 AND PARM-MET = 'M'
+               MOVE 'M' TO REQ-METRIC.
            IF PARM-LEN > 2 AND PARM-MODE = 'TSO'
                MOVE 'TSO' TO REQ-MODE.
            MOVE 'INIT' TO REQ-OP.

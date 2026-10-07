@@ -1,0 +1,11 @@
+{
+ "baseline": "release 1.0-MVS (commit 89fe86b)",
+ "files": {
+  "src/cobol/PACGAME.cob": "33fdf171ddc19297ad899fd8e8d897d5be72f11a9551886a498490a0d978c2b6",
+  "src/cobol/PACMAP.cob": "e950175efd22849d6c9f97155319d739b51a21e5768c40699fb3cc453afd7df6",
+  "src/cobol/PACAI.cob": "d7c3e1fcfa90ccfb5bee74195661e326fa49a5e387e0e99dbc08e00e6621cb2f",
+  "src/copy/PACSTATE.cpy": "197bbf9ddcbf4df7112e7bb182211bc3dbce550cc9c85feac57b1e9b5a141c43",
+  "src/copy/PACMREQ.cpy": "3e6e623b1169e1942a959c2d8aa63cdcd430223094ddce504af585e8de738547",
+  "maps/LEVEL1.txt": "8c0d68a637a7b3d7d5840d95df8b637c6935aec8e445b4cbefacde45194c33ee"
+ }
+}

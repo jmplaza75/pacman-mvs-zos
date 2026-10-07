@@ -66,3 +66,12 @@
   the CLIST is a template with @@PREFIX@@), so the release rebuilds from empty libraries under any prefix. Release
   acceptance = tools/release_check.sh (local checks + RELEASE deck + tests/test_mvs8.py), proven from scratch under
   HERC01.PACMAN.R10 (JOBs 139-142) and on HERC01.PACMAN (JOB 143). Deliverables in releases/1.0-MVS/.
+- D22 (MVS-G0) Core freeze: PACGAME, PACMAP, PACAI, PACSTATE, PACMREQ and maps/LEVEL1.txt are pinned to 1.0-MVS by
+  tests/core_baseline.json (tests/test_core_frozen.py). A change is allowed only through
+  `tools/core_baseline.py --authorize "REASON" --by NAME`, which logs it in docs/CORE_CHANGES.md. PACREQ may grow
+  (append-only). The regression oracle for every G phase is the 1.0-MVS release evidence (mvs9-release-build.txt):
+  all 25 output blocks must stay byte-identical (tests/test_g0.py).
+- D23 (MVS-G0) Presentation metrics are optional: PARM column 11 = 'M' (e.g. 'BAT       M', 'TSO AI3 3 M') makes
+  PACDISP print one METRICS line (frames, lines, characters, clears) after the end lines; without it the output is
+  unchanged. Replaceability of the display is proven by linking an alternative PACDISP (src/cobol/alt/PACDSPX.cob)
+  over the existing LOAD(PACMAIN) into LOAD(PACALT): the core CSECTs are reused without recompilation.

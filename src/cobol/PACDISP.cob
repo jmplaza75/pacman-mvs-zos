@@ -3,6 +3,9 @@
       * PRMT shows the input prompt in TSO mode only (no-op in BAT).
       * TSO: EVERY FRAME AFTER THE FIRST STARTS ON A FRESH SCREEN
       * (PACPLAT CLS), SO TSO NEVER PAGES A FRAME WITH '***'.
+      * MVS-G0: COUNTS FRAMES, LINES, CHARACTERS AND SCREEN CLEARS;
+      * THE TOTALS ARE PRINTED AFTER THE END LINES ONLY WHEN
+      * REQ-METRIC = 'M' (OPTIONAL; NORMAL OUTPUT IS UNCHANGED).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -18,6 +21,19 @@
        01  WS-SAVE-OP            PIC X(4).
        01  WS-G                  PIC 9.
        01  WS-GX                 PIC 99.
+       01  M-FRAMES              PIC 9(4) VALUE 0.
+       01  M-LINES               PIC 9(5) VALUE 0.
+       01  M-CHARS               PIC 9(7) VALUE 0.
+       01  M-CLEARS              PIC 9(4) VALUE 0.
+       01  WS-MET.
+           05  FILLER            PIC X(15) VALUE 'METRICS FRAMES='.
+           05  MT-FRAMES         PIC 9(4).
+           05  FILLER            PIC X(7) VALUE ' LINES='.
+           05  MT-LINES          PIC 9(5).
+           05  FILLER            PIC X(7) VALUE ' CHARS='.
+           05  MT-CHARS          PIC 9(7).
+           05  FILLER            PIC X(8) VALUE ' CLEARS='.
+           05  MT-CLEARS         PIC 9(4).
        01  WS-STATUS-LINE.
            05  FILLER            PIC X VALUE 'T'.
            05  ST-TURN           PIC 999.
@@ -58,10 +74,14 @@
        MAIN-PARA.
            IF REQ-OP = 'HEAD'
                DISPLAY 'PACMAN MVS-6 SMART GHOSTS'
+               ADD 1 TO M-LINES
+               ADD 25 TO M-CHARS
            ELSE IF REQ-OP = 'STAT'
                PERFORM SHOW-STATE THRU SHOW-STATE-EXIT
            ELSE IF REQ-OP = 'INVL'
                DISPLAY 'INVALID COMMAND ' REQ-CHAR
+               ADD 1 TO M-LINES
+               ADD 17 TO M-CHARS
            ELSE IF REQ-OP = 'END '
                PERFORM SHOW-END THRU SHOW-END-EXIT
            ELSE IF REQ-OP = 'PRMT'
@@ -70,28 +90,46 @@
        NEW-SCREEN.
            MOVE REQ-OP TO WS-SAVE-OP.
            MOVE 'CLS ' TO REQ-OP.
+           ADD 1 TO M-CLEARS.
            CALL 'PACPLAT' USING PAC-REQ.
            MOVE WS-SAVE-OP TO REQ-OP.
        SHOW-PROMPT.
            IF REQ-MODE = 'TSO'
-               DISPLAY 'CMD (U/D/L/R/Q)?'.
+               DISPLAY 'CMD (U/D/L/R/Q)?'
+               ADD 1 TO M-LINES
+               ADD 16 TO M-CHARS.
        SHOW-PROMPT-EXIT.
            EXIT.
        SHOW-END.
            IF F-LOST = 1
                DISPLAY 'LOST'
+               ADD 4 TO M-CHARS
            ELSE IF F-WON = 1
                DISPLAY 'WIN'
+               ADD 3 TO M-CHARS
            ELSE IF F-QUIT = 1
                DISPLAY 'QUIT'
+               ADD 4 TO M-CHARS
            ELSE
-               DISPLAY 'EOF'.
+               DISPLAY 'EOF'
+               ADD 3 TO M-CHARS.
            DISPLAY 'TURNS ' TICK-COUNT.
            DISPLAY 'SCORE ' SCORE.
            DISPLAY 'LIVES ' LIVES.
+           ADD 4 TO M-LINES.
+           ADD 26 TO M-CHARS.
+           IF REQ-METRIC = 'M'
+               PERFORM SHOW-METRICS.
        SHOW-END-EXIT.
            EXIT.
+       SHOW-METRICS.
+           MOVE M-FRAMES TO MT-FRAMES.
+           MOVE M-LINES TO MT-LINES.
+           MOVE M-CHARS TO MT-CHARS.
+           MOVE M-CLEARS TO MT-CLEARS.
+           DISPLAY WS-MET.
        SHOW-STATE.
+           ADD 1 TO M-FRAMES.
            IF REQ-MODE = 'TSO' AND LAST-RESULT NOT = 'START  '
                PERFORM NEW-SCREEN.
            MOVE TICK-COUNT TO ST-TURN.
@@ -106,6 +144,8 @@
            MOVE GAME-STATE TO ST-STATE.
            MOVE PELLETS-LEFT TO ST-LEFT.
            DISPLAY WS-STATUS-LINE.
+           ADD 1 TO M-LINES.
+           ADD 61 TO M-CHARS.
            IF GHOST-COUNT > 1
                PERFORM SHOW-EXTRA THRU SHOW-EXTRA-EXIT.
            PERFORM SHOW-ROW VARYING WS-ROW FROM 1 BY 1
@@ -119,6 +159,8 @@
            PERFORM OVERLAY-GHOST THRU OVERLAY-GHOST-EXIT
                VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
            DISPLAY WS-LINE.
+           ADD 1 TO M-LINES.
+           ADD 20 TO M-CHARS.
        OVERLAY-GHOST.
            IF WS-ROW = GH-Y (WS-G)
                MOVE GH-X (WS-G) TO WS-GX
@@ -128,11 +170,14 @@
        SHOW-EXTRA.
            MOVE GH-X (2) TO XL2-X.
            MOVE GH-Y (2) TO XL2-Y.
+           ADD 1 TO M-LINES.
            IF GHOST-COUNT = 2
                DISPLAY WS-XL2
+               ADD 8 TO M-CHARS
            ELSE
                MOVE GH-X (3) TO XL3-X
                MOVE GH-Y (3) TO XL3-Y
-               DISPLAY WS-XL2 WS-XL3.
+               DISPLAY WS-XL2 WS-XL3
+               ADD 17 TO M-CHARS.
        SHOW-EXTRA-EXIT.
            EXIT.

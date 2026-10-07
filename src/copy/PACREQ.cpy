@@ -8,3 +8,4 @@
            05  REQ-COUNT             PIC 9.
            05  REQ-MODE              PIC X(3).
            05  REQ-TEXT              PIC X(8).
+           05  REQ-METRIC            PIC X.
