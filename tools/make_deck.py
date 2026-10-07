@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate a self-contained MVS build+test deck (build/<NAME>.jcl).
 
-Usage: make_deck.py PACHELLO | MVS3 [--hlq HERC01]
+Usage: make_deck.py PACHELLO | MVS4 [--hlq HERC01]
 Sources are validated (ASCII, 80 columns, no tabs) and uploaded with
 IEBGENER, compiled with IKFCBL00, link-edited with IEWL and executed.
 """
@@ -21,6 +21,7 @@ DECKS = {
     'MVS1': ('PACBLD01', ['PACMAIN'], [], 'PACMAIN', [None]),
     'MVS2': ('PACBLD02', ['PACMAIN'], [], 'PACMAIN', ['tests/cases/MOVES.txt', 'tests/cases/EOF.txt']),
     'MVS3': ('PACBLD03', ['PACMAIN'], [], 'PACMAIN', ['tests/cases/MOVES.txt', 'tests/cases/EOF.txt', 'tests/cases/WIN.txt']),
+    'MVS4': ('PACBLD04', ['PACMAIN'], [], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0')]),
 }
 
 

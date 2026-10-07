@@ -39,3 +39,14 @@ command that must be ignored; `tests/ref_mvs3.py --gen-win`). Expected output fr
 Result: PACBLD03 JOB 119, all six steps RC 0000, no warnings; WIN run: 185 turns, SCORE 1010, L=000.
 Evidence: docs/evidence/mvs3-pellets.txt. MVS-2 tests (test_mvs2.py) remain as local checks only; their
 runtime expectations are superseded by the changed output format.
+
+## MVS-4: basic ghost (2026-10-07)
+PACMAIN adds one ghost (`G` on the board, `G=xx,yy` in each status line), AI0/AI1 config card and CAUGHT end.
+Rules in docs/DECISIONS.md D9. Build: `python3 tools/make_deck.py MVS4 && ./tools/submit.sh build/MVS4.jcl`, then
+`./tools/job_output.py PACBLD04 > build/PACBLD04.txt && python3 tests/test_mvs4.py build/PACBLD04.txt`.
+Cases (tests/cases): MOVES, RAND (57 turns, ghost roams), CATCH1 (ghost walks into the player, found by model
+search), WIN0 (AI0, full clear avoiding the ghost: 183 turns, 1000 points), CATCH0 (player walks into a still
+ghost, trailing command ignored). Expected output from the independent `tests/ref_mvs4.py`; the runtime checker
+also asserts the ghost never stands in a wall and moves at most one orthogonal step (zero in AI0).
+Result: PACBLD04 JOB 120, SRC1/COB1/LINK/RUN1-5 all RC 0000, no warnings, outputs identical to the model.
+Evidence: docs/evidence/mvs4-ghost.txt. MVS-3 runtime tests are superseded by the new format.

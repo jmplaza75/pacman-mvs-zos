@@ -1,6 +1,7 @@
-      * MVS-3: PELLETS AND SCORE. COMMANDS U/D/L/R/Q, ONE PER CARD
-      * (SYSIN). MAP LITERALS MUST MATCH MAPS/LEVEL1.TXT. THE START
-      * CELL IS CLEARED AT INIT WITHOUT SCORING; PELLET = 10 POINTS.
+      * MVS-4: BASIC GHOST. COMMANDS U/D/L/R/Q, ONE PER CARD (SYSIN).
+      * OPTIONAL FIRST CARD AI0 (GHOST STILL) OR AI1 (RANDOM, DEFAULT).
+      * MAP LITERALS MUST MATCH MAPS/LEVEL1.TXT. PLAYER AND GHOST START
+      * CELLS ARE CLEARED AT INIT; PELLET = 10 POINTS.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -19,7 +20,9 @@
            DATA RECORD IS COMMAND-RECORD.
        01  COMMAND-RECORD.
            05  CMD-CHAR          PIC X.
-           05  FILLER            PIC X(79).
+           05  FILLER            PIC X.
+           05  CMD-LEVEL         PIC X.
+           05  FILLER            PIC X(77).
        WORKING-STORAGE SECTION.
        01  MAP-DATA.
            05  FILLER            PIC X(20) VALUE '####################'.
@@ -49,6 +52,25 @@
        01  WS-EOF                PIC 9 VALUE 0.
        01  WS-QUIT               PIC 9 VALUE 0.
        01  WS-WON                PIC 9 VALUE 0.
+       01  WS-CAUGHT             PIC 9 VALUE 0.
+       01  AI-LEVEL              PIC 9 VALUE 1.
+       01  GHOST-X               PIC 99 VALUE 19.
+       01  GHOST-Y               PIC 99 VALUE 9.
+       01  GHOST-SEED            PIC 9(5) VALUE 12345.
+       01  WS-WORK               PIC 9(9).
+       01  WS-QUOT               PIC 9(9).
+       01  WS-REM                PIC 9(5).
+       01  WS-D                  PIC 9.
+       01  CAND-N                PIC 9.
+       01  CAND-TABLE.
+           05  CAND              PIC 9 OCCURS 4 TIMES.
+       01  DIR-DATA              PIC X(8) VALUE '10120121'.
+       01  DIR-TABLE REDEFINES DIR-DATA.
+           05  DIR-ENTRY         OCCURS 4 TIMES.
+               10  DIR-DX        PIC 9.
+               10  DIR-DY        PIC 9.
+       01  G-NX                  PIC 99.
+       01  G-NY                  PIC 99.
        01  WS-COL                PIC 99.
        01  SCORE                 PIC 9(4) VALUE 0.
        01  PELLETS-LEFT          PIC 999 VALUE 0.
@@ -67,17 +89,25 @@
            05  ST-SCORE          PIC 9(4).
            05  FILLER            PIC X(3) VALUE ' L='.
            05  ST-LEFT           PIC 999.
+           05  FILLER            PIC X(3) VALUE ' G='.
+           05  ST-GX             PIC 99.
+           05  FILLER            PIC X VALUE ','.
+           05  ST-GY             PIC 99.
        PROCEDURE DIVISION.
        MAIN-PARA.
            OPEN INPUT COMMAND-FILE.
-           DISPLAY 'PACMAN MVS-3 PELLETS AND SCORE'.
+           DISPLAY 'PACMAN MVS-4 BASIC GHOST'.
+           PERFORM READ-CMD.
+           PERFORM READ-CONFIG THRU READ-CONFIG-EXIT.
            PERFORM INIT-GAME.
            MOVE 'START  ' TO WS-RESULT.
            PERFORM SHOW-STATE.
-           PERFORM READ-CMD.
            PERFORM TURN-PARA
-               UNTIL WS-EOF = 1 OR WS-QUIT = 1 OR WS-WON = 1.
-           IF WS-WON = 1
+               UNTIL WS-EOF = 1 OR WS-QUIT = 1 OR WS-WON = 1
+                  OR WS-CAUGHT = 1.
+           IF WS-CAUGHT = 1
+               DISPLAY 'CAUGHT'
+           ELSE IF WS-WON = 1
                DISPLAY 'WIN'
            ELSE IF WS-QUIT = 1
                DISPLAY 'QUIT'
@@ -87,8 +117,22 @@
            DISPLAY 'SCORE ' SCORE.
            CLOSE COMMAND-FILE.
            STOP RUN.
+       READ-CONFIG.
+           IF CMD-CHAR = 'A' AND WS-EOF = 0
+               PERFORM SET-LEVEL THRU SET-LEVEL-EXIT
+               PERFORM READ-CMD.
+       READ-CONFIG-EXIT.
+           EXIT.
+       SET-LEVEL.
+           IF CMD-LEVEL = '0'
+               MOVE 0 TO AI-LEVEL
+           ELSE
+               MOVE 1 TO AI-LEVEL.
+       SET-LEVEL-EXIT.
+           EXIT.
        INIT-GAME.
            MOVE ' ' TO MAP-CELL (PLAYER-Y PLAYER-X).
+           MOVE ' ' TO MAP-CELL (GHOST-Y GHOST-X).
            PERFORM COUNT-ROW VARYING WS-ROW FROM 1 BY 1
                UNTIL WS-ROW > 10.
        COUNT-ROW.
@@ -137,7 +181,45 @@
                MOVE NEW-X TO PLAYER-X
                MOVE NEW-Y TO PLAYER-Y
                PERFORM EAT-PELLET THRU EAT-PELLET-EXIT.
+           PERFORM ROUND-END THRU ROUND-END-EXIT.
            PERFORM SHOW-STATE.
+       ROUND-END.
+           PERFORM CHECK-HIT THRU CHECK-HIT-EXIT.
+           IF WS-WON = 0 AND WS-CAUGHT = 0 AND AI-LEVEL = 1
+               PERFORM GHOST-MOVE THRU GHOST-MOVE-EXIT
+               PERFORM CHECK-HIT THRU CHECK-HIT-EXIT.
+       ROUND-END-EXIT.
+           EXIT.
+       CHECK-HIT.
+           IF GHOST-X = PLAYER-X AND GHOST-Y = PLAYER-Y
+               MOVE 1 TO WS-CAUGHT
+               MOVE 0 TO WS-WON.
+       CHECK-HIT-EXIT.
+           EXIT.
+       GHOST-MOVE.
+           MOVE 0 TO CAND-N.
+           PERFORM GHOST-PROBE THRU GHOST-PROBE-EXIT
+               VARYING WS-D FROM 1 BY 1 UNTIL WS-D > 4.
+           IF CAND-N > 0
+               COMPUTE WS-WORK = GHOST-SEED * 75 + 74
+               DIVIDE WS-WORK BY 65537 GIVING WS-QUOT
+                   REMAINDER GHOST-SEED
+               DIVIDE GHOST-SEED BY CAND-N GIVING WS-QUOT
+                   REMAINDER WS-REM
+               ADD 1 TO WS-REM
+               MOVE CAND (WS-REM) TO WS-D
+               COMPUTE GHOST-X = GHOST-X + DIR-DX (WS-D) - 1
+               COMPUTE GHOST-Y = GHOST-Y + DIR-DY (WS-D) - 1.
+       GHOST-MOVE-EXIT.
+           EXIT.
+       GHOST-PROBE.
+           COMPUTE G-NX = GHOST-X + DIR-DX (WS-D) - 1.
+           COMPUTE G-NY = GHOST-Y + DIR-DY (WS-D) - 1.
+           IF MAP-CELL (G-NY G-NX) NOT = '#'
+               ADD 1 TO CAND-N
+               MOVE WS-D TO CAND (CAND-N).
+       GHOST-PROBE-EXIT.
+           EXIT.
        EAT-PELLET.
            IF MAP-CELL (PLAYER-Y PLAYER-X) = '.'
                MOVE ' ' TO MAP-CELL (PLAYER-Y PLAYER-X)
@@ -157,6 +239,8 @@
            MOVE PLAYER-X TO ST-X.
            MOVE PLAYER-Y TO ST-Y.
            MOVE SCORE TO ST-SCORE.
+           MOVE GHOST-X TO ST-GX.
+           MOVE GHOST-Y TO ST-GY.
            MOVE PELLETS-LEFT TO ST-LEFT.
            DISPLAY WS-STATUS-LINE.
            PERFORM SHOW-ROW VARYING WS-ROW FROM 1 BY 1
@@ -165,4 +249,6 @@
            MOVE MAP-ROW (WS-ROW) TO WS-LINE.
            IF WS-ROW = PLAYER-Y
                MOVE 'P' TO WS-LINE-CELL (PLAYER-X).
+           IF WS-ROW = GHOST-Y
+               MOVE 'G' TO WS-LINE-CELL (GHOST-X).
            DISPLAY WS-LINE.

@@ -1,1 +1,1 @@
-MVS-3 complete (pellets/score/win verified, JOB 119); next: MVS-4 (basic ghost) - not started
+MVS-4 complete (ghost, collision; JOB 120); next: MVS-5 (lives and game cycle) - not started
