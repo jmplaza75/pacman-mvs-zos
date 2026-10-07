@@ -24,3 +24,7 @@ Porting to z/OS (ZOS-*) should only replace PACINPT/PACDISP/PACPLAT (plus JCL).
 `REQ-MODE` (BAT default | TSO) is set by PACMAIN from the PARM and validated by PACPLAT; PACINPT (TSO input rules) and
 PACDISP (prompt, fresh-screen frames) use it. BAT = cards in SYSIN, output in SYSOUT (reference, regression, fallback).
 TSO = the same files allocated to the terminal by the CLIST. See docs/INTERACTIVITY.md.
+
+## Build tooling (MVS-9)
+All dataset names derive from a prefix (tools/make_deck.py --prefix). Decks: ALLOC, CLIST, RELEASE (build + regression),
+RUN (batch play). tools/run_deck.py = submit + wait + listing; tools/release_check.sh = full release verification.

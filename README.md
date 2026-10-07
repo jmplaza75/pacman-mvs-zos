@@ -1,12 +1,78 @@
-# Pac-Man for MVS 3.8J (TK4-) and z/OS
-Text Pac-Man in COBOL. See docs/ for environment, build and phase status.
-- MVS-0 (toolchain, PACHELLO): **complete** - see docs/mvs-build.md.
-- MVS-1 (static board): **complete** - see docs/mvs-build.md.
-- MVS-2 (player by turns): **complete** - see docs/mvs-build.md.
-- MVS-3 (pellets and score): **complete** - winnable game, see docs/mvs-build.md.
-- MVS-4 (basic ghost): **complete** - see docs/mvs-build.md.
-- MVS-5 (lives and game cycle): **complete** - a full game can be won or lost; see docs/mvs-build.md.
-- MVS-6 (smarter ghosts, up to 3, AI0-AI3): **complete** - see docs/mvs-build.md.
-- MVS-7 (portability refactor, 7 modules): **complete** - behaviour identical to MVS-6; see docs/ARCHITECTURE.md.
-- MVS-8 (interactive TSO mode via CLIST, no `***` paging): **complete** - validated live in c3270; see docs/INTERACTIVITY.md.
-- MVS-9 onward: not started.
+# Pac-Man for MVS 3.8J — release 1.0-MVS
+
+A text Pac-Man written in conservative COBOL (IBM OS COBOL, `IKFCBL00`) for MVS 3.8J (TK4-) running on Hercules.
+It plays in batch, with one command per card, or interactively from a TSO 3270 session. Everything runs on the
+emulated mainframe: there is no client-side extension and no sound (requirements sec. 27).
+
+## Game
+- Maze of 20x10 (`maps/LEVEL1.txt`) with 100 pellets worth 10 points each, and three lives.
+- Commands: `U` `D` `L` `R` (any case) move one cell, `Q` quits. Walls block, and a blocked move still costs a turn.
+- Ghosts (1 to 3) use one of four levels: `AI0` still, `AI1` random (default), `AI2` keeps its direction until an
+  intersection, `AI3` chases (Manhattan distance). All levels are deterministic: the LCG seed is fixed at 12345.
+- A hit costs one life and resets the player and the ghosts. The game is WON when all pellets are eaten, and LOST at
+  0 lives. Rules: `docs/DECISIONS.md` D7, D9, D11 and D14.
+- Output for each turn: `Txxx <cmd> <result> X= Y= S=score L=pellets G=ghost V=lives ST=state`, then the board
+  (`#` wall, `.` pellet, `P` player, `G` ghost). With several ghosts there is an extra `G2=..[ G3=..]` line.
+  At the end the program prints `WIN|LOST|QUIT|EOF`, `TURNS`, `SCORE` and `LIVES`.
+
+## Requirements
+- Hercules with TK4- running (`~/mainframe/tk4`, `./start_herc`), the ASCII card reader on `127.0.0.1:3505` and JES
+  output in `~/mainframe/tk4/prt/prt00e.txt`. See `docs/ENVIRONMENT.md`.
+- Python 3 on the host, to generate, submit and check decks.
+- A TSO user that may create `<prefix>.*` datasets; the default prefix is `HERC01.PACMAN`. Put the password in a local
+  `.env` file as `HERC01_PASSWORD=...`. That file is git-ignored and is never printed or committed. It is injected into
+  the job card in memory and redacted in saved listings.
+
+## Install and build from scratch
+```sh
+python3 tools/make_deck.py ALLOC   && python3 tools/run_deck.py build/ALLOC.jcl     # first use only
+python3 tools/make_deck.py CLIST   && python3 tools/run_deck.py build/CLIST.jcl     # TSO launcher
+./tools/release_check.sh                                                         # build + full regression
+```
+Use `--prefix HLQ.NAME` with `make_deck.py`, and pass the prefix as the argument of `release_check.sh`, to install
+under a different prefix. 1.0-MVS was rebuilt this way from empty libraries under `HERC01.PACMAN.R10`
+(`docs/evidence/mvs9-fresh-r10-*`).
+
+The build deck (`RELEASE`, job `PACREL10`) does the following:
+1. Uploads 3 copybooks and 7 COBOL sources with IEBGENER.
+2. Compiles them with IKFCBL00 and assembles the `PACTSO` stub with IFOX00.
+3. Links everything with IEWL into `<prefix>.LOAD(PACMAIN)`.
+4. Runs the 19 batch regression cases and 6 interactive-mode replays.
+
+`release_check.sh` first runs every local check, then submits the deck, waits for the job and verifies it with
+`tests/test_mvs8.py`. The checks are:
+- all steps end with RC 0000;
+- each run's output equals the independent Python model;
+- batch output is byte-identical to the accepted MVS-7 output;
+- the AI and lives properties hold, re-derived from the real output;
+- the interactive transcripts are correct.
+
+Ready-made decks for the default prefix are in `releases/1.0-MVS/` (`ALLOC`, `CLIST`, `BUILD`, `RUN`). That folder
+also holds `SHA256SUMS` for the sources.
+
+## Play in batch
+```sh
+python3 tools/make_deck.py RUN --cards my-game.txt && python3 tools/run_deck.py build/RUN.jcl
+```
+The card file has one command per line. An optional first line `AI<l> <n>` picks the level and the number of ghosts,
+for example `AI3 2`. The game is printed in the job listing.
+
+## Play interactively (TSO, 3270)
+Log on to TSO (`c3270 localhost:3270`) and run from `READY`:
+```
+EXEC 'HERC01.PACMAN.CLIST(PACMAN)'
+EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'AI(3) GHOSTS(2)'
+```
+Type `U/D/L/R` and press ENTER for each move, and `Q` to quit. An empty ENTER redraws the board. Each turn starts on a
+fresh screen, so TSO's `***` paging does not interrupt play (`docs/INTERACTIVITY.md`). Several invalid commands in a
+row can still fill the screen once. Validated live in c3270.
+
+## Architecture and documentation
+- `PACMAIN` is the driver; the layers are `PACGAME`, `PACMAP` and `PACAI` (portable core), `PACINPT` and `PACDISP`
+  (adapters), and `PACPLAT` with `PACTSO` (platform). See `docs/ARCHITECTURE.md`.
+- `docs/DECISIONS.md` records the compiler dialect rules and the game rules (D1–D21).
+- `docs/mvs-build.md` holds the per-phase build history and evidence, and `docs/CURRENT_PHASE.md` the status.
+
+## Phases
+MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
+(ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

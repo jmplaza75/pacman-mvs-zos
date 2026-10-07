@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Generate a self-contained MVS build+test deck (build/<NAME>.jcl).
+"""Generate MVS decks (build/<NAME>.jcl). Every dataset name derives from --prefix (default HERC01.PACMAN).
 
-Usage: make_deck.py PACHELLO | MVS8 [--hlq HERC01]
-Sources are validated (ASCII, 80 columns, no tabs) and uploaded with
-IEBGENER, compiled with IKFCBL00, link-edited with IEWL and executed.
+Build+test decks: PACHELLO, MVS1..MVS8 (phase history), RELEASE (= MVS8 content, release job name).
+Install/use decks: ALLOC (first use: COBOL/COPY/LOAD/CLIST libraries), CLIST (store the TSO launcher),
+RUN (play the installed game in batch from a card file, default tests/cases/MOVES.txt; --cards FILE).
+Sources are validated (ASCII, 80 columns, COBOL to column 72, assembler to 71, no tabs) and uploaded with
+IEBGENER, compiled with IKFCBL00 (+ IFOX00 for the PACTSO stub), link-edited with IEWL and executed.
 """
 import argparse
 from pathlib import Path
@@ -26,6 +28,8 @@ DECKS = {
     'MVS6': ('PACBLD06', ['PACMAIN'], [], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS7': ('PACBLD07', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'RELEASE': ('PACREL10', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
+                ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -38,44 +42,44 @@ def text_of(path):
     return path.read_text(encoding='ascii')
 
 
-def upload(step, hlq, lib, member, text):
+def upload(step, pfx, lib, member, text):
     return (f'//{step:<8} EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n'
-            f'//SYSUT2   DD DSN={hlq}.PACMAN.{lib}({member}),DISP=OLD\n'
+            f'//SYSUT2   DD DSN={pfx}.{lib}({member}),DISP=OLD\n'
             '//SYSIN    DD DUMMY\n//SYSUT1   DD DATA,DLM=ZZ\n' + text + 'ZZ\n')
 
 
-def compile_step(step, hlq, member, obj):
+def compile_step(step, pfx, member, obj):
     return (f'//{step:<8} EXEC PGM=IKFCBL00,COND=(0,NE),\n//         PARM=\'{COBOL_PARM}\'\n'
             '//SYSPRINT DD SYSOUT=A\n//SYSPUNCH DD DUMMY\n'
             + ''.join(f'//SYSUT{i}   DD UNIT=SYSDA,SPACE=(460,(700,100))\n' for i in range(1, 5)) +
             f'//SYSLIN   DD DSN=&&{obj},DISP=(NEW,PASS),UNIT=SYSDA,\n'
             '//            SPACE=(80,(500,100)),\n'
             '//            DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)\n'
-            f'//SYSIN    DD DSN={hlq}.PACMAN.COBOL({member}),DISP=SHR\n'
-            f'//SYSLIB   DD DSN={hlq}.PACMAN.COPY,DISP=SHR\n')
+            f'//SYSIN    DD DSN={pfx}.COBOL({member}),DISP=SHR\n'
+            f'//SYSLIB   DD DSN={pfx}.COPY,DISP=SHR\n')
 
 
-def link_step(hlq, objs, load, entry):
+def link_step(pfx, objs, load, entry):
     t = "//LINK     EXEC PGM=IEWL,COND=(0,NE),PARM='LIST,XREF'\n"
     for i, o in enumerate(objs):
         t += f'//{"SYSLIN" if i == 0 else "":<8} DD DSN=&&{o},DISP=(OLD,DELETE)\n'
     t += '//         DD DDNAME=SYSIN\n'
-    t += (f'//SYSLMOD  DD DSN={hlq}.PACMAN.LOAD({load}),DISP=OLD\n'
+    t += (f'//SYSLMOD  DD DSN={pfx}.LOAD({load}),DISP=OLD\n'
           '//SYSLIB   DD DSN=SYS1.COBLIB,DISP=SHR\n'
           '//SYSUT1   DD UNIT=SYSDA,SPACE=(1024,(50,20))\n'
           f'//SYSPRINT DD SYSOUT=A\n//SYSIN    DD *\n ENTRY {entry}\n/*\n')
     return t
 
 
-def run_step(step, hlq, load, sysin, parm=None):
+def run_step(step, pfx, load, sysin, parm=None):
     t = (f'//{step:<8} EXEC PGM={load},COND=(0,NE)' + (f",PARM='{parm}'" if parm else '') + '\n'
-         f'//STEPLIB  DD DSN={hlq}.PACMAN.LOAD,DISP=SHR\n')
+         f'//STEPLIB  DD DSN={pfx}.LOAD,DISP=SHR\n')
     if sysin is not None:
         t += '//SYSIN    DD *\n' + sysin + '/*\n'
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'MVS8': ['PACTSO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -89,7 +93,8 @@ def asm_step(step, obj, text):
             '//SYSIN    DD DATA,DLM=ZZ\n' + text + 'ZZ\n')
 
 
-TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}   # replayed in interactive mode (PARM='TSO')
+TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'RELEASE': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}   # replayed in interactive mode (PARM='TSO')
 
 
 def tso_parm_and_cards(case):
@@ -100,35 +105,82 @@ def tso_parm_and_cards(case):
     return 'TSO', ''.join(lines)
 
 
-def build(name, hlq):
+def build(name, pfx):
     job, modules, copies, load, runs = DECKS[name]
-    out = (f'//{job} JOB (1),\'PACMAN {name}\',CLASS=A,MSGCLASS=A,\n'
-           '//             MSGLEVEL=(1,1),REGION=4096K\n')
+    out = job_card(job, f'PACMAN {name}') + f'//* PREFIX {pfx}\n'
     for i, c in enumerate(copies, 1):
-        out += upload(f'CPY{i}', hlq, 'COPY', c, text_of(ROOT / f'src/copy/{c}.cpy'))
+        out += upload(f'CPY{i}', pfx, 'COPY', c, text_of(ROOT / f'src/copy/{c}.cpy'))
     for i, m in enumerate(modules, 1):
-        out += upload(f'SRC{i}', hlq, 'COBOL', m, text_of(ROOT / f'src/cobol/{m}.cob'))
-        out += compile_step(f'COB{i}', hlq, m, f'OBJ{i}')
+        out += upload(f'SRC{i}', pfx, 'COBOL', m, text_of(ROOT / f'src/cobol/{m}.cob'))
+        out += compile_step(f'COB{i}', pfx, m, f'OBJ{i}')
     objs = [f'OBJ{i}' for i in range(1, len(modules) + 1)]
     for i, a in enumerate(ASM.get(name, []), 1):
         out += asm_step(f'ASM{i}', f'OBJA{i}', text_of(ROOT / f'src/asm/{a}.asm'))
         objs.append(f'OBJA{i}')
-    out += link_step(hlq, objs, load, modules[0])
+    out += link_step(pfx, objs, load, modules[0])
     for i, r in enumerate(runs, 1):
         sysin = None if r is None else text_of(ROOT / r)
-        out += run_step(f'RUN{i}', hlq, load, sysin)
+        out += run_step(f'RUN{i}', pfx, load, sysin)
     for i, c in enumerate(TSO.get(name, []), 1):
         text_of(ROOT / f'tests/cases/{c}.txt')
         parm, cards = tso_parm_and_cards(c)
-        out += run_step(f'TSO{i}', hlq, load, cards, parm=parm)
+        out += run_step(f'TSO{i}', pfx, load, cards, parm=parm)
     return out + '//\n'
+
+
+def job_card(job, title):
+    return f"//{job} JOB (1),'{title}',CLASS=A,MSGCLASS=A,\n//             MSGLEVEL=(1,1),REGION=4096K\n"
+
+
+def clist_text(pfx):
+    return text_of(ROOT / 'src/clist/PACMAN.clist').replace('@@PREFIX@@', pfx)
+
+
+def alloc_deck(pfx):
+    out = job_card('PACALC10', 'PACMAN ALLOC') + (
+        '//* FIRST USE ONLY: CREATES THE PROJECT LIBRARIES. NOT IDEMPOTENT AND NEVER\n'
+        '//* DELETES ANYTHING: IF A DATASET EXISTS THE JOB FAILS WITH NOT CATLGD 2.\n'
+        '//ALLOC    EXEC PGM=IEFBR14\n')
+    for dd, lib, space, dcb in (('COBOL', 'COBOL', '(TRK,(15,5,10))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
+                                ('COPY', 'COPY', '(TRK,(5,2,5))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
+                                ('LOAD', 'LOAD', '(TRK,(15,5,10))', 'RECFM=U,BLKSIZE=6144'),
+                                ('CLIST', 'CLIST', '(TRK,(2,1,5))', 'RECFM=FB,LRECL=80,BLKSIZE=3120')):
+        out += (f'//{dd:<8} DD DSN={pfx}.{lib},DISP=(NEW,CATLG,DELETE),\n'
+                f'//            UNIT=SYSDA,SPACE={space},\n'
+                f'//            DCB=(DSORG=PO,{dcb})\n')
+    return out + '//\n'
+
+
+def clist_deck(pfx):
+    return (job_card('PACCLS10', 'PACMAN CLIST') + '//* STORES/REPLACES THE TSO LAUNCHER MEMBER PACMAN.\n'
+            '//STORE    EXEC PGM=IEBGENER\n//SYSPRINT DD SYSOUT=A\n'
+            f'//SYSUT2   DD DSN={pfx}.CLIST(PACMAN),DISP=OLD\n//SYSIN    DD DUMMY\n'
+            '//SYSUT1   DD DATA,DLM=ZZ\n' + clist_text(pfx) + 'ZZ\n//\n')
+
+
+def run_deck(pfx, cards):
+    return (job_card('PACRUN10', 'PACMAN RUN') + '//* PLAYS THE INSTALLED GAME IN BATCH: ONE COMMAND PER CARD BELOW\n'
+            '//* (OPTIONAL FIRST CARD AI<L> <N>, THEN U/D/L/R, Q TO QUIT).\n'
+            + run_step('PLAY', pfx, 'PACMAIN', text_of(cards)) + '//\n')
 
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS))
-    ap.add_argument('--hlq', default='HERC01')
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN'])
+    ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
+    ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
+    ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
+    ap.add_argument('--out', help='output file (default build/<DECK>.jcl)')
     a = ap.parse_args()
-    dest = ROOT / 'build' / f'{a.deck}.jcl'
-    dest.write_text(build(a.deck, a.hlq), encoding='ascii')
+    pfx = a.prefix or f'{a.hlq}.PACMAN'
+    if a.deck == 'ALLOC':
+        text = alloc_deck(pfx)
+    elif a.deck == 'CLIST':
+        text = clist_deck(pfx)
+    elif a.deck == 'RUN':
+        text = run_deck(pfx, ROOT / a.cards)
+    else:
+        text = build(a.deck, pfx)
+    dest = Path(a.out) if a.out else ROOT / 'build' / f'{a.deck}.jcl'
+    dest.write_text(text, encoding='ascii')
     print(dest)

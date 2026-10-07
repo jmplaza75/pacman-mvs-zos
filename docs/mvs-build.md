@@ -94,3 +94,13 @@ docs/INTERACTIVITY.md. Build: `python3 tools/make_deck.py MVS8 && ./tools/submit
 Final result JOB 138: 43 steps RC 0000 + ASM1 RC 0; batch identical to MVS-7; 6 TSO replays pass. Manual c3270 validation
 by the user on the same build. Evidence: docs/evidence/mvs8-interactive.txt (mvs8-tputprobe.txt: discarded TPUT path).
 Earlier phase checkers now read the map literals from PACMAP.cob (moved there in MVS-7).
+
+## MVS-9: release 1.0-MVS (2026-10-07)
+- tools/make_deck.py gained `--prefix` and the decks ALLOC, CLIST, RUN and RELEASE (job PACREL10, same content as
+  MVS8); tools/run_deck.py submits, waits for the new job number and saves build/<JOB>-<NO>.txt; tools/release_check.sh
+  runs every local check, the RELEASE deck and tests/test_mvs8.py.
+- From scratch under HERC01.PACMAN.R10: ALLOC JOB 139 RC 0 (4 libraries cataloged), CLIST JOB 140 RC 0, RELEASE JOB 141
+  (43 steps RC 0000, ASM1 RC 0, no compiler/linker warnings, all checks PASS), RUN JOB 142 (WIN0 cards: WIN, 183 turns,
+  1000 points). Evidence: docs/evidence/mvs9-fresh-r10-build.txt, mvs9-fresh-r10-install.txt.
+- Default prefix: RELEASE JOB 143 PASS (docs/evidence/mvs9-release-build.txt); CLIST JOB 144 RC 0.
+- Release decks and checksums: releases/1.0-MVS/. README rewritten with install, build, use and test instructions.

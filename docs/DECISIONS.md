@@ -62,3 +62,7 @@
 - D20 (MVS-8) TSO `***` paging is avoided by starting each frame (after the first) on a fresh screen with
   `STLINENO LINE=1`, issued by the assembler stub PACTSO via PACPLAT op CLS; PACTSO is a no-op unless ASCBTSB shows a TSO
   user. Assembler is limited to this terminal service (requirements sec. 1). Validated live in c3270 (JOB 138 build).
+- D21 (MVS-9) Release 1.0-MVS: every dataset name derives from a prefix (make_deck.py --prefix, default HERC01.PACMAN;
+  the CLIST is a template with @@PREFIX@@), so the release rebuilds from empty libraries under any prefix. Release
+  acceptance = tools/release_check.sh (local checks + RELEASE deck + tests/test_mvs8.py), proven from scratch under
+  HERC01.PACMAN.R10 (JOBs 139-142) and on HERC01.PACMAN (JOB 143). Deliverables in releases/1.0-MVS/.
