@@ -4,7 +4,7 @@ With a job listing argument: SYSOUT of the run step == tests/expected/MVS1.txt a
 import re, sys
 from pathlib import Path
 R = Path(__file__).resolve().parent.parent
-src = (R / 'src/cobol/PACMAIN.cob').read_text()
+src = (R / 'src/cobol/PACMAP.cob').read_text()
 lit = re.findall(r"FILLER\s+PIC X\(20\) VALUE '([^']*)'", src)
 exp = (R / 'maps/LEVEL1.txt').read_text().splitlines()
 assert lit == exp, 'COBOL map differs from maps/LEVEL1.txt'

@@ -1,5 +1,8 @@
       * PACDISP : DISPLAY ADAPTER (PLAIN TEXT, LEVEL G0). READS THE
-      * STATE, NEVER CHANGES IT.  OPS : HEAD  STAT  INVL  END
+      * STATE, NEVER CHANGES IT.  OPS : HEAD  STAT  INVL  END  PRMT
+      * PRMT shows the input prompt in TSO mode only (no-op in BAT).
+      * TSO: EVERY FRAME AFTER THE FIRST STARTS ON A FRESH SCREEN
+      * (PACPLAT CLS), SO TSO NEVER PAGES A FRAME WITH '***'.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -12,6 +15,7 @@
        01  WS-LINE-CELLS REDEFINES WS-LINE.
            05  WS-LINE-CELL      PIC X OCCURS 20 TIMES.
        01  WS-ROW                PIC 99.
+       01  WS-SAVE-OP            PIC X(4).
        01  WS-G                  PIC 9.
        01  WS-GX                 PIC 99.
        01  WS-STATUS-LINE.
@@ -59,8 +63,20 @@
            ELSE IF REQ-OP = 'INVL'
                DISPLAY 'INVALID COMMAND ' REQ-CHAR
            ELSE IF REQ-OP = 'END '
-               PERFORM SHOW-END THRU SHOW-END-EXIT.
+               PERFORM SHOW-END THRU SHOW-END-EXIT
+           ELSE IF REQ-OP = 'PRMT'
+               PERFORM SHOW-PROMPT THRU SHOW-PROMPT-EXIT.
            GOBACK.
+       NEW-SCREEN.
+           MOVE REQ-OP TO WS-SAVE-OP.
+           MOVE 'CLS ' TO REQ-OP.
+           CALL 'PACPLAT' USING PAC-REQ.
+           MOVE WS-SAVE-OP TO REQ-OP.
+       SHOW-PROMPT.
+           IF REQ-MODE = 'TSO'
+               DISPLAY 'CMD (U/D/L/R/Q)?'.
+       SHOW-PROMPT-EXIT.
+           EXIT.
        SHOW-END.
            IF F-LOST = 1
                DISPLAY 'LOST'
@@ -76,6 +92,8 @@
        SHOW-END-EXIT.
            EXIT.
        SHOW-STATE.
+           IF REQ-MODE = 'TSO' AND LAST-RESULT NOT = 'START  '
+               PERFORM NEW-SCREEN.
            MOVE TICK-COUNT TO ST-TURN.
            MOVE LAST-CMD TO ST-CMD.
            MOVE LAST-RESULT TO ST-RESULT.

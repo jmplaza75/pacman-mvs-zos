@@ -8,4 +8,5 @@ Text Pac-Man in COBOL. See docs/ for environment, build and phase status.
 - MVS-5 (lives and game cycle): **complete** - a full game can be won or lost; see docs/mvs-build.md.
 - MVS-6 (smarter ghosts, up to 3, AI0-AI3): **complete** - see docs/mvs-build.md.
 - MVS-7 (portability refactor, 7 modules): **complete** - behaviour identical to MVS-6; see docs/ARCHITECTURE.md.
-- MVS-8 onward: not started.
+- MVS-8 (interactive TSO mode via CLIST, no `***` paging): **complete** - validated live in c3270; see docs/INTERACTIVITY.md.
+- MVS-9 onward: not started.

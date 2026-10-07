@@ -52,3 +52,13 @@
 - D17 (MVS-7) Refactor rule: observable behaviour must not change. The banner text stays `PACMAN MVS-6 SMART GHOSTS`
   (it names the behaviour version, not the build) and all 19 SYSOUT blocks are byte-identical to the pre-refactor
   MVS-6 evidence (docs/evidence/mvs6-ai.txt); PACMAIN-MVS-6 monolith is preserved in git (tag mvs-6).
+- D18 (permanent) D16 (copy members start with their own 01 record), D17 (refactors must not change observable
+  behaviour; before/after SYSOUT identity) and the MVS-7 layer separation bind every later phase: PACGAME, PACMAP and
+  PACAI never reference terminal, 3270, TSO or platform facilities; those live only in PACINPT, PACDISP, PACPLAT.
+- D19 (MVS-8) Interactive mode = CLIST with SYSIN/SYSOUT allocated to the terminal + `PARM='TSO AI<l> <n>'`. The mode
+  (REQ-MODE) is read only by PACMAIN, PACPLAT, PACINPT and PACDISP; the core never mentions it (tested). TSO-only input
+  rules: leading blanks skipped, empty line = redraw. No input is read after QUIT/WON/LOST in either mode. TPUT/TGET
+  were discarded (no-ops under a batch TMP, untestable). Details: docs/INTERACTIVITY.md.
+- D20 (MVS-8) TSO `***` paging is avoided by starting each frame (after the first) on a fresh screen with
+  `STLINENO LINE=1`, issued by the assembler stub PACTSO via PACPLAT op CLS; PACTSO is a no-op unless ASCBTSB shows a TSO
+  user. Assembler is limited to this terminal service (requirements sec. 1). Validated live in c3270 (JOB 138 build).

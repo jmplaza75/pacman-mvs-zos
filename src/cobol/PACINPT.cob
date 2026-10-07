@@ -1,7 +1,8 @@
       * PACINPT : INPUT ADAPTER. ONE SYSIN CARD -> ONE REQUEST.
-      * OPS : OPEN  READ  CLOS.  READ SETS REQ-KIND:
-      *   MOV (REQ-DIR U/D/L/R)  QUI  CFG (REQ-LEVEL, REQ-COUNT)
-      *   INV  EOF.  REQ-CHAR ALWAYS HOLDS THE CARD'S FIRST BYTE.
+      * OPS : OPEN  READ  CLOS  PARM (CLASSIFY REQ-TEXT, NO I/O).
+      * REQ-KIND: MOV (REQ-DIR U/D/L/R)  QUI  CFG (REQ-LEVEL,
+      *   REQ-COUNT)  INV  EOF, AND IN TSO MODE RDR (BLANK LINE =
+      *   REDRAW REQUEST). REQ-CHAR HOLDS THE COMMAND'S FIRST BYTE.
       * ONLY THIS MODULE KNOWS ABOUT THE TERMINAL/CARD SOURCE.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACINPT.
@@ -19,13 +20,23 @@
            LABEL RECORDS ARE OMITTED
            RECORD CONTAINS 80 CHARACTERS
            DATA RECORD IS COMMAND-RECORD.
-       01  COMMAND-RECORD.
+       01  COMMAND-RECORD        PIC X(80).
+       WORKING-STORAGE SECTION.
+       01  WS-CARD.
            05  CMD-CHAR          PIC X.
            05  FILLER            PIC X.
            05  CMD-LEVEL         PIC X.
            05  FILLER            PIC X.
            05  CMD-COUNT         PIC X.
            05  FILLER            PIC X(75).
+       01  RAW-CARD REDEFINES WS-CARD.
+           05  RAW-CHAR          PIC X OCCURS 80 TIMES.
+       01  NORM-REC.
+           05  NR-CHAR           PIC X OCCURS 80 TIMES.
+       01  WS-OFF                PIC 99.
+       01  WS-I                  PIC 99.
+       01  WS-J                  PIC 99.
+       01  WS-LIM                PIC 99.
        LINKAGE SECTION.
        01  PAC-REQ COPY PACREQ.
        PROCEDURE DIVISION USING PAC-REQ.
@@ -35,15 +46,49 @@
            ELSE IF REQ-OP = 'READ'
                PERFORM DO-READ THRU DO-READ-EXIT
            ELSE IF REQ-OP = 'CLOS'
-               CLOSE COMMAND-FILE.
+               CLOSE COMMAND-FILE
+           ELSE IF REQ-OP = 'PARM'
+               MOVE SPACES TO WS-CARD
+               MOVE REQ-TEXT TO WS-CARD
+               PERFORM CLASSIFY THRU CLASSIFY-EXIT.
            GOBACK.
        DO-READ.
            MOVE SPACES TO REQ-KIND.
            READ COMMAND-FILE AT END MOVE 'EOF' TO REQ-KIND.
            IF REQ-KIND = SPACES
+               MOVE COMMAND-RECORD TO WS-CARD.
+           IF REQ-KIND = SPACES AND REQ-MODE = 'TSO'
+               PERFORM NORMALIZE THRU NORMALIZE-EXIT.
+           IF REQ-KIND = SPACES AND REQ-MODE = 'TSO'
+                                AND WS-CARD = SPACES
+               MOVE 'RDR' TO REQ-KIND.
+           IF REQ-KIND = SPACES
                PERFORM CLASSIFY THRU CLASSIFY-EXIT.
        DO-READ-EXIT.
            EXIT.
+       NORMALIZE.
+      * TSO ONLY: TOLERATE LEADING BLANKS/NON-PRINTABLE BYTES TYPED
+      * BEFORE THE COMMAND: START AT THE FIRST BYTE > BLANK (1-8).
+           MOVE 1 TO WS-OFF.
+           PERFORM FIND-START UNTIL WS-OFF > 8
+               OR RAW-CHAR (WS-OFF) > SPACE.
+           IF WS-OFF > 1 AND WS-OFF < 9
+               PERFORM SHIFT-LEFT THRU SHIFT-LEFT-EXIT.
+       NORMALIZE-EXIT.
+           EXIT.
+       FIND-START.
+           ADD 1 TO WS-OFF.
+       SHIFT-LEFT.
+           MOVE SPACES TO NORM-REC.
+           COMPUTE WS-LIM = 81 - WS-OFF.
+           PERFORM COPY-CHAR VARYING WS-I FROM 1 BY 1
+               UNTIL WS-I > WS-LIM.
+           MOVE NORM-REC TO WS-CARD.
+       SHIFT-LEFT-EXIT.
+           EXIT.
+       COPY-CHAR.
+           COMPUTE WS-J = WS-I + WS-OFF - 1.
+           MOVE RAW-CHAR (WS-J) TO NR-CHAR (WS-I).
        CLASSIFY.
            MOVE CMD-CHAR TO REQ-CHAR.
            MOVE 'INV' TO REQ-KIND.

@@ -8,7 +8,7 @@ sys.path.insert(0, str(R / 'tests'))
 from ref_mvs2 import simulate  # noqa: E402
 
 # source map must still equal the map file
-lit = re.findall(r"FILLER\s+PIC X\(20\) VALUE '([^']*)'", (R / 'src/cobol/PACMAIN.cob').read_text())
+lit = re.findall(r"FILLER\s+PIC X\(20\) VALUE '([^']*)'", (R / 'src/cobol/PACMAP.cob').read_text())
 assert lit == (R / 'maps/LEVEL1.txt').read_text().splitlines(), 'map mismatch'
 # model invariants: the player never stands on a wall, walls block, quit stops, EOF ends
 for name in ('MOVES', 'EOF'):

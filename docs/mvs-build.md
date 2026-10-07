@@ -84,3 +84,13 @@ the independent model; (3) BEFORE/AFTER: each SYSOUT block equals the pre-refact
 (4) the behaviour properties of MVS-6 re-derived from the real output; (5) static architecture rules (core has no
 terminal/host verbs). Result: PACBLD07 JOB 126 (JOB 125 failed: copy members need their own 01 line, D16).
 Evidence: docs/evidence/mvs7-refactor.txt. Load module is still HERC01.PACMAN.LOAD(PACMAIN).
+
+## MVS-8: interactive TSO mode (2026-10-07, closed)
+New: REQ-MODE/REQ-TEXT (PACREQ), PARM handling and TSO start flow in PACMAIN, mode validation + CLS in PACPLAT, prompt and
+fresh-screen frames in PACDISP, TSO input rules in PACINPT, assembler stub src/asm/PACTSO.asm (assembled by IFOX00 in
+the same deck), launcher CLIST (first install jcl/mvs/INSTCLST.jcl, update jcl/mvs/STORCLST.jcl). Details: D19, D20,
+docs/INTERACTIVITY.md. Build: `python3 tools/make_deck.py MVS8 && ./tools/submit.sh build/MVS8.jcl`, then
+`./tools/job_output.py PACBLD08 > build/PACBLD08.txt && python3 tests/test_mvs8.py build/PACBLD08.txt`.
+Final result JOB 138: 43 steps RC 0000 + ASM1 RC 0; batch identical to MVS-7; 6 TSO replays pass. Manual c3270 validation
+by the user on the same build. Evidence: docs/evidence/mvs8-interactive.txt (mvs8-tputprobe.txt: discarded TPUT path).
+Earlier phase checkers now read the map literals from PACMAP.cob (moved there in MVS-7).

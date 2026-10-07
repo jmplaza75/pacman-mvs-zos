@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate a self-contained MVS build+test deck (build/<NAME>.jcl).
 
-Usage: make_deck.py PACHELLO | MVS7 [--hlq HERC01]
+Usage: make_deck.py PACHELLO | MVS8 [--hlq HERC01]
 Sources are validated (ASCII, 80 columns, no tabs) and uploaded with
 IEBGENER, compiled with IKFCBL00, link-edited with IEWL and executed.
 """
@@ -25,6 +25,8 @@ DECKS = {
     'MVS5': ('PACBLD05', ['PACMAIN'], [], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1')]),
     'MVS6': ('PACBLD06', ['PACMAIN'], [], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS7': ('PACBLD07', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
+             ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
 
@@ -65,12 +67,37 @@ def link_step(hlq, objs, load, entry):
     return t
 
 
-def run_step(step, hlq, load, sysin):
-    t = (f'//{step:<8} EXEC PGM={load},COND=(0,NE)\n'
+def run_step(step, hlq, load, sysin, parm=None):
+    t = (f'//{step:<8} EXEC PGM={load},COND=(0,NE)' + (f",PARM='{parm}'" if parm else '') + '\n'
          f'//STEPLIB  DD DSN={hlq}.PACMAN.LOAD,DISP=SHR\n')
     if sysin is not None:
         t += '//SYSIN    DD *\n' + sysin + '/*\n'
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
+
+
+ASM = {'MVS8': ['PACTSO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+
+
+def asm_step(step, obj, text):
+    return (f'//{step:<8} EXEC PGM=IFOX00,COND=(0,NE),PARM=\'OBJECT,NODECK,NOXREF\'\n'
+            '//SYSLIB   DD DSN=SYS1.MACLIB,DISP=SHR\n//         DD DSN=SYS1.AMODGEN,DISP=SHR\n'
+            + ''.join(f'//SYSUT{i}   DD UNIT=SYSDA,SPACE=(CYL,(3,1))\n' for i in range(1, 4)) +
+            '//SYSPRINT DD SYSOUT=A\n'
+            f'//SYSGO    DD DSN=&&{obj},DISP=(NEW,PASS),UNIT=SYSDA,\n'
+            '//            SPACE=(80,(500,100)),\n'
+            '//            DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)\n'
+            '//SYSIN    DD DATA,DLM=ZZ\n' + text + 'ZZ\n')
+
+
+TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}   # replayed in interactive mode (PARM='TSO')
+
+
+def tso_parm_and_cards(case):
+    """Interactive mode takes the config from the PARM ('TSO AI3 2'), not from a first card."""
+    lines = (ROOT / f'tests/cases/{case}.txt').read_text(encoding='ascii').splitlines(keepends=True)
+    if lines and lines[0][:1] == 'A':
+        return 'TSO ' + lines[0].rstrip('\n')[:5], ''.join(lines[1:])
+    return 'TSO', ''.join(lines)
 
 
 def build(name, hlq):
@@ -82,10 +109,18 @@ def build(name, hlq):
     for i, m in enumerate(modules, 1):
         out += upload(f'SRC{i}', hlq, 'COBOL', m, text_of(ROOT / f'src/cobol/{m}.cob'))
         out += compile_step(f'COB{i}', hlq, m, f'OBJ{i}')
-    out += link_step(hlq, [f'OBJ{i}' for i in range(1, len(modules) + 1)], load, modules[0])
+    objs = [f'OBJ{i}' for i in range(1, len(modules) + 1)]
+    for i, a in enumerate(ASM.get(name, []), 1):
+        out += asm_step(f'ASM{i}', f'OBJA{i}', text_of(ROOT / f'src/asm/{a}.asm'))
+        objs.append(f'OBJA{i}')
+    out += link_step(hlq, objs, load, modules[0])
     for i, r in enumerate(runs, 1):
         sysin = None if r is None else text_of(ROOT / r)
         out += run_step(f'RUN{i}', hlq, load, sysin)
+    for i, c in enumerate(TSO.get(name, []), 1):
+        text_of(ROOT / f'tests/cases/{c}.txt')
+        parm, cards = tso_parm_and_cards(c)
+        out += run_step(f'TSO{i}', hlq, load, cards, parm=parm)
     return out + '//\n'
 
 

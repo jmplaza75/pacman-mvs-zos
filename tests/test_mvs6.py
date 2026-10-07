@@ -11,7 +11,7 @@ from ref_mvs6 import simulate, Game, MAP0, GSTARTS, GDIR0, REV, DIRS  # noqa: E4
 OLD = ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1')
 NEW = ('P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')
 RUNS = OLD + NEW
-lit = re.findall(r"FILLER\s+PIC X\(20\) VALUE '([^']*)'", (R / 'src/cobol/PACMAIN.cob').read_text())
+lit = re.findall(r"FILLER\s+PIC X\(20\) VALUE '([^']*)'", (R / 'src/cobol/PACMAP.cob').read_text())
 assert lit == MAP0, 'map mismatch'
 OPEN = lambda x, y: MAP0[y - 1][x - 1] != '#'
 NB = {k: (dx, dy) for k, (_, dx, dy) in enumerate(DIRS, 1)}        # 1=U 2=D 3=L 4=R

@@ -8,7 +8,7 @@ sys.path.insert(0, str(R / 'tests'))
 from ref_mvs5 import simulate, MAP0  # noqa: E402
 
 RUNS = ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1')
-lit = re.findall(r"FILLER\s+PIC X\(20\) VALUE '([^']*)'", (R / 'src/cobol/PACMAIN.cob').read_text())
+lit = re.findall(r"FILLER\s+PIC X\(20\) VALUE '([^']*)'", (R / 'src/cobol/PACMAP.cob').read_text())
 assert lit == MAP0, 'map mismatch'
 
 

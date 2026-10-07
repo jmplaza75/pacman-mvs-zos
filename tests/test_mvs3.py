@@ -8,7 +8,7 @@ sys.path.insert(0, str(R / 'tests'))
 from ref_mvs3 import simulate  # noqa: E402
 
 RUNS = ('MOVES', 'EOF', 'WIN')
-lit = re.findall(r"FILLER\s+PIC X\(20\) VALUE '([^']*)'", (R / 'src/cobol/PACMAIN.cob').read_text())
+lit = re.findall(r"FILLER\s+PIC X\(20\) VALUE '([^']*)'", (R / 'src/cobol/PACMAP.cob').read_text())
 assert lit == (R / 'maps/LEVEL1.txt').read_text().splitlines(), 'map mismatch'
 for n in RUNS:
     exp = (R / f'tests/expected/MVS3-{n}.txt').read_text().splitlines()
