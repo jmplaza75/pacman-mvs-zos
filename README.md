@@ -3,4 +3,5 @@ Text Pac-Man in COBOL. See docs/ for environment, build and phase status.
 - MVS-0 (toolchain, PACHELLO): **complete** - see docs/mvs-build.md.
 - MVS-1 (static board): **complete** - see docs/mvs-build.md.
 - MVS-2 (player by turns): **complete** - see docs/mvs-build.md.
-- MVS-3 onward: not started.
+- MVS-3 (pellets and score): **complete** - winnable game, see docs/mvs-build.md.
+- MVS-4 onward: not started.

@@ -1,0 +1,2757 @@
+****A  START  JOB  119  PACBLD03  PACMAN MVS3           ROOM        5.30.06 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  119  START  A****
+****A  START  JOB  119  PACBLD03  PACMAN MVS3           ROOM        5.30.06 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  119  START  A****
+****A  START  JOB  119  PACBLD03  PACMAN MVS3           ROOM        5.30.06 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  119  START  A****
+****A  START  JOB  119  PACBLD03  PACMAN MVS3           ROOM        5.30.06 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  119  START  A****
+                                                J E S 2   J O B   L O G
+
+
+17.30.05 JOB  119  $HASP373 PACBLD03 STARTED - INIT  1 - CLASS A - SYS TK4-
+17.30.05 JOB  119  IEF403I PACBLD03 - STARTED - TIME=17.30.05
+17.30.05 JOB  119  IEFACTRT - Stepname  Procstep  Program   Retcode
+17.30.05 JOB  119  PACBLD03   SRC1                IEBGENER  RC= 0000
+17.30.05 JOB  119  PACBLD03   COB1                IKFCBL00  RC= 0000
+17.30.05 JOB  119  PACBLD03   LINK                IEWL      RC= 0000
+17.30.05 JOB  119  PACBLD03   RUN1                PACMAIN   RC= 0000
+17.30.06 JOB  119  PACBLD03   RUN2                PACMAIN   RC= 0000
+17.30.06 JOB  119  PACBLD03   RUN3                PACMAIN   RC= 0000
+17.30.06 JOB  119  IEF404I PACBLD03 - ENDED - TIME=17.30.06
+17.30.06 JOB  119  $HASP395 PACBLD03 ENDED
+
+
+------ JES2 JOB STATISTICS ------
+
+
+ 07 OCT 26 JOB EXECUTION DATE
+
+
+       424 CARDS READ
+
+
+     2,689 SYSOUT PRINT RECORDS
+
+
+         0 SYSOUT PUNCH RECORDS
+
+
+      0.00 MINUTES EXECUTION TIME
+    1     //PACBLD03 JOB (1),'PACMAN MVS3',CLASS=A,MSGCLASS=A,                    JOB  119
+          //             MSGLEVEL=(1,1),REGION=4096K,
+          //             USER=HERC01,PASSWORD=<REDACTED>
+    2     //SRC1     EXEC PGM=IEBGENER,COND=(0,NE)
+    3     //SYSPRINT DD SYSOUT=A
+    4     //SYSUT2   DD DSN=HERC01.PACMAN.COBOL(PACMAIN),DISP=OLD
+    5     //SYSIN    DD DUMMY
+    6     //SYSUT1   DD DATA,DLM=ZZ
+    7     //COB1     EXEC PGM=IKFCBL00,COND=(0,NE),
+          //         PARM='LOAD,LIB,SUPMAP,SIZE=2048K,BUF=1024K'
+    8     //SYSPRINT DD SYSOUT=A
+    9     //SYSPUNCH DD DUMMY
+   10     //SYSUT1   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   11     //SYSUT2   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   12     //SYSUT3   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   13     //SYSUT4   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   14     //SYSLIN   DD DSN=&&OBJ1,DISP=(NEW,PASS),UNIT=SYSDA,
+          //            SPACE=(80,(500,100)),
+          //            DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)
+   15     //SYSIN    DD DSN=HERC01.PACMAN.COBOL(PACMAIN),DISP=SHR
+   16     //SYSLIB   DD DSN=HERC01.PACMAN.COPY,DISP=SHR
+   17     //LINK     EXEC PGM=IEWL,COND=(0,NE),PARM='LIST,XREF'
+   18     //SYSLIN   DD DSN=&&OBJ1,DISP=(OLD,DELETE)
+   19     //         DD DDNAME=SYSIN
+   20     //SYSLMOD  DD DSN=HERC01.PACMAN.LOAD(PACMAIN),DISP=OLD
+   21     //SYSLIB   DD DSN=SYS1.COBLIB,DISP=SHR
+   22     //SYSUT1   DD UNIT=SYSDA,SPACE=(1024,(50,20))
+   23     //SYSPRINT DD SYSOUT=A
+   24     //SYSIN    DD *
+   25     //RUN1     EXEC PGM=PACMAIN,COND=(0,NE)
+   26     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   27     //SYSIN    DD *
+   28     //SYSOUT   DD SYSOUT=A
+   29     //SYSUDUMP DD SYSOUT=A
+   30     //RUN2     EXEC PGM=PACMAIN,COND=(0,NE)
+   31     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   32     //SYSIN    DD *
+   33     //SYSOUT   DD SYSOUT=A
+   34     //SYSUDUMP DD SYSOUT=A
+   35     //RUN3     EXEC PGM=PACMAIN,COND=(0,NE)
+   36     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   37     //SYSIN    DD *
+   38     //SYSOUT   DD SYSOUT=A
+   39     //SYSUDUMP DD SYSOUT=A
+          //
+IEF236I ALLOC. FOR PACBLD03 SRC1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I 191  ALLOCATED TO SYSUT2
+IEF237I 240  ALLOCATED TO SYS00524
+IEF237I DMY  ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSUT1
+IEF142I PACBLD03 SRC1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00119.SO0106                         SYSOUT
+IEF285I   HERC01.PACMAN.COBOL                          KEPT          *--------8
+IEF285I   VOL SER NOS= MVSCAT.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00119.SI0101                         SYSIN
+IEF373I STEP /SRC1    / START 26280.1730
+IEF374I STEP /SRC1    / STOP  26280.1730 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT    44K SYS   224K
+************************************************************************************************************************************
+*     1. Jobstep of job: PACBLD03    Stepname: SRC1        Program name: IEBGENER   Executed on 07.10.26 from 17.30.05 to 17.30.05 *
+*         elapsed time  00:00:00,05                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:     44K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:    168                                                                           *
+*     DMY.......0 191.......8 240.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACBLD03 COB1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I DMY  ALLOCATED TO SYSPUNCH
+IEF237I 170  ALLOCATED TO SYSUT1
+IEF237I 190  ALLOCATED TO SYSUT2
+IEF237I 140  ALLOCATED TO SYSUT3
+IEF237I 180  ALLOCATED TO SYSUT4
+IEF237I 180  ALLOCATED TO SYSLIN
+IEF237I 191  ALLOCATED TO SYSIN
+IEF237I 240  ALLOCATED TO SYS00526
+IEF237I 290  ALLOCATED TO SYSLIB
+IEF142I PACBLD03 COB1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00119.SO0107                         SYSOUT
+IEF285I   SYS26280.T173005.RA000.PACBLD03.R0000001     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK01.
+IEF285I   SYS26280.T173005.RA000.PACBLD03.R0000002     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   SYS26280.T173005.RA000.PACBLD03.R0000003     DELETED       *--------9
+IEF285I   VOL SER NOS= WORK00.
+IEF285I   SYS26280.T173005.RA000.PACBLD03.R0000004     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK02.
+IEF285I   SYS26280.T173005.RA000.PACBLD03.OBJ1         PASSED        *--------3
+IEF285I   VOL SER NOS= WORK02.
+IEF285I   HERC01.PACMAN.COBOL                          KEPT          *--------6
+IEF285I   VOL SER NOS= MVSCAT.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   HERC01.PACMAN.COPY                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB003.
+IEF373I STEP /COB1    / START 26280.1730
+IEF374I STEP /COB1    / STOP  26280.1730 CPU    0MIN 00.04SEC SRB    0MIN 00.01SEC VIRT  2076K SYS   236K
+************************************************************************************************************************************
+*     2. Jobstep of job: PACBLD03    Stepname: COB1        Program name: IKFCBL00   Executed on 07.10.26 from 17.30.05 to 17.30.05 *
+*         elapsed time  00:00:00,10                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,05               Virtual Storage used:   2076K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,05   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      0                                                                           *
+*     DMY.......0 DMY.......0 170.......6 190.......6 140.......9 180.......6 180.......3 191.......6 240.......0 290.......0      *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,08                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACBLD03 LINK
+IEF237I 180  ALLOCATED TO SYSLIN
+IEF237I JES2 ALLOCATED TO
+IEF237I 270  ALLOCATED TO SYSLMOD
+IEF237I 240  ALLOCATED TO SYS00528
+IEF237I 148  ALLOCATED TO SYSLIB
+IEF237I 170  ALLOCATED TO SYSUT1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF142I PACBLD03 LINK - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   SYS26280.T173005.RA000.PACBLD03.OBJ1         DELETED       *--------4
+IEF285I   VOL SER NOS= WORK02.
+IEF285I   JES2.JOB00119.SI0102                         SYSIN
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *-------10
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   SYS1.COBLIB                                  KEPT          *-------17
+IEF285I   VOL SER NOS= MVSRES.
+IEF285I   SYS26280.T173005.RA000.PACBLD03.R0000005     DELETED       *--------0
+IEF285I   VOL SER NOS= WORK01.
+IEF285I   JES2.JOB00119.SO0108                         SYSOUT
+IEF373I STEP /LINK    / START 26280.1730
+IEF374I STEP /LINK    / STOP  26280.1730 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT   264K SYS   236K
+************************************************************************************************************************************
+*     3. Jobstep of job: PACBLD03    Stepname: LINK        Program name: IEWL       Executed on 07.10.26 from 17.30.05 to 17.30.05 *
+*         elapsed time  00:00:00,04                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:    264K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      1                                                                           *
+*     180.......4 DMY.......0 270......10 240.......0 148......17 170.......0 DMY.......0                                          *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACBLD03 RUN1
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS00530
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACBLD03 RUN1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00119.SI0103                         SYSIN
+IEF285I   JES2.JOB00119.SO0109                         SYSOUT
+IEF285I   JES2.JOB00119.SO0110                         SYSOUT
+IEF373I STEP /RUN1    / START 26280.1730
+IEF374I STEP /RUN1    / STOP  26280.1730 CPU    0MIN 00.00SEC SRB    0MIN 00.00SEC VIRT    12K SYS   236K
+IEF236I ALLOC. FOR PACBLD03 RUN2
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS00532
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACBLD03 RUN2 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00119.SI0104                         SYSIN
+IEF285I   JES2.JOB00119.SO0111                         SYSOUT
+IEF285I   JES2.JOB00119.SO0112                         SYSOUT
+IEF373I STEP /RUN2    / START 26280.1730
+IEF374I STEP /RUN2    / STOP  26280.1730 CPU    0MIN 00.00SEC SRB    0MIN 00.00SEC VIRT    12K SYS   232K
+IEF236I ALLOC. FOR PACBLD03 RUN3
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS00534
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACBLD03 RUN3 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00119.SI0105                         SYSIN
+IEF285I   JES2.JOB00119.SO0113                         SYSOUT
+IEF285I   JES2.JOB00119.SO0114                         SYSOUT
+IEF373I STEP /RUN3    / START 26280.1730
+IEF374I STEP /RUN3    / STOP  26280.1730 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT    12K SYS   244K
+************************************************************************************************************************************
+*     6. Jobstep of job: PACBLD03    Stepname: RUN3        Program name: PACMAIN    Executed on 07.10.26 from 17.30.06 to 17.30.06 *
+*         elapsed time  00:00:00,04                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:     12K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:    186                                                                           *
+*     270.......0 240.......0 DMY.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF375I  JOB /PACBLD03/ START 26280.1730
+IEF376I  JOB /PACBLD03/ STOP  26280.1730 CPU    0MIN 00.07SEC SRB    0MIN 00.01SEC
+DATA SET UTILITY - GENERATE                                                                       PAGE 0001
+
+
+
+PROCESSING ENDED AT EOD  CB545 V2 LVL78 01MAY72                 IBM OS AMERICAN NATIONAL STANDARD COBOL                       DATE OCT  7,2026
+
+
+   1
+
+
+00001         * MVS-3: PELLETS AND SCORE. COMMANDS U/D/L/R/Q, ONE PER CARD
+00002         * (SYSIN). MAP LITERALS MUST MATCH MAPS/LEVEL1.TXT. THE START
+00003         * CELL IS CLEARED AT INIT WITHOUT SCORING; PELLET = 10 POINTS.
+00004          IDENTIFICATION DIVISION.
+00005          PROGRAM-ID. PACMAIN.
+00006          ENVIRONMENT DIVISION.
+00007          CONFIGURATION SECTION.
+00008          SOURCE-COMPUTER. IBM-370.
+00009          OBJECT-COMPUTER. IBM-370.
+00010          INPUT-OUTPUT SECTION.
+00011          FILE-CONTROL.
+00012              SELECT COMMAND-FILE ASSIGN TO UT-S-SYSIN.
+00013          DATA DIVISION.
+00014          FILE SECTION.
+00015          FD  COMMAND-FILE
+00016              RECORDING MODE IS F
+00017              LABEL RECORDS ARE OMITTED
+00018              RECORD CONTAINS 80 CHARACTERS
+00019              DATA RECORD IS COMMAND-RECORD.
+00020          01  COMMAND-RECORD.
+00021              05  CMD-CHAR          PIC X.
+00022              05  FILLER            PIC X(79).
+00023          WORKING-STORAGE SECTION.
+00024          01  MAP-DATA.
+00025              05  FILLER            PIC X(20) VALUE '####################'.
+00026              05  FILLER            PIC X(20) VALUE '#........##........#'.
+00027              05  FILLER            PIC X(20) VALUE '#.##.###.##.###.##.#'.
+00028              05  FILLER            PIC X(20) VALUE '#..................#'.
+00029              05  FILLER            PIC X(20) VALUE '#.##.#.######.#.##.#'.
+00030              05  FILLER            PIC X(20) VALUE '#....#...##...#....#'.
+00031              05  FILLER            PIC X(20) VALUE '#.##.###.##.###.##.#'.
+00032              05  FILLER            PIC X(20) VALUE '#..................#'.
+00033              05  FILLER            PIC X(20) VALUE '#..................#'.
+00034              05  FILLER            PIC X(20) VALUE '####################'.
+00035          01  MAP-TABLE REDEFINES MAP-DATA.
+00036              05  MAP-ROW           OCCURS 10 TIMES.
+00037                  10  MAP-CELL      PIC X OCCURS 20 TIMES.
+00038          01  WS-LINE               PIC X(20).
+00039          01  WS-LINE-CELLS REDEFINES WS-LINE.
+00040              05  WS-LINE-CELL      PIC X OCCURS 20 TIMES.
+00041          01  PLAYER-X              PIC 99 VALUE 2.
+00042          01  PLAYER-Y              PIC 99 VALUE 2.
+00043          01  NEW-X                 PIC 99.
+00044          01  NEW-Y                 PIC 99.
+00045          01  WS-ROW                PIC 99.
+00046          01  TICK-COUNT            PIC 999 VALUE 0.
+00047          01  WS-CMD                PIC X.
+00048          01  WS-RESULT             PIC X(7).
+00049          01  WS-EOF                PIC 9 VALUE 0.
+00050          01  WS-QUIT               PIC 9 VALUE 0.
+00051          01  WS-WON                PIC 9 VALUE 0.
+00052          01  WS-COL                PIC 99.
+00053          01  SCORE                 PIC 9(4) VALUE 0.
+00054          01  PELLETS-LEFT          PIC 999 VALUE 0.   2
+
+
+00055          01  WS-STATUS-LINE.
+00056              05  FILLER            PIC X VALUE 'T'.
+00057              05  ST-TURN           PIC 999.
+00058              05  FILLER            PIC X VALUE ' '.
+00059              05  ST-CMD            PIC X.
+00060              05  FILLER            PIC X VALUE ' '.
+00061              05  ST-RESULT         PIC X(7).
+00062              05  FILLER            PIC X(3) VALUE ' X='.
+00063              05  ST-X              PIC 99.
+00064              05  FILLER            PIC X(3) VALUE ' Y='.
+00065              05  ST-Y              PIC 99.
+00066              05  FILLER            PIC X(3) VALUE ' S='.
+00067              05  ST-SCORE          PIC 9(4).
+00068              05  FILLER            PIC X(3) VALUE ' L='.
+00069              05  ST-LEFT           PIC 999.
+00070          PROCEDURE DIVISION.
+00071          MAIN-PARA.
+00072              OPEN INPUT COMMAND-FILE.
+00073              DISPLAY 'PACMAN MVS-3 PELLETS AND SCORE'.
+00074              PERFORM INIT-GAME.
+00075              MOVE 'START  ' TO WS-RESULT.
+00076              PERFORM SHOW-STATE.
+00077              PERFORM READ-CMD.
+00078              PERFORM TURN-PARA
+00079                  UNTIL WS-EOF = 1 OR WS-QUIT = 1 OR WS-WON = 1.
+00080              IF WS-WON = 1
+00081                  DISPLAY 'WIN'
+00082              ELSE IF WS-QUIT = 1
+00083                  DISPLAY 'QUIT'
+00084              ELSE
+00085                  DISPLAY 'EOF'.
+00086              DISPLAY 'TURNS ' TICK-COUNT.
+00087              DISPLAY 'SCORE ' SCORE.
+00088              CLOSE COMMAND-FILE.
+00089              STOP RUN.
+00090          INIT-GAME.
+00091              MOVE ' ' TO MAP-CELL (PLAYER-Y PLAYER-X).
+00092              PERFORM COUNT-ROW VARYING WS-ROW FROM 1 BY 1
+00093                  UNTIL WS-ROW > 10.
+00094          COUNT-ROW.
+00095              PERFORM COUNT-CELL THRU COUNT-CELL-EXIT
+00096                  VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
+00097          COUNT-CELL.
+00098              IF MAP-CELL (WS-ROW WS-COL) = '.'
+00099                  ADD 1 TO PELLETS-LEFT.
+00100          COUNT-CELL-EXIT.
+00101              EXIT.
+00102          TURN-PARA.
+00103              PERFORM PROCESS-CMD THRU PROCESS-CMD-EXIT.
+00104              PERFORM READ-CMD.
+00105          READ-CMD.
+00106              READ COMMAND-FILE AT END MOVE 1 TO WS-EOF.
+00107              MOVE CMD-CHAR TO WS-CMD.
+00108          PROCESS-CMD.
+00109              MOVE PLAYER-X TO NEW-X.
+00110              MOVE PLAYER-Y TO NEW-Y.
+00111              MOVE 'MOVED  ' TO WS-RESULT.   3
+
+
+00112              IF WS-CMD = 'U' OR WS-CMD = 'u'
+00113                  SUBTRACT 1 FROM NEW-Y
+00114                  PERFORM TRY-MOVE
+00115              ELSE IF WS-CMD = 'D' OR WS-CMD = 'd'
+00116                  ADD 1 TO NEW-Y
+00117                  PERFORM TRY-MOVE
+00118              ELSE IF WS-CMD = 'L' OR WS-CMD = 'l'
+00119                  SUBTRACT 1 FROM NEW-X
+00120                  PERFORM TRY-MOVE
+00121              ELSE IF WS-CMD = 'R' OR WS-CMD = 'r'
+00122                  ADD 1 TO NEW-X
+00123                  PERFORM TRY-MOVE
+00124              ELSE IF WS-CMD = 'Q' OR WS-CMD = 'q'
+00125                  MOVE 1 TO WS-QUIT
+00126              ELSE
+00127                  DISPLAY 'INVALID COMMAND ' WS-CMD.
+00128          PROCESS-CMD-EXIT.
+00129              EXIT.
+00130          TRY-MOVE.
+00131              ADD 1 TO TICK-COUNT.
+00132              IF NEW-X < 1 OR NEW-X > 20 OR NEW-Y < 1 OR NEW-Y > 10
+00133                  MOVE 'BLOCKED' TO WS-RESULT
+00134              ELSE IF MAP-CELL (NEW-Y NEW-X) = '#'
+00135                  MOVE 'BLOCKED' TO WS-RESULT
+00136              ELSE
+00137                  MOVE NEW-X TO PLAYER-X
+00138                  MOVE NEW-Y TO PLAYER-Y
+00139                  PERFORM EAT-PELLET THRU EAT-PELLET-EXIT.
+00140              PERFORM SHOW-STATE.
+00141          EAT-PELLET.
+00142              IF MAP-CELL (PLAYER-Y PLAYER-X) = '.'
+00143                  MOVE ' ' TO MAP-CELL (PLAYER-Y PLAYER-X)
+00144                  ADD 10 TO SCORE
+00145                  SUBTRACT 1 FROM PELLETS-LEFT.
+00146              IF PELLETS-LEFT = 0
+00147                  MOVE 1 TO WS-WON.
+00148          EAT-PELLET-EXIT.
+00149              EXIT.
+00150          SHOW-STATE.
+00151              MOVE TICK-COUNT TO ST-TURN.
+00152              IF WS-RESULT = 'START  '
+00153                  MOVE ' ' TO ST-CMD
+00154              ELSE
+00155                  MOVE WS-CMD TO ST-CMD.
+00156              MOVE WS-RESULT TO ST-RESULT.
+00157              MOVE PLAYER-X TO ST-X.
+00158              MOVE PLAYER-Y TO ST-Y.
+00159              MOVE SCORE TO ST-SCORE.
+00160              MOVE PELLETS-LEFT TO ST-LEFT.
+00161              DISPLAY WS-STATUS-LINE.
+00162              PERFORM SHOW-ROW VARYING WS-ROW FROM 1 BY 1
+00163                  UNTIL WS-ROW > 10.
+00164          SHOW-ROW.
+00165              MOVE MAP-ROW (WS-ROW) TO WS-LINE.
+00166              IF WS-ROW = PLAYER-Y
+00167                  MOVE 'P' TO WS-LINE-CELL (PLAYER-X).
+00168              DISPLAY WS-LINE.   4
+
+
+
+*STATISTICS*     SOURCE RECORDS =   168     DATA DIVISION STATEMENTS =    50     PROCEDURE DIVISION STATEMENTS =    87
+*OPTIONS IN EFFECT*     SIZE = 2097152  BUF = 1048576  LINECNT = 57  SPACE1, FLAGW,   SEQ,   SOURCE
+*OPTIONS IN EFFECT*     NODMAP, NOPMAP, NOCLIST,   SUPMAP, NOXREF,   LOAD, NODECK, APOST, NOTRUNC,   LIB, NOVERB
+*OPTIONS IN EFFECT*       ZWB
+ F64-LEVEL LINKAGE EDITOR OPTIONS SPECIFIED LIST,XREF
+          DEFAULT OPTION(S) USED -  SIZE=(231424,55296)
+IEW0000     ENTRY PACMAIN
+
+
+
+                                                CROSS REFERENCE TABLE
+
+
+  CONTROL SECTION                       ENTRY
+
+    NAME    ORIGIN  LENGTH                NAME   LOCATION     NAME   LOCATION     NAME   LOCATION     NAME   LOCATION
+  PACMAIN       00     FB8
+  ILBODSP0*    FB8     700
+  ILBOSTP0*   16B8      35
+                                        ILBOSTP1    16CE
+
+
+
+  LOCATION  REFERS TO SYMBOL  IN CONTROL SECTION             LOCATION  REFERS TO SYMBOL  IN CONTROL SECTION
+      528            ILBOSTP0        ILBOSTP0                     52C            ILBODSP0        ILBODSP0
+      530            ILBOSTP1        ILBOSTP0
+ ENTRY ADDRESS       00
+
+ TOTAL LENGTH      16F0
+****PACMAIN   NOW REPLACED IN DATA SET
+AUTHORIZATION CODE IS         0.
+
+PACMAN MVS-3 PELLETS AND SCORE
+T000   START   X=02 Y=02 S=0000 L=101
+####################
+#P.......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T001 R MOVED   X=03 Y=02 S=0010 L=100
+####################
+# P......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T002 R MOVED   X=04 Y=02 S=0020 L=099
+####################
+#  P.....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T003 U BLOCKED X=04 Y=02 S=0020 L=099
+####################
+#  P.....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T004 L MOVED   X=03 Y=02 S=0020 L=099
+####################
+# P .....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T005 L MOVED   X=02 Y=02 S=0020 L=099
+####################
+#P  .....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T006 L BLOCKED X=02 Y=02 S=0020 L=099
+####################
+#P  .....##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T007 D MOVED   X=02 Y=03 S=0030 L=098
+####################
+#   .....##........#
+#P##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T008 D MOVED   X=02 Y=04 S=0040 L=097
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#P.................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T009 R MOVED   X=03 Y=04 S=0050 L=096
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+# P................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+INVALID COMMAND X
+T010 r MOVED   X=04 Y=04 S=0060 L=095
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#  P...............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T011 R MOVED   X=05 Y=04 S=0070 L=094
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#   P..............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T012 R MOVED   X=06 Y=04 S=0080 L=093
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#    P.............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T013 D BLOCKED X=06 Y=04 S=0080 L=093
+####################
+#   .....##........#
+# ##.###.##.###.##.#
+#    P.............#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+QUIT
+TURNS 013
+SCORE 0080
+
+PACMAN MVS-3 PELLETS AND SCORE
+T000   START   X=02 Y=02 S=0000 L=101
+####################
+#P.......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T001 D MOVED   X=02 Y=03 S=0010 L=100
+####################
+# .......##........#
+#P##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T002 D MOVED   X=02 Y=04 S=0020 L=099
+####################
+# .......##........#
+# ##.###.##.###.##.#
+#P.................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T003 R MOVED   X=03 Y=04 S=0030 L=098
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# P................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+EOF
+TURNS 003
+SCORE 0030
+
+PACMAN MVS-3 PELLETS AND SCORE
+T000   START   X=02 Y=02 S=0000 L=101
+####################
+#P.......##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T001 D MOVED   X=02 Y=03 S=0010 L=100
+####################
+# .......##........#
+#P##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T002 D MOVED   X=02 Y=04 S=0020 L=099
+####################
+# .......##........#
+# ##.###.##.###.##.#
+#P.................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T003 D MOVED   X=02 Y=05 S=0030 L=098
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+#P##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T004 D MOVED   X=02 Y=06 S=0040 L=097
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+#P...#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T005 D MOVED   X=02 Y=07 S=0050 L=096
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+#P##.###.##.###.##.#
+#..................#
+#..................#
+####################
+T006 D MOVED   X=02 Y=08 S=0060 L=095
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+#P.................#
+#..................#
+####################
+T007 D MOVED   X=02 Y=09 S=0070 L=094
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+# .................#
+#P.................#
+####################
+T008 R MOVED   X=03 Y=09 S=0080 L=093
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+# .................#
+# P................#
+####################
+T009 U MOVED   X=03 Y=08 S=0090 L=092
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+# P................#
+#  ................#
+####################
+T010 R MOVED   X=04 Y=08 S=0100 L=091
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+#  P...............#
+#  ................#
+####################
+T011 D MOVED   X=04 Y=09 S=0110 L=090
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+#   ...............#
+#  P...............#
+####################
+T012 R MOVED   X=05 Y=09 S=0120 L=089
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+#   ...............#
+#   P..............#
+####################
+T013 U MOVED   X=05 Y=08 S=0130 L=088
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+#   P..............#
+#    ..............#
+####################
+T014 U MOVED   X=05 Y=07 S=0140 L=087
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##P###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T015 U MOVED   X=05 Y=06 S=0150 L=086
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##.#.######.#.##.#
+# ..P#...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T016 U MOVED   X=05 Y=05 S=0160 L=085
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# .................#
+# ##P#.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T017 U MOVED   X=05 Y=04 S=0170 L=084
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# ..P..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T018 U MOVED   X=05 Y=03 S=0180 L=083
+####################
+# .......##........#
+# ##P###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T019 U MOVED   X=05 Y=02 S=0190 L=082
+####################
+# ..P....##........#
+# ## ###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T020 L MOVED   X=04 Y=02 S=0200 L=081
+####################
+# .P ....##........#
+# ## ###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T021 L MOVED   X=03 Y=02 S=0210 L=080
+####################
+# P  ....##........#
+# ## ###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T022 R MOVED   X=04 Y=02 S=0210 L=080
+####################
+#  P ....##........#
+# ## ###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T023 R MOVED   X=05 Y=02 S=0210 L=080
+####################
+#   P....##........#
+# ## ###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T024 R MOVED   X=06 Y=02 S=0220 L=079
+####################
+#    P...##........#
+# ## ###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T025 R MOVED   X=07 Y=02 S=0230 L=078
+####################
+#     P..##........#
+# ## ###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T026 R MOVED   X=08 Y=02 S=0240 L=077
+####################
+#      P.##........#
+# ## ###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T027 R MOVED   X=09 Y=02 S=0250 L=076
+####################
+#       P##........#
+# ## ###.##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T028 D MOVED   X=09 Y=03 S=0260 L=075
+####################
+#        ##........#
+# ## ###P##.###.##.#
+# .. ..............#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T029 D MOVED   X=09 Y=04 S=0270 L=074
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. ...P..........#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T030 L MOVED   X=08 Y=04 S=0280 L=073
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. ..P ..........#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T031 L MOVED   X=07 Y=04 S=0290 L=072
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .P  ..........#
+# ## #.######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T032 D MOVED   X=07 Y=05 S=0300 L=071
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## #P######.#.##.#
+# .. #...##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T033 D MOVED   X=07 Y=06 S=0310 L=070
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #P..##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T034 R MOVED   X=08 Y=06 S=0320 L=069
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. # P.##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T035 R MOVED   X=09 Y=06 S=0330 L=068
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #  P##...#....#
+# ## ###.##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T036 D MOVED   X=09 Y=07 S=0340 L=067
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ###P##.###.##.#
+#    ..............#
+#    ..............#
+####################
+T037 D MOVED   X=09 Y=08 S=0350 L=066
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#    ...P..........#
+#    ..............#
+####################
+T038 D MOVED   X=09 Y=09 S=0360 L=065
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#    ... ..........#
+#    ...P..........#
+####################
+T039 L MOVED   X=08 Y=09 S=0370 L=064
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#    ... ..........#
+#    ..P ..........#
+####################
+T040 U MOVED   X=08 Y=08 S=0380 L=063
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#    ..P ..........#
+#    ..  ..........#
+####################
+T041 L MOVED   X=07 Y=08 S=0390 L=062
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#    .P  ..........#
+#    ..  ..........#
+####################
+T042 D MOVED   X=07 Y=09 S=0400 L=061
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#    .   ..........#
+#    .P  ..........#
+####################
+T043 L MOVED   X=06 Y=09 S=0410 L=060
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#    .   ..........#
+#    P   ..........#
+####################
+T044 U MOVED   X=06 Y=08 S=0420 L=059
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#    P   ..........#
+#        ..........#
+####################
+T045 D MOVED   X=06 Y=09 S=0420 L=059
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#        ..........#
+#    P   ..........#
+####################
+T046 R MOVED   X=07 Y=09 S=0420 L=059
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#        ..........#
+#     P  ..........#
+####################
+T047 U MOVED   X=07 Y=08 S=0420 L=059
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#     P  ..........#
+#        ..........#
+####################
+T048 R MOVED   X=08 Y=08 S=0420 L=059
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#      P ..........#
+#        ..........#
+####################
+T049 D MOVED   X=08 Y=09 S=0420 L=059
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#        ..........#
+#      P ..........#
+####################
+T050 R MOVED   X=09 Y=09 S=0420 L=059
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#        ..........#
+#       P..........#
+####################
+T051 R MOVED   X=10 Y=09 S=0430 L=058
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#        ..........#
+#        P.........#
+####################
+T052 U MOVED   X=10 Y=08 S=0440 L=057
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#        P.........#
+#         .........#
+####################
+T053 R MOVED   X=11 Y=08 S=0450 L=056
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#         P........#
+#         .........#
+####################
+T054 D MOVED   X=11 Y=09 S=0460 L=055
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#          ........#
+#         P........#
+####################
+T055 R MOVED   X=12 Y=09 S=0470 L=054
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#          ........#
+#          P.......#
+####################
+T056 U MOVED   X=12 Y=08 S=0480 L=053
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##.###.##.#
+#          P.......#
+#           .......#
+####################
+T057 U MOVED   X=12 Y=07 S=0490 L=052
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##...#....#
+# ## ### ##P###.##.#
+#           .......#
+#           .......#
+####################
+T058 U MOVED   X=12 Y=06 S=0500 L=051
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##P..#....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T059 R MOVED   X=13 Y=06 S=0510 L=050
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ## P.#....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T060 R MOVED   X=14 Y=06 S=0520 L=049
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######.#.##.#
+# .. #   ##  P#....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T061 U MOVED   X=14 Y=05 S=0530 L=048
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..........#
+# ## # ######P#.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T062 U MOVED   X=14 Y=04 S=0540 L=047
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ....P.....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T063 L MOVED   X=13 Y=04 S=0550 L=046
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ...P .....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T064 L MOVED   X=12 Y=04 S=0560 L=045
+####################
+#        ##........#
+# ## ### ##.###.##.#
+# .. .   ..P  .....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T065 U MOVED   X=12 Y=03 S=0570 L=044
+####################
+#        ##........#
+# ## ### ##P###.##.#
+# .. .   ..   .....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T066 U MOVED   X=12 Y=02 S=0580 L=043
+####################
+#        ##P.......#
+# ## ### ## ###.##.#
+# .. .   ..   .....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T067 R MOVED   X=13 Y=02 S=0590 L=042
+####################
+#        ## P......#
+# ## ### ## ###.##.#
+# .. .   ..   .....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T068 R MOVED   X=14 Y=02 S=0600 L=041
+####################
+#        ##  P.....#
+# ## ### ## ###.##.#
+# .. .   ..   .....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T069 R MOVED   X=15 Y=02 S=0610 L=040
+####################
+#        ##   P....#
+# ## ### ## ###.##.#
+# .. .   ..   .....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T070 R MOVED   X=16 Y=02 S=0620 L=039
+####################
+#        ##    P...#
+# ## ### ## ###.##.#
+# .. .   ..   .....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T071 D MOVED   X=16 Y=03 S=0630 L=038
+####################
+#        ##     ...#
+# ## ### ## ###P##.#
+# .. .   ..   .....#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T072 D MOVED   X=16 Y=04 S=0640 L=037
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   .P...#
+# ## # ###### #.##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T073 D MOVED   X=16 Y=05 S=0650 L=036
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### #P##.#
+# .. #   ##   #....#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T074 D MOVED   X=16 Y=06 S=0660 L=035
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   #P...#
+# ## ### ## ###.##.#
+#           .......#
+#           .......#
+####################
+T075 D MOVED   X=16 Y=07 S=0670 L=034
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ###P##.#
+#           .......#
+#           .......#
+####################
+T076 D MOVED   X=16 Y=08 S=0680 L=033
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#           ...P...#
+#           .......#
+####################
+T077 D MOVED   X=16 Y=09 S=0690 L=032
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#           ... ...#
+#           ...P...#
+####################
+T078 L MOVED   X=15 Y=09 S=0700 L=031
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#           ... ...#
+#           ..P ...#
+####################
+T079 U MOVED   X=15 Y=08 S=0710 L=030
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#           ..P ...#
+#           ..  ...#
+####################
+T080 L MOVED   X=14 Y=08 S=0720 L=029
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#           .P  ...#
+#           ..  ...#
+####################
+T081 D MOVED   X=14 Y=09 S=0730 L=028
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#           .   ...#
+#           .P  ...#
+####################
+T082 L MOVED   X=13 Y=09 S=0740 L=027
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#           .   ...#
+#           P   ...#
+####################
+T083 U MOVED   X=13 Y=08 S=0750 L=026
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#           P   ...#
+#               ...#
+####################
+T084 D MOVED   X=13 Y=09 S=0750 L=026
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#               ...#
+#           P   ...#
+####################
+T085 R MOVED   X=14 Y=09 S=0750 L=026
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#               ...#
+#            P  ...#
+####################
+T086 U MOVED   X=14 Y=08 S=0750 L=026
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#            P  ...#
+#               ...#
+####################
+T087 R MOVED   X=15 Y=08 S=0750 L=026
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#             P ...#
+#               ...#
+####################
+T088 D MOVED   X=15 Y=09 S=0750 L=026
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#               ...#
+#             P ...#
+####################
+T089 R MOVED   X=16 Y=09 S=0750 L=026
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#               ...#
+#              P...#
+####################
+T090 R MOVED   X=17 Y=09 S=0760 L=025
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#               ...#
+#               P..#
+####################
+T091 U MOVED   X=17 Y=08 S=0770 L=024
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#               P..#
+#                ..#
+####################
+T092 R MOVED   X=18 Y=08 S=0780 L=023
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#                P.#
+#                ..#
+####################
+T093 D MOVED   X=18 Y=09 S=0790 L=022
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#                 .#
+#                P.#
+####################
+T094 R MOVED   X=19 Y=09 S=0800 L=021
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#                 .#
+#                 P#
+####################
+T095 U MOVED   X=19 Y=08 S=0810 L=020
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##.#
+#                 P#
+#                  #
+####################
+T096 U MOVED   X=19 Y=07 S=0820 L=019
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ...#
+# ## ### ## ### ##P#
+#                  #
+#                  #
+####################
+T097 U MOVED   X=19 Y=06 S=0830 L=018
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##.#
+# .. #   ##   # ..P#
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T098 U MOVED   X=19 Y=05 S=0840 L=017
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ...#
+# ## # ###### # ##P#
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T099 U MOVED   X=19 Y=04 S=0850 L=016
+####################
+#        ##     ...#
+# ## ### ## ### ##.#
+# .. .   ..   . ..P#
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T100 U MOVED   X=19 Y=03 S=0860 L=015
+####################
+#        ##     ...#
+# ## ### ## ### ##P#
+# .. .   ..   . .. #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T101 U MOVED   X=19 Y=02 S=0870 L=014
+####################
+#        ##     ..P#
+# ## ### ## ### ## #
+# .. .   ..   . .. #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T102 L MOVED   X=18 Y=02 S=0880 L=013
+####################
+#        ##     .P #
+# ## ### ## ### ## #
+# .. .   ..   . .. #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T103 L MOVED   X=17 Y=02 S=0890 L=012
+####################
+#        ##     P  #
+# ## ### ## ### ## #
+# .. .   ..   . .. #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T104 R MOVED   X=18 Y=02 S=0890 L=012
+####################
+#        ##      P #
+# ## ### ## ### ## #
+# .. .   ..   . .. #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T105 R MOVED   X=19 Y=02 S=0890 L=012
+####################
+#        ##       P#
+# ## ### ## ### ## #
+# .. .   ..   . .. #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T106 D MOVED   X=19 Y=03 S=0890 L=012
+####################
+#        ##        #
+# ## ### ## ### ##P#
+# .. .   ..   . .. #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T107 D MOVED   X=19 Y=04 S=0890 L=012
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   . ..P#
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T108 L MOVED   X=18 Y=04 S=0900 L=011
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   . .P #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T109 L MOVED   X=17 Y=04 S=0910 L=010
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   . P  #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T110 R MOVED   X=18 Y=04 S=0910 L=010
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .  P #
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T111 R MOVED   X=19 Y=04 S=0910 L=010
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .   P#
+# ## # ###### # ## #
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T112 D MOVED   X=19 Y=05 S=0910 L=010
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ##P#
+# .. #   ##   # .. #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T113 D MOVED   X=19 Y=06 S=0910 L=010
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   # ..P#
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T114 L MOVED   X=18 Y=06 S=0920 L=009
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   # .P #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T115 L MOVED   X=17 Y=06 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   # P  #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T116 R MOVED   X=18 Y=06 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #  P #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T117 R MOVED   X=19 Y=06 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #   P#
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T118 D MOVED   X=19 Y=07 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ##P#
+#                  #
+#                  #
+####################
+T119 D MOVED   X=19 Y=08 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                 P#
+#                  #
+####################
+T120 D MOVED   X=19 Y=09 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                 P#
+####################
+T121 L MOVED   X=18 Y=09 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                P #
+####################
+T122 U MOVED   X=18 Y=08 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                P #
+#                  #
+####################
+T123 L MOVED   X=17 Y=08 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#               P  #
+#                  #
+####################
+T124 D MOVED   X=17 Y=09 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#               P  #
+####################
+T125 L MOVED   X=16 Y=09 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#              P   #
+####################
+T126 U MOVED   X=16 Y=08 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#              P   #
+#                  #
+####################
+T127 U MOVED   X=16 Y=07 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ###P## #
+#                  #
+#                  #
+####################
+T128 U MOVED   X=16 Y=06 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### # ## #
+# .. #   ##   #P   #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T129 U MOVED   X=16 Y=05 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .    #
+# ## # ###### #P## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T130 U MOVED   X=16 Y=04 S=0930 L=008
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   .P   #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T131 L MOVED   X=15 Y=04 S=0940 L=007
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..   P    #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T132 R MOVED   X=16 Y=04 S=0940 L=007
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..    P   #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T133 U MOVED   X=16 Y=03 S=0940 L=007
+####################
+#        ##        #
+# ## ### ## ###P## #
+# .. .   ..        #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T134 U MOVED   X=16 Y=02 S=0940 L=007
+####################
+#        ##    P   #
+# ## ### ## ### ## #
+# .. .   ..        #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T135 L MOVED   X=15 Y=02 S=0940 L=007
+####################
+#        ##   P    #
+# ## ### ## ### ## #
+# .. .   ..        #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T136 L MOVED   X=14 Y=02 S=0940 L=007
+####################
+#        ##  P     #
+# ## ### ## ### ## #
+# .. .   ..        #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T137 L MOVED   X=13 Y=02 S=0940 L=007
+####################
+#        ## P      #
+# ## ### ## ### ## #
+# .. .   ..        #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T138 L MOVED   X=12 Y=02 S=0940 L=007
+####################
+#        ##P       #
+# ## ### ## ### ## #
+# .. .   ..        #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T139 D MOVED   X=12 Y=03 S=0940 L=007
+####################
+#        ##        #
+# ## ### ##P### ## #
+# .. .   ..        #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T140 D MOVED   X=12 Y=04 S=0940 L=007
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   ..P       #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T141 L MOVED   X=11 Y=04 S=0950 L=006
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   .P        #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T142 L MOVED   X=10 Y=04 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .   P         #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T143 R MOVED   X=11 Y=04 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .    P        #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T144 R MOVED   X=12 Y=04 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .     P       #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T145 R MOVED   X=13 Y=04 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .      P      #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T146 R MOVED   X=14 Y=04 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .       P     #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T147 D MOVED   X=14 Y=05 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ######P# ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T148 D MOVED   X=14 Y=06 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##  P#    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T149 L MOVED   X=13 Y=06 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ## P #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T150 L MOVED   X=12 Y=06 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##P  #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T151 D MOVED   X=12 Y=07 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ##P### ## #
+#                  #
+#                  #
+####################
+T152 D MOVED   X=12 Y=08 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#          P       #
+#                  #
+####################
+T153 D MOVED   X=12 Y=09 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#          P       #
+####################
+T154 L MOVED   X=11 Y=09 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#         P        #
+####################
+T155 U MOVED   X=11 Y=08 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#         P        #
+#                  #
+####################
+T156 L MOVED   X=10 Y=08 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#        P         #
+#                  #
+####################
+T157 D MOVED   X=10 Y=09 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#        P         #
+####################
+T158 L MOVED   X=09 Y=09 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#       P          #
+####################
+T159 U MOVED   X=09 Y=08 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#       P          #
+#                  #
+####################
+T160 U MOVED   X=09 Y=07 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ###P## ### ## #
+#                  #
+#                  #
+####################
+T161 U MOVED   X=09 Y=06 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #  P##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T162 L MOVED   X=08 Y=06 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. # P ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T163 L MOVED   X=07 Y=06 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## # ###### # ## #
+# .. #P  ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T164 U MOVED   X=07 Y=05 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .             #
+# ## #P###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T165 U MOVED   X=07 Y=04 S=0960 L=005
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. .P            #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T166 L MOVED   X=06 Y=04 S=0970 L=004
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .. P             #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T167 R MOVED   X=07 Y=04 S=0970 L=004
+####################
+#        ##        #
+# ## ### ## ### ## #
+# ..  P            #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T168 R MOVED   X=08 Y=04 S=0970 L=004
+####################
+#        ##        #
+# ## ### ## ### ## #
+# ..   P           #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T169 R MOVED   X=09 Y=04 S=0970 L=004
+####################
+#        ##        #
+# ## ### ## ### ## #
+# ..    P          #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T170 U MOVED   X=09 Y=03 S=0970 L=004
+####################
+#        ##        #
+# ## ###P## ### ## #
+# ..               #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T171 U MOVED   X=09 Y=02 S=0970 L=004
+####################
+#       P##        #
+# ## ### ## ### ## #
+# ..               #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T172 L MOVED   X=08 Y=02 S=0970 L=004
+####################
+#      P ##        #
+# ## ### ## ### ## #
+# ..               #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T173 L MOVED   X=07 Y=02 S=0970 L=004
+####################
+#     P  ##        #
+# ## ### ## ### ## #
+# ..               #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T174 L MOVED   X=06 Y=02 S=0970 L=004
+####################
+#    P   ##        #
+# ## ### ## ### ## #
+# ..               #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T175 L MOVED   X=05 Y=02 S=0970 L=004
+####################
+#   P    ##        #
+# ## ### ## ### ## #
+# ..               #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T176 D MOVED   X=05 Y=03 S=0970 L=004
+####################
+#        ##        #
+# ##P### ## ### ## #
+# ..               #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T177 D MOVED   X=05 Y=04 S=0970 L=004
+####################
+#        ##        #
+# ## ### ## ### ## #
+# ..P              #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T178 L MOVED   X=04 Y=04 S=0980 L=003
+####################
+#        ##        #
+# ## ### ## ### ## #
+# .P               #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T179 L MOVED   X=03 Y=04 S=0990 L=002
+####################
+#        ##        #
+# ## ### ## ### ## #
+# P                #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T180 R MOVED   X=04 Y=04 S=0990 L=002
+####################
+#        ##        #
+# ## ### ## ### ## #
+#  P               #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T181 R MOVED   X=05 Y=04 S=0990 L=002
+####################
+#        ##        #
+# ## ### ## ### ## #
+#   P              #
+# ## # ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T182 D MOVED   X=05 Y=05 S=0990 L=002
+####################
+#        ##        #
+# ## ### ## ### ## #
+#                  #
+# ##P# ###### # ## #
+# .. #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T183 D MOVED   X=05 Y=06 S=0990 L=002
+####################
+#        ##        #
+# ## ### ## ### ## #
+#                  #
+# ## # ###### # ## #
+# ..P#   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T184 L MOVED   X=04 Y=06 S=1000 L=001
+####################
+#        ##        #
+# ## ### ## ### ## #
+#                  #
+# ## # ###### # ## #
+# .P #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+T185 L MOVED   X=03 Y=06 S=1010 L=000
+####################
+#        ##        #
+# ## ### ## ### ## #
+#                  #
+# ## # ###### # ## #
+# P  #   ##   #    #
+# ## ### ## ### ## #
+#                  #
+#                  #
+####################
+WIN
+TURNS 185
+SCORE 1010
+                 PPPPPPPPPPP    AAAAAAAAAA    CCCCCCCCCC   BBBBBBBBBBB   LL            DDDDDDDDD       00000000     3333333333
+                PPPPPPPPPPPP  AAAAAAAAAAAA  CCCCCCCCCCCC  BBBBBBBBBBBB  LL            DDDDDDDDDD     0000000000   333333333333
+               PP        PP  AA        AA  CC        CC  BB        BB  LL            DD       DD   00      0000  33        33
+              PP        PP  AA        AA  CC            BB        BB  LL            DD        DD  00     00 00            33
+             PP        PP  AA        AA  CC            BB       BB   LL            DD        DD  00    00  00            33
+            PPPPPPPPPPPP  AAAAAAAAAAAA  CC            BBBBBBBBBB    LL            DD        DD  00   00   00         3333
+           PPPPPPPPPPP   AAAAAAAAAAAA  CC            BBBBBBBBBB    LL            DD        DD  00  00    00         3333
+          PP            AA        AA  CC            BB       BB   LL            DD        DD  00 00     00            33
+         PP            AA        AA  CC            BB        BB  LL            DD        DD  0000      00            33
+        PP            AA        AA  CC        CC  BB        BB  LL            DD       DD   000       00  33        33
+       PP            AA        AA  CCCCCCCCCCCC  BBBBBBBBBBBB  LLLLLLLLLLLL  DDDDDDDDDD     0000000000   333333333333
+      PP            AA        AA   CCCCCCCCCC   BBBBBBBBBBB   LLLLLLLLLLLL  DDDDDDDDD       00000000     3333333333
+
+
+
+                    JJJJJJJJJJ       11            11        9999999999                                AAAAAAAAAA
+                    JJJJJJJJJJ      111           111       999999999999                              AAAAAAAAAAAA
+                        JJ         1111          1111       99        99                              AA        AA
+                        JJ           11            11       99        99                              AA        AA
+                        JJ           11            11       99        99                              AA        AA
+                        JJ           11            11       999999999999                              AAAAAAAAAAAA
+                        JJ           11            11       999999999999                              AAAAAAAAAAAA
+                        JJ           11            11                 99                              AA        AA
+                  JJ    JJ           11            11                 99                              AA        AA
+                  JJ    JJ           11            11       99        99                              AA        AA
+                  JJJJJJJJ       1111111111    1111111111   999999999999                              AA        AA
+                   JJJJJJ        1111111111    1111111111    9999999999                               AA        AA
+
+
+****A   END   JOB  119  PACBLD03  PACMAN MVS3           ROOM        5.30.06 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  119   END   A****
+****A   END   JOB  119  PACBLD03  PACMAN MVS3           ROOM        5.30.06 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  119   END   A****
+****A   END   JOB  119  PACBLD03  PACMAN MVS3           ROOM        5.30.06 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  119   END   A****
+****A   END   JOB  119  PACBLD03  PACMAN MVS3           ROOM        5.30.06 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  119   END   A****

@@ -8,3 +8,7 @@
 - D4 (MVS-2) A performed paragraph ending in a conditional gives IKF4072I-W (RC 4). End it with an EXIT
   paragraph and call `PERFORM x THRU x-EXIT`.
 - D5 (MVS-2) Tests compare SYSOUT with expected output produced by an independent Python reference model.
+- D6 (MVS-3) COBOL text must end by column 72 (an overlong line gave IKF4091I, RC 12); tools/validate_source.py
+  now enforces it. Counters that can exceed 99 (turns up to 185 in the full-clear run) are PIC 999.
+- D7 (MVS-3) Rules: pellet = 10 points; the start cell is cleared at init without scoring; blocked moves and
+  revisits score nothing; the game ends WIN when PELLETS-LEFT = 0 and later commands are ignored.

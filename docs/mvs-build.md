@@ -28,3 +28,14 @@ Result: PACBLD02 JOB 117, SRC1/COB1/LINK/RUN1/RUN2 RC 0000, no warnings; SYSOUT 
 Evidence: docs/evidence/mvs2-player.txt. Dialect notes: no reference modification (`X(1:1)`) - use
 REDEFINES; end conditional performed paragraphs with `PERFORM ... THRU ...-EXIT`.
 `tests/test_map.py` remains the local map-sync check; its MVS-1 runtime mode is superseded.
+
+## MVS-3: pellets and score (2026-10-07)
+PACMAIN adds SCORE (PIC 9(4)), PELLETS-LEFT (counted at init: 101 on LEVEL1), eat-on-entry (10 points), WIN
+state and `S=`/`L=` fields in each status line; end lines `WIN|QUIT|EOF`, `TURNS nnn`, `SCORE nnnn`.
+Build: `python3 tools/make_deck.py MVS3 && ./tools/submit.sh build/MVS3.jcl`, then
+`./tools/job_output.py PACBLD03 > build/PACBLD03.txt && python3 tests/test_mvs3.py build/PACBLD03.txt`.
+Cases: MOVES (revisit/bump score nothing), EOF, WIN (generated full-clear route of 185 turns plus one trailing
+command that must be ignored; `tests/ref_mvs3.py --gen-win`). Expected output from `tests/ref_mvs3.py`.
+Result: PACBLD03 JOB 119, all six steps RC 0000, no warnings; WIN run: 185 turns, SCORE 1010, L=000.
+Evidence: docs/evidence/mvs3-pellets.txt. MVS-2 tests (test_mvs2.py) remain as local checks only; their
+runtime expectations are superseded by the changed output format.

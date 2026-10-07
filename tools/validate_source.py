@@ -12,6 +12,8 @@ def validate(path):
     for n, line in enumerate(path.read_bytes().decode('latin-1').splitlines(), 1):
         if any(ord(c) > 126 or (ord(c) < 32) for c in line):
             errors.append(f'{path}:{n}: non-ASCII or control character')
+        if path.suffix == '.cob' and len(line.rstrip()) > 72:
+            errors.append(f'{path}:{n}: COBOL text beyond column 72')
         if len(line) > 80:
             errors.append(f'{path}:{n}: longer than 80 columns')
         if path.suffix == '.cob' and len(line) > 6 and line[6] not in ' *-/D':

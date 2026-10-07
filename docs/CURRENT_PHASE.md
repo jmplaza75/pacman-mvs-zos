@@ -1,1 +1,1 @@
-MVS-2 complete (player by turns verified, JOB 117); next: MVS-3 (pellets and score) - not started
+MVS-3 complete (pellets/score/win verified, JOB 119); next: MVS-4 (basic ghost) - not started
