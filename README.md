@@ -5,4 +5,5 @@ Text Pac-Man in COBOL. See docs/ for environment, build and phase status.
 - MVS-2 (player by turns): **complete** - see docs/mvs-build.md.
 - MVS-3 (pellets and score): **complete** - winnable game, see docs/mvs-build.md.
 - MVS-4 (basic ghost): **complete** - see docs/mvs-build.md.
-- MVS-5 onward: not started.
+- MVS-5 (lives and game cycle): **complete** - a full game can be won or lost; see docs/mvs-build.md.
+- MVS-6 onward: not started.

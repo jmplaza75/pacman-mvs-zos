@@ -20,3 +20,15 @@
   one draw per ghost move, no draw if no neighbour. AI0 = still ghost (test mode; optional first SYSIN card
   `AI0`/`AI1`). Order per turn: player move/eat -> hit check -> (if not over) ghost move -> hit check; a hit
   ends the run with CAUGHT (lives arrive in MVS-5) and beats WIN. Every U/D/L/R command, even blocked, is a tick.
+- D10 (permanent rules from MVS-4) Tests are deterministic and checked against an independent Python model.
+  AI must be reproducible with a fixed seed; a controlled/deterministic mode (AI0 still ghost, fixed LCG seed)
+  is always kept so AI, collision and regression scenarios replay exactly. Any future AI improvement must be
+  testable reproducibly even if normal play uses pseudo-random behaviour.
+- D11 (MVS-5) Lives and cycle: 3 lives. A hit costs one life; if lives remain, player (2,2) and ghost (19,9) are
+  reset (eaten pellets and score persist, ghost seed continues, ghost does not move that tick) and the result is
+  DIED; at 0 lives the run ends LOST (board shows the collision). States: READY (before the first tick) ->
+  RUNNING -> WON | LOST | QUIT (shown as ST= in each status line); EOF ends in the last state. End lines:
+  WIN|LOST|QUIT|EOF, TURNS, SCORE, LIVES. A hit beats a simultaneous last pellet; if lives remain and no pellets
+  are left after the reset the game is WON. That edge is covered by cases EDGE3/EDGE2/EDGE1 (tests/search_edge.py engineers them: last pellet eaten in the same tick as the hit, with 2/1/0 lives remaining after it).
+  JES trims trailing blanks, so tests compare right-stripped lines.
+- D12 (permanent rule) No documented edge case may remain without a test before a phase is closed.

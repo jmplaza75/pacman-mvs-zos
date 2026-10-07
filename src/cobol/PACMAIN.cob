@@ -1,7 +1,8 @@
-      * MVS-4: BASIC GHOST. COMMANDS U/D/L/R/Q, ONE PER CARD (SYSIN).
+      * MVS-5: LIVES AND GAME CYCLE. COMMANDS U/D/L/R/Q, ONE PER CARD.
       * OPTIONAL FIRST CARD AI0 (GHOST STILL) OR AI1 (RANDOM, DEFAULT).
       * MAP LITERALS MUST MATCH MAPS/LEVEL1.TXT. PLAYER AND GHOST START
-      * CELLS ARE CLEARED AT INIT; PELLET = 10 POINTS.
+      * CELLS ARE CLEARED AT INIT; PELLET = 10 POINTS. THREE LIVES;
+      * A HIT COSTS ONE AND SENDS BOTH CHARACTERS TO THEIR START CELLS.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -52,7 +53,10 @@
        01  WS-EOF                PIC 9 VALUE 0.
        01  WS-QUIT               PIC 9 VALUE 0.
        01  WS-WON                PIC 9 VALUE 0.
-       01  WS-CAUGHT             PIC 9 VALUE 0.
+       01  WS-LOST               PIC 9 VALUE 0.
+       01  WS-HIT                PIC 9 VALUE 0.
+       01  LIVES                 PIC 9 VALUE 3.
+       01  GAME-STATE            PIC X(7) VALUE 'READY  '.
        01  AI-LEVEL              PIC 9 VALUE 1.
        01  GHOST-X               PIC 99 VALUE 19.
        01  GHOST-Y               PIC 99 VALUE 9.
@@ -93,10 +97,14 @@
            05  ST-GX             PIC 99.
            05  FILLER            PIC X VALUE ','.
            05  ST-GY             PIC 99.
+           05  FILLER            PIC X(3) VALUE ' V='.
+           05  ST-LIVES          PIC 9.
+           05  FILLER            PIC X(4) VALUE ' ST='.
+           05  ST-STATE          PIC X(7).
        PROCEDURE DIVISION.
        MAIN-PARA.
            OPEN INPUT COMMAND-FILE.
-           DISPLAY 'PACMAN MVS-4 BASIC GHOST'.
+           DISPLAY 'PACMAN MVS-5 LIVES AND CYCLE'.
            PERFORM READ-CMD.
            PERFORM READ-CONFIG THRU READ-CONFIG-EXIT.
            PERFORM INIT-GAME.
@@ -104,9 +112,9 @@
            PERFORM SHOW-STATE.
            PERFORM TURN-PARA
                UNTIL WS-EOF = 1 OR WS-QUIT = 1 OR WS-WON = 1
-                  OR WS-CAUGHT = 1.
-           IF WS-CAUGHT = 1
-               DISPLAY 'CAUGHT'
+                  OR WS-LOST = 1.
+           IF WS-LOST = 1
+               DISPLAY 'LOST'
            ELSE IF WS-WON = 1
                DISPLAY 'WIN'
            ELSE IF WS-QUIT = 1
@@ -115,6 +123,7 @@
                DISPLAY 'EOF'.
            DISPLAY 'TURNS ' TICK-COUNT.
            DISPLAY 'SCORE ' SCORE.
+           DISPLAY 'LIVES ' LIVES.
            CLOSE COMMAND-FILE.
            STOP RUN.
        READ-CONFIG.
@@ -167,6 +176,7 @@
                PERFORM TRY-MOVE
            ELSE IF WS-CMD = 'Q' OR WS-CMD = 'q'
                MOVE 1 TO WS-QUIT
+               MOVE 'QUIT   ' TO GAME-STATE
            ELSE
                DISPLAY 'INVALID COMMAND ' WS-CMD.
        PROCESS-CMD-EXIT.
@@ -182,19 +192,47 @@
                MOVE NEW-Y TO PLAYER-Y
                PERFORM EAT-PELLET THRU EAT-PELLET-EXIT.
            PERFORM ROUND-END THRU ROUND-END-EXIT.
+           PERFORM SET-STATE THRU SET-STATE-EXIT.
            PERFORM SHOW-STATE.
        ROUND-END.
+           MOVE 0 TO WS-HIT.
            PERFORM CHECK-HIT THRU CHECK-HIT-EXIT.
-           IF WS-WON = 0 AND WS-CAUGHT = 0 AND AI-LEVEL = 1
+           IF WS-HIT = 0 AND WS-WON = 0 AND AI-LEVEL = 1
                PERFORM GHOST-MOVE THRU GHOST-MOVE-EXIT
                PERFORM CHECK-HIT THRU CHECK-HIT-EXIT.
+           IF WS-HIT = 1
+               PERFORM LOSE-LIFE THRU LOSE-LIFE-EXIT.
        ROUND-END-EXIT.
            EXIT.
        CHECK-HIT.
            IF GHOST-X = PLAYER-X AND GHOST-Y = PLAYER-Y
-               MOVE 1 TO WS-CAUGHT
-               MOVE 0 TO WS-WON.
+               MOVE 1 TO WS-HIT.
        CHECK-HIT-EXIT.
+           EXIT.
+       LOSE-LIFE.
+           MOVE 0 TO WS-WON.
+           SUBTRACT 1 FROM LIVES.
+           IF LIVES = 0
+               MOVE 1 TO WS-LOST
+               MOVE 'LOST   ' TO WS-RESULT
+           ELSE
+               MOVE 'DIED   ' TO WS-RESULT
+               MOVE 2 TO PLAYER-X
+               MOVE 2 TO PLAYER-Y
+               MOVE 19 TO GHOST-X
+               MOVE 9 TO GHOST-Y
+               IF PELLETS-LEFT = 0
+                   MOVE 1 TO WS-WON.
+       LOSE-LIFE-EXIT.
+           EXIT.
+       SET-STATE.
+           IF WS-LOST = 1
+               MOVE 'LOST   ' TO GAME-STATE
+           ELSE IF WS-WON = 1
+               MOVE 'WON    ' TO GAME-STATE
+           ELSE
+               MOVE 'RUNNING' TO GAME-STATE.
+       SET-STATE-EXIT.
            EXIT.
        GHOST-MOVE.
            MOVE 0 TO CAND-N.
@@ -241,6 +279,8 @@
            MOVE SCORE TO ST-SCORE.
            MOVE GHOST-X TO ST-GX.
            MOVE GHOST-Y TO ST-GY.
+           MOVE LIVES TO ST-LIVES.
+           MOVE GAME-STATE TO ST-STATE.
            MOVE PELLETS-LEFT TO ST-LEFT.
            DISPLAY WS-STATUS-LINE.
            PERFORM SHOW-ROW VARYING WS-ROW FROM 1 BY 1

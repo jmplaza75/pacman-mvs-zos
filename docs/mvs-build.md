@@ -50,3 +50,14 @@ ghost, trailing command ignored). Expected output from the independent `tests/re
 also asserts the ghost never stands in a wall and moves at most one orthogonal step (zero in AI0).
 Result: PACBLD04 JOB 120, SRC1/COB1/LINK/RUN1-5 all RC 0000, no warnings, outputs identical to the model.
 Evidence: docs/evidence/mvs4-ghost.txt. MVS-3 runtime tests are superseded by the new format.
+
+## MVS-5: lives and game cycle (2026-10-07)
+PACMAIN adds LIVES, GAME-STATE (READY/RUNNING/WON/LOST/QUIT), respawn after a hit and the LOST end (rules: D11).
+Build: `python3 tools/make_deck.py MVS5 && ./tools/submit.sh build/MVS5.jcl`, then
+`./tools/job_output.py PACBLD05 > build/PACBLD05.txt && python3 tests/test_mvs5.py build/PACBLD05.txt`.
+Twelve cases vs the independent model `tests/ref_mvs5.py`: MOVES, RAND, CATCH1 (ghost kills, play continues),
+WIN0, CATCH0, DIE1 (die, move on, QUIT), LOST0 (three deaths = 72 turns, trailing command ignored),
+WINAFTER (die once, then win with 2 lives), LOST1 (random ghost, game lost). Runtime invariants: lives drop by
+exactly one per death, respawn cells, ghost steps/walls. The game is both winnable and losable.
+Edge cases EDGE3/EDGE2/EDGE1 (last pellet + hit in one tick; WON with 2 or 1 lives, LOST with 0) were added afterwards.
+Result: PACBLD05 (final run, JOB 122) 15 steps incl. RUN1-12 all RC 0000, no warnings. Evidence: docs/evidence/mvs5-lives.txt.
