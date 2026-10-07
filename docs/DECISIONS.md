@@ -32,3 +32,17 @@
   are left after the reset the game is WON. That edge is covered by cases EDGE3/EDGE2/EDGE1 (tests/search_edge.py engineers them: last pellet eaten in the same tick as the hit, with 2/1/0 lives remaining after it).
   JES trims trailing blanks, so tests compare right-stripped lines.
 - D12 (permanent rule) No documented edge case may remain without a test before a phase is closed.
+- D13 (MVS-6) IKFCBL00 rejects nested subscripts (`REV-D (GH-DIR (G))`, `MAP-CELL (GH-Y (G) GH-X (G))`,
+  IKF4077I): copy table fields into scalars first. Table items (GHOST-TABLE OCCURS 3) are fine as plain subscripts.
+- D14 (MVS-6) Ghost AI levels, config card `AI<l> [<n>]` (l 0 still, 1 random incl. reversal, 2 persistent,
+  3 chase; n = 1-3 ghosts, default AI1, 1 ghost, so MVS-5 behaviour and output are unchanged byte for byte):
+  * Levels 2/3 never reverse unless no other move exists (impossible on LEVEL1: no dead ends - asserted by test).
+  * AI2 keeps going while exactly one non-reverse move exists (corridor/turn); at an intersection (>= 2) it draws
+    from the shared LCG (same seed 12345, draws in ghost order).
+  * AI3 picks the move minimising Manhattan distance to the player's position after the player's move; ties go to
+    the first in order U,D,L,R; no random draw.
+  * Ghost starts (19,9) dir L, (2,9) dir R, (19,2) dir L; only active ghosts' cells are cleared (100/99/98 pellets).
+  * Ghosts move in index order after the player; any ghost on the player's cell is a hit; several ghosts on the
+    cell in one tick cost ONE life. Extra ghosts print on an extra status line `G2=xx,yy[ G3=xx,yy]`.
+  * Documented edges are all tested: double hit (MULTI), pellet counts, no-reverse, corridor/intersection, tie
+    breaking (properties re-derived from the real SYSOUT by tests/test_mvs6.py).

@@ -1,0 +1,19 @@
+AI3 3
+R
+D
+R
+R
+R
+U
+R
+R
+U
+R
+L
+D
+R
+R
+R
+D
+R
+R

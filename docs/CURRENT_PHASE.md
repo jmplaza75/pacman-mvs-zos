@@ -1,1 +1,1 @@
-MVS-5 complete (D11 edge covered, JOB 122)
+MVS-6 complete (AI0-AI3, 1-3 ghosts; JOB 124); next: MVS-7 (portability refactor) - not started

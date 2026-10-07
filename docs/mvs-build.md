@@ -61,3 +61,15 @@ WINAFTER (die once, then win with 2 lives), LOST1 (random ghost, game lost). Run
 exactly one per death, respawn cells, ghost steps/walls. The game is both winnable and losable.
 Edge cases EDGE3/EDGE2/EDGE1 (last pellet + hit in one tick; WON with 2 or 1 lives, LOST with 0) were added afterwards.
 Result: PACBLD05 (final run, JOB 122) 15 steps incl. RUN1-12 all RC 0000, no warnings. Evidence: docs/evidence/mvs5-lives.txt.
+
+## MVS-6: smarter ghosts (2026-10-07)
+PACMAIN: GHOST-TABLE (up to 3 ghosts), levels AI0-AI3 (rules: D14). Build: `python3 tools/make_deck.py MVS6 &&
+./tools/submit.sh build/MVS6.jcl`, then `./tools/job_output.py PACBLD06 > build/PACBLD06.txt &&
+python3 tests/test_mvs6.py build/PACBLD06.txt`. 19 runs vs the independent model `tests/ref_mvs6.py`:
+the 12 MVS-5 cases (their output is byte-identical to MVS-5 apart from the header = regression) plus P2 (AI2),
+P2N3 (AI2, 3 ghosts), R1N2 (AI1, 2 ghosts), C3WALK (chase while moving), C3 (waiting player is hunted down: LOST in
+84 turns), C3N2 (two chasers: LOST in 21), MULTI (AI3, 3 ghosts, double hit costs one life).
+The checker also re-derives from the real output that ghosts never enter walls, move one step, never reverse
+(AI2/3), follow corridors (AI2), pick the first Manhattan minimum (AI3) and that lives fall by one per hit.
+Result: PACBLD06 JOB 124 (first attempt JOB 123 failed to compile: nested subscripts, D13), 22 steps RC 0000.
+Evidence: docs/evidence/mvs6-ai.txt.
