@@ -1,0 +1,309 @@
+****A  START  JOB  114  PACBLD01  PACMAN MVS1           ROOM        5.19.39 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  114  START  A****
+****A  START  JOB  114  PACBLD01  PACMAN MVS1           ROOM        5.19.39 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  114  START  A****
+****A  START  JOB  114  PACBLD01  PACMAN MVS1           ROOM        5.19.39 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  114  START  A****
+****A  START  JOB  114  PACBLD01  PACMAN MVS1           ROOM        5.19.39 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  114  START  A****
+                                                J E S 2   J O B   L O G
+
+
+17.19.39 JOB  114  $HASP373 PACBLD01 STARTED - INIT  1 - CLASS A - SYS TK4-
+17.19.39 JOB  114  IEF403I PACBLD01 - STARTED - TIME=17.19.39
+17.19.39 JOB  114  IEFACTRT - Stepname  Procstep  Program   Retcode
+17.19.39 JOB  114  PACBLD01   SRC1                IEBGENER  RC= 0000
+17.19.39 JOB  114  PACBLD01   COB1                IKFCBL00  RC= 0000
+17.19.39 JOB  114  PACBLD01   LINK                IEWL      RC= 0000
+17.19.39 JOB  114  PACBLD01   RUN1                PACMAIN   RC= 0000
+17.19.39 JOB  114  IEF404I PACBLD01 - ENDED - TIME=17.19.39
+17.19.39 JOB  114  $HASP395 PACBLD01 ENDED
+
+
+------ JES2 JOB STATISTICS ------
+
+
+ 07 OCT 26 JOB EXECUTION DATE
+
+
+        67 CARDS READ
+
+
+       243 SYSOUT PRINT RECORDS
+
+
+         0 SYSOUT PUNCH RECORDS
+
+
+      0.00 MINUTES EXECUTION TIME
+    1     //PACBLD01 JOB (1),'PACMAN MVS1',CLASS=A,MSGCLASS=A,                    JOB  114
+          //             MSGLEVEL=(1,1),REGION=4096K,
+          //             USER=HERC01,PASSWORD=<REDACTED>
+    2     //SRC1     EXEC PGM=IEBGENER,COND=(0,NE)
+    3     //SYSPRINT DD SYSOUT=A
+    4     //SYSUT2   DD DSN=HERC01.PACMAN.COBOL(PACMAIN),DISP=OLD
+    5     //SYSIN    DD DUMMY
+    6     //SYSUT1   DD DATA,DLM=ZZ
+    7     //COB1     EXEC PGM=IKFCBL00,COND=(0,NE),
+          //         PARM='LOAD,LIB,SUPMAP,SIZE=2048K,BUF=1024K'
+    8     //SYSPRINT DD SYSOUT=A
+    9     //SYSPUNCH DD DUMMY
+   10     //SYSUT1   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   11     //SYSUT2   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   12     //SYSUT3   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   13     //SYSUT4   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   14     //SYSLIN   DD DSN=&&OBJ1,DISP=(NEW,PASS),UNIT=SYSDA,
+          //            SPACE=(80,(500,100)),
+          //            DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)
+   15     //SYSIN    DD DSN=HERC01.PACMAN.COBOL(PACMAIN),DISP=SHR
+   16     //SYSLIB   DD DSN=HERC01.PACMAN.COPY,DISP=SHR
+   17     //LINK     EXEC PGM=IEWL,COND=(0,NE),PARM='LIST,XREF'
+   18     //SYSLIN   DD DSN=&&OBJ1,DISP=(OLD,DELETE)
+   19     //         DD DDNAME=SYSIN
+   20     //SYSLMOD  DD DSN=HERC01.PACMAN.LOAD(PACMAIN),DISP=OLD
+   21     //SYSLIB   DD DSN=SYS1.COBLIB,DISP=SHR
+   22     //SYSUT1   DD UNIT=SYSDA,SPACE=(1024,(50,20))
+   23     //SYSPRINT DD SYSOUT=A
+   24     //SYSIN    DD *
+   25     //RUN1     EXEC PGM=PACMAIN,COND=(0,NE)
+   26     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   27     //SYSOUT   DD SYSOUT=A
+   28     //SYSUDUMP DD SYSOUT=A
+          //
+IEF236I ALLOC. FOR PACBLD01 SRC1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I 191  ALLOCATED TO SYSUT2
+IEF237I 240  ALLOCATED TO SYS00494
+IEF237I DMY  ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSUT1
+IEF142I PACBLD01 SRC1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00114.SO0103                         SYSOUT
+IEF285I   HERC01.PACMAN.COBOL                          KEPT          *--------4
+IEF285I   VOL SER NOS= MVSCAT.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00114.SI0101                         SYSIN
+IEF373I STEP /SRC1    / START 26280.1719
+IEF374I STEP /SRC1    / STOP  26280.1719 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT    44K SYS   172K
+************************************************************************************************************************************
+*     1. Jobstep of job: PACBLD01    Stepname: SRC1        Program name: IEBGENER   Executed on 07.10.26 from 17.19.39 to 17.19.39 *
+*         elapsed time  00:00:00,05                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:     44K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:     30                                                                           *
+*     DMY.......0 191.......4 240.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACBLD01 COB1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I DMY  ALLOCATED TO SYSPUNCH
+IEF237I 190  ALLOCATED TO SYSUT1
+IEF237I 140  ALLOCATED TO SYSUT2
+IEF237I 180  ALLOCATED TO SYSUT3
+IEF237I 170  ALLOCATED TO SYSUT4
+IEF237I 170  ALLOCATED TO SYSLIN
+IEF237I 191  ALLOCATED TO SYSIN
+IEF237I 240  ALLOCATED TO SYS00496
+IEF237I 290  ALLOCATED TO SYSLIB
+IEF142I PACBLD01 COB1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00114.SO0104                         SYSOUT
+IEF285I   SYS26280.T171939.RA000.PACBLD01.R0000001     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   SYS26280.T171939.RA000.PACBLD01.R0000002     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK00.
+IEF285I   SYS26280.T171939.RA000.PACBLD01.R0000003     DELETED       *--------9
+IEF285I   VOL SER NOS= WORK02.
+IEF285I   SYS26280.T171939.RA000.PACBLD01.R0000004     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK01.
+IEF285I   SYS26280.T171939.RA000.PACBLD01.OBJ1         PASSED        *--------1
+IEF285I   VOL SER NOS= WORK01.
+IEF285I   HERC01.PACMAN.COBOL                          KEPT          *--------2
+IEF285I   VOL SER NOS= MVSCAT.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   HERC01.PACMAN.COPY                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB003.
+IEF373I STEP /COB1    / START 26280.1719
+IEF374I STEP /COB1    / STOP  26280.1719 CPU    0MIN 00.03SEC SRB    0MIN 00.01SEC VIRT  2076K SYS   232K
+************************************************************************************************************************************
+*     2. Jobstep of job: PACBLD01    Stepname: COB1        Program name: IKFCBL00   Executed on 07.10.26 from 17.19.39 to 17.19.39 *
+*         elapsed time  00:00:00,09                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,04               Virtual Storage used:   2076K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,04   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      0                                                                           *
+*     DMY.......0 DMY.......0 190.......6 140.......6 180.......9 170.......6 170.......1 191.......2 240.......0 290.......0      *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,06                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACBLD01 LINK
+IEF237I 170  ALLOCATED TO SYSLIN
+IEF237I JES2 ALLOCATED TO
+IEF237I 270  ALLOCATED TO SYSLMOD
+IEF237I 240  ALLOCATED TO SYS00498
+IEF237I 148  ALLOCATED TO SYSLIB
+IEF237I 140  ALLOCATED TO SYSUT1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF142I PACBLD01 LINK - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   SYS26280.T171939.RA000.PACBLD01.OBJ1         DELETED       *--------2
+IEF285I   VOL SER NOS= WORK01.
+IEF285I   JES2.JOB00114.SI0102                         SYSIN
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *-------10
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   SYS1.COBLIB                                  KEPT          *-------17
+IEF285I   VOL SER NOS= MVSRES.
+IEF285I   SYS26280.T171939.RA000.PACBLD01.R0000005     DELETED       *--------0
+IEF285I   VOL SER NOS= WORK00.
+IEF285I   JES2.JOB00114.SO0105                         SYSOUT
+IEF373I STEP /LINK    / START 26280.1719
+IEF374I STEP /LINK    / STOP  26280.1719 CPU    0MIN 00.02SEC SRB    0MIN 00.00SEC VIRT   264K SYS   232K
+************************************************************************************************************************************
+*     3. Jobstep of job: PACBLD01    Stepname: LINK        Program name: IEWL       Executed on 07.10.26 from 17.19.39 to 17.19.39 *
+*         elapsed time  00:00:00,04                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,02               Virtual Storage used:    264K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,02   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      1                                                                           *
+*     170.......2 DMY.......0 270......10 240.......0 148......17 140.......0 DMY.......0                                          *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,03                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACBLD01 RUN1
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS00500
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACBLD01 RUN1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00114.SO0106                         SYSOUT
+IEF285I   JES2.JOB00114.SO0107                         SYSOUT
+IEF373I STEP /RUN1    / START 26280.1719
+IEF374I STEP /RUN1    / STOP  26280.1719 CPU    0MIN 00.00SEC SRB    0MIN 00.00SEC VIRT     8K SYS   228K
+IEF375I  JOB /PACBLD01/ START 26280.1719
+IEF376I  JOB /PACBLD01/ STOP  26280.1719 CPU    0MIN 00.06SEC SRB    0MIN 00.01SEC
+DATA SET UTILITY - GENERATE                                                                       PAGE 0001
+
+
+
+PROCESSING ENDED AT EOD  CB545 V2 LVL78 01MAY72                 IBM OS AMERICAN NATIONAL STANDARD COBOL                       DATE OCT  7,2026
+
+
+   1
+
+
+00001          IDENTIFICATION DIVISION.
+00002          PROGRAM-ID. PACMAIN.
+00003          ENVIRONMENT DIVISION.
+00004          DATA DIVISION.
+00005          WORKING-STORAGE SECTION.
+00006         * MVS-1: STATIC MAZE, 20 COLUMNS X 10 ROWS. KEEP IN SYNC WITH
+00007         * MAPS/LEVEL1.TXT (CHECKED BY TESTS/TEST_MAP.PY).
+00008          01  MAP-DATA.
+00009              05  FILLER            PIC X(20) VALUE '####################'.
+00010              05  FILLER            PIC X(20) VALUE '#........##........#'.
+00011              05  FILLER            PIC X(20) VALUE '#.##.###.##.###.##.#'.
+00012              05  FILLER            PIC X(20) VALUE '#..................#'.
+00013              05  FILLER            PIC X(20) VALUE '#.##.#.######.#.##.#'.
+00014              05  FILLER            PIC X(20) VALUE '#....#...##...#....#'.
+00015              05  FILLER            PIC X(20) VALUE '#.##.###.##.###.##.#'.
+00016              05  FILLER            PIC X(20) VALUE '#..................#'.
+00017              05  FILLER            PIC X(20) VALUE '#..................#'.
+00018              05  FILLER            PIC X(20) VALUE '####################'.
+00019          01  MAP-TABLE REDEFINES MAP-DATA.
+00020              05  MAP-ROW           PIC X(20) OCCURS 10 TIMES.
+00021          01  WS-ROW                PIC 99 VALUE 0.
+00022          PROCEDURE DIVISION.
+00023          MAIN-PARA.
+00024              DISPLAY 'PACMAN MVS-1 STATIC MAP 20X10'.
+00025              PERFORM SHOW-ROW VARYING WS-ROW FROM 1 BY 1
+00026                  UNTIL WS-ROW > 10.
+00027              DISPLAY 'END OF MAP'.
+00028              STOP RUN.
+00029          SHOW-ROW.
+00030              DISPLAY MAP-ROW (WS-ROW).   2
+
+
+
+*STATISTICS*     SOURCE RECORDS =    30     DATA DIVISION STATEMENTS =    14     PROCEDURE DIVISION STATEMENTS =     5
+*OPTIONS IN EFFECT*     SIZE = 2097152  BUF = 1048576  LINECNT = 57  SPACE1, FLAGW,   SEQ,   SOURCE
+*OPTIONS IN EFFECT*     NODMAP, NOPMAP, NOCLIST,   SUPMAP, NOXREF,   LOAD, NODECK, APOST, NOTRUNC,   LIB, NOVERB
+*OPTIONS IN EFFECT*       ZWB
+ F64-LEVEL LINKAGE EDITOR OPTIONS SPECIFIED LIST,XREF
+          DEFAULT OPTION(S) USED -  SIZE=(231424,55296)
+IEW0000     ENTRY PACMAIN
+
+
+
+                                                CROSS REFERENCE TABLE
+
+
+  CONTROL SECTION                       ENTRY
+
+    NAME    ORIGIN  LENGTH                NAME   LOCATION     NAME   LOCATION     NAME   LOCATION     NAME   LOCATION
+  PACMAIN       00     502
+  ILBODSP0*    508     700
+  ILBOSTP0*    C08      35
+                                        ILBOSTP1     C1E
+
+
+
+  LOCATION  REFERS TO SYMBOL  IN CONTROL SECTION             LOCATION  REFERS TO SYMBOL  IN CONTROL SECTION
+      338            ILBOSTP0        ILBOSTP0                     33C            ILBODSP0        ILBODSP0
+      340            ILBOSTP1        ILBOSTP0
+ ENTRY ADDRESS       00
+
+ TOTAL LENGTH       C40
+****PACMAIN   DOES NOT EXIST BUT HAS BEEN ADDED TO DATA SET
+AUTHORIZATION CODE IS         0.
+
+PACMAN MVS-1 STATIC MAP 20X10
+####################
+#........##........#
+#.##.###.##.###.##.#
+#..................#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#..................#
+#..................#
+####################
+END OF MAP
+                 PPPPPPPPPPP    AAAAAAAAAA    CCCCCCCCCC   BBBBBBBBBBB   LL            DDDDDDDDD       00000000         11
+                PPPPPPPPPPPP  AAAAAAAAAAAA  CCCCCCCCCCCC  BBBBBBBBBBBB  LL            DDDDDDDDDD     0000000000       111
+               PP        PP  AA        AA  CC        CC  BB        BB  LL            DD       DD   00      0000     1111
+              PP        PP  AA        AA  CC            BB        BB  LL            DD        DD  00     00 00       11
+             PP        PP  AA        AA  CC            BB       BB   LL            DD        DD  00    00  00       11
+            PPPPPPPPPPPP  AAAAAAAAAAAA  CC            BBBBBBBBBB    LL            DD        DD  00   00   00       11
+           PPPPPPPPPPP   AAAAAAAAAAAA  CC            BBBBBBBBBB    LL            DD        DD  00  00    00       11
+          PP            AA        AA  CC            BB       BB   LL            DD        DD  00 00     00       11
+         PP            AA        AA  CC            BB        BB  LL            DD        DD  0000      00       11
+        PP            AA        AA  CC        CC  BB        BB  LL            DD       DD   000       00       11
+       PP            AA        AA  CCCCCCCCCCCC  BBBBBBBBBBBB  LLLLLLLLLLLL  DDDDDDDDDD     0000000000    1111111111
+      PP            AA        AA   CCCCCCCCCC   BBBBBBBBBBB   LLLLLLLLLLLL  DDDDDDDDD       00000000     1111111111
+
+
+
+                    JJJJJJJJJJ       11            11             444                                  AAAAAAAAAA
+                    JJJJJJJJJJ      111           111            4444                                 AAAAAAAAAAAA
+                        JJ         1111          1111           44 44                                 AA        AA
+                        JJ           11            11          44  44                                 AA        AA
+                        JJ           11            11         44   44                                 AA        AA
+                        JJ           11            11        44444444444                              AAAAAAAAAAAA
+                        JJ           11            11       444444444444                              AAAAAAAAAAAA
+                        JJ           11            11              44                                 AA        AA
+                  JJ    JJ           11            11              44                                 AA        AA
+                  JJ    JJ           11            11              44                                 AA        AA
+                  JJJJJJJJ       1111111111    1111111111          44                                 AA        AA
+                   JJJJJJ        1111111111    1111111111          44                                 AA        AA
+
+
+****A   END   JOB  114  PACBLD01  PACMAN MVS1           ROOM        5.19.39 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  114   END   A****
+****A   END   JOB  114  PACBLD01  PACMAN MVS1           ROOM        5.19.39 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  114   END   A****
+****A   END   JOB  114  PACBLD01  PACMAN MVS1           ROOM        5.19.39 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  114   END   A****
+****A   END   JOB  114  PACBLD01  PACMAN MVS1           ROOM        5.19.39 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  114   END   A****

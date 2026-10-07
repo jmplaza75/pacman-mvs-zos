@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate a self-contained MVS build+test deck (build/<NAME>.jcl).
 
-Usage: make_deck.py PACHELLO | GAME [--hlq HERC01]
+Usage: make_deck.py PACHELLO | MVS1 [--hlq HERC01]
 Sources are validated (ASCII, 80 columns, no tabs) and uploaded with
 IEBGENER, compiled with IKFCBL00, link-edited with IEWL and executed.
 """
@@ -18,6 +18,7 @@ COBOL_PARM = 'LOAD,LIB,SUPMAP,SIZE=2048K,BUF=1024K'
 # name -> (jobname, modules in link order (first = entry), copybooks, load member, run input files)
 DECKS = {
     'PACHELLO': ('PACBLD00', ['PACHELLO'], [], 'PACHELLO', [None]),
+    'MVS1': ('PACBLD01', ['PACMAIN'], [], 'PACMAIN', [None]),
 }
 
 

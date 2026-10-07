@@ -1,1 +1,1 @@
-MVS-0 complete; next: MVS-1 (static board)
+MVS-1 complete (static board verified); next: MVS-2 (turn-based player)
