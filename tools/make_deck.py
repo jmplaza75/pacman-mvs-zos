@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate a self-contained MVS build+test deck (build/<NAME>.jcl).
 
-Usage: make_deck.py PACHELLO | MVS6 [--hlq HERC01]
+Usage: make_deck.py PACHELLO | MVS7 [--hlq HERC01]
 Sources are validated (ASCII, 80 columns, no tabs) and uploaded with
 IEBGENER, compiled with IKFCBL00, link-edited with IEWL and executed.
 """
@@ -24,6 +24,8 @@ DECKS = {
     'MVS4': ('PACBLD04', ['PACMAIN'], [], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0')]),
     'MVS5': ('PACBLD05', ['PACMAIN'], [], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1')]),
     'MVS6': ('PACBLD06', ['PACMAIN'], [], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'MVS7': ('PACBLD07', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
+             ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
 
 

@@ -73,3 +73,14 @@ The checker also re-derives from the real output that ghosts never enter walls, 
 (AI2/3), follow corridors (AI2), pick the first Manhattan minimum (AI3) and that lives fall by one per hit.
 Result: PACBLD06 JOB 124 (first attempt JOB 123 failed to compile: nested subscripts, D13), 22 steps RC 0000.
 Evidence: docs/evidence/mvs6-ai.txt.
+
+## MVS-7: portability refactor (2026-10-07)
+PACMAIN was split into PACMAIN/PACGAME/PACMAP/PACAI/PACINPT/PACDISP/PACPLAT + copybooks PACSTATE/PACREQ/PACMREQ
+(see docs/ARCHITECTURE.md). No intended behaviour change. Build: `python3 tools/make_deck.py MVS7 &&
+./tools/submit.sh build/MVS7.jcl`, then `./tools/job_output.py PACBLD07 > build/PACBLD07.txt &&
+python3 tests/test_mvs7.py build/PACBLD07.txt`. The same 19 cases/expected files as MVS-6 are used (unchanged).
+Checks: (1) all 37 steps RC 0000 (3 copybook + 7 source uploads, 7 compiles, link, 19 runs); (2) every run equals
+the independent model; (3) BEFORE/AFTER: each SYSOUT block equals the pre-refactor evidence from JOB 124;
+(4) the behaviour properties of MVS-6 re-derived from the real output; (5) static architecture rules (core has no
+terminal/host verbs). Result: PACBLD07 JOB 126 (JOB 125 failed: copy members need their own 01 line, D16).
+Evidence: docs/evidence/mvs7-refactor.txt. Load module is still HERC01.PACMAN.LOAD(PACMAIN).

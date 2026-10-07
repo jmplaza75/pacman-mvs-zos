@@ -7,4 +7,5 @@ Text Pac-Man in COBOL. See docs/ for environment, build and phase status.
 - MVS-4 (basic ghost): **complete** - see docs/mvs-build.md.
 - MVS-5 (lives and game cycle): **complete** - a full game can be won or lost; see docs/mvs-build.md.
 - MVS-6 (smarter ghosts, up to 3, AI0-AI3): **complete** - see docs/mvs-build.md.
-- MVS-7 onward: not started.
+- MVS-7 (portability refactor, 7 modules): **complete** - behaviour identical to MVS-6; see docs/ARCHITECTURE.md.
+- MVS-8 onward: not started.

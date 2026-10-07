@@ -46,3 +46,9 @@
     cell in one tick cost ONE life. Extra ghosts print on an extra status line `G2=xx,yy[ G3=xx,yy]`.
   * Documented edges are all tested: double hit (MULTI), pellet counts, no-reverse, corridor/intersection, tie
     breaking (properties re-derived from the real SYSOUT by tests/test_mvs6.py).
+- D15 (permanent) D13 (no nested subscripts; copy table fields to scalars first) and D14 (all AI levels stay
+  deterministic and reproducible, including the U,D,L,R tie-break and shared-LCG draw order) bind every later phase.
+- D16 (MVS-7) IKFCBL00 copy members must START with their own 01 record (`01  PAC-STATE.`) and are used as `01  PAC-STATE COPY PACSTATE.` (names must match); otherwise IKF2148I/IKF3001I.
+- D17 (MVS-7) Refactor rule: observable behaviour must not change. The banner text stays `PACMAN MVS-6 SMART GHOSTS`
+  (it names the behaviour version, not the build) and all 19 SYSOUT blocks are byte-identical to the pre-refactor
+  MVS-6 evidence (docs/evidence/mvs6-ai.txt); PACMAIN-MVS-6 monolith is preserved in git (tag mvs-6).
