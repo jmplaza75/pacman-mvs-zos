@@ -121,3 +121,11 @@
   APL control (F1) works. Matches x3270 source (sf.c/ctlr.c/telnet.c). G6 (multicolour/triple-plane PS) is BLOCKED / NOT APPLICABLE
   here, reason inherited. A PS-capable terminal/emulator may be explored in a separate future compatibility branch (not pursued, no
   dependency on Vista TN3270/PCOMM). Next visual step for this environment: the 2 x 2 scaled renderer.
+- D31 (MVS-GS) Scaled renderer, design docs/GS-SCALED.md (approved 2026-10-08): 1 logical cell = 4x2 terminal cells (layout B,
+  board 80x20 rows 1-20, text rows 21-24), SCALE(3) = 3x2 alternative, SCALE(NO) = G4. Walls are contours on the wall/corridor
+  boundaries (corner rule on 2 neighbours + diagonal, outside = open: double outer border), static, computed once. Sprites = E11
+  half-block pixel art (Pac-Man R/L/shut, ghosts frames A/B with reverse-video eyes), pellet top row 2nd column. Row 22 end/status
+  banner. Option SCALE(AUTO|4|3|NO), PARM column 17; absent = NO (G4 byte-identical); AUTO only from the existing query results;
+  needs COLOR + HILITE + GRAPHIC glyphs, else SCALED -> G4 GRAPHIC -> BASE -> CLASSIC -> line mode. Full-screen compression (RA,
+  RA+GE, blank skips) lives in PACSCR; PACFSIO unchanged; renderer-side guard: no stream > 2048 bytes reaches PACFSIO. Probe E11
+  (JOB 198) live: captures identical to the model. Physical proportions not yet visually confirmed.

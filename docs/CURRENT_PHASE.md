@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (G5 cerrada; renderer escalado 2x2: ver NEXT).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (G5 cerrada; fase actual MVS-GS: docs/GS-SCALED.md).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -28,7 +28,9 @@ Evidence: docs/evidence/g5-probe-analysis.md, g5-c3270-e10-window.txt, g5-probe-
 MVS-G6 (multicolour/triple-plane PS): BLOCKED / NOT APPLICABLE in this environment (depends on PS, reason inherited from G5).
 Future option, not pursued: a PS-capable terminal/emulator in a separate compatibility branch (E10 reusable; no Vista/PCOMM dependency).
 
-NEXT (NOT STARTED, needs the user's go): scaled renderer, preferably 2x2 (arcade-style wall contours deferred from G4), the next
+MVS-GS IN PROGRESS (started 2026-10-08, user's go): DESIGN AWAITING APPROVAL - docs/GS-SCALED.md; probe E11 built (JOB 198) and
+run live (docs/evidence/gs-e11-screens.txt); 4x2 layout B recommended. PACMAN NOT MODIFIED; implement only after approval.
+WAS NEXT: scaled renderer, preferably 2x2 (arcade-style wall contours deferred from G4), the next
 meaningful visual improvement for the real environment. Start by reading: CLAUDE.md, this file, docs/DECISIONS.md (D24-D30),
 docs/G4-GLYPHS.md (sec. on deferred contours), docs/G3-PARTIAL.md, docs/CAPABILITIES.md. Probe lessons (G1-G5): check every TPUT
 length (never `LA 0,n(0)`); any inbound (Query Reply too) locks the keyboard until a write with keyboard restore; ENTER on an

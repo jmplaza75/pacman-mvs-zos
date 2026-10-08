@@ -356,9 +356,22 @@ def g5p_deck(pfx):
     return out + '//\n'
 
 
+def gsp_deck(pfx):
+    """Scaled-renderer study, probe E11 (2x2/3x2/4x2 layouts, isolated from PACMAN): PACGSP + PACFSB -> LOAD(PACGSP),
+    CLIST GSPROBE, one batch run (must end with RC 4: not a TSO session, nothing sent)."""
+    out = job_card('PACGSP01', 'PACMAN PROBE E11') + f'//* PREFIX {pfx}\n'
+    out += upload('SRC1', pfx, 'COBOL', 'PACGSP', text_of(ROOT / 'src/probe/PACGSP.cob'))
+    out += compile_step('COB1', pfx, 'PACGSP', 'OBJ1')
+    out += asm_step('ASM1', 'OBJA1', text_of(ROOT / 'src/probe/PACFSB.asm'))
+    out += link_step(pfx, ['OBJ1', 'OBJA1'], 'PACGSP', 'PACGSP')
+    out += upload('CLS1', pfx, 'CLIST', 'GSPROBE', text_of(ROOT / 'src/probe/GSPROBE.clist').replace('@@PREFIX@@', pfx))
+    out += run_step('BATCH', pfx, 'PACGSP', None)
+    return out + '//\n'
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'COMPRESS'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'COMPRESS'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -371,6 +384,8 @@ if __name__ == '__main__':
         text = clist_deck(pfx)
     elif a.deck == 'COMPRESS':
         text = compress_deck(pfx)
+    elif a.deck == 'GSP':
+        text = gsp_deck(pfx)
     elif a.deck == 'G5P':
         text = g5p_deck(pfx)
     elif a.deck == 'G4P':
