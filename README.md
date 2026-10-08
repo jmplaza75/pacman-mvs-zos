@@ -64,6 +64,8 @@ EXEC 'HERC01.PACMAN.CLIST(PACMAN)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'AI(3) GHOSTS(2)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'COLOR(NO)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'HILITE(NO)'
+EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'ANIM(NO) REDRAW(FULL)'
+EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'COLOR(YES) HILITE(YES)'     (recommended on TK4-/c3270: idle animation at once)
 ```
 With a colour terminal (COLOR(AUTO), the default) the game runs full-screen in colour: type the command in
 `COMMAND ===>` and press ENTER, PA2 redraws, Q quits. COLOR(NO) keeps the monochrome line mode described below.
@@ -84,5 +86,8 @@ MVS-G1 (colour full-screen mode TSC: `COLOR(AUTO|YES|NO)` in the CLIST, auto-det
 line mode as fallback; design `docs/G1-RENDERER.md`) is complete (tag `mvs-g1`).
 MVS-G2 (highlighting: `HILITE(AUTO|YES|NO)` in the CLIST, reverse P/G, blinking INVALID message, underlined input field;
 design `docs/G2-HIGHLIGHT.md`) is complete (tag `mvs-g2`; validated on Hercules, JOB 164, and live in c3270).
+MVS-G3 (partial redraw `REDRAW(PARTIAL|FULL)` and glyph animation `ANIM(AUTO|YES|NO)` with an idle visual tick; design and
+known limitation in `docs/G3-PARTIAL.md`) is complete. Known limitation: with `COLOR(AUTO)` (default) the idle animation starts after the
+first input because TSO holds the ticks after the capability query; use `'COLOR(YES) HILITE(YES)'` on TK4-/c3270 for immediate animation.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

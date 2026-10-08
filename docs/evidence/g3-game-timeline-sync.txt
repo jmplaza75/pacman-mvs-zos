@@ -1,0 +1,13 @@
+# PACMAN TSC run with SYNC (TCLEARQ INPUT after the query, JOB 185) under c3270 -trace: game window only, input by AID only
+180922.010  OUT  FULL len  608 f1 c3 11 40 40 3c 40 40 00 11 40 40 1d 60
+180939.885  IN   AID=7D
+180939.887  OUT  TICK len   22 f1 c2 11 c5 5f 28 42 f6 28 41 f2 d6 11 4e
+180939.890  OUT  TICK len  142 f1 c2 11 c5 5f 28 42 f6 28 41 f2 c3 11 4e
+180939.893  OUT  TICK len  238 f1 c2 11 c5 5f 28 42 f6 28 41 f2 c3 11 4e
+180939.898  OUT  TICK len   22 f1 c2 11 c5 5f 28 42 f6 28 41 f2 c3 11 4e
+180939.899  OUT  TICK len  262 f1 c2 11 c5 5f 28 42 f6 28 41 f2 d6 11 4e
+180939.904  OUT  TICK len   94 f1 c2 11 c5 5f 28 42 f6 28 41 f2 c3 11 4e
+180939.905  OUT  TICK len   22 f1 c2 11 c5 5f 28 42 f6 28 41 f2 c3 11 4e
+180940.365  OUT  TICK len   22 f1 c2 11 c5 5f 28 42 f6 28 41 f2 d6 11 4e
+180940.366  OUT  FULL len  608 f1 c3 11 40 40 3c 40 40 00 11 40 40 1d 60
+180940.882  OUT  TICK len   22 f1 c2 11 c5 5f 28 42 f6 28 41 f2 d6 11 4e

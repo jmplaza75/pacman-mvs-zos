@@ -14,3 +14,6 @@
            05  REQ-INTEXT.
                10  REQ-INTEXT-CH     PIC X OCCURS 8 TIMES.
            05  REQ-HILITE            PIC X.
+           05  REQ-ANIM              PIC X.
+           05  REQ-REDRAW            PIC X.
+           05  REQ-SENDST            PIC X.

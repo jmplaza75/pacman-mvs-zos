@@ -100,11 +100,9 @@
            ELSE IF REQ-OP = 'INVL'
                CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
            ELSE IF REQ-OP = 'PRMT'
-               CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
-               ADD DS-LEN TO M-CHARS
-               MOVE 'SEND' TO REQ-OP
-               CALL 'PACPLAT' USING PAC-REQ PAC-DS
-               MOVE 'PRMT' TO REQ-OP
+               PERFORM SCR-PRMT THRU SCR-PRMT-EXIT
+           ELSE IF REQ-OP = 'TICK'
+               PERFORM SCR-TICK THRU SCR-TICK-EXIT
            ELSE IF REQ-OP = 'END '
                MOVE 'FSOF' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ
@@ -112,6 +110,39 @@
                PERFORM SHOW-END THRU SHOW-END-EXIT.
        SCREEN-OP-EXIT.
            EXIT.
+       SCR-PRMT.
+           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
+           ADD DS-LEN TO M-CHARS.
+           MOVE 'SEND' TO REQ-OP.
+           MOVE SPACE TO REQ-SENDST.
+           CALL 'PACPLAT' USING PAC-REQ PAC-DS.
+           MOVE 'PRMT' TO REQ-OP.
+           IF REQ-SENDST = 'R'
+               PERFORM SCR-RESEND.
+       SCR-PRMT-EXIT.
+           EXIT.
+       SCR-TICK.
+      * MVS-G3: VISUAL TICK (GLYPH FRAME ONLY). NO CHANGE = NO SEND.
+           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
+           IF DS-LEN > 0
+               ADD DS-LEN TO M-CHARS
+               MOVE 'SEND' TO REQ-OP
+               MOVE SPACE TO REQ-SENDST
+               CALL 'PACPLAT' USING PAC-REQ PAC-DS
+               MOVE 'TICK' TO REQ-OP
+               IF REQ-SENDST = 'R'
+                   PERFORM SCR-RESEND.
+       SCR-TICK-EXIT.
+           EXIT.
+       SCR-RESEND.
+      * THE PARTIAL SEND FAILED (PACPLAT SWITCHED TO FULL REDRAW, NO
+      * ANIMATION): SEND THE WHOLE SCREEN INSTEAD.
+           MOVE 'FULL' TO REQ-OP.
+           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
+           ADD DS-LEN TO M-CHARS.
+           MOVE 'SEND' TO REQ-OP.
+           CALL 'PACPLAT' USING PAC-REQ PAC-DS.
+           MOVE 'PRMT' TO REQ-OP.
        NEW-SCREEN.
            MOVE REQ-OP TO WS-SAVE-OP.
            MOVE 'CLS ' TO REQ-OP.

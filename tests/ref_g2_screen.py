@@ -43,7 +43,7 @@ def status(g, cmd, res):
             f'G={g.gh[0][0]:02d},{g.gh[0][1]:02d} V={g.lives} ST={g.state}')
 
 
-def screen(g, cmd, res, msg, hi=False):
+def screen(g, cmd, res, msg, hi=False, glyphs=('P', 'G')):
     out = [0xC3] + sba(1, 1) + [0x1D, 0x60] + sba(1, 2) + sa(HUD) + e(status(g, cmd, res).ljust(61))
     if g.n > 1:
         text = 'G2=%02d,%02d' % tuple(g.gh[1][:2]) + (' G3=%02d,%02d' % tuple(g.gh[2][:2]) if g.n > 2 else '')
@@ -53,10 +53,10 @@ def screen(g, cmd, res, msg, hi=False):
         cols = [WALL if c == '#' else PELLET if c == '.' else 0 for c in chars]
         his = [0] * 20
         if g.y == j:
-            chars[g.x - 1], cols[g.x - 1], his[g.x - 1] = 'P', PLAYER, REVERSE if hi else 0
+            chars[g.x - 1], cols[g.x - 1], his[g.x - 1] = glyphs[0], PLAYER, REVERSE if hi else 0
         for k, (gx, gy, _) in enumerate(g.gh):
             if gy == j:
-                chars[gx - 1], cols[gx - 1], his[gx - 1] = 'G', GHOSTS[k], REVERSE if hi else 0
+                chars[gx - 1], cols[gx - 1], his[gx - 1] = glyphs[1], GHOSTS[k], REVERSE if hi else 0
         out += sba(3 + j, 31)
         cur = hcur = 0
         for c, col, h in zip(chars, cols, his):

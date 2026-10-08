@@ -1,0 +1,949 @@
+****A  START  JOB  179  PACE7P01  PACMAN G3 PROBE E7    ROOM        3.41.27 PM 08 OCT 26  PRINTER1  SYS TK4-  JOB  179  START  A****
+****A  START  JOB  179  PACE7P01  PACMAN G3 PROBE E7    ROOM        3.41.27 PM 08 OCT 26  PRINTER1  SYS TK4-  JOB  179  START  A****
+****A  START  JOB  179  PACE7P01  PACMAN G3 PROBE E7    ROOM        3.41.27 PM 08 OCT 26  PRINTER1  SYS TK4-  JOB  179  START  A****
+****A  START  JOB  179  PACE7P01  PACMAN G3 PROBE E7    ROOM        3.41.27 PM 08 OCT 26  PRINTER1  SYS TK4-  JOB  179  START  A****
+                                                J E S 2   J O B   L O G
+
+
+15.41.27 JOB  179  $HASP373 PACE7P01 STARTED - INIT  1 - CLASS A - SYS TK4-
+15.41.27 JOB  179  IEF403I PACE7P01 - STARTED - TIME=15.41.27
+15.41.27 JOB  179  IEFACTRT - Stepname  Procstep  Program   Retcode
+15.41.27 JOB  179  PACE7P01   SRC1                IEBGENER  RC= 0000
+15.41.27 JOB  179  PACE7P01   COB1                IKFCBL00  RC= 0000
+15.41.27 JOB  179  PACE7P01   ASM1                IFOX00    RC= 0000
+15.41.27 JOB  179  PACE7P01   LINK                IEWL      RC= 0000
+15.41.27 JOB  179  PACE7P01   CLS1                IEBGENER  RC= 0000
+15.41.27 JOB  179  PACE7P01   BATCH               PACE7P    RC= 0000
+15.41.27 JOB  179  IEF404I PACE7P01 - ENDED - TIME=15.41.27
+15.41.27 JOB  179  $HASP395 PACE7P01 ENDED
+
+
+------ JES2 JOB STATISTICS ------
+
+
+ 08 OCT 26 JOB EXECUTION DATE
+
+
+       472 CARDS READ
+
+
+       859 SYSOUT PRINT RECORDS
+
+
+         0 SYSOUT PUNCH RECORDS
+
+
+      0.00 MINUTES EXECUTION TIME
+    1     //PACE7P01 JOB (1),'PACMAN G3 PROBE E7',CLASS=A,MSGCLASS=A,             JOB  179
+          //             MSGLEVEL=(1,1),REGION=4096K,
+          //             USER=HERC01,PASSWORD=<REDACTED>
+          *** PREFIX HERC01.PACMAN
+    2     //SRC1     EXEC PGM=IEBGENER,COND=(0,NE)
+    3     //SYSPRINT DD SYSOUT=A
+    4     //SYSUT2   DD DSN=HERC01.PACMAN.COBOL(PACE7P),DISP=OLD
+    5     //SYSIN    DD DUMMY
+    6     //SYSUT1   DD DATA,DLM=ZZ
+    7     //COB1     EXEC PGM=IKFCBL00,COND=(0,NE),
+          //         PARM='LOAD,LIB,SUPMAP,SIZE=2048K,BUF=1024K'
+    8     //SYSPRINT DD SYSOUT=A
+    9     //SYSPUNCH DD DUMMY
+   10     //SYSUT1   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   11     //SYSUT2   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   12     //SYSUT3   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   13     //SYSUT4   DD UNIT=SYSDA,SPACE=(460,(700,100))
+   14     //SYSLIN   DD DSN=&&OBJ1,DISP=(NEW,PASS),UNIT=SYSDA,
+          //            SPACE=(80,(500,100)),
+          //            DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)
+   15     //SYSIN    DD DSN=HERC01.PACMAN.COBOL(PACE7P),DISP=SHR
+   16     //SYSLIB   DD DSN=HERC01.PACMAN.COPY,DISP=SHR
+   17     //ASM1     EXEC PGM=IFOX00,COND=(0,NE),PARM='OBJECT,NODECK,NOXREF'
+   18     //SYSLIB   DD DSN=SYS1.MACLIB,DISP=SHR
+   19     //         DD DSN=SYS1.AMODGEN,DISP=SHR
+   20     //SYSUT1   DD UNIT=SYSDA,SPACE=(CYL,(3,1))
+   21     //SYSUT2   DD UNIT=SYSDA,SPACE=(CYL,(3,1))
+   22     //SYSUT3   DD UNIT=SYSDA,SPACE=(CYL,(3,1))
+   23     //SYSPRINT DD SYSOUT=A
+   24     //SYSGO    DD DSN=&&OBJA1,DISP=(NEW,PASS),UNIT=SYSDA,
+          //            SPACE=(80,(500,100)),
+          //            DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)
+   25     //SYSIN    DD DATA,DLM=ZZ
+   26     //LINK     EXEC PGM=IEWL,COND=(0,NE),PARM='LIST,XREF'
+   27     //SYSLIN   DD DSN=&&OBJ1,DISP=(OLD,DELETE)
+   28     //         DD DSN=&&OBJA1,DISP=(OLD,DELETE)
+   29     //         DD DDNAME=SYSIN
+   30     //SYSLMOD  DD DSN=HERC01.PACMAN.LOAD(PACE7P),DISP=OLD
+   31     //SYSLIB   DD DSN=SYS1.COBLIB,DISP=SHR
+   32     //SYSUT1   DD UNIT=SYSDA,SPACE=(1024,(50,20))
+   33     //SYSPRINT DD SYSOUT=A
+   34     //SYSIN    DD *
+   35     //CLS1     EXEC PGM=IEBGENER,COND=(0,NE)
+   36     //SYSPRINT DD SYSOUT=A
+   37     //SYSUT2   DD DSN=HERC01.PACMAN.CLIST(E7PROBE),DISP=OLD
+   38     //SYSIN    DD DUMMY
+   39     //SYSUT1   DD DATA,DLM=ZZ
+   40     //BATCH    EXEC PGM=PACE7P,COND=(0,NE)
+   41     //STEPLIB  DD DSN=HERC01.PACMAN.LOAD,DISP=SHR
+   42     //SYSOUT   DD SYSOUT=A
+   43     //SYSUDUMP DD SYSOUT=A
+          //
+IEF236I ALLOC. FOR PACE7P01 SRC1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I 191  ALLOCATED TO SYSUT2
+IEF237I 240  ALLOCATED TO SYS01570
+IEF237I DMY  ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSUT1
+IEF142I PACE7P01 SRC1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00179.SO0105                         SYSOUT
+IEF285I   HERC01.PACMAN.COBOL                          KEPT          *--------5
+IEF285I   VOL SER NOS= MVSCAT.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00179.SI0101                         SYSIN
+IEF373I STEP /SRC1    / START 26281.1541
+IEF374I STEP /SRC1    / STOP  26281.1541 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT    44K SYS   212K
+************************************************************************************************************************************
+*     1. Jobstep of job: PACE7P01    Stepname: SRC1        Program name: IEBGENER   Executed on 08.10.26 from 15.41.27 to 15.41.27 *
+*         elapsed time  00:00:00,04                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:     44K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:     70                                                                           *
+*     DMY.......0 191.......5 240.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACE7P01 COB1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I DMY  ALLOCATED TO SYSPUNCH
+IEF237I 140  ALLOCATED TO SYSUT1
+IEF237I 170  ALLOCATED TO SYSUT2
+IEF237I 180  ALLOCATED TO SYSUT3
+IEF237I 190  ALLOCATED TO SYSUT4
+IEF237I 190  ALLOCATED TO SYSLIN
+IEF237I 191  ALLOCATED TO SYSIN
+IEF237I 240  ALLOCATED TO SYS01572
+IEF237I 290  ALLOCATED TO SYSLIB
+IEF142I PACE7P01 COB1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00179.SO0106                         SYSOUT
+IEF285I   SYS26281.T154127.RA000.PACE7P01.R0000001     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK00.
+IEF285I   SYS26281.T154127.RA000.PACE7P01.R0000002     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK01.
+IEF285I   SYS26281.T154127.RA000.PACE7P01.R0000003     DELETED       *--------9
+IEF285I   VOL SER NOS= WORK02.
+IEF285I   SYS26281.T154127.RA000.PACE7P01.R0000004     DELETED       *--------6
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   SYS26281.T154127.RA000.PACE7P01.OBJ1         PASSED        *--------2
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   HERC01.PACMAN.COBOL                          KEPT          *--------3
+IEF285I   VOL SER NOS= MVSCAT.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   HERC01.PACMAN.COPY                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB003.
+IEF373I STEP /COB1    / START 26281.1541
+IEF374I STEP /COB1    / STOP  26281.1541 CPU    0MIN 00.03SEC SRB    0MIN 00.01SEC VIRT  2076K SYS   176K
+************************************************************************************************************************************
+*     2. Jobstep of job: PACE7P01    Stepname: COB1        Program name: IKFCBL00   Executed on 08.10.26 from 15.41.27 to 15.41.27 *
+*         elapsed time  00:00:00,08                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,04               Virtual Storage used:   2076K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,04   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      0                                                                           *
+*     DMY.......0 DMY.......0 140.......6 170.......6 180.......9 190.......6 190.......2 191.......3 240.......0 290.......0      *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,06                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACE7P01 ASM1
+IEF237I 148  ALLOCATED TO SYSLIB
+IEF237I 248  ALLOCATED TO
+IEF237I 140  ALLOCATED TO SYSUT1
+IEF237I 180  ALLOCATED TO SYSUT2
+IEF237I 170  ALLOCATED TO SYSUT3
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I 190  ALLOCATED TO SYSGO
+IEF237I JES2 ALLOCATED TO SYSIN
+IEF142I PACE7P01 ASM1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   SYS1.MACLIB                                  KEPT          *-------22
+IEF285I   VOL SER NOS= MVSRES.
+IEF285I   SYS1.AMODGEN                                 KEPT          *--------0
+IEF285I   VOL SER NOS= MVSDLB.
+IEF285I   SYS26281.T154127.RA000.PACE7P01.R0000005     DELETED       *------127
+IEF285I   VOL SER NOS= WORK00.
+IEF285I   SYS26281.T154127.RA000.PACE7P01.R0000006     DELETED       *-------11
+IEF285I   VOL SER NOS= WORK02.
+IEF285I   SYS26281.T154127.RA000.PACE7P01.R0000007     DELETED       *--------8
+IEF285I   VOL SER NOS= WORK01.
+IEF285I   JES2.JOB00179.SO0107                         SYSOUT
+IEF285I   SYS26281.T154127.RA000.PACE7P01.OBJA1        PASSED        *--------2
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   JES2.JOB00179.SI0102                         SYSIN
+IEF373I STEP /ASM1    / START 26281.1541
+IEF374I STEP /ASM1    / STOP  26281.1541 CPU    0MIN 00.07SEC SRB    0MIN 00.01SEC VIRT  2108K SYS   176K
+************************************************************************************************************************************
+*     3. Jobstep of job: PACE7P01    Stepname: ASM1        Program name: IFOX00     Executed on 08.10.26 from 15.41.27 to 15.41.27 *
+*         elapsed time  00:00:00,10                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,08               Virtual Storage used:   2108K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,08   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:    336                                                                           *
+*     148......22 248.......0 140.....127 180......11 170.......8 DMY.......0 190.......2 DMY.......0                              *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,13                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACE7P01 LINK
+IEF237I 190  ALLOCATED TO SYSLIN
+IEF237I 190  ALLOCATED TO
+IEF237I JES2 ALLOCATED TO
+IEF237I 270  ALLOCATED TO SYSLMOD
+IEF237I 240  ALLOCATED TO SYS01574
+IEF237I 148  ALLOCATED TO SYSLIB
+IEF237I 170  ALLOCATED TO SYSUT1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF142I PACE7P01 LINK - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   SYS26281.T154127.RA000.PACE7P01.OBJ1         DELETED       *--------3
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   SYS26281.T154127.RA000.PACE7P01.OBJA1        DELETED       *--------3
+IEF285I   VOL SER NOS= WORK03.
+IEF285I   JES2.JOB00179.SI0103                         SYSIN
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *-------15
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   SYS1.COBLIB                                  KEPT          *-------17
+IEF285I   VOL SER NOS= MVSRES.
+IEF285I   SYS26281.T154127.RA000.PACE7P01.R0000008     DELETED       *--------0
+IEF285I   VOL SER NOS= WORK01.
+IEF285I   JES2.JOB00179.SO0108                         SYSOUT
+IEF373I STEP /LINK    / START 26281.1541
+IEF374I STEP /LINK    / STOP  26281.1541 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT   264K SYS   176K
+************************************************************************************************************************************
+*     4. Jobstep of job: PACE7P01    Stepname: LINK        Program name: IEWL       Executed on 08.10.26 from 15.41.27 to 15.41.27 *
+*         elapsed time  00:00:00,03                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:    264K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      1                                                                           *
+*     190.......3 190.......3 DMY.......0 270......15 240.......0 148......17 170.......0 DMY.......0                              *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACE7P01 CLS1
+IEF237I JES2 ALLOCATED TO SYSPRINT
+IEF237I 191  ALLOCATED TO SYSUT2
+IEF237I 240  ALLOCATED TO SYS01576
+IEF237I DMY  ALLOCATED TO SYSIN
+IEF237I JES2 ALLOCATED TO SYSUT1
+IEF142I PACE7P01 CLS1 - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00179.SO0109                         SYSOUT
+IEF285I   HERC01.PACMAN.CLIST                          KEPT          *--------4
+IEF285I   VOL SER NOS= MVSCAT.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00179.SI0104                         SYSIN
+IEF373I STEP /CLS1    / START 26281.1541
+IEF374I STEP /CLS1    / STOP  26281.1541 CPU    0MIN 00.01SEC SRB    0MIN 00.00SEC VIRT    44K SYS   172K
+************************************************************************************************************************************
+*     5. Jobstep of job: PACE7P01    Stepname: CLS1        Program name: IEBGENER   Executed on 08.10.26 from 15.41.27 to 15.41.27 *
+*         elapsed time  00:00:00,01                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,01               Virtual Storage used:     44K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,01   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      9                                                                           *
+*     DMY.......0 191.......4 240.......0 DMY.......0 DMY.......0                                                                  *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,01                                             *
+************************************************************************************************************************************
+IEF236I ALLOC. FOR PACE7P01 BATCH
+IEF237I 270  ALLOCATED TO STEPLIB
+IEF237I 240  ALLOCATED TO SYS01578
+IEF237I JES2 ALLOCATED TO SYSOUT
+IEF237I JES2 ALLOCATED TO SYSUDUMP
+IEF142I PACE7P01 BATCH - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   HERC01.PACMAN.LOAD                           KEPT          *--------0
+IEF285I   VOL SER NOS= PUB001.
+IEF285I   SYS1.UCAT.TSO                                KEPT          *--------0
+IEF285I   VOL SER NOS= PUB000.
+IEF285I   JES2.JOB00179.SO0110                         SYSOUT
+IEF285I   JES2.JOB00179.SO0111                         SYSOUT
+IEF373I STEP /BATCH   / START 26281.1541
+IEF374I STEP /BATCH   / STOP  26281.1541 CPU    0MIN 00.00SEC SRB    0MIN 00.00SEC VIRT    12K SYS   176K
+IEF375I  JOB /PACE7P01/ START 26281.1541
+IEF376I  JOB /PACE7P01/ STOP  26281.1541 CPU    0MIN 00.13SEC SRB    0MIN 00.02SEC
+DATA SET UTILITY - GENERATE                                                                       PAGE 0001
+
+
+
+PROCESSING ENDED AT EOD  CB545 V2 LVL78 01MAY72                 IBM OS AMERICAN NATIONAL STANDARD COBOL                       DATE OCT  8,2026
+
+
+   1
+
+
+00001         * PACE7P : MVS-G3 PROBE E7 (SEE PACFS7). PARM = VARIANT A, N OR W.
+00002         * NOTHING IS PRINTED BEFORE THE FULL-SCREEN PART. AFTERWARDS:
+00003         * VARIANT, RC OF THE FIRST FULLSCR, RC OF THE LAST TICK, TICKS
+00004         * SENT, PA2 SEEN, FULL SCREENS SENT, FINAL AID (HEX).
+00005          IDENTIFICATION DIVISION.
+00006          PROGRAM-ID. PACE7P.
+00007          ENVIRONMENT DIVISION.
+00008          CONFIGURATION SECTION.
+00009          SOURCE-COMPUTER. IBM-370.
+00010          OBJECT-COMPUTER. IBM-370.
+00011          DATA DIVISION.
+00012          WORKING-STORAGE SECTION.
+00013          01  P-VAR                 PIC X VALUE 'A'.
+00014          01  P-RC1                 PIC S9(4) COMP.
+00015          01  P-RC2                 PIC S9(4) COMP.
+00016          01  P-NPART               PIC S9(4) COMP.
+00017          01  P-NPA2                PIC S9(4) COMP.
+00018          01  P-NSCR                PIC S9(4) COMP.
+00019          01  P-AID                 PIC X.
+00020          01  HEXW.
+00021              05  HX-Z              PIC X VALUE LOW-VALUE.
+00022              05  HX-B              PIC X.
+00023          01  HEXN REDEFINES HEXW   PIC 9(4) COMP.
+00024          01  HEX-DATA              PIC X(16) VALUE '0123456789ABCDEF'.
+00025          01  HEX-TABLE REDEFINES HEX-DATA.
+00026              05  HEXDIG            PIC X OCCURS 16 TIMES.
+00027          01  WS-Q                  PIC 99.
+00028          01  WS-R                  PIC 99.
+00029          01  RES-LINE.
+00030              05  FILLER            PIC X(8) VALUE 'G7P V=  '.
+00031              05  RS-VAR            PIC X.
+00032              05  FILLER            PIC X(5) VALUE ' RC1='.
+00033              05  RS-RC1            PIC 9(4).
+00034              05  FILLER            PIC X(5) VALUE ' RC2='.
+00035              05  RS-RC2            PIC 9(4).
+00036              05  FILLER            PIC X(7) VALUE ' TICKS='.
+00037              05  RS-NPART          PIC 9(4).
+00038              05  FILLER            PIC X(5) VALUE ' PA2='.
+00039              05  RS-NPA2           PIC 9(4).
+00040              05  FILLER            PIC X(7) VALUE ' SCRNS='.
+00041              05  RS-NSCR           PIC 9(4).
+00042              05  FILLER            PIC X(5) VALUE ' AID='.
+00043              05  RS-AID.
+00044                  10  RS-AID1       PIC X.
+00045                  10  RS-AID2       PIC X.
+00046          LINKAGE SECTION.
+00047          01  PARM-AREA.
+00048              05  PARM-LEN          PIC S9(4) COMP.
+00049              05  PARM-VAR          PIC X.
+00050          PROCEDURE DIVISION USING PARM-AREA.
+00051          MAIN-PARA.
+00052              IF PARM-LEN > 0
+00053                  MOVE PARM-VAR TO P-VAR.
+00054              CALL 'PACFS7' USING P-VAR P-RC1 P-RC2 P-NPART P-NPA2   2
+
+
+00055                                  P-NSCR P-AID.
+00056              MOVE P-VAR TO RS-VAR.
+00057              MOVE P-RC1 TO RS-RC1.
+00058              MOVE P-RC2 TO RS-RC2.
+00059              MOVE P-NPART TO RS-NPART.
+00060              MOVE P-NPA2 TO RS-NPA2.
+00061              MOVE P-NSCR TO RS-NSCR.
+00062              MOVE P-AID TO HX-B.
+00063              DIVIDE HEXN BY 16 GIVING WS-Q REMAINDER WS-R.
+00064              ADD 1 TO WS-Q.
+00065              ADD 1 TO WS-R.
+00066              MOVE HEXDIG (WS-Q) TO RS-AID1.
+00067              MOVE HEXDIG (WS-R) TO RS-AID2.
+00068              DISPLAY RES-LINE.
+00069              DISPLAY 'G7P PROBE END'.
+00070              STOP RUN.   3
+
+
+
+*STATISTICS*     SOURCE RECORDS =    70     DATA DIVISION STATEMENTS =    36     PROCEDURE DIVISION STATEMENTS =    18
+*OPTIONS IN EFFECT*     SIZE = 2097152  BUF = 1048576  LINECNT = 57  SPACE1, FLAGW,   SEQ,   SOURCE
+*OPTIONS IN EFFECT*     NODMAP, NOPMAP, NOCLIST,   SUPMAP, NOXREF,   LOAD, NODECK, APOST, NOTRUNC,   LIB, NOVERB
+*OPTIONS IN EFFECT*       ZWB                                               EXTERNAL SYMBOL DICTIONARY                                      PAGE    1
+
+
+SYMBOL   TYPE  ID   ADDR  LENGTH LDID                                                            ASM 0201 15.41 10/08/26
+
+PACFS7    SD  0001 000000 0012A0                                                                                                               PAGE    2
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 15.41 10/08/26
+
+                                      1 *        PACFS7 : MVS-G3 PROBE E7. WHY DO THE IDLE TICKS (PARTIAL
+                                      2 *        WRITES
+                                      3 *        X'F1' + TPUT NOEDIT) NOT SHOW BEFORE THE FIRST AID IN THE
+                                      4 *        GAME?
+                                      5 *        SAME STARTUP AS THE GAME (TCLEARQ, STFSMODE, STTMPMD, READ
+                                      6 *        PARTITION QUERY, FULL SCREEN WITH THE CLEAR PREFIX, TPUT
+                                      7 *        FULLSCR)
+                                      8 *        AND THE SAME STREAMS (GENERATED FROM THE MODEL BY
+                                      9 *        TOOLS/GEN_PROBE_E7.PY): INITIAL SCREEN + TWO ALTERNATING
+                                     10 *        TICKS.
+                                     11 *        LOOP = 30 TICKS 0.5 S APART (15 S), THEN WAIT FOR AN AID.
+                                     12 *        VARIANT (PARM), EACH ONE FACTOR AWAY FROM A (A = GAME-LIKE):
+                                     13 *          A  NO TGET IN THE LOOP, TICK WCC C2, FIRST TICK AT ONCE
+                                     14 *          B  A + TGET NOWAIT BETWEEN TICKS
+                                     15 *          C  B + TICK WCC C3
+                                     16 *          D  A + STFSMODE ON WITHOUT INITIAL=YES
+                                     17 *          T  A + 2 S WAIT AFTER THE FULL SCREEN (AS PROBE E6)
+                                     18 *          K  A + TICK WCC C3 (AS PROBE E6)
+                                     19 *          Q  A WITHOUT THE READ PARTITION QUERY (AS PROBE E6)
+                                     20 *          P  A WITHOUT THE CLEAR PREFIX IN THE FULL SCREEN (AS E6)
+                                     21 *          F  A WITH THE INITIAL SCREEN WITHOUT 3270 FIELDS (NO SF)
+                                     22 *          I  A WITH TICKS IN THE GAME'S LOGICAL PARTIAL FORMAT (WCC
+                                     23 *             C3 + CELLS + INPUT FIELD WITH IC)
+                                     24 *        PA2 (X'6E') DURING OR AFTER THE LOOP = SEND THE FULL SCREEN
+                                     25 *        AGAIN AND LOOP AGAIN (MAX 3 ROUNDS); ANY OTHER AID ENDS.
+                                     26 *        CALL 'PACFS7' USING VAR RC1 RC2 NTICK NPA2 NSCR AID
+                                     27 *          VAR X(1)  RC1 S9(4) COMP RC OF THE FIRST FULLSCR (4 = NOT
+                                     28 *          TSO)
+                                     29 *          RC2 LAST TICK TPUT RC   NTICK TICKS SENT   NPA2 PA2 SEEN
+                                     30 *          NSCR FULL SCREENS SENT  AID X(1) AID THAT ENDED THE PROBE
+000000                               31 PACFS7   CSECT
+000000 90EC D00C      0000C          32          STM   14,12,12(13)
+000004 05C0                          33          BALR  12,0
+                            00006    34          USING *,12,10             TWO BASES: CODE + BUFFERS > 4 KB
+000006 41AC 0800      00800          35          LA    10,2048(12)
+00000A 41AA 0800      00800          36          LA    10,2048(10)
+00000E 50D0 C3CA      003D0          37          ST    13,SAVE+4
+000012 41E0 C3C6      003CC          38          LA    14,SAVE
+000016 50ED 0008      00008          39          ST    14,8(13)
+00001A 18DE                          40          LR    13,14
+00001C 9828 1000      00000          41          LM    2,8,0(1)
+000020 9028 C40E      00414          42          STM   2,8,PTAB
+000024 1BFF                          43          SR    15,15
+000026 40F0 C432      00438          44          STH   15,RC1
+00002A 40F0 C434      0043A          45          STH   15,RC2
+00002E 40F0 C438      0043E          46          STH   15,NT
+000032 40F0 C43A      00440          47          STH   15,NP
+000036 40F0 C43C      00442          48          STH   15,NS
+00003A 40F0 C43E      00444          49          STH   15,ROUNDS
+00003E 9200 C440      00446          50          MVI   AIDB,X'00'
+000042 41F0 0004      00004          51          LA    15,4
+000046 40F0 C432      00438          52          STH   15,RC1
+00004A 5810 0224      00224          53          L     1,X'224'            PSAAOLD: CURRENT ASCB
+00004E 5811 003C      0003C          54          L     1,X'3C'(1)          ASCBTSB: ZERO UNLESS TSO USER
+000052 1211                          55          LTR   1,1                                                                                                               PAGE    3
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 15.41 10/08/26
+
+000054 4780 C246      0024C          56          BZ    DONE
+000058 58F0 C40E      00414          57          L     15,PTAB
+00005C D200 C441 F000 00447 00000    58          MVC   VARB(1),0(15)
+                                     59          TCLEARQ OUTPUT
+000062 4100 0001      00001          60+         LA    0,1                      SET ENTRY CODE                  58000020
+000066 1B11                          61+         SR    1,1                      INDICATE OUTPUT                 66000020
+000068 8D00 0018      00018          62+         SLDL  0,24                     MOVE TO HI-ORDER BYTES          68000020
+00006C 0A5E                          63+         SVC   94                       ISSUE SVC                       70000020
+                                     64          TCLEARQ INPUT
+00006E 4100 0001      00001          65+         LA    0,1                      SET ENTRY CODE                  58000020
+000072 4110 0080      00080          66+         LA    1,X'80'                  INDICATE INPUT                  62000020
+000076 8D00 0018      00018          67+         SLDL  0,24                     MOVE TO HI-ORDER BYTES          68000020
+00007A 0A5E                          68+         SVC   94                       ISSUE SVC                       70000020
+00007C 95C4 C441      00447          69          CLI   VARB,C'D'
+000080 4780 C094      0009A          70          BE    NOINIT
+                                     71          STFSMODE ON,INITIAL=YES
+000084 4110 00C0      000C0          72+         LA    1,128+64+0                  MODE/INITIAL/NOEDIT  ZP60009 01400000
+000088 8910 0018      00018          73+         SLL   1,24                     SHIFT TO HIGH ORDER BYTE        01450000
+00008C 4100 0012      00012          74+         LA    0,18                     LOAD ENTRY CODE                 01700000
+000090 8900 0018      00018          75+         SLL   0,24                     SHIFT TO HIGH ORDER BYTE        01750000
+000094 0A5E                          76+         SVC   94                       TERMINAL CONTROL MACRO SVC      01800000
+000096 47F0 C0A6      000AC          77          B     FSDONE
+00009A                               78 NOINIT   DS    0H
+                                     79          STFSMODE ON
+00009A 4110 0080      00080          80+         LA    1,128+0+0                   MODE/INITIAL/NOEDIT  ZP60009 01400000
+00009E 8910 0018      00018          81+         SLL   1,24                     SHIFT TO HIGH ORDER BYTE        01450000
+0000A2 4100 0012      00012          82+         LA    0,18                     LOAD ENTRY CODE                 01700000
+0000A6 8900 0018      00018          83+         SLL   0,24                     SHIFT TO HIGH ORDER BYTE        01750000
+0000AA 0A5E                          84+         SVC   94                       TERMINAL CONTROL MACRO SVC      01800000
+0000AC                               85 FSDONE   DS    0H
+                                     86          STTMPMD ON
+0000AC 4110 0080      00080          87+         LA    1,128+0                  SET PARM FLAGS                  01800001
+0000B0 8910 0018      00018          88+         SLL   1,24                     SHIFT TO HIGH ORDER BYTE        01850001
+0000B4 4100 0014      00014          89+         LA    0,20                     LOAD ENTRY CODE                 01900001
+0000B8 8900 0018      00018          90+         SLL   0,24                     SHIFT TO HIGH ORDER BYTE        01950001
+0000BC 0A5E                          91+         SVC   94                       TERMINAL CONTROL MACRO SVC      02000001
+0000BE 95D8 C441      00447          92          CLI   VARB,C'Q'
+0000C2 4780 C130      00136          93          BE    QRYGOT
+0000C6 4110 CD61      00D67          94          LA    1,QUERY
+0000CA 4100 0006      00006          95          LA    0,QUERYL
+                                     96          TPUT  (1),(0),NOEDIT
+0000CE 0700                          97+         CNOP  0,4                          STANDARD EXTENDED  @G76XRYU 09800003
+0000D0 BE17 C0D7      000DD          98+         STCM  1,B'0111',*+13               OLD SUPPORT ONLY   @G76XRYU 09900003
+0000D4 4510 C0E2      000E8          99+         BAL   1,*+20                       BRANCH AROUND PARM @G76XRYU 10050003
+0000D8                              100+TPUT0006 DS    0H                           TPUT EXTENDED PARM @G76XRYU 10100003
+0000D8 0000                         101+         DC    H'0'                         ADDR SPACE ID      @G76XRYU 10150003
+0000DA 0000                         102+         DC    H'0'                         OUTPUT BUFFER SIZE @G76XRYU 10200003
+0000DC 03                           103+         DC    AL1(3)                       FLAGS 1            @G76XRYU 10250003
+0000DD 000000                       104+         DC    AL3(0)                       OUTPUT BUFFER ADDR @G76XRYU 10300003
+0000E0 00000000                     105+         DC    A(0)                         ADDRESS OF USER ID @G76XRYU 10350003
+0000E4 01                           106+         DC    AL1(1)                       FLAGS 2            @G76XRYU 10400003
+0000E5 000000                       107+         DC    AL3(0)                       RESERVED BYTES     @G76XRYU 10450003
+0000E8 4001 0002      00002         108+         STH   0,2(1)                       PUT SIZE IN PARM   @G76XRYU 11550003
+0000EC 9680 100C      0000C         109+         OI    12(1),128                    SET HI BIT OF PARM @G76XRYU 14700003
+0000F0 BF08 C0E7      000ED         110+         ICM   0,B'1000',*-3                SET HI BIT OF R0   @G76XRYU 14750003                                                                                                               PAGE    4
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 15.41 10/08/26
+
+0000F4 0A5D                         111+         SVC   93                           SVC TO MSG ROUTER  @G76XRYU 14900003
+0000F6 1B99                         112          SR    9,9
+0000F8                              113 QRYREAD  DS    0H
+0000F8 4110 C44E      00454         114          LA    1,INBUF
+0000FC 4100 0100      00100         115          LA    0,256
+                                    116          TGET  (1),(0),ASIS
+000100                              117+         CNOP  0,4                                             @OZ46729 45290136
+000100 47F0 C102      00108         118+         B     *+8                      BRANCH AROUND CONSTANT     @01P 45305803
+000104 81                           119+         DC    AL1(129)                 OPTION BITS                @01P 46090803
+000105 000000                       120+         DC    AL3(0)                   BUFFER ADDR                @01P 46122203
+000108 4110 1000      00000         121+         LA    1,0(,1)                  CLR HIGH ORDR BYTE + LD BFR@01P 46153603
+00010C 5610 C0FE      00104         122+         O     1,*-8                    SET OPTIONS                @01P 46185003
+000110 0A5D                         123+         SVC   93                       ISSUE SVC                  @01P 45086003
+
+000112 1211                         125          LTR   1,1
+000114 4770 C130      00136         126          BNZ   QRYGOT
+000118 4199 0001      00001         127          LA    9,1(9)
+00011C 5990 A28A      01290         128          C     9,=F'120'
+000120 47B0 C216      0021C         129          BNL   BACK
+                                    130          STIMER WAIT,BINTVL=HALFSEC
+                                    131+* /* MACDATE Y-1 72277                                               */ 03050002
+000124 4110 C446      0044C         132+         LA    1,HALFSEC                         LOAD PARAMETER REG 1   01900002
+000128 4100 0011      00011         133+         LA    0,17(0,0)                          LOAD FLAG BYTE        27000002
+00012C 8900 0018      00018         134+         SLL   0,24(0)                           SHIFT TO HI-ORDER BYTE 28000002
+000130 0A2F                         135+         SVC   47                                ISSUE STIMER SVC       43000002
+000132 47F0 C0F2      000F8         136          B     QRYREAD
+000136                              137 QRYGOT   DS    0H
+000136                              138 ROUND    DS    0H
+000136 4820 C43E      00444         139          LH    2,ROUNDS
+00013A 4122 0001      00001         140          LA    2,1(2)
+00013E 4020 C43E      00444         141          STH   2,ROUNDS
+000142 5920 A28E      01294         142          C     2,=F'4'
+000146 47B0 C216      0021C         143          BNL   BACK
+00014A 45B0 C298      0029E         144          BAL   11,SENDFULL
+00014E 48F0 C436      0043C         145          LH    15,RCTMP
+000152 12FF                         146          LTR   15,15
+000154 4770 C216      0021C         147          BNZ   BACK
+000158 9200 C442      00448         148          MVI   PAR,X'00'
+00015C 95E3 C441      00447         149          CLI   VARB,C'T'
+000160 4770 C16C      00172         150          BNE   NOWAIT2
+                                    151          STIMER WAIT,BINTVL=TWOSEC
+                                    152+* /* MACDATE Y-1 72277                                               */ 03050002
+000164 4110 C44A      00450         153+         LA    1,TWOSEC                          LOAD PARAMETER REG 1   01900002
+000168 4100 0011      00011         154+         LA    0,17(0,0)                          LOAD FLAG BYTE        27000002
+00016C 8900 0018      00018         155+         SLL   0,24(0)                           SHIFT TO HI-ORDER BYTE 28000002
+000170 0A2F                         156+         SVC   47                                ISSUE STIMER SVC       43000002
+000172                              157 NOWAIT2  DS    0H
+000172 1B99                         158          SR    9,9
+000174 5090 C42A      00430         159          ST    9,CNT
+000178                              160 LOOP     DS    0H
+000178 5890 C42A      00430         161          L     9,CNT
+00017C 5990 A292      01298         162          C     9,=F'30'
+000180 47B0 C1DC      001E2         163          BNL   WAITAID
+000184 45B0 C318      0031E         164          BAL   11,SENDTICK
+000188 48F0 C436      0043C         165          LH    15,RCTMP                                                                                                               PAGE    5
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 15.41 10/08/26
+
+00018C 12FF                         166          LTR   15,15
+00018E 4770 C216      0021C         167          BNZ   BACK
+000192 95C2 C441      00447         168          CLI   VARB,C'B'
+000196 4780 C19C      001A2         169          BE    DOGET
+00019A 95C3 C441      00447         170          CLI   VARB,C'C'
+00019E 4770 C1BE      001C4         171          BNE   NOGET
+0001A2                              172 DOGET    DS    0H
+0001A2 4110 C44E      00454         173          LA    1,INBUF
+0001A6 4100 0100      00100         174          LA    0,256
+                                    175          TGET  (1),(0),ASIS,NOWAIT
+0001AA 0700                         176+         CNOP  0,4                                             @OZ46729 45290136
+0001AC 47F0 C1AE      001B4         177+         B     *+8                      BRANCH AROUND CONSTANT     @01P 45305803
+0001B0 91                           178+         DC    AL1(145)                 OPTION BITS                @01P 46090803
+0001B1 000000                       179+         DC    AL3(0)                   BUFFER ADDR                @01P 46122203
+0001B4 4110 1000      00000         180+         LA    1,0(,1)                  CLR HIGH ORDR BYTE + LD BFR@01P 46153603
+0001B8 5610 C1AA      001B0         181+         O     1,*-8                    SET OPTIONS                @01P 46185003
+0001BC 0A5D                         182+         SVC   93                       ISSUE SVC                  @01P 45086003
+
+0001BE 12FF                         184          LTR   15,15
+0001C0 4780 C1F8      001FE         185          BZ    GOTIN
+0001C4                              186 NOGET    DS    0H
+                                    187          STIMER WAIT,BINTVL=HALFSEC
+                                    188+* /* MACDATE Y-1 72277                                               */ 03050002
+0001C4 4110 C446      0044C         189+         LA    1,HALFSEC                         LOAD PARAMETER REG 1   01900002
+0001C8 4100 0011      00011         190+         LA    0,17(0,0)                          LOAD FLAG BYTE        27000002
+0001CC 8900 0018      00018         191+         SLL   0,24(0)                           SHIFT TO HI-ORDER BYTE 28000002
+0001D0 0A2F                         192+         SVC   47                                ISSUE STIMER SVC       43000002
+0001D2 5890 C42A      00430         193          L     9,CNT
+0001D6 4199 0001      00001         194          LA    9,1(9)
+0001DA 5090 C42A      00430         195          ST    9,CNT
+0001DE 47F0 C172      00178         196          B     LOOP
+0001E2                              197 WAITAID  DS    0H
+0001E2 4110 C44E      00454         198          LA    1,INBUF
+0001E6 4100 0100      00100         199          LA    0,256
+                                    200          TGET  (1),(0),ASIS
+0001EA 0700                         201+         CNOP  0,4                                             @OZ46729 45290136
+0001EC 47F0 C1EE      001F4         202+         B     *+8                      BRANCH AROUND CONSTANT     @01P 45305803
+0001F0 81                           203+         DC    AL1(129)                 OPTION BITS                @01P 46090803
+0001F1 000000                       204+         DC    AL3(0)                   BUFFER ADDR                @01P 46122203
+0001F4 4110 1000      00000         205+         LA    1,0(,1)                  CLR HIGH ORDR BYTE + LD BFR@01P 46153603
+0001F8 5610 C1EA      001F0         206+         O     1,*-8                    SET OPTIONS                @01P 46185003
+0001FC 0A5D                         207+         SVC   93                       ISSUE SVC                  @01P 45086003
+
+0001FE                              209 GOTIN    DS    0H
+0001FE D200 C440 C44E 00446 00454   210          MVC   AIDB(1),INBUF
+000204 956E C44E      00454         211          CLI   INBUF,X'6E'
+000208 4770 C216      0021C         212          BNE   BACK
+00020C 4820 C43A      00440         213          LH    2,NP
+000210 4122 0001      00001         214          LA    2,1(2)
+000214 4020 C43A      00440         215          STH   2,NP
+000218 47F0 C130      00136         216          B     ROUND
+00021C                              217 BACK     DS    0H
+                                    218          STTMPMD OFF
+00021C 4110 0000      00000         219+         LA    1,0+0                    SET PARM FLAGS                  01800001
+000220 8910 0018      00018         220+         SLL   1,24                     SHIFT TO HIGH ORDER BYTE        01850001                                                                                                               PAGE    6
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 15.41 10/08/26
+
+000224 4100 0014      00014         221+         LA    0,20                     LOAD ENTRY CODE                 01900001
+000228 8900 0018      00018         222+         SLL   0,24                     SHIFT TO HIGH ORDER BYTE        01950001
+00022C 0A5E                         223+         SVC   94                       TERMINAL CONTROL MACRO SVC      02000001
+                                    224          STFSMODE OFF
+00022E 1B11                         225+         SR    1,1                      CLEAR PARAMETER REGISTER        01600000
+000230 4100 0012      00012         226+         LA    0,18                     LOAD ENTRY CODE                 01700000
+000234 8900 0018      00018         227+         SLL   0,24                     SHIFT TO HIGH ORDER BYTE        01750000
+000238 0A5E                         228+         SVC   94                       TERMINAL CONTROL MACRO SVC      01800000
+                                    229          STLINENO LINE=1
+00023A 4110 0001      00001         230+         LA    1,1                      PUT LINE NUM IN PARM REG        01400000
+00023E 1B00                         231+         SR    0,0                      PREPARE FLAG BYTE               02130000
+000240 1610                         232+         OR    1,0                      SET MODE=OFF FLAG IN REG 1      02140000
+000242 4100 0013      00013         233+         LA    0,19                     LOAD ENTRY CODE                 02200000
+000246 8900 0018      00018         234+         SLL   0,24                     SHIFT TO HIGH ORDER BYTE        02250000
+00024A 0A5E                         235+         SVC   94                       TERMINAL CONTROL MACRO SVC      02300000
+00024C                              236 DONE     DS    0H
+00024C 58F0 C412      00418         237          L     15,PTAB+4
+000250 48E0 C432      00438         238          LH    14,RC1
+000254 40EF 0000      00000         239          STH   14,0(15)
+000258 58F0 C416      0041C         240          L     15,PTAB+8
+00025C 48E0 C434      0043A         241          LH    14,RC2
+000260 40EF 0000      00000         242          STH   14,0(15)
+000264 58F0 C41A      00420         243          L     15,PTAB+12
+000268 48E0 C438      0043E         244          LH    14,NT
+00026C 40EF 0000      00000         245          STH   14,0(15)
+000270 58F0 C41E      00424         246          L     15,PTAB+16
+000274 48E0 C43A      00440         247          LH    14,NP
+000278 40EF 0000      00000         248          STH   14,0(15)
+00027C 58F0 C422      00428         249          L     15,PTAB+20
+000280 48E0 C43C      00442         250          LH    14,NS
+000284 40EF 0000      00000         251          STH   14,0(15)
+000288 58F0 C426      0042C         252          L     15,PTAB+24
+00028C D200 F000 C440 00000 00446   253          MVC   0(1,15),AIDB
+000292 58D0 C3CA      003D0         254          L     13,SAVE+4
+000296 98EC D00C      0000C         255          LM    14,12,12(13)
+00029A 1BFF                         256          SR    15,15
+00029C 07FE                         257          BR    14
+                                    258 *        FULL SCREEN, AS PACFSIO SEND: WCC, CLEAR PREFIX, REST.
+00029E                              259 SENDFULL DS    0H
+00029E 4160 CD68      00D6E         260          LA    6,FULLS
+0002A2 4150 0258      00258         261          LA    5,FULLSL
+0002A6 95C6 C441      00447         262          CLI   VARB,C'F'
+0002AA 4770 C2B0      002B6         263          BNE   GOTFULL
+0002AE 4160 CFC0      00FC6         264          LA    6,FULLF
+0002B2 4150 0255      00255         265          LA    5,FULLFL
+0002B6                              266 GOTFULL  DS    0H
+0002B6 95D7 C441      00447         267          CLI   VARB,C'P'
+0002BA 4770 C2C0      002C6         268          BNE   WITHPFX
+0002BE 1816                         269          LR    1,6
+0002C0 1805                         270          LR    0,5
+0002C2 47F0 C2EA      002F0         271          B     FULLTPUT
+0002C6                              272 WITHPFX  DS    0H
+0002C6 5050 C42E      00434         273          ST    5,TLEN
+0002CA D200 C54E 6000 00554 00000   274          MVC   SENDBUF(1),0(6)
+0002D0 D206 C54F CD5A 00555 00D60   275          MVC   SENDBUF+1(7),CLRPFX                                                                                                               PAGE    7
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 15.41 10/08/26
+
+0002D6 4140 C556      0055C         276          LA    4,SENDBUF+8
+0002DA 0650                         277          BCTR  5,0
+0002DC 4166 0001      00001         278          LA    6,1(6)
+0002E0 1875                         279          LR    7,5
+0002E2 0E46                         280          MVCL  4,6
+0002E4 4110 C54E      00554         281          LA    1,SENDBUF
+0002E8 5800 C42E      00434         282          L     0,TLEN
+0002EC 5A00 A296      0129C         283          A     0,=F'7'
+0002F0                              284 FULLTPUT DS    0H
+                                    285          TPUT  (1),(0),FULLSCR
+0002F0                              286+         DS    0H                       TJID IS '0'                     22800003
+0002F0                              287+         CNOP  0,4                                                      23700003
+0002F0                              288+         CNOP  0,4                                             @OZ65329 24120036
+0002F0 47F0 C2F2      002F8         289+         B     *+8                                             @OZ65329 24140036
+0002F4 03                           290+         DC    AL1(3)                   OPTION BITS            @OZ65329 24160036
+0002F5 000000                       291+         DC    AL3(0)                   BUFFER ADDR            @OZ65329 24180036
+0002F8 4110 1000      00000         292+         LA    1,0(,1)                  CLR HIGH ORDR BYTE + LD BFR ADR 24299993
+0002FC 5610 C2EE      002F4         293+         O     1,*-8                    SET OPTIONS                     24500003
+000300 0A5D                         294+         SVC   93                       ISSUE TGET/TPUT SVC             21200003
+
+000302 40F0 C436      0043C         296          STH   15,RCTMP
+000306 4820 C43C      00442         297          LH    2,NS
+00030A 1222                         298          LTR   2,2
+00030C 4770 C30E      00314         299          BNZ   NOTFIRST
+000310 40F0 C432      00438         300          STH   15,RC1
+000314                              301 NOTFIRST DS    0H
+000314 4122 0001      00001         302          LA    2,1(2)
+000318 4020 C43C      00442         303          STH   2,NS
+00031C 07FB                         304          BR    11
+                                    305 *        TICK, AS PACFSIO SENP: X'F1' + STREAM, TPUT NOEDIT.
+00031E                              306 SENDTICK DS    0H
+00031E 9500 C442      00448         307          CLI   PAR,X'00'
+000322 4770 C33C      00342         308          BNE   USET2
+000326 4160 A216      0121C         309          LA    6,TICK1
+00032A 4150 0015      00015         310          LA    5,TICK1L
+00032E 95C9 C441      00447         311          CLI   VARB,C'I'
+000332 4770 C354      0035A         312          BNE   TCOPY
+000336 4160 A242      01248         313          LA    6,TICK1I
+00033A 4150 0023      00023         314          LA    5,TICK1IL
+00033E 47F0 C354      0035A         315          B     TCOPY
+000342                              316 USET2    DS    0H
+000342 4160 A22C      01232         317          LA    6,TICK2
+000346 4150 0015      00015         318          LA    5,TICK2L
+00034A 95C9 C441      00447         319          CLI   VARB,C'I'
+00034E 4770 C354      0035A         320          BNE   TCOPY
+000352 4160 A266      0126C         321          LA    6,TICK2I
+000356 4150 0023      00023         322          LA    5,TICK2IL
+00035A                              323 TCOPY    DS    0H
+00035A 5050 C42E      00434         324          ST    5,TLEN
+00035E 92F1 C54E      00554         325          MVI   SENDBUF,X'F1'
+000362 4140 C54F      00555         326          LA    4,SENDBUF+1
+000366 1875                         327          LR    7,5
+000368 0E46                         328          MVCL  4,6
+00036A 95C3 C441      00447         329          CLI   VARB,C'C'
+00036E 4780 C374      0037A         330          BE    PATCH                                                                                                               PAGE    8
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 15.41 10/08/26
+
+000372 95D2 C441      00447         331          CLI   VARB,C'K'
+000376 4770 C378      0037E         332          BNE   NOPATCH
+00037A                              333 PATCH    DS    0H
+00037A 92C3 C54F      00555         334          MVI   SENDBUF+1,X'C3'
+00037E                              335 NOPATCH  DS    0H
+00037E 4110 C54E      00554         336          LA    1,SENDBUF
+000382 5800 C42E      00434         337          L     0,TLEN
+000386 4100 0001      00001         338          LA    0,1(0)
+                                    339          TPUT  (1),(0),NOEDIT
+00038A 0700                         340+         CNOP  0,4                          STANDARD EXTENDED  @G76XRYU 09800003
+00038C BE17 C393      00399         341+         STCM  1,B'0111',*+13               OLD SUPPORT ONLY   @G76XRYU 09900003
+000390 4510 C39E      003A4         342+         BAL   1,*+20                       BRANCH AROUND PARM @G76XRYU 10050003
+000394                              343+TPUT0020 DS    0H                           TPUT EXTENDED PARM @G76XRYU 10100003
+000394 0000                         344+         DC    H'0'                         ADDR SPACE ID      @G76XRYU 10150003
+000396 0000                         345+         DC    H'0'                         OUTPUT BUFFER SIZE @G76XRYU 10200003
+000398 03                           346+         DC    AL1(3)                       FLAGS 1            @G76XRYU 10250003
+000399 000000                       347+         DC    AL3(0)                       OUTPUT BUFFER ADDR @G76XRYU 10300003
+00039C 00000000                     348+         DC    A(0)                         ADDRESS OF USER ID @G76XRYU 10350003
+0003A0 01                           349+         DC    AL1(1)                       FLAGS 2            @G76XRYU 10400003
+0003A1 000000                       350+         DC    AL3(0)                       RESERVED BYTES     @G76XRYU 10450003
+0003A4 4001 0002      00002         351+         STH   0,2(1)                       PUT SIZE IN PARM   @G76XRYU 11550003
+0003A8 9680 100C      0000C         352+         OI    12(1),128                    SET HI BIT OF PARM @G76XRYU 14700003
+0003AC BF08 C3A3      003A9         353+         ICM   0,B'1000',*-3                SET HI BIT OF R0   @G76XRYU 14750003
+0003B0 0A5D                         354+         SVC   93                           SVC TO MSG ROUTER  @G76XRYU 14900003
+0003B2 40F0 C436      0043C         355          STH   15,RCTMP
+0003B6 40F0 C434      0043A         356          STH   15,RC2
+0003BA 4820 C438      0043E         357          LH    2,NT
+0003BE 4122 0001      00001         358          LA    2,1(2)
+0003C2 4020 C438      0043E         359          STH   2,NT
+0003C6 9701 C442      00448         360          XI    PAR,X'01'
+0003CA 07FB                         361          BR    11
+0003CC 0000000000000000             362 SAVE     DC    18F'0'
+000414                              363 PTAB     DS    7F
+000430 00000000                     364 CNT      DC    F'0'
+000434 00000000                     365 TLEN     DC    F'0'
+000438 0000                         366 RC1      DC    H'0'
+00043A 0000                         367 RC2      DC    H'0'
+00043C 0000                         368 RCTMP    DC    H'0'
+00043E 0000                         369 NT       DC    H'0'
+000440 0000                         370 NP       DC    H'0'
+000442 0000                         371 NS       DC    H'0'
+000444 0000                         372 ROUNDS   DC    H'0'
+000446 00                           373 AIDB     DC    X'00'
+000447 C1                           374 VARB     DC    C'A'
+000448 00                           375 PAR      DC    X'00'
+000449 000000
+00044C 00000032                     376 HALFSEC  DC    F'50'
+000450 000000C8                     377 TWOSEC   DC    F'200'
+000454                              378 INBUF    DS    CL256
+000554                              379 SENDBUF  DS    CL2060
+000D60 1140403C404000               380 CLRPFX   DC    X'114040',X'3C404000'
+000D67 F3000501FF02                 381 QUERY    DC    X'F3000501FF02'
+                            00006   382 QUERYL   EQU   *-QUERY
+000D6E                              383 FULLS    DS    0H
+000D6E C31140401D601140             384          DC    X'C31140401D601140C12842F5E3F0F0F0404040E2E3C1D9E3'                                                                                                               PAGE    9
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 15.41 10/08/26
+
+000D86 404040E77EF0F240             385          DC    X'404040E77EF0F240E87EF0F240E27EF0F0F0F040D37EF1F0'
+000D9E F040C77EF1F96BF0             386          DC    X'F040C77EF1F96BF0F940E57EF340E2E37ED9C5C1C4E84040'
+000DB6 4011C44E2842F17B             387          DC    X'4011C44E2842F17B7B7B7B7B7B7B7B7B7B7B7B7B7B7B7B7B'
+000DCE 7B7B7B11C55E2842             388          DC    X'7B7B7B11C55E2842F17B2842F62841F2C32842F72841004B'
+000DE6 4B4B4B4B4B4B2842             389          DC    X'4B4B4B4B4B4B2842F17B7B2842F74B4B4B4B4B4B4B4B2842'
+000DFE F17B11C66E2842F1             390          DC    X'F17B11C66E2842F17B2842F74B2842F17B7B2842F74B2842'
+000E16 F17B7B7B2842F74B             391          DC    X'F17B7B7B2842F74B2842F17B7B2842F74B2842F17B7B7B28'
+000E2E 42F74B2842F17B7B             392          DC    X'42F74B2842F17B7B2842F74B2842F17B11C77E2842F17B28'
+000E46 42F74B4B4B4B4B4B             393          DC    X'42F74B4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B2842F17B'
+000E5E 11C94E2842F17B28             394          DC    X'11C94E2842F17B2842F74B2842F17B7B2842F74B2842F17B'
+000E76 2842F74B2842F17B             395          DC    X'2842F74B2842F17B7B7B7B7B7B2842F74B2842F17B2842F7'
+000E8E 4B2842F17B7B2842             396          DC    X'4B2842F17B7B2842F74B2842F17B114A5E2842F17B2842F7'
+000EA6 4B4B4B4B2842F17B             397          DC    X'4B4B4B4B2842F17B2842F74B4B4B2842F17B7B2842F74B4B'
+000EBE 4B2842F17B2842F7             398          DC    X'4B2842F17B2842F74B4B4B4B2842F17B114B6E2842F17B28'
+000ED6 42F74B2842F17B7B             399          DC    X'42F74B2842F17B7B2842F74B2842F17B7B7B2842F74B2842'
+000EEE F17B7B2842F74B28             400          DC    X'F17B7B2842F74B2842F17B7B7B2842F74B2842F17B7B2842'
+000F06 F74B2842F17B114C             401          DC    X'F74B2842F17B114C7E2842F17B2842F74B4B4B4B4B4B4B4B'
+000F1E 4B4B4B4B4B4B4B4B             402          DC    X'4B4B4B4B4B4B4B4B4B4B2842F17B114E4E2842F17B2842F7'
+000F36 4B4B4B4B4B4B4B4B             403          DC    X'4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B2842F22841F2C7'
+000F4E 2842F12841007B11             404          DC    X'2842F12841007B114F5E2842F17B7B7B7B7B7B7B7B7B7B7B'
+000F66 7B7B7B7B7B7B7B7B             405          DC    X'7B7B7B7B7B7B7B7B7B11D5D12842F4C3D6D4D4C1D5C4407E'
+000F7E 7E7E6E1D402841F4             406          DC    X'7E7E6E1D402841F413402841001D60115B612842F4D7C1C3'
+000F96 D4C1D540C7F24040             407          DC    X'D4C1D540C7F24040E440C440D340D9404E40C5D5E3C5D940'
+000FAE 4040D840D8E4C9E3             408          DC    X'4040D840D8E4C9E3404040D7C1F240D9C5C4D9C1E6280000'
+                            00258   409 FULLSL  EQU   *-FULLS
+000FC6                              410 FULLF    DS    0H
+000FC6 C3114040401140C1             411          DC    X'C3114040401140C12842F5E3F0F0F0404040E2E3C1D9E340'
+000FDE 4040E77EF0F240E8             412          DC    X'4040E77EF0F240E87EF0F240E27EF0F0F0F040D37EF1F0F0'
+000FF6 40C77EF1F96BF0F9             413          DC    X'40C77EF1F96BF0F940E57EF340E2E37ED9C5C1C4E8404040'
+00100E 11C44E2842F17B7B             414          DC    X'11C44E2842F17B7B7B7B7B7B7B7B7B7B7B7B7B7B7B7B7B7B'
+001026 7B7B11C55E2842F1             415          DC    X'7B7B11C55E2842F17B2842F62841F2C32842F72841004B4B'
+00103E 4B4B4B4B4B2842F1             416          DC    X'4B4B4B4B4B2842F17B7B2842F74B4B4B4B4B4B4B4B2842F1'
+001056 7B11C66E2842F17B             417          DC    X'7B11C66E2842F17B2842F74B2842F17B7B2842F74B2842F1'
+00106E 7B7B7B2842F74B28             418          DC    X'7B7B7B2842F74B2842F17B7B2842F74B2842F17B7B7B2842'
+001086 F74B2842F17B7B28             419          DC    X'F74B2842F17B7B2842F74B2842F17B11C77E2842F17B2842'
+00109E F74B4B4B4B4B4B4B             420          DC    X'F74B4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B2842F17B11'
+0010B6 C94E2842F17B2842             421          DC    X'C94E2842F17B2842F74B2842F17B7B2842F74B2842F17B28'
+0010CE 42F74B2842F17B7B             422          DC    X'42F74B2842F17B7B7B7B7B7B2842F74B2842F17B2842F74B'
+0010E6 2842F17B7B2842F7             423          DC    X'2842F17B7B2842F74B2842F17B114A5E2842F17B2842F74B'
+0010FE 4B4B4B2842F17B28             424          DC    X'4B4B4B2842F17B2842F74B4B4B2842F17B7B2842F74B4B4B'
+001116 2842F17B2842F74B             425          DC    X'2842F17B2842F74B4B4B4B2842F17B114B6E2842F17B2842'
+00112E F74B2842F17B7B28             426          DC    X'F74B2842F17B7B2842F74B2842F17B7B7B2842F74B2842F1'
+001146 7B7B2842F74B2842             427          DC    X'7B7B2842F74B2842F17B7B7B2842F74B2842F17B7B2842F7'
+00115E 4B2842F17B114C7E             428          DC    X'4B2842F17B114C7E2842F17B2842F74B4B4B4B4B4B4B4B4B'
+001176 4B4B4B4B4B4B4B4B             429          DC    X'4B4B4B4B4B4B4B4B4B2842F17B114E4E2842F17B2842F74B'
+00118E 4B4B4B4B4B4B4B4B             430          DC    X'4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B4B2842F22841F2C728'
+0011A6 42F12841007B114F             431          DC    X'42F12841007B114F5E2842F17B7B7B7B7B7B7B7B7B7B7B7B'
+0011BE 7B7B7B7B7B7B7B7B             432          DC    X'7B7B7B7B7B7B7B7B11D5D12842F4C3D6D4D4C1D5C4407E7E'
+0011D6 7E6E402841F41340             433          DC    X'7E6E402841F4134028410040115B612842F4D7C1C3D4C1D5'
+0011EE 40C7F24040E440C4             434          DC    X'40C7F24040E440C440D340D9404E40C5D5E3C5D9404040D8'
+001206 40D8E4C9E3404040             435          DC    X'40D8E4C9E3404040D7C1F240D9C5C4D9C1E6280000'
+                            00255   436 FULLFL  EQU   *-FULLF
+00121C                              437 TICK1    DS    0H
+00121C C211C55F2842F628             438          DC    X'C211C55F2842F62841F2D6114E602842F2E6280000'
+                            00015   439 TICK1L  EQU   *-TICK1                                                                                                               PAGE   10
+
+
+  LOC  OBJECT CODE    ADDR1 ADDR2  STMT   SOURCE STATEMENT                                       ASM 0201 15.41 10/08/26
+
+001232                              440 TICK2    DS    0H
+001232 C211C55F2842F628             441          DC    X'C211C55F2842F62841F2C3114E602842F2C7280000'
+                            00015   442 TICK2L  EQU   *-TICK2
+001248                              443 TICK1I   DS    0H
+001248 C311C55F2842F628             444          DC    X'C311C55F2842F62841F2D6114E602842F2E611D55E132842'
+001260 F42841F440284100             445          DC    X'F42841F440284100280000'
+                            00023   446 TICK1IL EQU   *-TICK1I
+00126C                              447 TICK2I   DS    0H
+00126C C311C55F2842F628             448          DC    X'C311C55F2842F62841F2C3114E602842F2C711D55E132842'
+001284 F42841F440284100             449          DC    X'F42841F440284100280000'
+                            00023   450 TICK2IL EQU   *-TICK2I
+
+001290                              452          LTORG
+001290 00000078                     453                =F'120'
+001294 00000004                     454                =F'4'
+001298 0000001E                     455                =F'30'
+00129C 00000007                     456                =F'7'
+                                    457          END                                                  ASSEMBLER DIAGNOSTICS AND STATISTICS                         PAGE   11
+
+
+                                                                                                 ASM 0201 15.41 10/08/26
+
+NO STATEMENTS FLAGGED IN THIS ASSEMBLY
+HIGHEST SEVERITY WAS    0
+OPTIONS FOR THIS ASSEMBLY
+  ALIGN, ALOGIC, BUFSIZE(STD), NODECK, ESD, FLAG(0), LINECOUNT(55), LIST, NOMCALL, YFLAG, WORKSIZE(2097152)
+  NOMLOGIC, NONUMBER, OBJECT, NORENT, RLD, NOSTMT, NOLIBMAC, NOTERMINAL, NOTEST, NOXREF(SHORT)
+  SYSPARM()
+WORK FILE BUFFER SIZE/NUMBER =19066/ 1
+TOTAL RECORDS READ FROM SYSTEM INPUT        336
+TOTAL RECORDS READ FROM SYSTEM LIBRARY     1721
+TOTAL RECORDS PUNCHED                        50
+TOTAL RECORDS PRINTED                       492
+ F64-LEVEL LINKAGE EDITOR OPTIONS SPECIFIED LIST,XREF
+          DEFAULT OPTION(S) USED -  SIZE=(231424,55296)
+IEW0000     ENTRY PACE7P
+
+
+
+                                                CROSS REFERENCE TABLE
+
+
+  CONTROL SECTION                       ENTRY
+
+    NAME    ORIGIN  LENGTH                NAME   LOCATION     NAME   LOCATION     NAME   LOCATION     NAME   LOCATION
+  PACE7P        00     5EA
+  PACFS7       5F0    12A0
+  ILBODSP0*   1890     700
+  ILBOSTP0*   1F90      35
+                                        ILBOSTP1    1FA6
+
+
+
+  LOCATION  REFERS TO SYMBOL  IN CONTROL SECTION             LOCATION  REFERS TO SYMBOL  IN CONTROL SECTION
+      348            ILBOSTP0        ILBOSTP0                     34C            PACFS7          PACFS7
+      350            ILBODSP0        ILBODSP0                     354            ILBOSTP1        ILBOSTP0
+
+ ENTRY ADDRESS       00
+
+ TOTAL LENGTH      1FC8
+****PACE7P    NOW REPLACED IN DATA SET
+AUTHORIZATION CODE IS         0.
+DATA SET UTILITY - GENERATE                                                                       PAGE 0001
+
+
+
+PROCESSING ENDED AT EOD
+G7P V=  A RC1=0004 RC2=0000 TICKS=0000 PA2=0000 SCRNS=0000 AID=00
+G7P PROBE END
+                 PPPPPPPPPPP    AAAAAAAAAA    CCCCCCCCCC   EEEEEEEEEEEE  777777777777  PPPPPPPPPPP     00000000         11
+                PPPPPPPPPPPP  AAAAAAAAAAAA  CCCCCCCCCCCC  EEEEEEEEEEEE  77777777777   PPPPPPPPPPPP   0000000000       111
+               PP        PP  AA        AA  CC        CC  EE            77      77    PP        PP  00      0000     1111
+              PP        PP  AA        AA  CC            EE                   77     PP        PP  00     00 00       11
+             PP        PP  AA        AA  CC            EE                  77      PP        PP  00    00  00       11
+            PPPPPPPPPPPP  AAAAAAAAAAAA  CC            EEEEEEEE           77       PPPPPPPPPPPP  00   00   00       11
+           PPPPPPPPPPP   AAAAAAAAAAAA  CC            EEEEEEEE           77       PPPPPPPPPPP   00  00    00       11
+          PP            AA        AA  CC            EE                 77       PP            00 00     00       11
+         PP            AA        AA  CC            EE                 77       PP            0000      00       11
+        PP            AA        AA  CC        CC  EE                 77       PP            000       00       11
+       PP            AA        AA  CCCCCCCCCCCC  EEEEEEEEEEEE       77       PP             0000000000    1111111111
+      PP            AA        AA   CCCCCCCCCC   EEEEEEEEEEEE       77       PP              00000000     1111111111
+
+
+
+                    JJJJJJJJJJ       11       777777777777   9999999999                                AAAAAAAAAA
+                    JJJJJJJJJJ      111       77777777777   999999999999                              AAAAAAAAAAAA
+                        JJ         1111       77      77    99        99                              AA        AA
+                        JJ           11              77     99        99                              AA        AA
+                        JJ           11             77      99        99                              AA        AA
+                        JJ           11            77       999999999999                              AAAAAAAAAAAA
+                        JJ           11            77       999999999999                              AAAAAAAAAAAA
+                        JJ           11            77                 99                              AA        AA
+                  JJ    JJ           11            77                 99                              AA        AA
+                  JJ    JJ           11            77       99        99                              AA        AA
+                  JJJJJJJJ       1111111111        77       999999999999                              AA        AA
+                   JJJJJJ        1111111111        77        9999999999                               AA        AA
+
+
+****A   END   JOB  179  PACE7P01  PACMAN G3 PROBE E7    ROOM        3.41.27 PM 08 OCT 26  PRINTER1  SYS TK4-  JOB  179   END   A****
+****A   END   JOB  179  PACE7P01  PACMAN G3 PROBE E7    ROOM        3.41.27 PM 08 OCT 26  PRINTER1  SYS TK4-  JOB  179   END   A****
+****A   END   JOB  179  PACE7P01  PACMAN G3 PROBE E7    ROOM        3.41.27 PM 08 OCT 26  PRINTER1  SYS TK4-  JOB  179   END   A****
+****A   END   JOB  179  PACE7P01  PACMAN G3 PROBE E7    ROOM        3.41.27 PM 08 OCT 26  PRINTER1  SYS TK4-  JOB  179   END   A****

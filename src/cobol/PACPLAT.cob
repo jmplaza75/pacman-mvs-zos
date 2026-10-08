@@ -54,6 +54,7 @@
        01  WS-STOP               PIC 9.
        01  HAS-COLOUR            PIC 9.
        01  HAS-HILITE            PIC 9.
+       01  WS-IDLE               PIC 9(4) VALUE 0.
        LINKAGE SECTION.
        01  PAC-REQ COPY PACREQ.
        01  PAC-DS COPY PACDS.
@@ -86,6 +87,18 @@
                MOVE 'N' TO REQ-HILITE.
            IF REQ-HILITE NOT = 'Y'
                MOVE 'N' TO REQ-HILITE.
+      * MVS-G3: ANIM Y (A BECOMES Y IN TSC: PARTIAL SEND IS PROVEN,
+      * SO THERE IS NOTHING TO DETECT), REDRAW P (PARTIAL) ONLY IN
+      * TSC/TSD; EVERYTHING ELSE IS ANIM N / REDRAW F (FULL).
+           IF REQ-ANIM = 'A' AND REQ-MODE = 'TSC'
+               MOVE 'Y' TO REQ-ANIM.
+           IF REQ-MODE NOT = 'TSC' AND REQ-MODE NOT = 'TSD'
+               MOVE 'N' TO REQ-ANIM
+               MOVE 'F' TO REQ-REDRAW.
+           IF REQ-ANIM NOT = 'Y'
+               MOVE 'N' TO REQ-ANIM.
+           IF REQ-REDRAW NOT = 'P'
+               MOVE 'F' TO REQ-REDRAW.
        DO-INIT-EXIT.
            EXIT.
        TRY-COLOUR.
@@ -156,12 +169,28 @@
                GO TO DO-SEND-EXIT.
            IF REQ-MODE NOT = 'TSC'
                GO TO DO-SEND-EXIT.
+           IF DS-KIND NOT = 'F'
+               PERFORM SEND-PART THRU SEND-PART-EXIT
+               GO TO DO-SEND-EXIT.
            MOVE 'SEND' TO FS-OP.
            MOVE DS-LEN TO FS-LEN.
            CALL 'PACFSIO' USING FS-OP DS-BUF FS-LEN FS-RC.
            IF FS-RC NOT = 0
                PERFORM FALL-BACK.
        DO-SEND-EXIT.
+           EXIT.
+       SEND-PART.
+      * MVS-G3 PARTIAL SEND (WRITE X'F1' + TPUT NOEDIT, PROBE E6). A
+      * FAILURE IS NOT FATAL: FULL REDRAW WITHOUT ANIMATION FROM NOW ON
+      * AND THE CALLER IS TOLD TO SEND THE WHOLE SCREEN (REQ-SENDST R).
+           MOVE 'SENP' TO FS-OP.
+           MOVE DS-LEN TO FS-LEN.
+           CALL 'PACFSIO' USING FS-OP DS-BUF FS-LEN FS-RC.
+           IF FS-RC NOT = 0
+               MOVE 'R' TO REQ-SENDST
+               MOVE 'F' TO REQ-REDRAW
+               MOVE 'N' TO REQ-ANIM.
+       SEND-PART-EXIT.
            EXIT.
        DO-RECV.
       * REQ-INKEY: E = ENTER (REQ-INTEXT = TYPED FIELD), P = ANY OTHER
@@ -171,8 +200,26 @@
            IF REQ-MODE NOT = 'TSC'
                GO TO DO-RECV-EXIT.
            MOVE 'RECV' TO FS-OP.
+           IF REQ-ANIM = 'Y' AND REQ-REDRAW = 'P'
+               MOVE 'RECT' TO FS-OP.
            CALL 'PACFSIO' USING FS-OP IN-AREA FS-LEN FS-RC.
-           IF FS-RC NOT = 0 OR FS-LEN < 1
+           IF FS-RC NOT = 0
+               PERFORM FALL-BACK
+               GO TO DO-RECV-EXIT.
+      * MVS-G3 IDLE TICK: RECT = ONE READ + 0.5 S WAIT. EMPTY = TELL THE
+      * CALLER (REQ-INKEY T); AFTER 5 MINUTES OF NOTHING AS BEFORE.
+           MOVE 0 TO WS-STOP.
+           IF FS-OP = 'RECT' AND FS-LEN < 1
+               ADD 1 TO WS-IDLE
+               MOVE 'T' TO REQ-INKEY
+               MOVE 1 TO WS-STOP.
+           IF WS-STOP = 1 AND WS-IDLE > 599
+               PERFORM FALL-BACK
+               MOVE 'X' TO REQ-INKEY.
+           IF WS-STOP = 1
+               GO TO DO-RECV-EXIT.
+           MOVE 0 TO WS-IDLE.
+           IF FS-LEN < 1
                PERFORM FALL-BACK
                GO TO DO-RECV-EXIT.
            MOVE 'P' TO REQ-INKEY.
@@ -206,6 +253,8 @@
            PERFORM DO-FSOF THRU DO-FSOF-EXIT.
            MOVE 'TSO' TO REQ-MODE.
            MOVE 'N' TO REQ-HILITE.
+           MOVE 'N' TO REQ-ANIM.
+           MOVE 'F' TO REQ-REDRAW.
        BYTE-VAL.
            MOVE IN-CH (WS-K) TO HX-B.
            MOVE HEXN TO WS-V.

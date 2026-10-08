@@ -10,6 +10,8 @@
       * COLUMN 12 = COLOUR (MVS-G1): A AUTO, Y YES, N/BLANK NO. PARM
       * 'TSD ...' IS THE BATCH DRY RUN OF THE COLOUR SCREENS (HEX).
       * COLUMN 13 = HIGHLIGHT (MVS-G2): A AUTO, Y YES, N/BLANK NO.
+      * COLUMN 14 = ANIM (MVS-G3): A AUTO, Y YES, N/BLANK NO.
+      * COLUMN 15 = REDRAW: P PARTIAL, ANYTHING ELSE FULL (REFERENCE).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -33,6 +35,8 @@
            05  PARM-MET          PIC X.
            05  PARM-COLOR        PIC X.
            05  PARM-HILITE       PIC X.
+           05  PARM-ANIM         PIC X.
+           05  PARM-REDRAW       PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
@@ -49,6 +53,13 @@
            MOVE 'N' TO REQ-HILITE.
            IF PARM-LEN > 12
                MOVE PARM-HILITE TO REQ-HILITE.
+           MOVE 'N' TO REQ-ANIM.
+           IF PARM-LEN > 13
+               MOVE PARM-ANIM TO REQ-ANIM.
+           MOVE 'F' TO REQ-REDRAW.
+           IF PARM-LEN > 14
+               MOVE PARM-REDRAW TO REQ-REDRAW.
+           MOVE SPACE TO REQ-SENDST.
            MOVE 'INIT' TO REQ-OP.
            CALL 'PACPLAT' USING PAC-REQ.
            MOVE 'RSET' TO REQ-OP.
@@ -112,11 +123,19 @@
            CALL 'PACDISP' USING PAC-STATE PAC-REQ.
            MOVE 'READ' TO REQ-OP.
            CALL 'PACINPT' USING PAC-REQ.
+           PERFORM IDLE-TICK UNTIL REQ-KIND NOT = 'TCK'.
            IF REQ-KIND = 'EOF'
                MOVE 'EOF ' TO REQ-OP
                CALL 'PACGAME' USING PAC-STATE PAC-REQ.
        READ-INPUT-EXIT.
            EXIT.
+       IDLE-TICK.
+      * MVS-G3 VISUAL TICK: THE WAIT FOR INPUT WAS INTERRUPTED BY AN
+      * IDLE TICK. ONLY THE SCREEN CHANGES; NO GAME CALL, NO TURN.
+           MOVE 'TICK' TO REQ-OP.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           MOVE 'READ' TO REQ-OP.
+           CALL 'PACINPT' USING PAC-REQ.
        CHECK-CONFIG.
            IF REQ-KIND = 'CFG'
                MOVE 'CFG ' TO REQ-OP

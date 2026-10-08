@@ -17,6 +17,11 @@
            05  HI-GHOST              PIC 999 VALUE 242.
            05  HI-ERROR              PIC 999 VALUE 241.
            05  HI-INPUT              PIC 999 VALUE 244.
+      * MVS-G3 GLYPHS (ANIM): MOUTH OPEN/CLOSED, GHOST FEET A/B.
+           05  GLY-PLAYER-1          PIC X VALUE 'C'.
+           05  GLY-PLAYER-2          PIC X VALUE 'O'.
+           05  GLY-GHOST-1           PIC X VALUE 'G'.
+           05  GLY-GHOST-2           PIC X VALUE 'W'.
            05  LAY-STATUS-ROW        PIC 99 VALUE 1.
            05  LAY-GHOSTS-ROW        PIC 99 VALUE 2.
            05  LAY-BOARD-ROW         PIC 99 VALUE 4.

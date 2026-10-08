@@ -81,6 +81,17 @@
   AUTO in the CLIST); AUTO needs QCode X'86'; any failure keeps/returns to TSO line mode. Line mode is restored by
   PACPLAT FSOF at the end, by FINI, on any TPUT/TGET error (fallback) and by an ESTAE exit in PACFSIO on abend.
   TSD = batch dry run printing each TSC data stream in hex, checked byte for byte against tests/ref_g1_screen.py.
+- D28 (MVS-G3) Known limitation, investigation closed deliberately: In this TK4-/MVS 3.8J + TSO + c3270 environment, COLOR(AUTO) performs a capability Query Reply that leaves the idle ticks held
+  until the first AID. After the first input the animation works normally. With COLOR(YES) HILITE(YES) the query is skipped and the
+  animation starts immediately. This is a known limitation of the TSO environment/protocol investigated, not a fault of the game
+  mechanics or of the G3 renderer.
+  COLOR(AUTO) remains the default (G1/G2 detection + fallback); COLOR(YES) HILITE(YES) is the recommended option on TK4-/c3270 for
+  immediate idle animation. Refuted fixes: TPUT BREAKIN, TCLEARQ INPUT after the query, FSOF+FSON after the query (docs/G3-PARTIAL.md).
+- D27 (MVS-G3) Partial redraw = X'F1' Write + TPUT NOEDIT (probe E6, variant W; ASIS erases). Options REDRAW(PARTIAL|FULL) (PARM
+  col 15) and ANIM(AUTO|YES|NO) (col 14), independent; full render stays the reference/diagnostic mode and the fallback after a
+  failed partial send. Animation = alternating glyphs (PACPAL) with a visual tick separate from the logical one (idle polling,
+  never a game call). Core untouched. Performed paragraphs that end in an IF get a final `MOVE 0 TO WS-NOP.` (IKF4072I-W).
+  Details and results: docs/G3-PARTIAL.md.
 - D26 (MVS-G2) Highlighting is a separate option of TSC (HILITE(AUTO|YES|NO), PARM column 13, default N for direct calls,
   AUTO in the CLIST; AUTO needs colour plus QCode X'87'). Reverse for P/G, blink for INVALID COMMAND, underscore for the
   input field; nothing else (docs/G2-HIGHLIGHT.md). Values only in PACPAL. Off = G1 screens. Compiler note: a paragraph

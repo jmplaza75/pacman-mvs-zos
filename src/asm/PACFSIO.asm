@@ -10,7 +10,13 @@
 *                          (1,1) WITH X'00' = WHOLE BUFFER NULLED.
 *                          (ERASE/WRITE X'F5' SENT WITH TPUT NOEDIT
 *                          LEFT THE SCREEN BLACK, JOB 159.)
+*                    SENP  MVS-G3 PARTIAL SEND: X'F1' (WRITE, NO ERASE)
+*                          + BUF (LEN BYTES, STARTING WITH THE WCC),
+*                          TPUT NOEDIT (PROBE E6, VARIANT W)
 *                    RECV  TGET ASIS INTO BUF (RETRY EMPTY READS)
+*                    RECT  ONE TGET ASIS,NOWAIT (R15: 0 INPUT, 4 NONE,
+*                          ELSE ERROR); NONE = WAIT 0.5 S, LEN 0, RC 0
+*                          (VISUAL TICK FOR THE CALLER)
 *                    FSOF  ESTAE CANCEL, STTMPMD OFF, STFSMODE OFF,
 *                          STLINENO LINE=1 (LINE MODE RESTORED)
 *          BUF X(2048)   LEN S9(4) COMP   RC S9(4) COMP
@@ -47,6 +53,10 @@ PACFSIO  CSECT
          BE    DORECV
          CLC   0(4,2),=C'FSOF'
          BE    DOFSOF
+         CLC   0(4,2),=C'SENP'
+         BE    DOSENP
+         CLC   0(4,2),=C'RECT'
+         BE    DORECT
          B     DONE
 DOFSON   DS    0H
          TCLEARQ OUTPUT
@@ -79,6 +89,40 @@ DOSEND   DS    0H
 *                                  BASE MEANS ZERO - JOBS 159/160 BUG)
          TPUT  (1),(0),FULLSCR
          LR    6,15
+         B     DONE
+DOSENP   DS    0H
+         MVI   SENDBUF,X'F1'       3270 COMMAND WRITE (NO ERASE)
+         LA    8,SENDBUF+1
+         LH    9,0(4)
+         LR    10,3
+         LR    11,9
+         MVCL  8,10
+         LA    1,SENDBUF
+         LH    0,0(4)
+         AH    0,=H'1'
+         TPUT  (1),(0),NOEDIT
+         LR    6,15
+         B     DONE
+DORECT   DS    0H
+         LR    1,3
+         LA    0,2048
+         TGET  (1),(0),ASIS,NOWAIT
+         LR    6,15
+         LTR   15,15
+         BZ    RECTGOT             RC 0: INPUT, LENGTH IN R1
+         C     15,=F'4'
+         BNE   RECTERR             OTHER RC: ERROR (R1 UNDEFINED)
+         SR    1,1                 RC 4: NO INPUT, R1 NOT USED
+         STH   1,0(4)
+         STIMER WAIT,BINTVL=HALFSEC
+         SR    6,6
+         B     DONE
+RECTGOT  DS    0H
+         STH   1,0(4)
+         B     DONE
+RECTERR  DS    0H
+         SR    1,1
+         STH   1,0(4)
          B     DONE
 DORECV   DS    0H
          SR    7,7                 EMPTY-READ COUNTER

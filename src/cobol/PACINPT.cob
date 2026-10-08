@@ -67,6 +67,9 @@
            IF REQ-KIND = SPACES AND REQ-MODE NOT = 'BAT'
                                 AND WS-CARD = SPACES
                MOVE 'RDR' TO REQ-KIND.
+           IF REQ-KIND = SPACES AND REQ-MODE = 'TSD'
+                                AND CMD-CHAR = '+'
+               MOVE 'TCK' TO REQ-KIND.
            IF REQ-KIND = SPACES
                PERFORM CLASSIFY THRU CLASSIFY-EXIT.
        DO-READ-EXIT.
@@ -77,6 +80,9 @@
            MOVE 'READ' TO REQ-OP.
            IF REQ-INKEY = 'X'
                PERFORM DO-READ THRU DO-READ-EXIT
+               GO TO TSC-READ-EXIT.
+           IF REQ-INKEY = 'T'
+               MOVE 'TCK' TO REQ-KIND
                GO TO TSC-READ-EXIT.
            MOVE 'RDR' TO REQ-KIND.
            IF REQ-INKEY NOT = 'E'

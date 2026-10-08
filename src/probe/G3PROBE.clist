@@ -1,0 +1,7 @@
+PROC 0 V(A)
+/* MVS-G3 PROBE E6 (PARTIAL TPUT). VARIANTS: A (TPUT ASIS), N       */
+/* (TPUT NOEDIT), W (NOEDIT WITH WRITE COMMAND X'F1'):              */
+/*    EXEC '@@PREFIX@@.CLIST(G3PROBE)' 'V(A)'                       */
+ALLOC F(SYSOUT) DA(*) REUSE
+CALL '@@PREFIX@@.LOAD(PACG3P)' '&V'
+FREE F(SYSOUT)
