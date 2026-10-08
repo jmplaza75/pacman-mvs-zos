@@ -168,3 +168,12 @@ Build + tests: `python3 tools/make_deck.py G1 && python3 tools/run_deck.py build
 batch/TSO oracle blocks byte-identical to 1.0-MVS; 88 TSC screens (5 TSD dry runs) byte-identical to the independent
 Python renderer. CLIST reinstalled (JOB 158). Evidence: docs/evidence/g1-build-tsd.txt. Final build JOB 161 (length fix in PACFSIO SEND, D25) validated live in c3270: clean colour screen, R, Q, READY.
 The ESTAE abend-restore exit is implemented but not validated live. G1 closed (tag mvs-g1).
+
+## MVS-G5: Programmed Symbols experimental (2026-10-08) - closed negative (capability limit, D30)
+Isolated probe E10, nothing of PACMAN changed: tools/gen_probe_e10.py -> src/probe/PACFSA.asm, src/probe/PACG5P.cob, CLIST G5PROBE.
+Build: `python3 tools/make_deck.py G5P && python3 tools/run_deck.py build/G5P.jcl` (job PACG5P01). JOB 196: 6 steps RC 0000, severity 0,
+batch `RC=0004 LOADRC= NONE`. Live (c3270 -trace): `RC=0012 QLEN=0180 SCRNS=0002 AID=7D LOADRC=0000 ILEN=0053`; Query Reply = E9, no
+loadable sets; Load PS `unsupported ID 0x06`, no terminal response; set C1 shows the base set, APL control works. LOADRC = host TPUT
+accepted the send; ILEN 53 = tail of the screen-1 ENTER record beyond the 256-byte key TGET (not a response). Evidence:
+docs/evidence/g5-probe-build.txt, g5-probe-analysis.md, g5-c3270-e10-window.txt. G6 blocked (depends on PS).
+

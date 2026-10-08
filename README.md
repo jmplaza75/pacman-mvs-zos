@@ -82,7 +82,7 @@ row can still fill the screen once. Validated live in c3270.
 ## Architecture and documentation
 - `PACMAIN` is the driver; the layers are `PACGAME`, `PACMAP` and `PACAI` (portable core), `PACINPT` and `PACDISP`
   (adapters), and `PACPLAT` with `PACTSO` (platform). See `docs/ARCHITECTURE.md`.
-- `docs/DECISIONS.md` records the compiler dialect rules and the game rules (D1–D21).
+- `docs/DECISIONS.md` records the compiler dialect rules and the game rules (D1–D30).
 - `docs/mvs-build.md` holds the per-phase build history and evidence, and `docs/CURRENT_PHASE.md` the status.
 
 ## Phases
@@ -98,5 +98,9 @@ first input because TSO holds the ticks after the capability query; use `'COLOR(
 MVS-G4 (glyph profiles `GLYPHS(AUTO|GRAPHIC|BASE|CLASSIC)`: filled walls, APL pellets/Pac-Man facing left/right/ghosts,
 base-set pellets; CLASSIC = the G3 screens; design `docs/G4-GLYPHS.md`, probe E9 `docs/evidence/g4-probe-analysis.md`) is complete
 (tag `mvs-g4`; Hercules JOB 195 and live in c3270). Arcade wall contours are deferred to a future 2x2 scaled renderer.
+MVS-G5 (Programmed Symbols, isolated probe E10) is closed negative (tag `mvs-g5`): PS are not supported in the validated
+TK4-/MVS 3.8J + TSO + c3270 environment (no loadable sets announced, Load PS rejected by c3270, no host-defined glyph shown);
+G4 is the production character-set ceiling. MVS-G6 (multicolour PS) is blocked / not applicable here. See
+`docs/evidence/g5-probe-analysis.md` (D30). Next visual step: a 2x2 scaled renderer.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

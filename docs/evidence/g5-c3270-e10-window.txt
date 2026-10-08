@@ -1,0 +1,192 @@
+# c3270 4.5ga6 -trace, probe E10 window only (source ~/g5-e10-trace.txt, lines 2103-2269 and 2490-2533; logon excluded)
+# Kept: 3270 records (< host->terminal, > terminal->host), decoded orders, telnet EOR, keyboard lock/unlock. Records longer
+# than shown are cut by c3270's own decode line ('...'); the hex lines are complete.
+> Enter(8,36) SetBufferAddress(7,9) 'EXEC 'HERC01.PACMAN.CLIST(G5PROBE)''
+> 0x0   7dc9d311c7e8c5e7c5c3407dc8c5d9c3f0f14bd7c1c3d4c1d54bc3d3c9e2e34d
+> 0x20  c7f5d7d9d6c2c55d7dffef
+20261008.200342.658 telnet SENT EOR
+20261008.200342.699 socket Host socket read complete nr=9
+< 0x0   f3000501ffff02ffef
+< WriteStructuredField ReadPartition(0xff) Query
+> StructuredField
+> QueryReply(Summary(Summary,UsableArea,AlphanumericPartitions,CharacterSet ...
+... s,Color,Highlighting,ReplyModes,DistributedDataManagement,RPQNames,Impl ...
+... icitPartition))
+> QueryReply(UsableArea)
+> QueryReply(AlphanumericPartitions)
+> QueryReply(CharacterSets)
+> QueryReply(Color)
+> QueryReply(Highlighting)
+> QueryReply(ReplyModes)
+> QueryReply(DistributedDataManagement INLIM/OUTLIM=16384)
+> QueryReply(RPQNames '' -> 0 0 x3270)
+> QueryReply(ImplicitPartition)
+> 0x0   88000e81808081848586878895a1a60017818101000050001801000a02e50002
+> 0x20  006f090c07800008818400078000001b81858200090c000000000700100002b9
+> 0x40  00250100f103c3013600268186001000f4f1f1f2f2f3f3f4f4f5f5f6f6f7f7f8
+> 0x60  f8f9f9fafafbfbfcfcfdfdfefeffffffff000f81870500f0f1f1f2f2f4f4f8f8
+> 0x80  00078188000102000c81950000400040000101001281a1000000000000000006
+> 0xa0  a7f3f2f7f0001181a600000b01000050001800500018ffef
+20261008.200342.700 telnet SENT EOR
+20261008.200342.700 kybd   Keyboard lock(kybd_inhibit) OIA_TWAIT OIA_LOCKED +ENTER_INHIBIT -> OIA_TWAIT OIA_LOCKED ENTER_INHIBIT
+20261008.200342.700 telnet RCVD EOR
+20261008.200342.701 socket Host socket read complete nr=348
+< 0x0   f1c31140403c4040001140c12842f5d7c1c3d4c1d540c7f540d7d9d6c2c540c5
+< 0x20  f1f0406040d7d9d6c7d9c1d4d4c5c440e2e8d4c2d6d3e2404dc9e2d6d3c1e3c5
+< 0x40  c46b40d5d6e340e3c8c540c7c1d4c55d11c2612842f4e2e3c5d740f140c4d6d5
+< 0x60  c57a40d9c5c1c440d7c1d9e3c9e3c9d6d540d8e4c5d9e840e2c5d5e36b40d9c5
+< 0x80  d7d3e840d9c5c1c44b11c5c1d5c5e7e37a40d6d5c540d3d6c1c440d7d9d6c7d9
+< 0xa0  c1d4d4c5c440e2e8d4c2d6d3e240c6c9c5d3c4404de6e2c66b40e2c640c9c440
+< 0xc0  f0f65d40c6d6d940e2c5e340c3f16b40c3d6c4c540c3f16b11c6d1e3c8c5d540
+< 0xe0  c140f340e2c5c3d6d5c440e6c9d5c4d6e640c6d6d940c1d5e840e3c5d9d4c9d5
+< 0x100 c1d340d9c5e2d7d6d5e2c56b40e3c8c5d540e3c8c540d9c5e2e4d3e340e2c3d9
+< 0x120 c5c5d54b115b612842f7d7d9c5e2e240c5d5e3c5d940e3d640e2c5d5c440d3d6
+< 0x140 c1c440d7e24b40d7c1f2407e40d9c5c4d9c1e6280000115cf113ffef
+< Write20261008.200342.702 kybd   Keyboard unlock(kybd_inhibit) OIA_TWAIT OIA_LOCKED ENTER_INHIBIT -ENTER_INHIBIT -> OIA_TWAIT OIA_LOCKED
+... ULL SetBufferAddress(1,2) SetAttribute foreground(turquoise) 'PACMAN G5 ...
+...  PROBE E10 - PROGRAMMED SYMBOLS (ISOLATED, NOT THE GAME)' SetBufferAddr ...
+... ess(3,2) SetAttribute foreground(green) 'STEP 1 DONE: READ PARTITION QU ...
+... ERY SENT, REPLY READ.' SetBufferAddress(5,2) 'NEXT: ONE LOAD PROGRAMMED ...
+...  SYMBOLS FIELD (WSF, SF ID 06) FOR SET C1, CODE C1,' SetBufferAddress(6 ...
+... ,2) 'THEN A 3 SECOND WINDOW FOR ANY TERMINAL RESPONSE, THEN THE RESULT  ...
+... SCREEN.' SetBufferAddress(23,2) SetAttribute foreground(neutralWhite) ' ...
+... PRESS ENTER TO SEND LOAD PS. PA2 = REDRAW' SetAttribute all(0) SetBuffe ...
+... rAddress(24,2) InsertCursor
+20261008.200342.703 kybd   Keyboard unlock(do_reset) OIA_TWAIT OIA_LOCKED -OIA_TWAIT -OIA_LOCKED -> none
+20261008.200342.703 telnet RCVD EOR
+20261008.200418.510 ui      base.3270:12 -> Enter()
+20261008.200418.513 infra  keymap -> Enter()
+20261008.200418.513 kybd   Keyboard lock(key_AID) none +OIA_TWAIT +OIA_LOCKED -> OIA_TWAIT OIA_LOCKED
+> Enter(24,2) 'PACMAN G5 PROBE E10 - PROGRAMMED SYMBOLS (ISOLATED, NOT THE  ...
+... GAME)STEP 1 DONE: READ PARTITION QUERY SENT, REPLY READ.NEXT: ONE LOAD  ...
+... PROGRAMMED SYMBOLS FIELD (WSF, SF ID 06) FOR SET C1, CODE C1,THEN A 3 S ...
+... ECOND WINDOW FOR ANY TERMINAL RESPONSE, THEN THE RESULT SCREEN.PRESS EN ...
+... TER TO SEND LOAD PS. PA2 = REDRAW'
+> 0x0   7d5cf1d7c1c3d4c1d540c7f540d7d9d6c2c540c5f1f0406040d7d9d6c7d9c1d4
+> 0x20  d4c5c440e2e8d4c2d6d3e2404dc9e2d6d3c1e3c5c46b40d5d6e340e3c8c540c7
+> 0x40  c1d4c55de2e3c5d740f140c4d6d5c57a40d9c5c1c440d7c1d9e3c9e3c9d6d540
+> 0x60  d8e4c5d9e840e2c5d5e36b40d9c5d7d3e840d9c5c1c44bd5c5e7e37a40d6d5c5
+> 0x80  40d3d6c1c440d7d9d6c7d9c1d4d4c5c440e2e8d4c2d6d3e240c6c9c5d3c4404d
+> 0xa0  e6e2c66b40e2c640c9c440f0f65d40c6d6d940e2c5e340c3f16b40c3d6c4c540
+> 0xc0  c3f16be3c8c5d540c140f340e2c5c3d6d5c440e6c9d5c4d6e640c6d6d940c1d5
+> 0xe0  e840e3c5d9d4c9d5c1d340d9c5e2d7d6d5e2c56b40e3c8c5d540e3c8c540d9c5
+> 0x100 e2e4d3e340e2c3d9c5c5d54bd7d9c5e2e240c5d5e3c5d940e3d640e2c5d5c440
+> 0x120 d3d6c1c440d7e24b40d7c1f2407e40d9c5c4d9c1e6ffef
+20261008.200418.517 telnet SENT EOR
+20261008.200418.523 socket Host socket read complete nr=34
+< 0x0   f3001f0600c1c1011c007f00fe00fc00f800f000f800fc00fe007f001c000000
+< 0x20  ffef
+< WriteStructuredField unsupported ID 0x06
+20261008.200418.524 telnet RCVD EOR
+20261008.200418.524 socket Host socket read complete nr=717
+< 0x0   f1c31140403c4040001140c12842f5d7c1c3d4c1d540c7f540d7d9d6c2c540c5
+< 0x20  f1f0406040d7d9d6c7d9c1d4d4c5c440e2e8d4c2d6d3e2404dc9e2d6d3c1e3c5
+< 0x40  c46b40d5d6e340e3c8c540c7c1d4c55d11c2612842f4e2e3c5d740f240c4d6d5
+< 0x60  c57a40d3d6c1c440d7e240e2c5d5e340c6d6d940e2c5e340c3f1404dd6d5c540
+< 0x80  d7c1c3d4c1d540e2e8d4c2d6d340c1e340c3d6c4c540c3f15d4b11c5c1c15d40
+< 0xa0  e2c140f4f340c3f1404de3c8c540e2c5e340d1e4e2e340d3d6c1c4c5c45d6b40
+< 0xc0  c2e8e3c5e240c3f160c3f87a11c5f52842f62843c1c140c240c340c440c540c6
+< 0xe0  40c740c828430011c7612842f4c25d40e2c1d4c540c2e8e3c5e26b40c2c1e2c5
+< 0x100 40e2c5e3404dd9c5c6c5d9c5d5c3c55d7a11c8d52842f6c140c240c340c440c5
+< 0x120 40c640c740c8114ac12842f4c35d40e2c1d4c540c2e8e3c5e26b40e2c140f4f3
+< 0x140 40c6f1404dc1d7d36b40d7d6e2c9e3c9e5c540c3d6d5e3d9d6d35d7a114af528
+< 0x160 42f62843f1c140c240c340c440c540c640c740c8284300114df12842f4c9c640
+< 0x180 d7d9d6c7d9c1d4d4c5c440e2e8d4c2d6d3e240e6d6d9d2c5c46b40e3c8c540c6
+< 0x1a0 c9d9e2e340c3c5d3d340d6c640c15d40e6d6e4d3c440c2c540c140d7c1c3d4c1
+< 0x1c0 d5114fc1e2c8c1d7c5404de3c8c540c8d6e2e360c4c5c6c9d5c5c440e2e8d4c2
+< 0x1e0 d6d35d40c1d5c440e3c8c540d9c5e2e340d6c640c15d40c2d3c1d5d240d6d940
+< 0x200 e4d5c4c5c6c9d5c5c44b1150d1c15d40c5d8e4c1d340e3d640c25d407e40e2c5
+< 0x220 e340c3f140d5d6e340d3d6c1c4c5c4404de3c5d9d4c9d5c1d340c6c1d3d3e240
+< 0x240 c2c1c3d240e3d640e3c8c540c2c1e2c540e2c5e35d4b11d161c35d40c4c9c6c6
+< 0x260 c5d9c5d5e340c6d9d6d440c25d407e40e3c8c540e2c140f4f340d7c1e3c840c9
+< 0x280 e3e2c5d3c640e6d6d9d2e24b115b612842f7d5d6e3c540d9d6e6e240c16b40c2
+< 0x2a0 6b40c35e40e3c8c5d540c5d5e3c5d940e3d640c5d5c44b40d7c1f2407e40d9c5
+< 0x2c0 c4d9c1e6280000115cf113ffef
+< Write(reset,restore,resetMDT) SetBufferAddress(1,1) RepeatToAddress(1,1)N ...
+... ULL SetBufferAddress(1,2) SetAttribute foreground(turquoise) 'PACMAN G5 ...
+...  PROBE E10 - PROGRAMMED SYMBOLS (ISOLATED, NOT THE GAME)' SetBufferAddr ...
+... ess(3,2) SetAttribute foreground(green) 'STEP 2 DONE: LOAD PS SENT FOR  ...
+... SET C1 (ONE PACMAN SYMBOL AT CODE C1).' SetBufferAddress(5,2) 'A) SA 43 ...
+...  C1 (THE SET JUST LOADED), BYTES C1-C8:' SetBufferAddress(5,54) SetAttr ...
+... ibute foreground(yellow) SetAttribute charset(c1) 'A B C D E F G H' Set ...
+... Attribute charset(0) SetBufferAddress(7,2) SetAttribute foreground(gree ...
+... n) 'B) SAME BYTES, BASE SET (REFERENCE):' SetBufferAddress(7,54) SetAtt ...
+... ribute foreground(yellow) 'A B C D E F G H' SetBufferAddress(9,2) SetAt ...
+... tribute foreground(green) 'C) SAME BYTES, SA 43 F1 (APL, POSITIVE CONTR ...
+... OL):' SetBufferAddress(9,54) SetAttribute foreground(yellow) SetAttribu ...
+... te charset(f1) 'A B C D E F G H' SetAttribute charset(0) SetBufferAddre ...
+... ss(12,2) SetAttribute foreground(green) 'IF PROGRAMMED SYMBOLS WORKED,  ...
+... THE FIRST CELL OF A) WOULD BE A PACMAN' SetBufferAddress(13,2) 'SHAPE ( ...
+... THE HOST-DEFINED SYMBOL) AND THE REST OF A) BLANK OR UNDEFINED.' SetBuf ...
+... ferAddress(14,2) 'A) EQUAL TO B) = SET C1 NOT LOADED (TERMINAL FALLS BA ...
+... CK TO THE BASE SET).' SetBufferAddress(15,2) 'C) DIFFERENT FROM B) = TH ...
+... E SA 43 PATH ITSELF WORKS.' SetBufferAddress(23,2) SetAttribute foregro ...
+... und(neutralWhite) 'NOTE ROWS A, B, C; THEN ENTER TO END. PA2 = REDRAW'  ...
+... SetAttribute all(0) SetBufferAddress(24,2) InsertCursor
+20261008.200418.530 kybd   Keyboard unlock(do_reset) OIA_TWAIT OIA_LOCKED -OIA_TWAIT -OIA_LOCKED -> none
+20261008.200418.530 telnet RCVD EOR
+20261008.200552.546 ui      base.3270:12 -> Enter()
+20261008.200552.548 infra  keymap -> Enter()
+20261008.200552.548 kybd   Keyboard lock(key_AID) none +OIA_TWAIT +OIA_LOCKED -> OIA_TWAIT OIA_LOCKED
+> Enter(24,2) 'PACMAN G5 PROBE E10 - PROGRAMMED SYMBOLS (ISOLATED, NOT THE  ...
+... GAME)STEP 2 DONE: LOAD PS SENT FOR SET C1 (ONE PACMAN SYMBOL AT CODE C1 ...
+... ).A) SA 43 C1 (THE SET JUST LOADED), BYTES C1-C8:A B C D E F G HB) SAME ...
+...  BYTES, BASE SET (REFERENCE):A B C D E F G HC) SAME BYTES, SA 43 F1 (AP ...
+... L, POSITIVE CONTROL):A B C D E F G HIF PROGRAMMED SYMBOLS WORKED, THE F ...
+... IRST CELL OF A) WOULD BE A PACMANSHAPE (THE HOST-DEFINED SYMBOL) AND TH ...
+... E REST OF A) BLANK OR UNDEFINED.A) EQUAL TO B) = SET C1 NOT LOADED (TER ...
+... MINAL FALLS BACK TO THE BASE SET).C) DIFFERENT FROM B) = THE SA 43 PATH ...
+...  ITSELF WORKS.NOTE ROWS A, B, C; THEN ENTER TO END. PA2 = REDRAW'
+> 0x0   7d5cf1d7c1c3d4c1d540c7f540d7d9d6c2c540c5f1f0406040d7d9d6c7d9c1d4
+> 0x20  d4c5c440e2e8d4c2d6d3e2404dc9e2d6d3c1e3c5c46b40d5d6e340e3c8c540c7
+> 0x40  c1d4c55de2e3c5d740f240c4d6d5c57a40d3d6c1c440d7e240e2c5d5e340c6d6
+> 0x60  d940e2c5e340c3f1404dd6d5c540d7c1c3d4c1d540e2e8d4c2d6d340c1e340c3
+> 0x80  d6c4c540c3f15d4bc15d40e2c140f4f340c3f1404de3c8c540e2c5e340d1e4e2
+> 0xa0  e340d3d6c1c4c5c45d6b40c2e8e3c5e240c3f160c3f87ac140c240c340c440c5
+> 0xc0  40c640c740c8c25d40e2c1d4c540c2e8e3c5e26b40c2c1e2c540e2c5e3404dd9
+> 0xe0  c5c6c5d9c5d5c3c55d7ac140c240c340c440c540c640c740c8c35d40e2c1d4c5
+> 0x100 40c2e8e3c5e26b40e2c140f4f340c6f1404dc1d7d36b40d7d6e2c9e3c9e5c540
+> 0x120 c3d6d5e3d9d6d35d7ac140c240c340c440c540c640c740c8c9c640d7d9d6c7d9
+> 0x140 c1d4d4c5c440e2e8d4c2d6d3e240e6d6d9d2c5c46b40e3c8c540c6c9d9e2e340
+> 0x160 c3c5d3d340d6c640c15d40e6d6e4d3c440c2c540c140d7c1c3d4c1d5e2c8c1d7
+> 0x180 c5404de3c8c540c8d6e2e360c4c5c6c9d5c5c440e2e8d4c2d6d35d40c1d5c440
+> 0x1a0 e3c8c540d9c5e2e340d6c640c15d40c2d3c1d5d240d6d940e4d5c4c5c6c9d5c5
+> 0x1c0 c44bc15d40c5d8e4c1d340e3d640c25d407e40e2c5e340c3f140d5d6e340d3d6
+> 0x1e0 c1c4c5c4404de3c5d9d4c9d5c1d340c6c1d3d3e240c2c1c3d240e3d640e3c8c5
+> 0x200 40c2c1e2c540e2c5e35d4bc35d40c4c9c6c6c5d9c5d5e340c6d9d6d440c25d40
+> 0x220 7e40e3c8c540e2c140f4f340d7c1e3c840c9e3e2c5d3c640e6d6d9d2e24bd5d6
+> 0x240 e3c540d9d6e6e240c16b40c26b40c35e40e3c8c5d540c5d5e3c5d940e3d640c5
+> 0x260 d5c44b40d7c1f2407e40d9c5c4d9c1e6ffef
+20261008.200552.555 telnet SENT EOR
+
+# Screen 2 as rendered (x3270if Ascii over -scriptport 4001, while shown)
+01| PACMAN G5 PROBE E10 - PROGRAMMED SYMBOLS (ISOLATED, NOT THE GAME)
+02|
+03| STEP 2 DONE: LOAD PS SENT FOR SET C1 (ONE PACMAN SYMBOL AT CODE C1).
+04|
+05| A) SA 43 C1 (THE SET JUST LOADED), BYTES C1-C8:     A B C D E F G H
+06|
+07| B) SAME BYTES, BASE SET (REFERENCE):                A B C D E F G H
+08|
+09| C) SAME BYTES, SA 43 F1 (APL, POSITIVE CONTROL):    ⁼ + ∎ └ ┌ ├ ┴ §
+10|
+11|
+12| IF PROGRAMMED SYMBOLS WORKED, THE FIRST CELL OF A) WOULD BE A PACMAN
+13| SHAPE (THE HOST-DEFINED SYMBOL) AND THE REST OF A) BLANK OR UNDEFINED.
+14| A) EQUAL TO B) = SET C1 NOT LOADED (TERMINAL FALLS BACK TO THE BASE SET).
+15| C) DIFFERENT FROM B) = THE SA 43 PATH ITSELF WORKS.
+16|
+17|
+18|
+19|
+20|
+21|
+22|
+23| NOTE ROWS A, B, C; THEN ENTER TO END. PA2 = REDRAW
+
+# Screen 2 rows 5-9, c3270 buffer with attributes (x3270if ReadBuffer(Ebcdic)); 42 = colour, 43 = character set
+00 SA(42=f4) c1 5d 40 e2 c1 40 f4 f3 40 c3 f1 40 4d e3 c8 c5 40 e2 c5 e3 40 d1 e4 e2 e3 40 d3 d6 c1 c4 c5 c4 5d 6b 40 c2 e8 e3 c5 e2 40 c3 f1 60 c3 f8 7a SA(42=00) 00 00 00 00 00 SA(42=f6) c1 40 c2 40 c3 40 c4 40 c5 40 c6 40 c7 40 c8 SA(42=00) 00...
+00 00...
+00 SA(42=f4) c2 5d 40 e2 c1 d4 c5 40 c2 e8 e3 c5 e2 6b 40 c2 c1 e2 c5 40 e2 c5 e3 40 4d d9 c5 c6 c5 d9 c5 d5 c3 c5 5d 7a SA(42=00) 00... SA(42=f6) c1 40 c2 40 c3 40 c4 40 c5 40 c6 40 c7 40 c8 SA(42=00) 00...
+00 00...
+00 SA(42=f4) c3 5d 40 e2 c1 d4 c5 40 c2 e8 e3 c5 e2 6b 40 e2 c1 40 f4 f3 40 c6 f1 40 4d c1 d7 d3 6b 40 d7 d6 e2 c9 e3 c9 e5 c5 40 c3 d6 d5 e3 d9 d6 d3 5d 7a SA(42=00) 00 00 00 00 SA(42=f6,43=f1) c1 40 c2 40 c3 40 c4 40 c5 40 c6 40 c7 40 c8 SA(42=00,43=00) 00...

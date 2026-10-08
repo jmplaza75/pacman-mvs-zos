@@ -16,8 +16,8 @@ NOT EXPECTED = documented as unsupported by the emulator, to be confirmed by a p
 | Highlighting (reverse, blink, underscore) | ANNOUNCED (QCode 87); CONFIRMED live (G2) | docs/G2-HIGHLIGHT.md; JOB 164 data streams equal the model; c3270 live check passed | G2 |
 | Character attributes (SA order) | USED (colour SA X'42', highlight SA X'41') | G1 and G2 live | G2/G4 |
 | APL / graphic character set (GE order) | CONFIRMED (E9 live; used by G4) | QCode 85: GE flag, base 697/CP037, LCID F1 = 963/CP310; GE X'08' and SA X'43' F1 equivalent in c3270; box-drawing maze rendered (docs/evidence/g4-probe-analysis.md) | G4 |
-| Programmed Symbols | NOT ANNOUNCED | QCode 85 decoded (E9): no loadable symbol sets (form-type bytes 0); x3270 family documents no PS loading - confirm in G5 | G5/G6 |
-| Triple-plane PS | NOT EXPECTED | depends on PS | G6 |
+| Programmed Symbols | NOT SUPPORTED (c3270) | E10 live (JOB 196, D30): QCode 85 load bytes 00000000; Load PS traced `unsupported ID 0x06`, no inbound; SA 43 to the loaded LCID = base set (docs/evidence/g5-probe-analysis.md) | G5 closed negative |
+| Triple-plane PS | NOT APPLICABLE | depends on PS (G5 negative, D30) | G6 blocked |
 | Vector / host graphics (GDDM, GOCA) | NOT ANNOUNCED | E5 Query Reply has no graphics-related codes; x3270 documents no graphics | G7 |
 | Capability detection (Read Partition Query) | CONFIRMED | E5: TPUT NOEDIT WSF, reply AID 88 at TGET ASIS without user action; codes 80 81 84 85 86 87 88 95 A1 A6 | G1, G9 |
 | Colour renderer TSC (G1) | CONFIRMED | live c3270: clean full-screen colour game, moves, INVALID, PA2, Q (JOBs 157/161) | G1 |

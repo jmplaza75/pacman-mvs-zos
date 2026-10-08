@@ -114,3 +114,10 @@
   reverse video (HI-WALL) when highlighting is on, `#` otherwise (reverse video is never forced against HILITE); pellets and
   sprites as above; CLASSIC unchanged. Arcade-style wall contours are deferred to a future scaled renderer (preferably 2 x 2).
   Maintenance: `make_deck.py COMPRESS` compresses the COBOL/COPY libraries (SE37 in JOB 193).
+- D30 (MVS-G5) Programmed Symbols are not supported in the validated TK4-/MVS 3.8J + TSO + c3270 environment; G4 is the production
+  character-set ceiling (capability limit, not an implementation failure). Isolated probe E10 (JOB 196, live 2026-10-08,
+  docs/evidence/g5-probe-analysis.md): Query Reply X'85' offers no loadable sets (byte-identical to E9), c3270 traces the Load PS field
+  as `WriteStructuredField unsupported ID 0x06`, nothing returns to the host, SA X'43' to the loaded LCID shows the base set while the
+  APL control (F1) works. Matches x3270 source (sf.c/ctlr.c/telnet.c). G6 (multicolour/triple-plane PS) is BLOCKED / NOT APPLICABLE
+  here, reason inherited. A PS-capable terminal/emulator may be explored in a separate future compatibility branch (not pursued, no
+  dependency on Vista TN3270/PCOMM). Next visual step for this environment: the 2 x 2 scaled renderer.
