@@ -17,3 +17,7 @@ docs/G3-PARTIAL.md, docs/CAPABILITIES.md. Regression to keep: tests/test_g3.py (
 tests/test_g2.py (on its listing), tests/test_core_frozen.py. Probe lesson (G1, G3): check every TPUT length (never `LA 0,n(0)`), trace at
 the TPUT boundary, and verify on the terminal side (c3270 -trace, tools/c3270_*.py) before concluding anything from visuals.
 1.0-MVS is the immutable functional baseline; z/OS out of scope.
+
+MVS-G4 IN PROGRESS (2026-10-08): probe E9 CLOSED, PASS (JOB 190; docs/evidence/g4-probe-analysis.md): GE supported, LCID F1 =
+charset 963 / CP310 APL, base 697 / CP037, no loadable PS, box-drawing maze rendered live in c3270. Design docs/G4-GLYPHS.md
+APPROVED (all five points). Research/design checkpoint committed; implementation next (CLASSIC = G3 byte for byte, core frozen).

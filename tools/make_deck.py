@@ -293,9 +293,22 @@ def e8p_deck(pfx):
     return out + '//\n'
 
 
+def g4p_deck(pfx):
+    """MVS-G4 probe E9 (second character set via GE / SA X'43', full Query Reply): PACG4P + PACFS9 -> LOAD(PACG4P),
+    CLIST G4PROBE, one batch run (must end with RC 4: not a TSO session)."""
+    out = job_card('PACG4P01', 'PACMAN G4 PROBE E9') + f'//* PREFIX {pfx}\n'
+    out += upload('SRC1', pfx, 'COBOL', 'PACG4P', text_of(ROOT / 'src/probe/PACG4P.cob'))
+    out += compile_step('COB1', pfx, 'PACG4P', 'OBJ1')
+    out += asm_step('ASM1', 'OBJA1', text_of(ROOT / 'src/probe/PACFS9.asm'))
+    out += link_step(pfx, ['OBJ1', 'OBJA1'], 'PACG4P', 'PACG4P')
+    out += upload('CLS1', pfx, 'CLIST', 'G4PROBE', text_of(ROOT / 'src/probe/G4PROBE.clist').replace('@@PREFIX@@', pfx))
+    out += run_step('BATCH', pfx, 'PACG4P', None)
+    return out + '//\n'
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -306,6 +319,8 @@ if __name__ == '__main__':
         text = alloc_deck(pfx)
     elif a.deck == 'CLIST':
         text = clist_deck(pfx)
+    elif a.deck == 'G4P':
+        text = g4p_deck(pfx)
     elif a.deck == 'E8P':
         text = e8p_deck(pfx)
     elif a.deck == 'E7P':
