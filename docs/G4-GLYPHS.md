@@ -1,4 +1,26 @@
-# MVS-G4 advanced glyphs - design (2026-10-08, APPROVED by the user on all five points; implementation in progress)
+# MVS-G4 advanced glyphs - design and result (2026-10-08, CLOSED: tag mvs-g4; walls REVISED, see section 0)
+Final: JOB 195 (tests/test_g4.py PASS); live c3270 validation PASS (docs/evidence/g4-manual-c3270.md, Parts 1-3).
+
+## 0. Revision (user decision 2026-10-08): FILLED walls replace the neighbour-mask wall tiles
+Live, the box-drawing (GRAPHIC) and `+ - |` (BASE) wall tiles of sections 1-2 made the maze hard to read: they draw the
+centre-line connectivity of the wall cells (thin strokes, ladders in 2-wide areas, BASE corners collapsed to `+`), not
+the barriers (diagnosis: docs/evidence/g4-wall-diagnosis.md). Decision (alternative A):
+- BASE and GRAPHIC draw every wall cell as a blank in the wall colour with reverse video (a solid block) when
+  highlighting is on (REQ-HILITE Y); with HILITE(NO), or AUTO without highlighting, the wall cell is `#`. Reverse video is
+  not forced against the user's highlighting choice. No neighbour-derived wall glyphs any more (tables removed).
+- GRAPHIC keeps its CP310 pellets and sprites (GE); BASE keeps `·`; CLASSIC is the G3 renderer unchanged.
+  | Profile + highlighting | Walls | Pellets / sprites |
+  |---|---|---|
+  | GRAPHIC + HILITE(YES) | filled blocks | `•`, `⊂ ⊃ ○`, `∩ ⍝` (GE) |
+  | GRAPHIC + HILITE(NO) | `#` | `•`, `⊂ ⊃ ○`, `∩ ⍝` (GE) |
+  | BASE + HILITE(YES) | filled blocks | `·`, `C/O`, `G/W` |
+  | BASE + HILITE(NO) | `#` | `·`, `C/O`, `G/W` |
+  | CLASSIC | `#` | `.`, `C/O`/`P`, `G/W` (G3) |
+- True arcade-style wall contours (lines along the wall/corridor edges, double lines for 1-cell walls) need sub-cell
+  resolution and are DEFERRED deliberately to a future scaled renderer, preferably 2 x 2 (board 40 x 20, new layout).
+  The rejected centre-line rule and an "outline" variant (inner strokes removed) are kept in the diagnosis evidence.
+Sections 1-2 below describe the first (rejected) wall tiles and are kept for the record; everything else stands.
+
 Requirement (master doc sec. 25 row G4, sec. 26 MVS-G4): try the graphic/APL characters available, alternative wall and
 corner tiles, charset profiles, document visual differences per emulator. Acceptance: a look closer to the arcade without
 Programmed Symbols. Dependency G3; fallback G3. Basis: probe E9 (docs/evidence/g4-probe-analysis.md): GE supported, second
@@ -108,3 +130,22 @@ Programmed Symbols (G5/G6: E9 shows none loadable), new maps, power pellets, gam
 4. Pac-Man facing left/right only; vertical moves keep the last horizontal facing; ghosts `∩`/`⍝`.
 5. PACQRY extracted ONLY as pure capability parsing/selection (moves the G1/G2 decisions without changing them). Query
    transport, ordering, PACFSIO, TGET/TPUT, full-screen mode sequencing and the whole G1-G3 protocol path stay untouched.
+
+## Results, first build with wall tiles (Hercules JOB 191, 2026-10-08) - walls later rejected live (section 0)
+82 steps RC 0000, no compiler warnings; the 25 oracle blocks of 1.0-MVS byte-identical; 460 TSC streams identical to
+tests/ref_g4_screen.py: the 12 G3 runs (no column 16 = CLASSIC) equal the G3 model, plus 14 runs with GRAPHIC (full, partial,
+ticks, redraw, death, 1-3 ghosts, FACE case), BASE, explicit CLASSIC and AUTO (= CLASSIC without a query). PACQRY on 12 recorded
+replies (the live c3270 reply and variants without GE flag, CGCSGIDs, CP310 set, X'85', colour; not a reply; truncated; DBCS form;
+X'85' only; short descriptor; empty) gives the expected flags. Size: first GRAPHIC full screen 800 bytes (CLASSIC 600); same
+moves, partial traffic MOVES 1678 -> 1915 bytes, MULTI 2700 -> 3012 (one GE byte per changed graphic cell); BASE = CLASSIC sizes.
+Evidence: docs/evidence/g4-build-tsd.txt. CLIST reinstalled (JOB 192). Live c3270 checklist (section 6 item 7): pending.
+
+## Results, filled walls (Hercules JOB 195, 2026-10-08)
+JOB 193 ended with SE37 uploading to HERC01.PACMAN.COBOL (replaced members never reclaimed); new maintenance deck
+`python3 tools/make_deck.py COMPRESS` (IEBCOPY in place, COBOL and COPY libraries only) - JOB 194 RC 0. JOB 195: 82 steps RC 0000,
+no compiler warnings, oracle byte-identical, 460 TSC streams identical to tests/ref_g4_screen.py (199 CLASSIC = G3 model), 12 PACQRY
+cases as expected, and every one of the 460 streams replayed on a terminal image keeps exactly the 98 LEVEL1 wall cells occupied
+(filled block with highlighting, `#` without) - covered for GRAPHIC and BASE, with and without highlighting. First GRAPHIC full
+screen 912 bytes (highlight runs around the wall blocks); partial traffic MOVES 1678 (CLASSIC) -> 2027, MULTI 2700 -> 3112 (BASE 2898).
+Evidence: docs/evidence/g4-build-tsd.txt (JOB 195; the JOB 191 grids are kept in docs/evidence/g4-wall-diagnosis.md).
+Live validation (user, 2026-10-08): GRAPHIC, BASE, CLASSIC and AUTO, with and without highlighting, PASS in c3270; G4 closed.

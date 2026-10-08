@@ -10,7 +10,9 @@
       * also restores it from an ESTAE exit on abend). CLS (TSO only)
       * starts a fresh line-mode screen via PACTSO. GAME/MAP/AI never
       * see any of this. MVS-G2: REQ-HILITE A/Y/N IN, Y/N OUT
-      * (HIGHLIGHT = QCODE X'87' IN THE QUERY REPLY).
+      * (HIGHLIGHT = QCODE X'87' IN THE QUERY REPLY). MVS-G4: THE
+      * REPLY IS PARSED BY PACQRY (PURE); REQ-GLYPHS A/G/B/C IN, G/B/C
+      * OUT (AUTO = G ONLY WITH GE + CP310 IN THE REPLY).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACPLAT.
        ENVIRONMENT DIVISION.
@@ -41,12 +43,7 @@
            05  FILLER            PIC X(13) VALUE 'TSD FRAME LEN'.
            05  LL-LEN            PIC 9(4).
        01  WS-K                  PIC 9(4).
-       01  WS-P                  PIC 9(4).
        01  WS-V                  PIC 9(4).
-       01  WS-L                  PIC 9(4).
-       01  WS-ID                 PIC 9(4).
-       01  WS-QC                 PIC 9(4).
-       01  WS-LIM                PIC 9(4).
        01  WS-O                  PIC 99.
        01  WS-Q                  PIC 99.
        01  WS-R                  PIC 99.
@@ -54,6 +51,11 @@
        01  WS-STOP               PIC 9.
        01  HAS-COLOUR            PIC 9.
        01  HAS-HILITE            PIC 9.
+       01  HAS-GE                PIC 9 VALUE 0.
+       01  QRY-OUT.
+           05  QO-COLOUR         PIC 9.
+           05  QO-HILITE         PIC 9.
+           05  QO-GE             PIC 9.
        01  WS-IDLE               PIC 9(4) VALUE 0.
        LINKAGE SECTION.
        01  PAC-REQ COPY PACREQ.
@@ -99,6 +101,14 @@
                MOVE 'N' TO REQ-ANIM.
            IF REQ-REDRAW NOT = 'P'
                MOVE 'F' TO REQ-REDRAW.
+      * MVS-G4: GLYPH PROFILE G/B ONLY IN TSC/TSD; A BECOMES G ONLY WHEN
+      * THE QUERY REPLY ANNOUNCED GE + CP310 (NO QUERY: COLOR YES = C).
+           IF REQ-GLYPHS = 'A' AND REQ-MODE = 'TSC' AND HAS-GE = 1
+               MOVE 'G' TO REQ-GLYPHS.
+           IF REQ-MODE NOT = 'TSC' AND REQ-MODE NOT = 'TSD'
+               MOVE 'C' TO REQ-GLYPHS.
+           IF REQ-GLYPHS NOT = 'G' AND REQ-GLYPHS NOT = 'B'
+               MOVE 'C' TO REQ-GLYPHS.
        DO-INIT-EXIT.
            EXIT.
        TRY-COLOUR.
@@ -114,8 +124,12 @@
            CALL 'PACFSIO' USING FS-OP IN-AREA FS-LEN FS-RC.
            MOVE 0 TO HAS-COLOUR.
            MOVE 0 TO HAS-HILITE.
+           MOVE 0 TO HAS-GE.
            IF FS-RC = 0
-               PERFORM FIND-COLOUR THRU FIND-COLOUR-EXIT.
+               CALL 'PACQRY' USING IN-AREA FS-LEN QRY-OUT
+               MOVE QO-COLOUR TO HAS-COLOUR
+               MOVE QO-HILITE TO HAS-HILITE
+               MOVE QO-GE TO HAS-GE.
            IF HAS-COLOUR = 1 AND HAS-HILITE = 1 AND REQ-HILITE = 'A'
                MOVE 'Y' TO REQ-HILITE.
            IF HAS-COLOUR = 1
@@ -123,45 +137,6 @@
            ELSE
                PERFORM DO-FSOF THRU DO-FSOF-EXIT.
        TRY-COLOUR-EXIT.
-           EXIT.
-       FIND-COLOUR.
-      * QUERY REPLY = AID X'88' (136) + STRUCTURED FIELDS: LENGTH(2),
-      * X'81' (129), QCODE. COLOUR SUPPORT = QCODE X'86' (134).
-           MOVE 1 TO WS-K.
-           PERFORM BYTE-VAL.
-           IF WS-V NOT = 136
-               GO TO FIND-COLOUR-EXIT.
-           MOVE 2 TO WS-P.
-           MOVE 0 TO WS-STOP.
-           PERFORM NEXT-SF THRU NEXT-SF-EXIT UNTIL WS-STOP = 1.
-       FIND-COLOUR-EXIT.
-           EXIT.
-       NEXT-SF.
-           COMPUTE WS-LIM = WS-P + 3.
-           IF WS-LIM > FS-LEN
-               MOVE 1 TO WS-STOP
-               GO TO NEXT-SF-EXIT.
-           MOVE WS-P TO WS-K.
-           PERFORM BYTE-VAL.
-           COMPUTE WS-L = WS-V * 256.
-           ADD 1 TO WS-K.
-           PERFORM BYTE-VAL.
-           ADD WS-V TO WS-L.
-           ADD 1 TO WS-K.
-           PERFORM BYTE-VAL.
-           MOVE WS-V TO WS-ID.
-           ADD 1 TO WS-K.
-           PERFORM BYTE-VAL.
-           MOVE WS-V TO WS-QC.
-           IF WS-ID = 129 AND WS-QC = 134
-               MOVE 1 TO HAS-COLOUR.
-           IF WS-ID = 129 AND WS-QC = 135
-               MOVE 1 TO HAS-HILITE.
-           IF WS-L < 4
-               MOVE 1 TO WS-STOP
-           ELSE
-               ADD WS-L TO WS-P.
-       NEXT-SF-EXIT.
            EXIT.
        DO-SEND.
            IF REQ-MODE = 'TSD'
@@ -255,6 +230,7 @@
            MOVE 'N' TO REQ-HILITE.
            MOVE 'N' TO REQ-ANIM.
            MOVE 'F' TO REQ-REDRAW.
+           MOVE 'C' TO REQ-GLYPHS.
        BYTE-VAL.
            MOVE IN-CH (WS-K) TO HX-B.
            MOVE HEXN TO WS-V.

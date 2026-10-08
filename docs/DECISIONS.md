@@ -101,3 +101,16 @@
   remnants; JOB 159 (NOEDIT + X'F5') and JOB 160 (FULLSCR + prefix) black because of a length bug (`LA 0,n(0)` = n);
   JOB 161 fixes the length (AH) and was validated live (clean colour screen, R, Q, READY). The ESTAE abend-restore exit
   is implemented but not validated live.
+- D29 (MVS-G4) Glyph profiles of the TSC renderer, design docs/G4-GLYPHS.md (approved 2026-10-08): GLYPHS(AUTO|GRAPHIC|BASE|CLASSIC),
+  PARM column 16, default AUTO in the CLIST and CLASSIC (= the G3 screens byte for byte) for direct calls. GRAPHIC = CP310 glyphs
+  sent per cell as GE X'08' + code (not SA X'43'): wall tiles by neighbour mask (N1 E2 S4 W8), pellet bullet, Pac-Man facing the last
+  horizontal move that was not blocked (vertical moves, bumps, invalid input keep it), ghosts with two frames; BASE = + - | tiles and
+  a middle dot. AUTO = GRAPHIC only if the Query Reply X'85' has the GE flag, CGCSGIDs and a code page 310 set; with COLOR(YES) there
+  is no query, so the explicit TK4-/c3270 combination is COLOR(YES) HILITE(YES) GLYPHS(GRAPHIC). The reply is parsed by the pure
+  subprogram PACQRY (G1/G2 decisions moved there unchanged); query transport, PACFSIO and the G1-G3 protocol path are untouched.
+  Values only in PACPAL; the virtual image carries a GE flag per cell. Probe E9: docs/evidence/g4-probe-analysis.md.
+  REVISED after the live check (user, 2026-10-08): the neighbour-mask wall tiles were rejected (centre-line strokes, not
+  barriers; docs/evidence/g4-wall-diagnosis.md). BASE and GRAPHIC draw each wall cell as a blank in the wall colour with
+  reverse video (HI-WALL) when highlighting is on, `#` otherwise (reverse video is never forced against HILITE); pellets and
+  sprites as above; CLASSIC unchanged. Arcade-style wall contours are deferred to a future scaled renderer (preferably 2 x 2).
+  Maintenance: `make_deck.py COMPRESS` compresses the COBOL/COPY libraries (SE37 in JOB 193).

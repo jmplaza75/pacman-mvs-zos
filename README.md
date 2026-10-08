@@ -66,7 +66,13 @@ EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'COLOR(NO)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'HILITE(NO)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'ANIM(NO) REDRAW(FULL)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'COLOR(YES) HILITE(YES)'     (recommended on TK4-/c3270: idle animation at once)
+EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'COLOR(YES) HILITE(YES) GLYPHS(GRAPHIC)'   (TK4-/c3270: solid walls + APL sprites)
+EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'GLYPHS(BASE)'      (or CLASSIC: the # . C/O G/W look)
 ```
+`GLYPHS(AUTO|GRAPHIC|BASE|CLASSIC)` (MVS-G4) picks the board look in colour mode: GRAPHIC and BASE draw walls as solid
+blue blocks (reverse video; `#` with `HILITE(NO)`); GRAPHIC draws pellets, Pac-Man and ghosts with APL symbols (3270 GE
+order, code page 310), BASE with normal characters; AUTO uses GRAPHIC when the capability query announces it (with
+`COLOR(YES)` there is no query, so name GRAPHIC explicitly). See `docs/G4-GLYPHS.md`.
 With a colour terminal (COLOR(AUTO), the default) the game runs full-screen in colour: type the command in
 `COMMAND ===>` and press ENTER, PA2 redraws, Q quits. COLOR(NO) keeps the monochrome line mode described below.
 Type `U/D/L/R` and press ENTER for each move, and `Q` to quit. An empty ENTER redraws the board. Each turn starts on a
@@ -89,5 +95,8 @@ design `docs/G2-HIGHLIGHT.md`) is complete (tag `mvs-g2`; validated on Hercules,
 MVS-G3 (partial redraw `REDRAW(PARTIAL|FULL)` and glyph animation `ANIM(AUTO|YES|NO)` with an idle visual tick; design and
 known limitation in `docs/G3-PARTIAL.md`) is complete. Known limitation: with `COLOR(AUTO)` (default) the idle animation starts after the
 first input because TSO holds the ticks after the capability query; use `'COLOR(YES) HILITE(YES)'` on TK4-/c3270 for immediate animation.
+MVS-G4 (glyph profiles `GLYPHS(AUTO|GRAPHIC|BASE|CLASSIC)`: filled walls, APL pellets/Pac-Man facing left/right/ghosts,
+base-set pellets; CLASSIC = the G3 screens; design `docs/G4-GLYPHS.md`, probe E9 `docs/evidence/g4-probe-analysis.md`) is complete
+(tag `mvs-g4`; Hercules JOB 195 and live in c3270). Arcade wall contours are deferred to a future 2x2 scaled renderer.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

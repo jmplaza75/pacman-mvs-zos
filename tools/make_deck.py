@@ -38,6 +38,8 @@ DECKS = {
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'G3': ('PACBLDG3', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR'],
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'G4': ('PACBLDG4', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -67,8 +69,8 @@ def compile_step(step, pfx, member, obj):
             f'//SYSLIB   DD DSN={pfx}.COPY,DISP=SHR\n')
 
 
-def link_step(pfx, objs, load, entry):
-    t = "//LINK     EXEC PGM=IEWL,COND=(0,NE),PARM='LIST,XREF'\n"
+def link_step(pfx, objs, load, entry, step='LINK'):
+    t = f"//{step:<8} EXEC PGM=IEWL,COND=(0,NE),PARM='LIST,XREF'\n"
     for i, o in enumerate(objs):
         t += f'//{"SYSLIN" if i == 0 else "":<8} DD DSN=&&{o},DISP=(OLD,DELETE)\n'
     t += '//         DD DDNAME=SYSIN\n'
@@ -87,7 +89,7 @@ def run_step(step, pfx, load, sysin, parm=None):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -106,7 +108,8 @@ TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G0': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G1': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G2': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
-       'G3': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
+       'G3': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'G4': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
 TSD = {'G1': ['MOVES', 'TSORDR', 'MULTI', 'C3N2', 'DIE1'],
        # G2: (case, highlight flag in PARM column 13): 5 with highlights, 2 without (= G1 screens)
        'G2': [('MOVES', 'Y'), ('TSORDR', 'Y'), ('MULTI', 'Y'), ('C3N2', 'Y'), ('DIE1', 'Y'), ('MOVES', 'N'), ('DIE1', 'N')],
@@ -114,7 +117,13 @@ TSD = {'G1': ['MOVES', 'TSORDR', 'MULTI', 'C3N2', 'DIE1'],
        'G3': [('MOVES', 'Y', 'Y', 'P'), ('TSORDR', 'Y', 'Y', 'P'), ('MULTI', 'Y', 'Y', 'P'), ('DIE1', 'Y', 'Y', 'P'),
               ('C3N2', 'N', 'Y', 'P'), ('TICKS', 'Y', 'Y', 'P'), ('MOVES', 'Y', 'N', 'P'),
               ('MOVES', 'Y', 'Y', 'F'), ('TICKS', 'Y', 'Y', 'F'),
-              ('MOVES', 'Y', 'N', 'F'), ('DIE1', 'Y', 'N', 'F'), ('MULTI', 'Y', 'N', 'F')]}   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
+              ('MOVES', 'Y', 'N', 'F'), ('DIE1', 'Y', 'N', 'F'), ('MULTI', 'Y', 'N', 'F')]}
+# G4: the 12 G3 runs unchanged (no column 16 = CLASSIC) + (case, hilite, anim, redraw, glyphs) G/B/C/A profile runs
+TSD['G4'] = TSD['G3'] + [
+    ('MOVES', 'Y', 'Y', 'P', 'G'), ('TSORDR', 'Y', 'Y', 'P', 'G'), ('MULTI', 'Y', 'Y', 'P', 'G'), ('DIE1', 'Y', 'Y', 'P', 'G'),
+    ('TICKS', 'Y', 'Y', 'P', 'G'), ('C3N2', 'N', 'Y', 'P', 'G'), ('FACE', 'Y', 'Y', 'P', 'G'), ('FACE', 'N', 'N', 'F', 'G'),
+    ('MOVES', 'Y', 'N', 'F', 'G'), ('MULTI', 'Y', 'Y', 'P', 'B'), ('TICKS', 'Y', 'Y', 'P', 'B'), ('DIE1', 'N', 'N', 'F', 'B'),
+    ('MOVES', 'Y', 'Y', 'P', 'C'), ('MOVES', 'Y', 'Y', 'P', 'A')]   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
 
 
 def tso_parm_and_cards(case):
@@ -154,7 +163,21 @@ def build(name, pfx):
         if hilite:
             parm = (parm + ' AI1 1' if parm == 'TSD' else parm).ljust(11) + 'N' + hilite
         out += run_step(f'TSD{i}', pfx, load, cards, parm=parm)
+    if name == 'G4':
+        out += qry_test_steps(pfx)
     return out + '//\n'
+
+
+def qry_test_steps(pfx):
+    """MVS-G4: PACQRY (pure capability parsing) tested in batch with recorded Query Replies (tests/qry_cases.py):
+    driver PACQRYT + PACQRY compiled again into LOAD(PACQRYT), one run over all cases."""
+    sys.path.insert(0, str(ROOT / 'tests'))
+    from qry_cases import cards  # noqa: E402
+    out = upload('SRCQ', pfx, 'COBOL', 'PACQRYT', text_of(ROOT / 'src/cobol/PACQRYT.cob'))
+    out += compile_step('COBQ1', pfx, 'PACQRYT', 'OBJQ1')
+    out += compile_step('COBQ2', pfx, 'PACQRY', 'OBJQ2')
+    out += link_step(pfx, ['OBJQ1', 'OBJQ2'], 'PACQRYT', 'PACQRYT', step='LINKQ')
+    return out + run_step('QRY1', pfx, 'PACQRYT', cards())
 
 
 def job_card(job, title):
@@ -177,6 +200,20 @@ def alloc_deck(pfx):
         out += (f'//{dd:<8} DD DSN={pfx}.{lib},DISP=(NEW,CATLG,DELETE),\n'
                 f'//            UNIT=SYSDA,SPACE={space},\n'
                 f'//            DCB=(DSORG=PO,{dcb})\n')
+    return out + '//\n'
+
+
+def compress_deck(pfx):
+    """Maintenance: compress the source libraries in place (IEBCOPY). Every build re-uploads every member and a PDS
+    never reuses the space of replaced members, so the COBOL library eventually ends with SE37 (MVS-G4, JOB 193).
+    Only the COBOL and COPY libraries; all their members are rebuilt from git by any build deck."""
+    out = job_card('PACCMP10', 'PACMAN COMPRESS')
+    for i, lib in enumerate(('COBOL', 'COPY'), 1):
+        out += (f'//CMP{i}     EXEC PGM=IEBCOPY\n//SYSPRINT DD SYSOUT=A\n'
+                f'//LIB      DD DSN={pfx}.{lib},DISP=OLD\n'
+                '//SYSUT3   DD UNIT=SYSDA,SPACE=(TRK,(5,5))\n'
+                '//SYSUT4   DD UNIT=SYSDA,SPACE=(TRK,(5,5))\n'
+                '//SYSIN    DD *\n  COPY INDD=LIB,OUTDD=LIB\n/*\n')
     return out + '//\n'
 
 
@@ -308,7 +345,7 @@ def g4p_deck(pfx):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'COMPRESS'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -319,6 +356,8 @@ if __name__ == '__main__':
         text = alloc_deck(pfx)
     elif a.deck == 'CLIST':
         text = clist_deck(pfx)
+    elif a.deck == 'COMPRESS':
+        text = compress_deck(pfx)
     elif a.deck == 'G4P':
         text = g4p_deck(pfx)
     elif a.deck == 'E8P':

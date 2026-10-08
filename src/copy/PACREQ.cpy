@@ -17,3 +17,5 @@
            05  REQ-ANIM              PIC X.
            05  REQ-REDRAW            PIC X.
            05  REQ-SENDST            PIC X.
+      * MVS-G4 GLYPH PROFILE: A AUTO, G GRAPHIC (GE), B BASE, C CLASSIC.
+           05  REQ-GLYPHS            PIC X.

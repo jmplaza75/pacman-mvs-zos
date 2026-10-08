@@ -14,6 +14,11 @@
       * TERMINAL (VS-PREV) ARE SENT (DS-KIND P / T, WRITE WITHOUT
       * ERASE). REQ-ANIM = 'Y' ALTERNATES THE P/G GLYPHS (PACPAL). THE
       * GAME STATE IS NEVER CHANGED: ONLY HOW IT IS DRAWN.
+      * MVS-G4: REQ-GLYPHS G (GRAPHIC: CP310 PELLETS AND SPRITES SENT
+      * AS GE X'08' + CODE, PAC-MAN FACING THE LAST HORIZONTAL MOVE) OR
+      * B (BASE PELLET); IN BOTH, WALL CELLS ARE FILLED (BLANK, WALL
+      * COLOUR, REVERSE) WHEN HIGHLIGHTING IS ON, ELSE '#'. C = THE G3
+      * SCREENS. EVERY VIRTUAL CELL CARRIES A GE FLAG (CU-CS).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACSCR.
        ENVIRONMENT DIVISION.
@@ -66,6 +71,19 @@
            05  CELL-COL          PIC 999 OCCURS 20 TIMES.
        01  CELL-HILITE.
            05  CELL-HI           PIC 999 OCCURS 20 TIMES.
+       01  CELL-GES.
+           05  CELL-GE           PIC 9 OCCURS 20 TIMES.
+      * MVS-G4 GLYPH BYTES (BUILT ONCE FROM THE PACPAL VALUES).
+       01  TAB-OK                PIC 9 VALUE 0.
+       01  X-PEL-G               PIC X.
+       01  X-PEL-B               PIC X.
+       01  X-GPR                 PIC X.
+       01  X-GPL                 PIC X.
+       01  X-GPC                 PIC X.
+       01  X-GG1                 PIC X.
+       01  X-GG2                 PIC X.
+       01  WS-FACE               PIC X VALUE 'R'.
+       01  WS-HW                 PIC 999.
        01  MSG-ON                PIC 9 VALUE 0.
        01  MSG-LAST              PIC 9 VALUE 0.
        01  VS-MODE               PIC 9 VALUE 0.
@@ -89,6 +107,8 @@
                10  CU-CO         PIC 999 OCCURS 1920 TIMES.
            05  CU-HI-G.
                10  CU-HI         PIC 999 OCCURS 1920 TIMES.
+           05  CU-CS-G.
+               10  CU-CS         PIC 9 OCCURS 1920 TIMES.
        01  VS-PREV.
            05  PV-CH-G.
                10  PV-CH         PIC X OCCURS 1920 TIMES.
@@ -96,6 +116,8 @@
                10  PV-CO         PIC 999 OCCURS 1920 TIMES.
            05  PV-HI-G.
                10  PV-HI         PIC 999 OCCURS 1920 TIMES.
+           05  PV-CS-G.
+               10  PV-CS         PIC 9 OCCURS 1920 TIMES.
        01  WS-INV.
            05  FILLER            PIC X(16) VALUE 'INVALID COMMAND '.
            05  INV-CHAR          PIC X.
@@ -140,6 +162,8 @@
        01  PAC-DS COPY PACDS.
        PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-DS.
        MAIN-PARA.
+           IF TAB-OK = 0
+               PERFORM INIT-TAB.
            IF REQ-OP = 'INVL'
                MOVE 1 TO MSG-ON
                MOVE REQ-CHAR TO INV-CHAR
@@ -156,6 +180,7 @@
            PERFORM INIT-HI.
            IF REQ-ANIM = 'Y'
                PERFORM TOGGLE-VIS.
+           PERFORM SET-FACE.
            PERFORM SET-GLYPHS.
            IF REQ-REDRAW = 'P'
                PERFORM PRMT-VS
@@ -191,8 +216,9 @@
        DO-TICK-EXIT.
            EXIT.
        INIT-HI.
-           MOVE 0 TO WS-HP WS-HG WS-HE WS-HN.
+           MOVE 0 TO WS-HP WS-HG WS-HE WS-HN WS-HW.
            IF REQ-HILITE = 'Y'
+               MOVE HI-WALL TO WS-HW
                MOVE HI-PLAYER TO WS-HP
                MOVE HI-GHOST TO WS-HG
                MOVE HI-ERROR TO WS-HE
@@ -213,11 +239,51 @@
            IF REQ-ANIM = 'Y' AND VIS = 1
                MOVE GLY-PLAYER-2 TO WS-GP
                MOVE GLY-GHOST-2 TO WS-GG.
+           IF REQ-GLYPHS = 'G'
+               PERFORM SET-GLYPHS-G.
            MOVE 0 TO WS-NOP.
+       SET-GLYPHS-G.
+      * MVS-G4 GRAPHIC SPRITES: OPEN MOUTH FACING / GHOST, OR (SECOND
+      * ANIMATION FRAME) CLOSED MOUTH / GHOST WITH THE EYE.
+           MOVE X-GPR TO WS-GP.
+           IF WS-FACE = 'L'
+               MOVE X-GPL TO WS-GP.
+           MOVE X-GG1 TO WS-GG.
+           IF REQ-ANIM = 'Y' AND VIS = 1
+               MOVE X-GPC TO WS-GP
+               MOVE X-GG2 TO WS-GG.
+           MOVE 0 TO WS-NOP.
+       SET-FACE.
+      * PAC-MAN FACES THE LAST HORIZONTAL MOVE THAT WAS NOT BLOCKED;
+      * VERTICAL MOVES, BUMPS AND INVALID INPUT KEEP THE FACING.
+           IF (LAST-CMD = 'L' OR LAST-CMD = 'l')
+                             AND LAST-RESULT NOT = 'BLOCKED'
+               MOVE 'L' TO WS-FACE.
+           IF (LAST-CMD = 'R' OR LAST-CMD = 'r')
+                             AND LAST-RESULT NOT = 'BLOCKED'
+               MOVE 'R' TO WS-FACE.
+           MOVE 0 TO WS-NOP.
+       INIT-TAB.
+           MOVE PEL-G TO BW-N.
+           MOVE BW-L TO X-PEL-G.
+           MOVE PEL-B TO BW-N.
+           MOVE BW-L TO X-PEL-B.
+           MOVE GPL-RIGHT TO BW-N.
+           MOVE BW-L TO X-GPR.
+           MOVE GPL-LEFT TO BW-N.
+           MOVE BW-L TO X-GPL.
+           MOVE GPL-CLOSED TO BW-N.
+           MOVE BW-L TO X-GPC.
+           MOVE GGH-1 TO BW-N.
+           MOVE BW-L TO X-GG1.
+           MOVE GGH-2 TO BW-N.
+           MOVE BW-L TO X-GG2.
+           MOVE 1 TO TAB-OK.
        BUILD-VS.
            MOVE SPACES TO CU-CH-G.
            MOVE ALL '0' TO CU-CO-G.
            MOVE ALL '0' TO CU-HI-G.
+           MOVE ALL '0' TO CU-CS-G.
            MOVE 1 TO VS-MODE.
            PERFORM COMPOSE-BODY.
            MOVE 0 TO VS-MODE.
@@ -254,13 +320,22 @@
            PERFORM FLIP-CELL VARYING WS-COL FROM 1 BY 1
                UNTIL WS-COL > 20.
        FLIP-CELL.
+      * SPRITE CELLS ARE FOUND BY GLYPH; GE CELLS (MVS-G4) BY THE GE
+      * GLYPHS ONLY, SO A CP310 PELLET IS NEVER TAKEN FOR A SPRITE.
            COMPUTE WS-X = (LAY-BOARD-ROW + WS-I - 2) * 80
                + LAY-BOARD-COL + WS-COL - 1.
-           IF CU-CH (WS-X) = GLY-PLAYER-1
-                          OR CU-CH (WS-X) = GLY-PLAYER-2
+           IF CU-CS (WS-X) = 0 AND (CU-CH (WS-X) = GLY-PLAYER-1
+                          OR CU-CH (WS-X) = GLY-PLAYER-2)
                MOVE WS-GP TO CU-CH (WS-X).
-           IF CU-CH (WS-X) = GLY-GHOST-1
-                          OR CU-CH (WS-X) = GLY-GHOST-2
+           IF CU-CS (WS-X) = 0 AND (CU-CH (WS-X) = GLY-GHOST-1
+                          OR CU-CH (WS-X) = GLY-GHOST-2)
+               MOVE WS-GG TO CU-CH (WS-X).
+           IF CU-CS (WS-X) = 1 AND (CU-CH (WS-X) = X-GPR
+                          OR CU-CH (WS-X) = X-GPL
+                          OR CU-CH (WS-X) = X-GPC)
+               MOVE WS-GP TO CU-CH (WS-X).
+           IF CU-CS (WS-X) = 1 AND (CU-CH (WS-X) = X-GG1
+                          OR CU-CH (WS-X) = X-GG2)
                MOVE WS-GG TO CU-CH (WS-X).
            MOVE 0 TO WS-NOP.
        DIFF-ALL.
@@ -275,6 +350,7 @@
            IF CU-CH (WS-X) NOT = PV-CH (WS-X)
                           OR CU-CO (WS-X) NOT = PV-CO (WS-X)
                           OR CU-HI (WS-X) NOT = PV-HI (WS-X)
+                          OR CU-CS (WS-X) NOT = PV-CS (WS-X)
                MOVE 1 TO WS-HV.
            IF WS-HV = 0
                MOVE 0 TO IN-RUN.
@@ -298,6 +374,9 @@
                MOVE CU-HI (WS-X) TO RUN-HI
                MOVE RUN-HI TO WS-HV
                PERFORM PUT-HILITE.
+           IF CU-CS (WS-X) = 1
+               MOVE 8 TO WS-BV
+               PERFORM PUT-BYTE.
            ADD 1 TO DS-LEN.
            MOVE CU-CH (WS-X) TO DS-BYTE (DS-LEN).
        PUT-FIELD-PART.
@@ -402,6 +481,10 @@
                VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
            PERFORM GLYPH-CELL VARYING WS-COL FROM 1 BY 1
                UNTIL WS-COL > 20.
+           MOVE ALL '0' TO CELL-GES.
+           IF REQ-GLYPHS = 'G' OR REQ-GLYPHS = 'B'
+               PERFORM PROF-CELL THRU PROF-CELL-EXIT
+                   VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
            COMPUTE WS-ROW = LAY-BOARD-ROW + WS-I - 1.
            MOVE LAY-BOARD-COL TO WS-COL.
            PERFORM PUT-SBA.
@@ -423,8 +506,35 @@
            IF LINE-CH (WS-COL) = 'G'
                MOVE WS-GG TO LINE-CH (WS-COL).
            MOVE 0 TO WS-NOP.
+       PROF-CELL.
+      * MVS-G4: '#' -> FILLED BLOCK (BLANK + REVERSE, WALL COLOUR KEPT)
+      * WHEN HIGHLIGHTING IS ON, ELSE '#' AS IT IS; '.' -> THE PELLET
+      * GLYPH. IN GRAPHIC THE PELLETS AND SPRITES ARE GE CELLS.
+           IF LINE-CH (WS-COL) = SPACE
+               GO TO PROF-CELL-EXIT.
+           IF LINE-CH (WS-COL) = '#'
+               PERFORM WALL-CELL
+               GO TO PROF-CELL-EXIT.
+           IF REQ-GLYPHS = 'G'
+               MOVE 1 TO CELL-GE (WS-COL).
+           IF LINE-CH (WS-COL) = '.'
+               PERFORM PELLET-GLYPH.
+       PROF-CELL-EXIT.
+           EXIT.
+       WALL-CELL.
+           IF WS-HW NOT = 0
+               MOVE SPACE TO LINE-CH (WS-COL)
+               MOVE WS-HW TO CELL-HI (WS-COL).
+           MOVE 0 TO WS-NOP.
+       PELLET-GLYPH.
+           IF REQ-GLYPHS = 'G'
+               MOVE X-PEL-G TO LINE-CH (WS-COL)
+           ELSE
+               MOVE X-PEL-B TO LINE-CH (WS-COL).
+           MOVE 0 TO WS-NOP.
        VS-CELL.
            MOVE LINE-CH (WS-COL) TO CU-CH (VS-POS).
+           MOVE CELL-GE (WS-COL) TO CU-CS (VS-POS).
            MOVE CELL-COL (WS-COL) TO CU-CO (VS-POS).
            MOVE CELL-HI (WS-COL) TO CU-HI (VS-POS).
            ADD 1 TO VS-POS.
@@ -462,6 +572,9 @@
                MOVE CELL-HI (WS-COL) TO WS-HCUR
                MOVE WS-HCUR TO WS-HV
                PERFORM PUT-HILITE.
+           IF CELL-GE (WS-COL) = 1
+               MOVE 8 TO WS-BV
+               PERFORM PUT-BYTE.
            ADD 1 TO DS-LEN.
            MOVE LINE-CH (WS-COL) TO DS-BYTE (DS-LEN).
        SHOW-MESSAGE.
@@ -570,6 +683,7 @@
            MOVE TXT-CH (WS-I) TO CU-CH (VS-POS).
            MOVE VS-COL TO CU-CO (VS-POS).
            MOVE VS-HI TO CU-HI (VS-POS).
+           MOVE 0 TO CU-CS (VS-POS).
            IF TXT-CH (WS-I) = SPACE
                MOVE 0 TO CU-CO (VS-POS)
                MOVE 0 TO CU-HI (VS-POS).

@@ -15,8 +15,8 @@ NOT EXPECTED = documented as unsupported by the emulator, to be confirmed by a p
 | Reshow keys | PA2 CONFIRMED, CLEAR NOT DELIVERED | E3: PA2 redraw twice; E4: CLEAR blanks the screen and never reaches TGET (handled by TSO); redraw after CLEAR = PA2 | G1+ |
 | Highlighting (reverse, blink, underscore) | ANNOUNCED (QCode 87); CONFIRMED live (G2) | docs/G2-HIGHLIGHT.md; JOB 164 data streams equal the model; c3270 live check passed | G2 |
 | Character attributes (SA order) | USED (colour SA X'42', highlight SA X'41') | G1 and G2 live | G2/G4 |
-| APL / graphic character set (GE order) | PENDING | character sets reply (QCode 85) announced; contents to decode in G4 | G4 |
-| Programmed Symbols | NOT EXPECTED | QCode 85 present; loadable-set flags not decoded yet; x3270 family documents no PS loading - confirm in G5 | G5/G6 |
+| APL / graphic character set (GE order) | CONFIRMED (E9 live; used by G4) | QCode 85: GE flag, base 697/CP037, LCID F1 = 963/CP310; GE X'08' and SA X'43' F1 equivalent in c3270; box-drawing maze rendered (docs/evidence/g4-probe-analysis.md) | G4 |
+| Programmed Symbols | NOT ANNOUNCED | QCode 85 decoded (E9): no loadable symbol sets (form-type bytes 0); x3270 family documents no PS loading - confirm in G5 | G5/G6 |
 | Triple-plane PS | NOT EXPECTED | depends on PS | G6 |
 | Vector / host graphics (GDDM, GOCA) | NOT ANNOUNCED | E5 Query Reply has no graphics-related codes; x3270 documents no graphics | G7 |
 | Capability detection (Read Partition Query) | CONFIRMED | E5: TPUT NOEDIT WSF, reply AID 88 at TGET ASIS without user action; codes 80 81 84 85 86 87 88 95 A1 A6 | G1, G9 |
@@ -37,3 +37,11 @@ TSO adds 1 prompt line (16 chars) per read and 1 screen clear per frame after th
 | MULTI, TSO, 3 ghosts | 19 | 252 | 5 640 | 18 | 13.3 |
 | TSORDR, TSO, 1 ghost (with one redraw) | 4 | 53 | 1 163 | 3 | 13.3 |
 Totals include the banner and the four end lines. Every frame is redrawn completely (no partial redraw yet: G3).
+
+## Visual differences per emulator (MVS-G4 glyph profiles, docs/G4-GLYPHS.md section 7)
+| Emulator | GRAPHIC result | Status |
+|---|---|---|
+| c3270 4.5ga6, UTF-8 terminal (macOS) | CP310 mapped to Unicode; continuous box lines (font-dependent) | CONFIRMED live (E9) |
+| s3270 / x3270if `Ascii()` | same Unicode text | CONFIRMED (E9 capture) |
+| c3270 without Unicode / ASCII line-drawing mode | boxes become `+ - \|` (x3270 source, table `apla2uc`); APL symbols may be blank | NOT TESTED |
+| x3270, wc3270, commercial emulators, real 3279 with APL | GE expected where the GE flag is announced; AUTO = CLASSIC otherwise | NOT TESTED |
