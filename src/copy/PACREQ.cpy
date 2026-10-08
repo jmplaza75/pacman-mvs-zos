@@ -13,3 +13,4 @@
            05  REQ-INKEY             PIC X.
            05  REQ-INTEXT.
                10  REQ-INTEXT-CH     PIC X OCCURS 8 TIMES.
+           05  REQ-HILITE            PIC X.

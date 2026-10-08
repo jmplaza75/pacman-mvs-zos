@@ -13,8 +13,8 @@ NOT EXPECTED = documented as unsupported by the emulator, to be confirmed by a p
 | TPUT/TGET in batch TMP | CONFIRMED no-op | JOB 129, mvs8-tputprobe.txt: full-screen output cannot be regression-tested in batch | - |
 | Extended colour (3279), 7 colours | CONFIRMED | E3/E4 live: SA X'2842F1'-'F7' shown blue, red, pink, green, turquoise, yellow, white; default green (JOBs 154-155) | G1 |
 | Reshow keys | PA2 CONFIRMED, CLEAR NOT DELIVERED | E3: PA2 redraw twice; E4: CLEAR blanks the screen and never reaches TGET (handled by TSO); redraw after CLEAR = PA2 | G1+ |
-| Highlighting (reverse, blink, underscore, intensity) | ANNOUNCED (QCode 87) | E5 Query Reply; visual test belongs to G2 | G2 |
-| Character attributes (SA order) | PENDING | G2 probe | G2/G4 |
+| Highlighting (reverse, blink, underscore) | ANNOUNCED (QCode 87); CONFIRMED live (G2) | docs/G2-HIGHLIGHT.md; JOB 164 data streams equal the model; c3270 live check passed | G2 |
+| Character attributes (SA order) | USED (colour SA X'42', highlight SA X'41') | G1 and G2 live | G2/G4 |
 | APL / graphic character set (GE order) | PENDING | character sets reply (QCode 85) announced; contents to decode in G4 | G4 |
 | Programmed Symbols | NOT EXPECTED | QCode 85 present; loadable-set flags not decoded yet; x3270 family documents no PS loading - confirm in G5 | G5/G6 |
 | Triple-plane PS | NOT EXPECTED | depends on PS | G6 |

@@ -81,6 +81,10 @@
   AUTO in the CLIST); AUTO needs QCode X'86'; any failure keeps/returns to TSO line mode. Line mode is restored by
   PACPLAT FSOF at the end, by FINI, on any TPUT/TGET error (fallback) and by an ESTAE exit in PACFSIO on abend.
   TSD = batch dry run printing each TSC data stream in hex, checked byte for byte against tests/ref_g1_screen.py.
+- D26 (MVS-G2) Highlighting is a separate option of TSC (HILITE(AUTO|YES|NO), PARM column 13, default N for direct calls,
+  AUTO in the CLIST; AUTO needs colour plus QCode X'87'). Reverse for P/G, blink for INVALID COMMAND, underscore for the
+  input field; nothing else (docs/G2-HIGHLIGHT.md). Values only in PACPAL. Off = G1 screens. Compiler note: a paragraph
+  must not end with a conditional PERFORM (IKF4072I-W with IKFCBL00); end it with a plain statement.
 - D25 (MVS-G1) TSC screens start from a clean buffer: PACFSIO SEND inserts SBA(1,1) + RA to (1,1) with X'00' right
   after the WCC and sends with TPUT FULLSCR (the transport seen working live). History: JOB 157 visible with TSO
   remnants; JOB 159 (NOEDIT + X'F5') and JOB 160 (FULLSCR + prefix) black because of a length bug (`LA 0,n(0)` = n);

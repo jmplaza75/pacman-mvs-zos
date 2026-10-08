@@ -9,6 +9,7 @@
       * 'TSO AI3 2 M') MAKES PACDISP PRINT A FINAL METRICS LINE.
       * COLUMN 12 = COLOUR (MVS-G1): A AUTO, Y YES, N/BLANK NO. PARM
       * 'TSD ...' IS THE BATCH DRY RUN OF THE COLOUR SCREENS (HEX).
+      * COLUMN 13 = HIGHLIGHT (MVS-G2): A AUTO, Y YES, N/BLANK NO.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -31,6 +32,7 @@
            05  FILLER            PIC X.
            05  PARM-MET          PIC X.
            05  PARM-COLOR        PIC X.
+           05  PARM-HILITE       PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
@@ -44,6 +46,9 @@
            MOVE 'N' TO REQ-COLOR.
            IF PARM-LEN > 11
                MOVE PARM-COLOR TO REQ-COLOR.
+           MOVE 'N' TO REQ-HILITE.
+           IF PARM-LEN > 12
+               MOVE PARM-HILITE TO REQ-HILITE.
            MOVE 'INIT' TO REQ-OP.
            CALL 'PACPLAT' USING PAC-REQ.
            MOVE 'RSET' TO REQ-OP.

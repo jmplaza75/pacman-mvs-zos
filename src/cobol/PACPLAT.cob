@@ -9,7 +9,8 @@
       * always restore line mode if full-screen is active (PACFSIO
       * also restores it from an ESTAE exit on abend). CLS (TSO only)
       * starts a fresh line-mode screen via PACTSO. GAME/MAP/AI never
-      * see any of this.
+      * see any of this. MVS-G2: REQ-HILITE A/Y/N IN, Y/N OUT
+      * (HIGHLIGHT = QCODE X'87' IN THE QUERY REPLY).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACPLAT.
        ENVIRONMENT DIVISION.
@@ -52,6 +53,7 @@
        01  WS-I                  PIC 99.
        01  WS-STOP               PIC 9.
        01  HAS-COLOUR            PIC 9.
+       01  HAS-HILITE            PIC 9.
        LINKAGE SECTION.
        01  PAC-REQ COPY PACREQ.
        01  PAC-DS COPY PACDS.
@@ -77,6 +79,13 @@
            IF REQ-MODE = 'TSO'
                    AND (REQ-COLOR = 'A' OR REQ-COLOR = 'Y')
                PERFORM TRY-COLOUR THRU TRY-COLOUR-EXIT.
+      * MVS-G2: HIGHLIGHT ONLY IN TSC (OR THE TSD DRY RUN) AND ONLY WHEN
+      * ASKED: Y, OR A WITH QCODE X'87' IN THE QUERY REPLY (SET IN
+      * TRY-COLOUR). ANYTHING ELSE IS N.
+           IF REQ-MODE NOT = 'TSC' AND REQ-MODE NOT = 'TSD'
+               MOVE 'N' TO REQ-HILITE.
+           IF REQ-HILITE NOT = 'Y'
+               MOVE 'N' TO REQ-HILITE.
        DO-INIT-EXIT.
            EXIT.
        TRY-COLOUR.
@@ -91,8 +100,11 @@
            MOVE 'QRY ' TO FS-OP.
            CALL 'PACFSIO' USING FS-OP IN-AREA FS-LEN FS-RC.
            MOVE 0 TO HAS-COLOUR.
+           MOVE 0 TO HAS-HILITE.
            IF FS-RC = 0
                PERFORM FIND-COLOUR THRU FIND-COLOUR-EXIT.
+           IF HAS-COLOUR = 1 AND HAS-HILITE = 1 AND REQ-HILITE = 'A'
+               MOVE 'Y' TO REQ-HILITE.
            IF HAS-COLOUR = 1
                MOVE 'TSC' TO REQ-MODE
            ELSE
@@ -130,6 +142,8 @@
            MOVE WS-V TO WS-QC.
            IF WS-ID = 129 AND WS-QC = 134
                MOVE 1 TO HAS-COLOUR.
+           IF WS-ID = 129 AND WS-QC = 135
+               MOVE 1 TO HAS-HILITE.
            IF WS-L < 4
                MOVE 1 TO WS-STOP
            ELSE
@@ -191,6 +205,7 @@
        FALL-BACK.
            PERFORM DO-FSOF THRU DO-FSOF-EXIT.
            MOVE 'TSO' TO REQ-MODE.
+           MOVE 'N' TO REQ-HILITE.
        BYTE-VAL.
            MOVE IN-CH (WS-K) TO HX-B.
            MOVE HEXN TO WS-V.

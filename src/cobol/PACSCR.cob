@@ -5,6 +5,8 @@
       * PAC-STATE PAC-REQ PAC-DS.  OPS: INVL (REMEMBER THE INVALID
       * COMMAND FOR THE NEXT SCREEN)  PRMT (COMPOSE THE SCREEN).
       * ORDERS: WCC X'C3', SBA X'11', SF X'1D', SA X'28', IC X'13'.
+      * MVS-G2: WITH REQ-HILITE = 'Y' ADDS SA X'41' HIGHLIGHT ORDERS
+      * (PLAYER/GHOSTS REVERSE, INVALID BLINK, INPUT UNDERSCORE).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACSCR.
        ENVIRONMENT DIVISION.
@@ -41,6 +43,12 @@
        01  WS-G                  PIC 9.
        01  WS-GX                 PIC 99.
        01  WS-CUR                PIC 999.
+       01  WS-HCUR               PIC 999.
+       01  WS-HV                 PIC 999.
+       01  WS-HP                 PIC 999.
+       01  WS-HG                 PIC 999.
+       01  WS-HE                 PIC 999.
+       01  WS-HN                 PIC 999.
        01  WS-TLEN               PIC 99.
        01  WS-TXT.
            05  TXT-CH            PIC X OCCURS 80 TIMES.
@@ -49,6 +57,8 @@
            05  LINE-CH           PIC X OCCURS 20 TIMES.
        01  CELL-COLOURS.
            05  CELL-COL          PIC 999 OCCURS 20 TIMES.
+       01  CELL-HILITE.
+           05  CELL-HI           PIC 999 OCCURS 20 TIMES.
        01  MSG-ON                PIC 9 VALUE 0.
        01  WS-INV.
            05  FILLER            PIC X(16) VALUE 'INVALID COMMAND '.
@@ -87,7 +97,7 @@
            05  X23-3Y            PIC 99.
        01  WS-CMD-TXT            PIC X(12) VALUE 'COMMAND ===>'.
        01  WS-HELP-TXT           PIC X(48) VALUE
-           'PACMAN G1  U D L R + ENTER   Q QUIT   PA2 REDRAW'.
+           'PACMAN G2  U D L R + ENTER   Q QUIT   PA2 REDRAW'.
        LINKAGE SECTION.
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
@@ -102,6 +112,12 @@
            GOBACK.
        COMPOSE.
            MOVE 0 TO DS-LEN.
+           MOVE 0 TO WS-HP WS-HG WS-HE WS-HN.
+           IF REQ-HILITE = 'Y'
+               MOVE HI-PLAYER TO WS-HP
+               MOVE HI-GHOST TO WS-HG
+               MOVE HI-ERROR TO WS-HE
+               MOVE HI-INPUT TO WS-HN.
            MOVE 195 TO WS-BV.
            PERFORM PUT-BYTE.
            MOVE 1 TO WS-ROW.
@@ -169,17 +185,24 @@
                VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
            IF WS-I = PLAYER-Y
                MOVE 'P' TO LINE-CH (PLAYER-X)
-               MOVE PAL-PLAYER TO CELL-COL (PLAYER-X).
+               MOVE PAL-PLAYER TO CELL-COL (PLAYER-X)
+               MOVE WS-HP TO CELL-HI (PLAYER-X).
            PERFORM OVERLAY-GHOST THRU OVERLAY-GHOST-EXIT
                VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
            COMPUTE WS-ROW = LAY-BOARD-ROW + WS-I - 1.
            MOVE LAY-BOARD-COL TO WS-COL.
            PERFORM PUT-SBA.
            MOVE 0 TO WS-CUR.
+           MOVE 0 TO WS-HCUR.
            PERFORM PUT-CELL VARYING WS-COL FROM 1 BY 1
                UNTIL WS-COL > 20.
+           IF WS-HCUR NOT = 0
+               MOVE 0 TO WS-HV
+               PERFORM PUT-HILITE.
+           MOVE 0 TO WS-HCUR.
        BASE-COLOUR.
            MOVE 0 TO CELL-COL (WS-COL).
+           MOVE 0 TO CELL-HI (WS-COL).
            IF LINE-CH (WS-COL) = '#'
                MOVE PAL-WALL TO CELL-COL (WS-COL).
            IF LINE-CH (WS-COL) = '.'
@@ -191,6 +214,7 @@
                GO TO OVERLAY-GHOST-EXIT.
            MOVE GH-X (WS-G) TO WS-GX.
            MOVE 'G' TO LINE-CH (WS-GX).
+           MOVE WS-HG TO CELL-HI (WS-GX).
            IF WS-G = 1
                MOVE PAL-GHOST-1 TO CELL-COL (WS-GX).
            IF WS-G = 2
@@ -206,6 +230,10 @@
                MOVE CELL-COL (WS-COL) TO WS-CUR
                MOVE WS-CUR TO WS-BV
                PERFORM PUT-COLOUR.
+           IF CELL-HI (WS-COL) NOT = WS-HCUR
+               MOVE CELL-HI (WS-COL) TO WS-HCUR
+               MOVE WS-HCUR TO WS-HV
+               PERFORM PUT-HILITE.
            ADD 1 TO DS-LEN.
            MOVE LINE-CH (WS-COL) TO DS-BYTE (DS-LEN).
        SHOW-MESSAGE.
@@ -214,9 +242,16 @@
            PERFORM PUT-SBA.
            MOVE PAL-ERROR TO WS-BV.
            PERFORM PUT-COLOUR.
+           IF WS-HE NOT = 0
+               MOVE WS-HE TO WS-HV
+               PERFORM PUT-HILITE.
            MOVE WS-INV TO WS-TXT.
            MOVE 17 TO WS-TLEN.
            PERFORM PUT-TEXT.
+           IF WS-HE NOT = 0
+               MOVE 0 TO WS-HV
+               PERFORM PUT-HILITE.
+           MOVE 0 TO WS-HV.
        SHOW-COMMAND.
       * COMMAND ===> THEN A 1-BYTE UNPROTECTED FIELD WITH THE CURSOR.
            MOVE LAY-CMD-ROW TO WS-ROW.
@@ -231,10 +266,16 @@
            PERFORM PUT-BYTE.
            MOVE 64 TO WS-BV.
            PERFORM PUT-BYTE.
+           IF WS-HN NOT = 0
+               MOVE WS-HN TO WS-HV
+               PERFORM PUT-HILITE.
            MOVE 19 TO WS-BV.
            PERFORM PUT-BYTE.
            MOVE 64 TO WS-BV.
            PERFORM PUT-BYTE.
+           IF WS-HN NOT = 0
+               MOVE 0 TO WS-HV
+               PERFORM PUT-HILITE.
            MOVE 29 TO WS-BV.
            PERFORM PUT-BYTE.
            MOVE 96 TO WS-BV.
@@ -266,6 +307,14 @@
            MOVE 66 TO WS-BV.
            PERFORM PUT-BYTE.
            MOVE WS-CUR TO WS-BV.
+           PERFORM PUT-BYTE.
+       PUT-HILITE.
+      * SA X'41' + VALUE IN WS-HV (0 = DEFAULT, ENDS A HIGHLIGHT RUN).
+           MOVE 40 TO WS-BV.
+           PERFORM PUT-BYTE.
+           MOVE 65 TO WS-BV.
+           PERFORM PUT-BYTE.
+           MOVE WS-HV TO WS-BV.
            PERFORM PUT-BYTE.
        PUT-TEXT.
            PERFORM PUT-CHAR VARYING WS-I FROM 1 BY 1

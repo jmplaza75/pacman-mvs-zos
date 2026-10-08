@@ -63,6 +63,7 @@ Log on to TSO (`c3270 localhost:3270`) and run from `READY`:
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'AI(3) GHOSTS(2)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'COLOR(NO)'
+EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'HILITE(NO)'
 ```
 With a colour terminal (COLOR(AUTO), the default) the game runs full-screen in colour: type the command in
 `COMMAND ===>` and press ENTER, PA2 redraws, Q quits. COLOR(NO) keeps the monochrome line mode described below.
@@ -81,5 +82,7 @@ MVS-G0 (stable visual baseline: core frozen, 1.0-MVS oracle, optional METRICS, r
 matrix `docs/CAPABILITIES.md`) is complete (tag `mvs-g0`).
 MVS-G1 (colour full-screen mode TSC: `COLOR(AUTO|YES|NO)` in the CLIST, auto-detected via Query Reply, monochrome
 line mode as fallback; design `docs/G1-RENDERER.md`) is complete (tag `mvs-g1`).
+MVS-G2 (highlighting: `HILITE(AUTO|YES|NO)` in the CLIST, reverse P/G, blinking INVALID message, underlined input field;
+design `docs/G2-HIGHLIGHT.md`) is complete (tag `mvs-g2`; validated on Hercules, JOB 164, and live in c3270).
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.
