@@ -28,3 +28,9 @@ TSO = the same files allocated to the terminal by the CLIST. See docs/INTERACTIV
 ## Build tooling (MVS-9)
 All dataset names derive from a prefix (tools/make_deck.py --prefix). Decks: ALLOC, CLIST, RELEASE (build + regression),
 RUN (batch play). tools/run_deck.py = submit + wait + listing; tools/release_check.sh = full release verification.
+
+## MVS-G1 addendum: colour mode TSC
+PACSCR (DISPLAY layer) composes the 80x24 colour screen from PAC-STATE using only copybook PACPAL (palette, layout);
+PACFSIO (assembler, PLATFORM, called only by PACPLAT) wraps the TSO full-screen protocol (FSON/QRY/SEND/RECV/FSOF,
+ESTAE restore). PACPLAT selects TSC (COLOR AUTO/YES), sends/receives and falls back to TSO line mode on any error.
+Core modules unchanged (frozen).

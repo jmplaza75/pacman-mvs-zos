@@ -1,0 +1,6 @@
+PROC 0
+/* MVS-G1 PROBE E5 (E2 PROTOCOL + READ PARTITION QUERY):           */
+/*    EXEC '@@PREFIX@@.CLIST(G1PROBE5)'                            */
+ALLOC F(SYSOUT) DA(*) REUSE
+CALL '@@PREFIX@@.LOAD(PACG1Q)' 'Q'
+FREE F(SYSOUT)

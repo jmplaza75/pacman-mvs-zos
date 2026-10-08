@@ -7,6 +7,8 @@
       * NO INPUT IS READ ONCE THE GAME HAS ENDED (QUIT, WON, LOST).
       * OPTIONAL 'M' IN PARM COLUMN 11 (E.G. 'BAT       M' OR
       * 'TSO AI3 2 M') MAKES PACDISP PRINT A FINAL METRICS LINE.
+      * COLUMN 12 = COLOUR (MVS-G1): A AUTO, Y YES, N/BLANK NO. PARM
+      * 'TSD ...' IS THE BATCH DRY RUN OF THE COLOUR SCREENS (HEX).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -28,6 +30,7 @@
            05  PARM-CFG          PIC X(5).
            05  FILLER            PIC X.
            05  PARM-MET          PIC X.
+           05  PARM-COLOR        PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
@@ -36,6 +39,11 @@
                MOVE 'M' TO REQ-METRIC.
            IF PARM-LEN > 2 AND PARM-MODE = 'TSO'
                MOVE 'TSO' TO REQ-MODE.
+           IF PARM-LEN > 2 AND PARM-MODE = 'TSD'
+               MOVE 'TSD' TO REQ-MODE.
+           MOVE 'N' TO REQ-COLOR.
+           IF PARM-LEN > 11
+               MOVE PARM-COLOR TO REQ-COLOR.
            MOVE 'INIT' TO REQ-OP.
            CALL 'PACPLAT' USING PAC-REQ.
            MOVE 'RSET' TO REQ-OP.
@@ -44,10 +52,10 @@
            CALL 'PACINPT' USING PAC-REQ.
            MOVE 'HEAD' TO REQ-OP.
            CALL 'PACDISP' USING PAC-STATE PAC-REQ.
-           IF REQ-MODE = 'TSO'
-               PERFORM TSO-START THRU TSO-START-EXIT
+           IF REQ-MODE = 'BAT'
+               PERFORM BAT-START THRU BAT-START-EXIT
            ELSE
-               PERFORM BAT-START THRU BAT-START-EXIT.
+               PERFORM TSO-START THRU TSO-START-EXIT.
            PERFORM TURN-PARA THRU TURN-PARA-EXIT
                UNTIL F-EOF = 1 OR F-QUIT = 1 OR F-WON = 1
                   OR F-LOST = 1.

@@ -1,0 +1,479 @@
+****A  START  JOB  152  PACLST02  PACMAN LIST CMDLIB    ROOM        9.30.17 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  152  START  A****
+****A  START  JOB  152  PACLST02  PACMAN LIST CMDLIB    ROOM        9.30.17 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  152  START  A****
+****A  START  JOB  152  PACLST02  PACMAN LIST CMDLIB    ROOM        9.30.17 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  152  START  A****
+****A  START  JOB  152  PACLST02  PACMAN LIST CMDLIB    ROOM        9.30.17 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  152  START  A****
+                                                J E S 2   J O B   L O G
+
+
+21.30.16 JOB  152  $HASP373 PACLST02 STARTED - INIT  1 - CLASS A - SYS TK4-
+21.30.16 JOB  152  IEF403I PACLST02 - STARTED - TIME=21.30.16
+21.30.17 JOB  152  IEFACTRT - Stepname  Procstep  Program   Retcode
+21.30.17 JOB  152  PACLST02   TSO                 IKJEFT01  RC= 0000
+21.30.17 JOB  152  IEF404I PACLST02 - ENDED - TIME=21.30.17
+21.30.17 JOB  152  $HASP395 PACLST02 ENDED
+
+
+------ JES2 JOB STATISTICS ------
+
+
+ 07 OCT 26 JOB EXECUTION DATE
+
+
+        11 CARDS READ
+
+
+       430 SYSOUT PRINT RECORDS
+
+
+         0 SYSOUT PUNCH RECORDS
+
+
+      0.00 MINUTES EXECUTION TIME
+    1     //PACLST02 JOB (1),'PACMAN LIST CMDLIB',CLASS=A,MSGCLASS=A,             JOB  152
+          //             MSGLEVEL=(1,1),
+          //             USER=HERC01,PASSWORD=<REDACTED>
+          *** READ-ONLY: LIST MEMBER NAMES OF TSO COMMAND LIBRARIES
+    2     //TSO      EXEC PGM=IKJEFT01
+    3     //SYSTSPRT DD SYSOUT=A
+    4     //SYSTSIN  DD *
+          //
+IEF236I ALLOC. FOR PACLST02 TSO
+IEF237I JES2 ALLOCATED TO SYSTSPRT
+IEF237I JES2 ALLOCATED TO SYSTSIN
+IEF237I 240  ALLOCATED TO SYS00001
+IEF285I   SYS2.CMDLIB                                  KEPT          *-------36
+IEF285I   VOL SER NOS= PUB000.
+IEF237I 148  ALLOCATED TO SYS00002
+IEF285I   SYS1.CMDLIB                                  KEPT          *-------50
+IEF285I   VOL SER NOS= MVSRES.
+IEF142I PACLST02 TSO - STEP WAS EXECUTED - COND CODE 0000
+IEF285I   JES2.JOB00152.SO0102                         SYSOUT
+IEF285I   JES2.JOB00152.SI0101                         SYSIN
+IEF373I STEP /TSO     / START 26280.2130
+IEF374I STEP /TSO     / STOP  26280.2130 CPU    0MIN 00.06SEC SRB    0MIN 00.01SEC VIRT    60K SYS   240K
+************************************************************************************************************************************
+*     1. Jobstep of job: PACLST02    Stepname: TSO         Program name: IKJEFT01   Executed on 07.10.26 from 21.30.16 to 21.30.17 *
+*         elapsed time  00:00:00,08                      CPU-Identifier:  TK4-           Page-in:      0                           *
+*             CPU time  00:00:00,07               Virtual Storage used:     60K         Page-out:      0                           *
+*           corr. CPU:  00:00:00,07   CPU time has been corrected by  1 / 1,0  multiplier                                          *
+*                                                                                                                                  *
+*     I/O Operation                                                                                                                *
+*     Number of records read via DD * or DD DATA:      2                                                                           *
+*     DMY.......0 DMY.......0                                                                                                      *
+*                                                                                                                                  *
+*                                          Charge for step (w/o SYSOUT):          0,11                                             *
+************************************************************************************************************************************
+IEF375I  JOB /PACLST02/ START 26280.2130
+IEF376I  JOB /PACLST02/ STOP  26280.2130 CPU    0MIN 00.06SEC SRB    0MIN 00.01SEC
+ LISTDS 'SYS2.CMDLIB' MEMBERS
+SYS2.CMDLIB
+--RECFM-LRECL-BLKSIZE-DSORG
+  U     **    19069   PO
+--VOLUMES--
+  PUB000
+--MEMBERS--
+  ADVNTURE
+  ASM
+  AUPGM
+  BLKDISK  ALIAS(BLK23051,BLK23052,BLK2314,BLK3330,BLK33301,
+           BLK3340,BLK3350,BLK3375,BLK3380,BLK3390,BLK9345)
+  BLKSPTRK  ALIAS(BPT)
+  BPAGE
+  CBT1350  ALIAS(LETTERS,LTR)
+  CDPG037
+  CDPG1047
+  CDSCB
+  CHAT
+  CLRSCRN  ALIAS(CLEARS,CLS,SYSCLS)
+  CMDSBTSO
+  CMDTSO
+  CODEPAGE
+  COMPARE
+  COMPAREB
+  COMPRESS
+  CONCAT
+  CPAGE
+  CSCGA03D
+  CSCGE03D
+  CSCGF03D
+  CSCGH03D
+  CSCGI03D
+  CSCGJ03D
+  CSCGO03D
+  CSCGQ03D
+  CSCGS03D
+  CSCGU03D
+  C3270  ALIAS(TERMTYPE)
+  DATE
+  DDASD
+  DDT
+  DDUVOLX
+  DDUX
+  DECONCAT  ALIAS(DECAT)
+  DEDUCT
+  DENQ  ALIAS(DSN)
+  DISPLAY  ALIAS(DS)
+  DLXAUTHC  ALIAS(RUNAUTH)
+  DOPGM
+  DSAT
+  DSPACE
+  DSVC
+  DT
+  DUPTIME  ALIAS(DUP)
+  DVOL  ETPSTSO
+  EWA3270
+  EXECPGM
+  FAIRCLS
+  FAIRLOC
+  FAIRMOD
+  FAIRNTE
+  FAIROPN
+  FAIRPNT
+  FAIRREC
+  FREEALL  ALIAS(FA)
+  GUPI
+  HELP  ALIAS(H,HE,LMH)
+  HELPLIST
+  IKJEG9FI
+  IKJEG9LB
+  IM
+  IM370GAT
+  IM370GLS
+  IND$F111
+  IND$F205  ALIAS(IND$FILE)
+  INITKL
+  JRPRINT
+  KERMIT  ALIAS(KERMTGET,KERM40)
+  KL
+  LIFE
+  LISTCDS
+  LISTLPA
+  LISTSPC
+  LISTVOL  ALIAS(LISTV)
+  LISTVTOC
+  MURPHY
+  PDS86  ALIAS(PDS)
+  PRINTOFF  ALIAS(PRINTO)
+  PRINTON  ALIAS(LIST)
+  Q  ALIAS(QUE,QUEUE)
+  QDATE
+  QTIME
+  RANKING
+  REVIEW  ALIAS(FSH,FSHELP,HEL,REV,REVED,
+           REVLEV,REVOUT,REVVSAM,RFE)
+  REVLPDS
+  REVSMF
+  REVTOCRD
+  RLSE
+  RPFALLOC
+  RPFASM
+  RPFASM00
+  RPFBRO
+  RPFCHNG
+  RPFCNVDT
+  RPFDAIR
+  RPFDATAL
+  RPFDEF
+  RPFDOC
+  RPFEDIT  RPFEDITL
+  RPFEND
+  RPFFILL
+  RPFFIND
+  RPFHCPY
+  RPFHELP
+  RPFINIT
+  RPFJCL
+  RPFLIB
+  RPFLIB00
+  RPFLIB01
+  RPFLISTC
+  RPFMAIN  ALIAS(RPF)
+  RPFMVCPY
+  RPFOPER
+  RPFOUT
+  RPFPDS
+  RPFPFK
+  RPFSAVE
+  RPFSTAT
+  RPFSUB
+  RPFTEST
+  RPFTSO
+  RPFUTIL
+  RPFVTOC
+  RPFVTOC1
+  SCRIPT
+  SHOWDS  ALIAS(SDS)
+  SHOWSS
+  SNAKE  ALIAS(HALFSNAK,HS,QS,QUARTERS)
+  SPFCOPY
+  SPY
+  STEPLIB
+  ST79INIT
+  SUPRTREK
+  SYSTEM
+  TERMTEST
+  TSOMENU
+  TSOUSER  ALIAS(TSOU,WHO)
+  UNITS
+  UPDCNV0
+  VSAMADTL
+  VSAMAGET
+  VSAMAHLP
+  VSAMANAL
+  VSAMANDX
+  VSAMSIZE
+  VTOC
+  WORM  ALIAS(HALFTEST,HALFWORM,HW,QUARTERW,QUARTEST,
+           QW,WORMTEST)
+  ZAP
+ LISTDS 'SYS1.CMDLIB' MEMBERS
+SYS1.CMDLIB
+--RECFM-LRECL-BLKSIZE-DSORG
+  U     **    19069   PO
+--VOLUMES--  MVSRES
+--MEMBERS--
+  AKJLKL01  ALIAS(IKJLKL01)
+  AKJLKL02
+  ALLOCATE  ALIAS(ALLOC)
+  ATTRIB  ALIAS(ATTR)
+  BLSEADPR
+  BLSEDEL0
+  BLSELP00
+  BLSEMDPR
+  BLSFAD00
+  BLSFDD00
+  BLSFLD00
+  BLSFMD00
+  BLSRASCX
+  BLSRASM7
+  BLSRCOMK
+  BLSRCOMP
+  BLSRCOPY
+  BLSRDUAL
+  BLSRDUDE
+  BLSRDUDR
+  BLSRDUIN
+  BLSRDULS
+  BLSRDUSC  ALIAS(SYSDSCAN)
+  BLSRENQK
+  BLSREQU
+  BLSRESDR
+  BLSRESRU
+  BLSREVAL
+  BLSRFIND
+  BLSRFMOD
+  BLSRFUCB
+  BLSRIOSK
+  BLSRLIST
+  BLSRLSYM
+  BLSRPHAR
+  BLSRPHGE
+  BLSRRDAR
+  BLSRRDGE
+  BLSRRDPU
+  BLSRRNCH
+  BLSRSADE
+  BLSRSALI
+  BLSRSCAN
+  BLSRSETD
+  BLSRST00
+  BLSRSUMM
+  BLSRSYRB
+  BLSRTCBX
+  BLSRVRBX
+  BLSRVSLD  ALIAS(IPCSDDIR)
+  BLSR3270
+  BLSSASCB
+  BLSSASMV
+  BLSSASVT  BLSSASXB
+  BLSSCDE
+  BLSSCOMM
+  BLSSCSD
+  BLSSCVT
+  BLSSCVT2
+  BLSSIOC
+  BLSSIOX
+  BLSSLCCA
+  BLSSLCCV
+  BLSSLLPA
+  BLSSLPDE
+  BLSSPCCA
+  BLSSPCCV
+  BLSSPFT
+  BLSSPGTE
+  BLSSPRIV
+  BLSSPSA
+  BLSSPVT
+  BLSSSGTE
+  BLSSTCB
+  BLSSUCB
+  BLSSUCM
+  BLSSXTLS
+  BLSTB4
+  BLSTB5
+  BLSTM4
+  BLSTM5
+  BLSTU4
+  BLSTU5
+  BLST04A
+  BLST04BS  ALIAS(BLST04C,BLST04H)
+  BLST04CV  ALIAS(BLST04CR)
+  BLSU  ALIAS(IPCS)
+  BLSUHELP
+  BLSUINI1
+  BLSUINI2
+  BLSUMTOD
+  BLSUNOTE
+  BLSUPUT  ALIAS(BLSUZZ1)
+  BLSUTSO
+  BLSVASCB
+  BLSVASVT
+  BLSVASXB
+  BLSVCDE
+  BLSVCVT
+  BLSVCVT2
+  BLSVIOC
+  BLSVIOX
+  BLSVLCCA
+  BLSVLCCV
+  BLSVLPDE
+  BLSVPCCA
+  BLSVPCCV
+  BLSVPGTE
+  BLSVPSA  BLSVPVT
+  BLSVQCBA
+  BLSVQCBB
+  BLSVQEL
+  BLSVRB
+  BLSVSGTE
+  BLSVTCB
+  BLSVUCB
+  BLSVXTLS
+  CANCEL
+  E  ALIAS(EDIT,IKJEBEIN)
+  EXEC  ALIAS(EX)
+  FREE
+  IDCAM01  ALIAS(ALTER,DEF,DEFINE,DEL,DELETE,
+           EXP,EXPORT,IMP,IMPORT,LISTC,LISTCAT,PRINT,
+           REPRO,VERIFY,VFY)
+  IDCAM02  ALIAS(BIX,BLDINDEX,CNVTC,CNVTCAT,EXPORTRA,
+           IMPORTRA,LISTCRA,LISTR,MPRA,RCAT,RESETCAT,XPRA)
+  IKJEBEAA
+  IKJEBEBO
+  IKJEBECH  ALIAS(IKJEBESE)
+  IKJEBECI
+  IKJEBECO
+  IKJEBEDA
+  IKJEBEDE
+  IKJEBEDO
+  IKJEBEEX
+  IKJEBEFC
+  IKJEBEFI
+  IKJEBEFO
+  IKJEBEHE
+  IKJEBEIA
+  IKJEBEIP
+  IKJEBEIS
+  IKJEBELE
+  IKJEBELI
+  IKJEBELT
+  IKJEBEMA  ALIAS(IKJEBEAE,IKJEBEEN,IKJEBEUT,IKJEBEXT)
+  IKJEBEMC  ALIAS(IKJEBEMM)
+  IKJEBEME
+  IKJEBEMR
+  IKJEBEMS
+  IKJEBEM1
+  IKJEBEM2
+  IKJEBEM3
+  IKJEBEM4
+  IKJEBEM5
+  IKJEBEM6
+  IKJEBEM7
+  IKJEBEPS
+  IKJEBERE  ALIAS(IKJEBEDX,IKJEBRE5)
+  IKJEBERN
+  IKJEBERU  ALIAS(IKJEBEDC)
+  IKJEBESA
+  IKJEBESC
+  IKJEBESU  IKJEBETA
+  IKJEBETO
+  IKJEBEUI
+  IKJEBEUN
+  IKJEBEUP
+  IKJEBEVE
+  IKJEFE11  ALIAS(END,WHEN)
+  IKJEFG00  ALIAS(CALL)
+  IKJEGAT
+  IKJEGATD
+  IKJEGCIV
+  IKJEGCPY
+  IKJEGDCB
+  IKJEGDEB
+  IKJEGEND
+  IKJEGEQU  ALIAS(IKJEGDRP)
+  IKJEGGO  ALIAS(IKJEGCAL,IKJEGRUN)
+  IKJEGLDF  ALIAS(IKJEGDEL,IKJEGFRE,IKJEGGET,IKJEGLOD)
+  IKJEGLDR
+  IKJEGLSA
+  IKJEGLST
+  IKJEGMAP
+  IKJEGOFF
+  IKJEGPCH
+  IKJEGPSW
+  IKJEGQFY
+  IKJEGSYM
+  IKJEGTCB
+  IKJEGWHR
+  IKJEHAL1  ALIAS(LISTA,LISTALC)
+  IKJEHDS1  ALIAS(LISTD,LISTDS)
+  IKJEHMEM
+  IKJEHPRO  ALIAS(PROT,PROTECT)
+  IKJEHREN  ALIAS(REN,RENAME)
+  IKJEHSIR
+  LINK
+  LISTBC  ALIAS(LISTB)
+  LOADGO  ALIAS(LOAD)
+  LOGOFF  ALIAS(LOGON)
+  OPERATOR  ALIAS(OPER)
+  OUTPUT  ALIAS(OUT)
+  PROFILE  ALIAS(PROF)
+  RUN  ALIAS(R)
+  SEND  ALIAS(SE)
+  STATUS  ALIAS(IKJEFFCA,ST)
+  SUBMIT  ALIAS(SUB)
+  TERMINAL  ALIAS(TERM)
+  TEST
+  TSOHELP
+END                 PPPPPPPPPPP    AAAAAAAAAA    CCCCCCCCCC   LL             SSSSSSSSSS   TTTTTTTTTTTT    00000000     2222222222
+                PPPPPPPPPPPP  AAAAAAAAAAAA  CCCCCCCCCCCC  LL            SSSSSSSSSSSS  TTTTTTTTTTTT   0000000000   222222222222
+               PP        PP  AA        AA  CC        CC  LL            SS        SS       TT       00      0000  22        22
+              PP        PP  AA        AA  CC            LL            SS                 TT       00     00 00            22
+             PP        PP  AA        AA  CC            LL            SSS                TT       00    00  00            22
+            PPPPPPPPPPPP  AAAAAAAAAAAA  CC            LL             SSSSSSSSS         TT       00   00   00           22
+           PPPPPPPPPPP   AAAAAAAAAAAA  CC            LL              SSSSSSSSS        TT       00  00    00         22
+          PP            AA        AA  CC            LL                     SSS       TT       00 00     00       22
+         PP            AA        AA  CC            LL                      SS       TT       0000      00     22
+        PP            AA        AA  CC        CC  LL            SS        SS       TT       000       00   22
+       PP            AA        AA  CCCCCCCCCCCC  LLLLLLLLLLLL  SSSSSSSSSSSS       TT        0000000000   222222222222
+      PP            AA        AA   CCCCCCCCCC   LLLLLLLLLLLL   SSSSSSSSSS        TT         00000000    222222222222
+
+
+
+                    JJJJJJJJJJ       11       555555555555   2222222222                                AAAAAAAAAA
+                    JJJJJJJJJJ      111       555555555555  222222222222                              AAAAAAAAAAAA
+                        JJ         1111       55            22        22                              AA        AA
+                        JJ           11       55                      22                              AA        AA
+                        JJ           11       55                      22                              AA        AA
+                        JJ           11       555555555              22                               AAAAAAAAAAAA
+                        JJ           11       5555555555           22                                 AAAAAAAAAAAA
+                        JJ           11                55        22                                   AA        AA
+                  JJ    JJ           11                 55     22                                     AA        AA
+                  JJ    JJ           11                 55   22                                       AA        AA
+                  JJJJJJJJ       1111111111   555555555555  222222222222                              AA        AA
+                   JJJJJJ        1111111111   55555555555   222222222222                              AA        AA
+
+
+****A   END   JOB  152  PACLST02  PACMAN LIST CMDLIB    ROOM        9.30.17 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  152   END   A****
+****A   END   JOB  152  PACLST02  PACMAN LIST CMDLIB    ROOM        9.30.17 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  152   END   A****
+****A   END   JOB  152  PACLST02  PACMAN LIST CMDLIB    ROOM        9.30.17 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  152   END   A****
+****A   END   JOB  152  PACLST02  PACMAN LIST CMDLIB    ROOM        9.30.17 PM 07 OCT 26  PRINTER1  SYS TK4-  JOB  152   END   A****

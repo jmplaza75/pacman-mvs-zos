@@ -1,0 +1,6 @@
+PROC 0
+/* MVS-G1 PROBE E3 (E2 PROTOCOL + ONE SA COLOUR ORDER):            */
+/*    EXEC '@@PREFIX@@.CLIST(G1PROBE3)'                            */
+ALLOC F(SYSOUT) DA(*) REUSE
+CALL '@@PREFIX@@.LOAD(PACG1Q)' 'C'
+FREE F(SYSOUT)

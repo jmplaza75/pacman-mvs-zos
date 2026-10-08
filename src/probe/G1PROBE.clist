@@ -1,0 +1,6 @@
+PROC 0
+/* MVS-G1 3270 CAPABILITY PROBE. RUN FROM TSO READY:               */
+/*    EXEC '@@PREFIX@@.CLIST(G1PROBE)'                             */
+ALLOC F(SYSOUT) DA(*) REUSE
+CALL '@@PREFIX@@.LOAD(PACG1P)'
+FREE F(SYSOUT)

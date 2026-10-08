@@ -6,6 +6,10 @@
       * MVS-G0: COUNTS FRAMES, LINES, CHARACTERS AND SCREEN CLEARS;
       * THE TOTALS ARE PRINTED AFTER THE END LINES ONLY WHEN
       * REQ-METRIC = 'M' (OPTIONAL; NORMAL OUTPUT IS UNCHANGED).
+      * MVS-G1: IN TSC (COLOUR FULL-SCREEN) AND TSD (ITS BATCH DRY RUN)
+      * THE FRAME IS COMPOSED BY PACSCR AND SENT BY PACPLAT ONCE PER
+      * READ (PRMT); NO LINE OUTPUT UNTIL THE END, WHEN PACPLAT FSOF
+      * RESTORES LINE MODE BEFORE THE USUAL END LINES.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -21,6 +25,7 @@
        01  WS-SAVE-OP            PIC X(4).
        01  WS-G                  PIC 9.
        01  WS-GX                 PIC 99.
+       01  PAC-DS COPY PACDS.
        01  M-FRAMES              PIC 9(4) VALUE 0.
        01  M-LINES               PIC 9(5) VALUE 0.
        01  M-CHARS               PIC 9(7) VALUE 0.
@@ -72,7 +77,9 @@
        01  PAC-REQ COPY PACREQ.
        PROCEDURE DIVISION USING PAC-STATE PAC-REQ.
        MAIN-PARA.
-           IF REQ-OP = 'HEAD'
+           IF REQ-MODE = 'TSC' OR REQ-MODE = 'TSD'
+               PERFORM SCREEN-OP THRU SCREEN-OP-EXIT
+           ELSE IF REQ-OP = 'HEAD'
                DISPLAY 'PACMAN MVS-6 SMART GHOSTS'
                ADD 1 TO M-LINES
                ADD 25 TO M-CHARS
@@ -87,6 +94,24 @@
            ELSE IF REQ-OP = 'PRMT'
                PERFORM SHOW-PROMPT THRU SHOW-PROMPT-EXIT.
            GOBACK.
+       SCREEN-OP.
+           IF REQ-OP = 'STAT'
+               ADD 1 TO M-FRAMES
+           ELSE IF REQ-OP = 'INVL'
+               CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
+           ELSE IF REQ-OP = 'PRMT'
+               CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
+               ADD DS-LEN TO M-CHARS
+               MOVE 'SEND' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ PAC-DS
+               MOVE 'PRMT' TO REQ-OP
+           ELSE IF REQ-OP = 'END '
+               MOVE 'FSOF' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ
+               MOVE 'END ' TO REQ-OP
+               PERFORM SHOW-END THRU SHOW-END-EXIT.
+       SCREEN-OP-EXIT.
+           EXIT.
        NEW-SCREEN.
            MOVE REQ-OP TO WS-SAVE-OP.
            MOVE 'CLS ' TO REQ-OP.

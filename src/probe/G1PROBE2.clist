@@ -1,0 +1,6 @@
+PROC 0
+/* MVS-G1 PROBE 2 (PLAIN FULL-SCREEN, HYPOTHESIS H1):             */
+/*    EXEC '@@PREFIX@@.CLIST(G1PROBE2)'                            */
+ALLOC F(SYSOUT) DA(*) REUSE
+CALL '@@PREFIX@@.LOAD(PACG1Q)'
+FREE F(SYSOUT)

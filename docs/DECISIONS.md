@@ -75,3 +75,14 @@
   PACDISP print one METRICS line (frames, lines, characters, clears) after the end lines; without it the output is
   unchanged. Replaceability of the display is proven by linking an alternative PACDISP (src/cobol/alt/PACDSPX.cob)
   over the existing LOAD(PACMAIN) into LOAD(PACALT): the core CSECTs are reused without recompilation.
+- D24 (MVS-G1) Colour renderer TSC as designed in docs/G1-RENDERER.md, approved with: player yellow, ghosts red/pink/
+  turquoise (by index), walls blue, pellets white, HUD turquoise, help/input green, error red. All colours and the
+  screen layout live only in copybook PACPAL. Selection COLOR(AUTO|YES|NO) (PARM column 12, default N for direct calls,
+  AUTO in the CLIST); AUTO needs QCode X'86'; any failure keeps/returns to TSO line mode. Line mode is restored by
+  PACPLAT FSOF at the end, by FINI, on any TPUT/TGET error (fallback) and by an ESTAE exit in PACFSIO on abend.
+  TSD = batch dry run printing each TSC data stream in hex, checked byte for byte against tests/ref_g1_screen.py.
+- D25 (MVS-G1) TSC screens start from a clean buffer: PACFSIO SEND inserts SBA(1,1) + RA to (1,1) with X'00' right
+  after the WCC and sends with TPUT FULLSCR (the transport seen working live). History: JOB 157 visible with TSO
+  remnants; JOB 159 (NOEDIT + X'F5') and JOB 160 (FULLSCR + prefix) black because of a length bug (`LA 0,n(0)` = n);
+  JOB 161 fixes the length (AH) and was validated live (clean colour screen, R, Q, READY). The ESTAE abend-restore exit
+  is implemented but not validated live.

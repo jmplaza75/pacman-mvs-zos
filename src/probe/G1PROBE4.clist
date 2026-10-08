@@ -1,0 +1,6 @@
+PROC 0
+/* MVS-G1 PROBE E4 (E2 PROTOCOL + 7-COLOUR SA PALETTE):            */
+/*    EXEC '@@PREFIX@@.CLIST(G1PROBE4)'                            */
+ALLOC F(SYSOUT) DA(*) REUSE
+CALL '@@PREFIX@@.LOAD(PACG1Q)' 'K'
+FREE F(SYSOUT)

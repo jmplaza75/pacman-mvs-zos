@@ -32,6 +32,8 @@ DECKS = {
                 ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'G0': ('PACBLDG0', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
            ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'G1': ('PACBLDG1', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -81,7 +83,7 @@ def run_step(step, pfx, load, sysin, parm=None):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -97,7 +99,9 @@ def asm_step(step, obj, text):
 
 TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'RELEASE': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
-       'G0': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}   # replayed in interactive mode (PARM='TSO')
+       'G0': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'G1': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
+TSD = {'G1': ['MOVES', 'TSORDR', 'MULTI', 'C3N2', 'DIE1']}   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
 
 
 def tso_parm_and_cards(case):
@@ -128,6 +132,9 @@ def build(name, pfx):
         text_of(ROOT / f'tests/cases/{c}.txt')
         parm, cards = tso_parm_and_cards(c)
         out += run_step(f'TSO{i}', pfx, load, cards, parm=parm)
+    for i, c in enumerate(TSD.get(name, []), 1):
+        parm, cards = tso_parm_and_cards(c)
+        out += run_step(f'TSD{i}', pfx, load, cards, parm='TSD' + parm[3:])
     return out + '//\n'
 
 
@@ -201,9 +208,39 @@ def g0x_deck(pfx):
     return out + '//\n'
 
 
+def g1p_deck(pfx):
+    """MVS-G1 capability probe: PACG1P (COBOL) + PACFS (assembler) -> LOAD(PACG1P), launcher CLIST G1PROBE,
+    and one batch run (must report 'not a TSO session')."""
+    out = job_card('PACG1P01', 'PACMAN G1 PROBE') + f'//* PREFIX {pfx}\n'
+    out += upload('SRC1', pfx, 'COBOL', 'PACG1P', text_of(ROOT / 'src/probe/PACG1P.cob'))
+    out += compile_step('COB1', pfx, 'PACG1P', 'OBJ1')
+    out += asm_step('ASM1', 'OBJA1', text_of(ROOT / 'src/probe/PACFS.asm'))
+    out += link_step(pfx, ['OBJ1', 'OBJA1'], 'PACG1P', 'PACG1P')
+    out += upload('CLS1', pfx, 'CLIST', 'G1PROBE',
+                  text_of(ROOT / 'src/probe/G1PROBE.clist').replace('@@PREFIX@@', pfx))
+    out += run_step('BATCH', pfx, 'PACG1P', None)
+    return out + '//\n'
+
+
+def g1q_deck(pfx):
+    """MVS-G1 probe 2 (single hypothesis H1): PACG1Q + PACFS2 -> LOAD(PACG1Q), CLIST G1PROBE2, one batch run."""
+    out = job_card('PACG1Q01', 'PACMAN G1 PROBE2') + f'//* PREFIX {pfx}\n'
+    out += upload('SRC1', pfx, 'COBOL', 'PACG1Q', text_of(ROOT / 'src/probe/PACG1Q.cob'))
+    out += compile_step('COB1', pfx, 'PACG1Q', 'OBJ1')
+    out += asm_step('ASM1', 'OBJA1', text_of(ROOT / 'src/probe/PACFS2.asm'))
+    out += link_step(pfx, ['OBJ1', 'OBJA1'], 'PACG1Q', 'PACG1Q')
+    for i, m in enumerate(('G1PROBE2', 'G1PROBE3', 'G1PROBE4', 'G1PROBE5'), 1):
+        out += upload(f'CLS{i}', pfx, 'CLIST', m, text_of(ROOT / f'src/probe/{m}.clist').replace('@@PREFIX@@', pfx))
+    out += run_step('BATCH', pfx, 'PACG1Q', None)
+    out += run_step('BATCHC', pfx, 'PACG1Q', None, parm='C')
+    out += run_step('BATCHK', pfx, 'PACG1Q', None, parm='K')
+    out += run_step('BATCHQ', pfx, 'PACG1Q', None, parm='Q')
+    return out + '//\n'
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -214,6 +251,10 @@ if __name__ == '__main__':
         text = alloc_deck(pfx)
     elif a.deck == 'CLIST':
         text = clist_deck(pfx)
+    elif a.deck == 'G1Q':
+        text = g1q_deck(pfx)
+    elif a.deck == 'G1P':
+        text = g1p_deck(pfx)
     elif a.deck == 'G0X':
         text = g0x_deck(pfx)
     elif a.deck == 'RUN':

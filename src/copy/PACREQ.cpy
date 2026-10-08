@@ -9,3 +9,7 @@
            05  REQ-MODE              PIC X(3).
            05  REQ-TEXT              PIC X(8).
            05  REQ-METRIC            PIC X.
+           05  REQ-COLOR             PIC X.
+           05  REQ-INKEY             PIC X.
+           05  REQ-INTEXT.
+               10  REQ-INTEXT-CH     PIC X OCCURS 8 TIMES.
