@@ -40,6 +40,8 @@ DECKS = {
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'G4': ('PACBLDG4', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY'],
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'GS': ('PACBLDGS', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -89,7 +91,7 @@ def run_step(step, pfx, load, sysin, parm=None):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -109,7 +111,8 @@ TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G1': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G2': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G3': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
-       'G4': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
+       'G4': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'GS': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
 TSD = {'G1': ['MOVES', 'TSORDR', 'MULTI', 'C3N2', 'DIE1'],
        # G2: (case, highlight flag in PARM column 13): 5 with highlights, 2 without (= G1 screens)
        'G2': [('MOVES', 'Y'), ('TSORDR', 'Y'), ('MULTI', 'Y'), ('C3N2', 'Y'), ('DIE1', 'Y'), ('MOVES', 'N'), ('DIE1', 'N')],
@@ -123,7 +126,18 @@ TSD['G4'] = TSD['G3'] + [
     ('MOVES', 'Y', 'Y', 'P', 'G'), ('TSORDR', 'Y', 'Y', 'P', 'G'), ('MULTI', 'Y', 'Y', 'P', 'G'), ('DIE1', 'Y', 'Y', 'P', 'G'),
     ('TICKS', 'Y', 'Y', 'P', 'G'), ('C3N2', 'N', 'Y', 'P', 'G'), ('FACE', 'Y', 'Y', 'P', 'G'), ('FACE', 'N', 'N', 'F', 'G'),
     ('MOVES', 'Y', 'N', 'F', 'G'), ('MULTI', 'Y', 'Y', 'P', 'B'), ('TICKS', 'Y', 'Y', 'P', 'B'), ('DIE1', 'N', 'N', 'F', 'B'),
-    ('MOVES', 'Y', 'Y', 'P', 'C'), ('MOVES', 'Y', 'Y', 'P', 'A')]   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
+    ('MOVES', 'Y', 'Y', 'P', 'C'), ('MOVES', 'Y', 'Y', 'P', 'A')]
+# MVS-GS: the 26 G4 runs unchanged (no column 17 = SCALE(NO), the G4 regression) + (case, hilite, anim, redraw, glyphs,
+# scale) runs: 4x2 / 3x2 scaled (all four end banners: QUIT, EOF, LOST, WIN), AUTO, the fallbacks (no highlight, BASE,
+# CLASSIC), the size guard (T: 4x2 with a 1000-byte limit -> G4) and an explicit N
+GS_RUNS = [
+    ('MOVES', 'Y', 'Y', 'P', 'G', '4'), ('TSORDR', 'Y', 'Y', 'P', 'G', '4'), ('MULTI', 'Y', 'Y', 'P', 'G', '4'),
+    ('DIE1', 'Y', 'Y', 'P', 'G', '4'), ('TICKS', 'Y', 'Y', 'P', 'G', '4'), ('FACE', 'Y', 'Y', 'P', 'G', '4'),
+    ('C3N2', 'Y', 'Y', 'P', 'G', '4'), ('EDGE2', 'Y', 'N', 'P', 'G', '4'), ('MOVES', 'Y', 'N', 'F', 'G', '4'),
+    ('MULTI', 'Y', 'Y', 'P', 'G', '3'), ('FACE', 'Y', 'Y', 'P', 'G', '3'), ('C3N2', 'Y', 'N', 'F', 'G', '3'),
+    ('MOVES', 'Y', 'Y', 'P', 'G', 'A'), ('MOVES', 'N', 'Y', 'P', 'G', '4'), ('MOVES', 'Y', 'Y', 'P', 'B', '4'),
+    ('MOVES', 'Y', 'Y', 'P', 'A', 'A'), ('MULTI', 'Y', 'Y', 'P', 'G', 'T'), ('TICKS', 'Y', 'Y', 'P', 'G', 'N')]
+TSD['GS'] = TSD['G4'] + GS_RUNS   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
 
 
 def tso_parm_and_cards(case):
@@ -163,7 +177,7 @@ def build(name, pfx):
         if hilite:
             parm = (parm + ' AI1 1' if parm == 'TSD' else parm).ljust(11) + 'N' + hilite
         out += run_step(f'TSD{i}', pfx, load, cards, parm=parm)
-    if name == 'G4':
+    if name in ('G4', 'GS'):
         out += qry_test_steps(pfx)
     return out + '//\n'
 
@@ -369,9 +383,22 @@ def gsp_deck(pfx):
     return out + '//\n'
 
 
+def gep_deck(pfx):
+    """MVS-GS geometry probe E12 (alternate screen size via Erase/Write Alternate, isolated from PACMAN): PACGEP + PACFSC
+    -> LOAD(PACGEP), CLIST GEPROBE, one batch run (must print 'NOT A TSO SESSION')."""
+    out = job_card('PACGEP01', 'PACMAN PROBE E12') + f'//* PREFIX {pfx}\n'
+    out += upload('SRC1', pfx, 'COBOL', 'PACGEP', text_of(ROOT / 'src/probe/PACGEP.cob'))
+    out += compile_step('COB1', pfx, 'PACGEP', 'OBJ1')
+    out += asm_step('ASM1', 'OBJA1', text_of(ROOT / 'src/probe/PACFSC.asm'))
+    out += link_step(pfx, ['OBJ1', 'OBJA1'], 'PACGEP', 'PACGEP')
+    out += upload('CLS1', pfx, 'CLIST', 'GEPROBE', text_of(ROOT / 'src/probe/GEPROBE.clist').replace('@@PREFIX@@', pfx))
+    out += run_step('BATCH', pfx, 'PACGEP', None)
+    return out + '//\n'
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'COMPRESS'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'COMPRESS'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -384,6 +411,8 @@ if __name__ == '__main__':
         text = clist_deck(pfx)
     elif a.deck == 'COMPRESS':
         text = compress_deck(pfx)
+    elif a.deck == 'GEP':
+        text = gep_deck(pfx)
     elif a.deck == 'GSP':
         text = gsp_deck(pfx)
     elif a.deck == 'G5P':

@@ -68,7 +68,13 @@ EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'ANIM(NO) REDRAW(FULL)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'COLOR(YES) HILITE(YES)'     (recommended on TK4-/c3270: idle animation at once)
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'COLOR(YES) HILITE(YES) GLYPHS(GRAPHIC)'   (TK4-/c3270: solid walls + APL sprites)
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'GLYPHS(BASE)'      (or CLASSIC: the # . C/O G/W look)
+EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'COLOR(YES) HILITE(YES) GLYPHS(GRAPHIC) SCALE(4)'   (TK4-/c3270: large 4x2 maze)
+EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'SCALE(NO)'         (or 3: smaller 3x2 maze)
 ```
+`SCALE(AUTO|4|3|NO)` (MVS-GS) draws each maze cell as 4x2 (or 3x2) screen cells: the maze fills rows 1-20, walls are
+arcade-style double contour lines, Pac-Man and the ghosts are larger half-block sprites, and the game ends on a screen
+with a YOU WIN / GAME OVER / QUIT banner shown for 3 seconds. It needs colour, highlighting and the GRAPHIC glyphs (AUTO
+scales only when all three are active); otherwise the GLYPHS look above is used. See `docs/GS-SCALED.md`.
 `GLYPHS(AUTO|GRAPHIC|BASE|CLASSIC)` (MVS-G4) picks the board look in colour mode: GRAPHIC and BASE draw walls as solid
 blue blocks (reverse video; `#` with `HILITE(NO)`); GRAPHIC draws pellets, Pac-Man and ghosts with APL symbols (3270 GE
 order, code page 310), BASE with normal characters; AUTO uses GRAPHIC when the capability query announces it (with

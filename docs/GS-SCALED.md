@@ -191,3 +191,34 @@ CLASSIC -> line mode; **direct calls without column 17 behave as SCALE(NO), byte
 Visual proportions: approved from the geometry and the E11 results. The script-port captures prove the buffer contents,
 NOT the physical aspect ratio; the live proportions of layout B have not yet been visually confirmed by the user
 (to be recorded at the live check).
+
+## 12. Implementation (2026-10-08) - built and tested on Hercules; live check pending
+Changed (presentation/platform only; core freeze D22 intact, PACFSIO untouched):
+- PACSCR: scaled board drawn into the existing 1920-cell virtual image (tiles of 4x2 / 3x2; contour table CT-CODE
+  built once from the map; sprites from PACPAL), full-screen encoder ENCODE-S (RA, RA+GE, blank skips, field orders),
+  scaled tick = rebuilt image + G3 diff, op ENDS (end screen), size guard (every byte goes through PUT-CHB: nothing is
+  written past DS-LIMIT = 2048; an overflowing screen sets DS-OVF and the renderer falls back to the G4 screens for the
+  rest of the game, sending the G4 full screen instead).
+- PACPAL: LS- layout B values, LAY-SF-ROW / LAY-GHOSTS-COL / LAY-HELP-COL (G4 values by default), contour and half-block
+  codes (SG-), sprite tables SPR-4 / SPR-3, pellet column.
+- PACREQ: REQ-SCALE appended. PACMAIN: PARM column 17 (absent = N). PACPLAT: SCALE resolution (A -> 4; needs TSC/TSD,
+  HILITE Y, GLYPHS G from the existing query path; else N), FALL-BACK -> N, op WAIT (TSC only).
+- PACDISP: at END, scaled only: op ENDS, SEND, WAIT, then line mode and the usual end lines.
+- PACTSO: op WAIT = STIMER 3 s (no terminal I/O). CLIST: SCALE(AUTO|4|3|NO), default AUTO.
+Deviations from the draft, decided during implementation:
+- End banner (user decision 2026-10-08): the game has no end screen in TSC (END restores line mode at once, D19: no
+  input after the end), so the scaled renderer sends one final full screen with the banner and pauses 3 s (PACTSO
+  WAIT) before line mode. No key is read. SCALE(NO) unchanged (no end screen).
+- SCALE(3) uses the layout-B text rows (21-23) with the 60 x 20 board centred at column 11, not the layout-C side panel:
+  one text layout for both scales (less code, same information).
+- 3x2 ghost: the eye is the middle top cell (with the E11 pixel art the 3x2 ghost had no full top cell for eyes and its
+  frame B looked like the shut Pac-Man).
+Invalidation: a changed logical cell can only change cells inside its own 8 (6) cells (contours are static and never
+change); the G3 diff then sends only those of them that differ (e.g. an eaten pellet = 1 cell).
+Traffic (JOB 200, real streams): first 4x2 screen 1556-1645 bytes, largest stream 1653 (limit 2048); per turn about
+90-300 bytes (status line + Pac-Man + ghosts); MOVES 5171 bytes in total (G4 GRAPHIC 2027), MULTI 8397 (G4 3112).
+Tests: tests/ref_gs_screen.py (independent model), tests/test_gs.py; deck `GS` (job PACBLDGS). JOB 200: 100 steps RC
+0000, no compiler warnings, oracle byte-identical, 931 TSC streams identical to the models (26 G4 runs without column 17
+= G4 regression, 18 GS runs: 4x2/3x2, QUIT/EOF/LOST/WIN banners, AUTO, no-highlight/BASE/CLASSIC fallbacks, guard T,
+explicit N), 395 scaled streams replayed on a 3270 buffer image equal to the model image, 12 PACQRY cases.
+

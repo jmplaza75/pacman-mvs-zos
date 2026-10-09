@@ -177,3 +177,10 @@ loadable sets; Load PS `unsupported ID 0x06`, no terminal response; set C1 shows
 accepted the send; ILEN 53 = tail of the screen-1 ENTER record beyond the 256-byte key TGET (not a response). Evidence:
 docs/evidence/g5-probe-build.txt, g5-probe-analysis.md, g5-c3270-e10-window.txt. G6 blocked (depends on PS).
 
+## MVS-GS: scaled renderer (2026-10-08)
+Study + probe E11 (JOB 198) and design docs/GS-SCALED.md (approved, D31). Implementation in PACSCR/PACPAL/PACREQ/PACMAIN/PACPLAT/
+PACDISP/PACTSO/CLIST (core and PACFSIO untouched). Build + tests: `python3 tools/make_deck.py GS && python3 tools/run_deck.py
+build/GS.jcl`, then `python3 tests/test_gs.py build/PACBLDGS-<n>.txt`. COMPRESS JOB 199 first. JOB 200: 100 steps RC 0000, no
+warnings, oracle identical, 931 streams = models (26 G4 runs = SCALE(NO) regression + 18 GS runs), 395 scaled streams replayed on
+a 3270 image = model. CLIST reinstalled (JOB 201). Evidence: docs/evidence/gs-build-tsd.txt. Live check pending.
+

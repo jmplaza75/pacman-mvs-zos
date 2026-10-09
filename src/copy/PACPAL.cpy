@@ -44,3 +44,43 @@
            05  LAY-MSG-ROW           PIC 99 VALUE 16.
            05  LAY-CMD-ROW           PIC 99 VALUE 18.
            05  LAY-HELP-ROW          PIC 99 VALUE 23.
+      * MVS-GS: LAYOUT FIELDS ADDED WITH THE G1-G4 VALUES (FIRST SF ROW,
+      * COLUMNS OF THE GHOSTS AND HELP TEXTS).
+           05  LAY-SF-ROW            PIC 99 VALUE 1.
+           05  LAY-GHOSTS-COL        PIC 99 VALUE 2.
+           05  LAY-HELP-COL          PIC 99 VALUE 2.
+      * MVS-GS SCALED RENDERER (DOCS/GS-SCALED.MD, D31): LAYOUT B. BOARD
+      * ROWS 1-20 (4X2 AT COLUMN 1, 3X2 CENTRED AT COLUMN 11), TEXT ROWS
+      * 21-23. COPIED OVER THE LAY- VALUES WHEN SCALING IS ACTIVE.
+           05  LS-STATUS-ROW         PIC 99 VALUE 21.
+           05  LS-GHOSTS-ROW         PIC 99 VALUE 21.
+           05  LS-GHOSTS-COL         PIC 99 VALUE 64.
+           05  LS-MSG-ROW            PIC 99 VALUE 22.
+           05  LS-CMD-ROW            PIC 99 VALUE 23.
+           05  LS-HELP-ROW           PIC 99 VALUE 23.
+           05  LS-HELP-COL           PIC 99 VALUE 20.
+           05  LS-SF-ROW             PIC 99 VALUE 21.
+           05  LS-BOARD-ROW          PIC 99 VALUE 1.
+           05  LS-BOARD-COL-4        PIC 99 VALUE 1.
+           05  LS-BOARD-COL-3        PIC 99 VALUE 11.
+      * WALL CONTOURS (CP310 VIA GE): LINE X'A2', BAR X'85', CORNERS
+      * TOP-LEFT X'C5', TOP-RIGHT X'D5', BOTTOM-LEFT X'C4', BOTTOM-
+      * RIGHT X'D4'. HALF BLOCKS: UPPER X'93', LOWER X'94'; EYE X'A1'.
+           05  SG-HLINE              PIC 999 VALUE 162.
+           05  SG-VLINE              PIC 999 VALUE 133.
+           05  SG-TL                 PIC 999 VALUE 197.
+           05  SG-TR                 PIC 999 VALUE 213.
+           05  SG-BL                 PIC 999 VALUE 196.
+           05  SG-BR                 PIC 999 VALUE 212.
+           05  SG-UPPER              PIC 999 VALUE 147.
+           05  SG-LOWER              PIC 999 VALUE 148.
+           05  SG-EYE                PIC 999 VALUE 161.
+      * SPRITES, 2 ROWS EACH, IN THE ORDER PAC-MAN RIGHT, LEFT, SHUT,
+      * GHOST FRAME A, FRAME B. CELL CODES: F = BLANK IN REVERSE VIDEO,
+      * T = UPPER HALF, B = LOWER HALF, E = EYE IN REVERSE, ' ' = BLANK.
+           05  SPR-4                 PIC X(40) VALUE
+               'BFT TFB  TFB BFTBFFBTFFTBEEBFTFTBEEBTFTF'.
+           05  SPR-3                 PIC X(30) VALUE
+               'BF TF  FB FTBFBTFTBEBFTFBEBTFT'.
+      * PELLET: SUB-CELL (ROW 1, COLUMN 2) OF ITS TILE, CP310 X'A3'.
+           05  LS-PEL-COL            PIC 9 VALUE 2.

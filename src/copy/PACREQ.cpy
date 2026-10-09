@@ -19,3 +19,6 @@
            05  REQ-SENDST            PIC X.
       * MVS-G4 GLYPH PROFILE: A AUTO, G GRAPHIC (GE), B BASE, C CLASSIC.
            05  REQ-GLYPHS            PIC X.
+      * MVS-GS SCALE: A AUTO, 4 (4X2), 3 (3X2), N NO; T = 4X2 WITH A
+      * 1000-BYTE LIMIT (TEST OF THE SIZE GUARD). RESOLVED: 4/3/T/N.
+           05  REQ-SCALE             PIC X.

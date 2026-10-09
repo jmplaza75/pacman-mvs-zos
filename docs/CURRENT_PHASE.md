@@ -28,8 +28,11 @@ Evidence: docs/evidence/g5-probe-analysis.md, g5-c3270-e10-window.txt, g5-probe-
 MVS-G6 (multicolour/triple-plane PS): BLOCKED / NOT APPLICABLE in this environment (depends on PS, reason inherited from G5).
 Future option, not pursued: a PS-capable terminal/emulator in a separate compatibility branch (E10 reusable; no Vista/PCOMM dependency).
 
-MVS-GS IN PROGRESS (started 2026-10-08, user's go): DESIGN AWAITING APPROVAL - docs/GS-SCALED.md; probe E11 built (JOB 198) and
-run live (docs/evidence/gs-e11-screens.txt); 4x2 layout B recommended. PACMAN NOT MODIFIED; implement only after approval.
+MVS-GS IN PROGRESS: design approved (D31, checkpoint fbc52ab); implemented and PASS on Hercules (JOB 200, test_gs.py; CLIST
+JOB 201). Live: 4x2 proportions confirmed by the user (PASS). Geometry study done (probe E12, JOBs 202/203; 80x32, 80x43,
+132x27, 120x27 IBM-DYNAMIC all LIVE PASS; resize below the canvas = unsupported; latent wide-buffer defect found; evidence
+docs/evidence/gs-e12-geometry.md). PENDING: approval of docs/GS-GEOMETRY.md (wide/tall canvases, CANVAS option, PACFSIO
+op SENX), then its implementation + live check, then README + close (tag mvs-gs). Do not commit/tag before that.
 WAS NEXT: scaled renderer, preferably 2x2 (arcade-style wall contours deferred from G4), the next
 meaningful visual improvement for the real environment. Start by reading: CLAUDE.md, this file, docs/DECISIONS.md (D24-D30),
 docs/G4-GLYPHS.md (sec. on deferred contours), docs/G3-PARTIAL.md, docs/CAPABILITIES.md. Probe lessons (G1-G5): check every TPUT

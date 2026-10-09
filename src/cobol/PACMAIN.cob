@@ -14,6 +14,8 @@
       * COLUMN 15 = REDRAW: P PARTIAL, ANYTHING ELSE FULL (REFERENCE).
       * COLUMN 16 = GLYPHS (MVS-G4): A AUTO, G GRAPHIC, B BASE, C OR
       * BLANK CLASSIC (THE G3 SCREENS).
+      * COLUMN 17 = SCALE (MVS-GS): A AUTO, 4 4X2, 3 3X2, N/BLANK NO
+      * (THE G4 SCREENS).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -40,6 +42,7 @@
            05  PARM-ANIM         PIC X.
            05  PARM-REDRAW       PIC X.
            05  PARM-GLYPHS       PIC X.
+           05  PARM-SCALE        PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
@@ -65,6 +68,9 @@
            MOVE 'C' TO REQ-GLYPHS.
            IF PARM-LEN > 15
                MOVE PARM-GLYPHS TO REQ-GLYPHS.
+           MOVE 'N' TO REQ-SCALE.
+           IF PARM-LEN > 16
+               MOVE PARM-SCALE TO REQ-SCALE.
            MOVE SPACE TO REQ-SENDST.
            MOVE 'INIT' TO REQ-OP.
            CALL 'PACPLAT' USING PAC-REQ.

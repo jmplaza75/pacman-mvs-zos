@@ -29,6 +29,7 @@
        01  M-FRAMES              PIC 9(4) VALUE 0.
        01  M-LINES               PIC 9(5) VALUE 0.
        01  M-CHARS               PIC 9(7) VALUE 0.
+       01  WS-NOP                PIC 9.
        01  M-CLEARS              PIC 9(4) VALUE 0.
        01  WS-MET.
            05  FILLER            PIC X(15) VALUE 'METRICS FRAMES='.
@@ -104,6 +105,7 @@
            ELSE IF REQ-OP = 'TICK'
                PERFORM SCR-TICK THRU SCR-TICK-EXIT
            ELSE IF REQ-OP = 'END '
+               PERFORM SCR-ENDS
                MOVE 'FSOF' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ
                MOVE 'END ' TO REQ-OP
@@ -121,6 +123,22 @@
                PERFORM SCR-RESEND.
        SCR-PRMT-EXIT.
            EXIT.
+       SCR-ENDS.
+      * MVS-GS: SCALED ONLY - ONE FINAL SCREEN WITH THE END BANNER, THEN
+      * A SHORT PAUSE (PACPLAT WAIT, NO INPUT IS READ) BEFORE LINE MODE.
+           IF REQ-SCALE NOT = 'N'
+               MOVE 'ENDS' TO REQ-OP
+               CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
+               PERFORM SCR-ENDS-SEND.
+           MOVE 'END ' TO REQ-OP.
+       SCR-ENDS-SEND.
+           IF DS-LEN > 0
+               ADD DS-LEN TO M-CHARS
+               MOVE 'SEND' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ PAC-DS
+               MOVE 'WAIT' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ.
+           MOVE 0 TO WS-NOP.
        SCR-TICK.
       * MVS-G3: VISUAL TICK (GLYPH FRAME ONLY). NO CHANGE = NO SEND.
            CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.

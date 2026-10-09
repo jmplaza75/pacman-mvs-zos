@@ -129,3 +129,14 @@
   needs COLOR + HILITE + GRAPHIC glyphs, else SCALED -> G4 GRAPHIC -> BASE -> CLASSIC -> line mode. Full-screen compression (RA,
   RA+GE, blank skips) lives in PACSCR; PACFSIO unchanged; renderer-side guard: no stream > 2048 bytes reaches PACFSIO. Probe E11
   (JOB 198) live: captures identical to the model. Physical proportions not yet visually confirmed.
+  Implementation (JOB 200, test_gs PASS): end banner = one final scaled screen + 3 s pause (new PACTSO op WAIT, no input
+  read, D19 kept), scaled only; SCALE(3) shares the layout-B text rows (board centred at column 11); 3x2 ghost eye in the
+  middle cell; size guard falls back to G4 for the rest of the game (tested with SCALE T = 1000-byte limit).
+- D32 (MVS-GS) Geometry (docs/GS-GEOMETRY.md, approved 2026-10-09; evidence docs/evidence/gs-e12-geometry.md, probe E12): the
+  3270 canvas is fixed by c3270 at connect (window size then; silent downgrade when too small; resize never renegotiates,
+  shrinking below it is unsupported). Live PASS: 80x32 (model 3), 80x43 (model 4), 132x27 (model 5), 120x27 (IBM-DYNAMIC,
+  `-model 2 -oversize auto`). TK4- TSO itself enters the alternate size at logon, so PACMAN must set the buffer size itself:
+  CANVAS(AUTO|DEFAULT) (PARM column 18), one EWA / EW before the query, FULLSCR first screen, later full screens with the same
+  command (PACFSIO op SENX, the one allowed extension), partials unchanged. Primary layout 120x27 (maze rows 4-23, columns
+  21-100, compact side HUD), 132x27 wide, 80x43/80x32 tall, 80x24 GS fallback. The maze stays 4x2 (80x20). 4 KB TPUT (E13)
+  is a future investigation, not a dependency.

@@ -12,7 +12,10 @@
       * see any of this. MVS-G2: REQ-HILITE A/Y/N IN, Y/N OUT
       * (HIGHLIGHT = QCODE X'87' IN THE QUERY REPLY). MVS-G4: THE
       * REPLY IS PARSED BY PACQRY (PURE); REQ-GLYPHS A/G/B/C IN, G/B/C
-      * OUT (AUTO = G ONLY WITH GE + CP310 IN THE REPLY).
+      * OUT (AUTO = G ONLY WITH GE + CP310 IN THE REPLY). MVS-GS:
+      * REQ-SCALE A/4/3/T IN, 4/3/T/N OUT: SCALING NEEDS TSC/TSD,
+      * HIGHLIGHT Y AND GLYPHS G (FROM THE SAME QUERY, NO NEW ONE); AUTO
+      * = 4. OP WAIT (TSC ONLY): PACTSO PAUSE BEFORE THE END LINES.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACPLAT.
        ENVIRONMENT DIVISION.
@@ -22,6 +25,7 @@
        DATA DIVISION.
        WORKING-STORAGE SECTION.
        01  TSO-OP                PIC X(4) VALUE 'CLS '.
+       01  TSO-WAIT              PIC X(4) VALUE 'WAIT'.
        01  TSO-RC                PIC S9(4) COMP.
        01  FS-OP                 PIC X(4).
        01  FS-LEN                PIC S9(4) COMP.
@@ -74,7 +78,9 @@
            ELSE IF REQ-OP = 'RECV'
                PERFORM DO-RECV THRU DO-RECV-EXIT
            ELSE IF REQ-OP = 'FSOF'
-               PERFORM DO-FSOF THRU DO-FSOF-EXIT.
+               PERFORM DO-FSOF THRU DO-FSOF-EXIT
+           ELSE IF REQ-OP = 'WAIT' AND REQ-MODE = 'TSC'
+               CALL 'PACTSO' USING TSO-WAIT TSO-RC.
            GOBACK.
        DO-INIT.
            IF REQ-MODE NOT = 'TSO' AND REQ-MODE NOT = 'TSD'
@@ -109,6 +115,18 @@
                MOVE 'C' TO REQ-GLYPHS.
            IF REQ-GLYPHS NOT = 'G' AND REQ-GLYPHS NOT = 'B'
                MOVE 'C' TO REQ-GLYPHS.
+      * MVS-GS: SCALED ONLY WITH COLOUR (TSC/TSD), HIGHLIGHT (SPRITE
+      * BODIES ARE REVERSE VIDEO) AND THE GRAPHIC GLYPHS (GE + CP310),
+      * ALL AS ALREADY RESOLVED ABOVE; OTHERWISE THE G4 RENDERER.
+           IF REQ-SCALE = 'A'
+               MOVE '4' TO REQ-SCALE.
+           IF REQ-SCALE NOT = '4' AND REQ-SCALE NOT = '3'
+                             AND REQ-SCALE NOT = 'T'
+               MOVE 'N' TO REQ-SCALE.
+           IF REQ-MODE NOT = 'TSC' AND REQ-MODE NOT = 'TSD'
+               MOVE 'N' TO REQ-SCALE.
+           IF REQ-HILITE NOT = 'Y' OR REQ-GLYPHS NOT = 'G'
+               MOVE 'N' TO REQ-SCALE.
        DO-INIT-EXIT.
            EXIT.
        TRY-COLOUR.
@@ -231,6 +249,7 @@
            MOVE 'N' TO REQ-ANIM.
            MOVE 'F' TO REQ-REDRAW.
            MOVE 'C' TO REQ-GLYPHS.
+           MOVE 'N' TO REQ-SCALE.
        BYTE-VAL.
            MOVE IN-CH (WS-K) TO HX-B.
            MOVE HEXN TO WS-V.

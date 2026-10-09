@@ -19,6 +19,14 @@
       * B (BASE PELLET); IN BOTH, WALL CELLS ARE FILLED (BLANK, WALL
       * COLOUR, REVERSE) WHEN HIGHLIGHTING IS ON, ELSE '#'. C = THE G3
       * SCREENS. EVERY VIRTUAL CELL CARRIES A GE FLAG (CU-CS).
+      * MVS-GS: REQ-SCALE 4 / 3 (T = 4 WITH A 1000-BYTE TEST LIMIT):
+      * EACH LOGICAL CELL IS A 4X2 / 3X2 TILE OF THE VIRTUAL IMAGE
+      * (WALL CONTOURS FROM A TABLE BUILT ONCE FROM THE MAP, HALF-BLOCK
+      * SPRITES, PELLET); FULL SCREENS ARE ENCODED FROM THE IMAGE WITH
+      * RA AND BLANK SKIPS (ENCODE-S); PARTIAL SCREENS AND TICKS ARE
+      * THE G3 DIFF. OP ENDS = FINAL SCREEN WITH THE END BANNER. NO
+      * STREAM EVER EXCEEDS DS-LIMIT (2048): ON OVERFLOW THE RENDERER
+      * FALLS BACK TO THE G4 SCREENS FOR THE REST OF THE GAME.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACSCR.
        ENVIRONMENT DIVISION.
@@ -156,6 +164,85 @@
        01  WS-CMD-TXT            PIC X(12) VALUE 'COMMAND ===>'.
        01  WS-HELP-TXT           PIC X(48) VALUE
            'PACMAN G2  U D L R + ENTER   Q QUIT   PA2 REDRAW'.
+      * MVS-GS SCALED RENDERER.
+       01  WS-HELP-S             PIC X(48) VALUE
+           'PACMAN GS  U D L R + ENTER   Q QUIT   PA2 REDRAW'.
+       01  WS-HELP-G             PIC X(48).
+       01  SC-INIT               PIC 9 VALUE 0.
+       01  SC-ON                 PIC 9 VALUE 0.
+       01  SC-W                  PIC 9 VALUE 4.
+       01  SC-BROW               PIC 99.
+       01  SC-BCOL               PIC 99.
+       01  DS-LIMIT              PIC 9(4) VALUE 2048.
+       01  DS-OVF                PIC 9 VALUE 0.
+       01  WS-CHB                PIC X.
+       01  BAN-ON                PIC 9 VALUE 0.
+       01  SV-LAY.
+           05  SV-STATUS-ROW     PIC 99.
+           05  SV-GHOSTS-ROW     PIC 99.
+           05  SV-GHOSTS-COL     PIC 99.
+           05  SV-MSG-ROW        PIC 99.
+           05  SV-CMD-ROW        PIC 99.
+           05  SV-HELP-ROW       PIC 99.
+           05  SV-HELP-COL       PIC 99.
+           05  SV-SF-ROW         PIC 99.
+       01  SPR-PAC               PIC 9 VALUE 1.
+       01  SPR-GH                PIC 9 VALUE 4.
+       01  SPR-NO                PIC 9.
+       01  SPR-4-T.
+           05  SPR-4-CH          PIC X OCCURS 40 TIMES.
+       01  SPR-3-T.
+           05  SPR-3-CH          PIC X OCCURS 30 TIMES.
+       01  SPR-C                 PIC X.
+       01  CT-OK                 PIC 9 VALUE 0.
+       01  CT-TABLE.
+           05  CT-CODE           PIC 999 OCCURS 1600 TIMES.
+       01  CX                    PIC 99.
+       01  CY                    PIC 99.
+       01  SR                    PIC 9.
+       01  SC                    PIC 9.
+       01  CT-BASE               PIC 9(4).
+       01  CT-K                  PIC 9(4).
+       01  WX                    PIC 99.
+       01  WY                    PIC 99.
+       01  WW                    PIC 9.
+       01  NB-N                  PIC 9.
+       01  NB-S                  PIC 9.
+       01  NB-W                  PIC 9.
+       01  NB-E                  PIC 9.
+       01  NB-NW                 PIC 9.
+       01  NB-NE                 PIC 9.
+       01  NB-SW                 PIC 9.
+       01  NB-SE                 PIC 9.
+       01  CN-V                  PIC 9.
+       01  CN-H                  PIC 9.
+       01  CN-D                  PIC 9.
+       01  CN-OUT                PIC 999.
+       01  CN-IN                 PIC 999.
+       01  CN-RES                PIC 999.
+       01  TL-CH                 PIC X.
+       01  TL-CO                 PIC 999.
+       01  TL-HI                 PIC 999.
+       01  TL-CS                 PIC 9.
+       01  TL-KIND               PIC X.
+       01  TL-COL                PIC 999.
+       01  EA                    PIC 9(4).
+       01  ER                    PIC 9(4).
+       01  EN                    PIC 9(4).
+       01  EL                    PIC 9(4).
+       01  EPOS                  PIC 9(4).
+       01  EC-CO                 PIC 999.
+       01  EC-HI                 PIC 999.
+       01  E-SP1                 PIC 9(4).
+       01  E-SPF                 PIC 9(4).
+       01  E-DONE                PIC 9.
+       01  E-BLANK               PIC 9.
+       01  E-CB                  PIC 9.
+       01  E-K                   PIC 9(4).
+       01  WS-BAN.
+           05  BAN-CH            PIC X OCCURS 14 TIMES.
+       01  BAN-LEN               PIC 99.
+       01  BAN-CO                PIC 999.
        LINKAGE SECTION.
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
@@ -164,6 +251,9 @@
        MAIN-PARA.
            IF TAB-OK = 0
                PERFORM INIT-TAB.
+           IF SC-INIT = 0
+               PERFORM INIT-SCALE.
+           MOVE 0 TO DS-OVF.
            IF REQ-OP = 'INVL'
                MOVE 1 TO MSG-ON
                MOVE REQ-CHAR TO INV-CHAR
@@ -172,7 +262,9 @@
            ELSE IF REQ-OP = 'TICK'
                PERFORM DO-TICK THRU DO-TICK-EXIT
            ELSE IF REQ-OP = 'FULL'
-               PERFORM DO-FULL THRU DO-FULL-EXIT.
+               PERFORM DO-FULL THRU DO-FULL-EXIT
+           ELSE IF REQ-OP = 'ENDS'
+               PERFORM DO-ENDS THRU DO-ENDS-EXIT.
            GOBACK.
        DO-PRMT.
            MOVE 0 TO DS-LEN.
@@ -182,14 +274,23 @@
                PERFORM TOGGLE-VIS.
            PERFORM SET-FACE.
            PERFORM SET-GLYPHS.
-           IF REQ-REDRAW = 'P'
-               PERFORM PRMT-VS
-           ELSE
-               PERFORM COMPOSE.
+           PERFORM PRMT-BODY.
+      * MVS-GS SIZE GUARD: A SCALED SCREEN THAT DID NOT FIT IS REPLACED
+      * BY THE G4 SCREEN (SCALING OFF FOR THE REST OF THE GAME).
+           IF DS-OVF = 1
+               PERFORM SCALE-OFF
+               PERFORM SET-GLYPHS
+               PERFORM PRMT-BODY.
            MOVE MSG-ON TO MSG-LAST.
            MOVE 0 TO MSG-ON.
        DO-PRMT-EXIT.
            EXIT.
+       PRMT-BODY.
+           IF REQ-REDRAW = 'P'
+               PERFORM PRMT-VS
+           ELSE
+               PERFORM COMPOSE.
+           MOVE 0 TO WS-NOP.
        PRMT-VS.
       * VIRTUAL IMAGE FIRST; FULL SCREEN WHEN THE TERMINAL HAS NOTHING
       * KNOWN (FIRST SCREEN) OR THE LAST INPUT WAS A REDRAW REQUEST.
@@ -205,6 +306,10 @@
            PERFORM SET-GLYPHS.
            MOVE MSG-LAST TO MSG-ON.
            PERFORM COMPOSE.
+           IF DS-OVF = 1
+               PERFORM SCALE-OFF
+               PERFORM SET-GLYPHS
+               PERFORM COMPOSE.
            MOVE 0 TO MSG-ON.
            MOVE 0 TO PREV-OK.
        DO-FULL-EXIT.
@@ -212,9 +317,98 @@
        DO-TICK.
            MOVE 0 TO DS-LEN.
            IF REQ-ANIM = 'Y' AND REQ-REDRAW = 'P' AND PREV-OK = 1
+                             AND SC-ON = 1
+               PERFORM TICK-BUILD-S
+           ELSE IF REQ-ANIM = 'Y' AND REQ-REDRAW = 'P'
+                             AND PREV-OK = 1
                PERFORM TICK-BUILD.
+      * A TICK THAT DID NOT FIT: G4 FULL SCREEN INSTEAD (DS-KIND F).
+           IF DS-OVF = 1
+               PERFORM SCALE-OFF
+               PERFORM SET-GLYPHS
+               MOVE MSG-LAST TO MSG-ON
+               PERFORM PRMT-VS
+               MOVE 0 TO MSG-ON.
+           MOVE 0 TO WS-NOP.
        DO-TICK-EXIT.
            EXIT.
+       DO-ENDS.
+      * MVS-GS FINAL SCREEN (SCALED ONLY): THE LAST BOARD WITH THE END
+      * BANNER ON THE MESSAGE ROW, ALWAYS A FULL SCREEN. NOT SCALED (OR
+      * NOT FITTING): NOTHING (DS-LEN 0), AS BEFORE MVS-GS.
+           MOVE 0 TO DS-LEN.
+           IF SC-ON = 0
+               GO TO DO-ENDS-EXIT.
+           PERFORM INIT-HI.
+           PERFORM SET-FACE.
+           PERFORM SET-GLYPHS.
+           MOVE 0 TO MSG-ON.
+           MOVE 1 TO BAN-ON.
+           PERFORM COMPOSE.
+           MOVE 0 TO BAN-ON.
+           IF DS-OVF = 1
+               PERFORM SCALE-OFF.
+           MOVE 0 TO WS-NOP.
+       DO-ENDS-EXIT.
+           EXIT.
+       INIT-SCALE.
+      * MVS-GS: SCALING AS RESOLVED BY PACPLAT (4, 3, T; ANYTHING ELSE
+      * IS OFF). THE G1-G4 LAYOUT IS KEPT FOR A LATER FALLBACK.
+           MOVE 1 TO SC-INIT.
+           MOVE SPR-4 TO SPR-4-T.
+           MOVE SPR-3 TO SPR-3-T.
+           MOVE LAY-STATUS-ROW TO SV-STATUS-ROW.
+           MOVE LAY-GHOSTS-ROW TO SV-GHOSTS-ROW.
+           MOVE LAY-GHOSTS-COL TO SV-GHOSTS-COL.
+           MOVE LAY-MSG-ROW TO SV-MSG-ROW.
+           MOVE LAY-CMD-ROW TO SV-CMD-ROW.
+           MOVE LAY-HELP-ROW TO SV-HELP-ROW.
+           MOVE LAY-HELP-COL TO SV-HELP-COL.
+           MOVE LAY-SF-ROW TO SV-SF-ROW.
+           MOVE WS-HELP-TXT TO WS-HELP-G.
+           IF REQ-SCALE = '4' OR REQ-SCALE = '3' OR REQ-SCALE = 'T'
+               PERFORM SCALE-ON.
+           IF SC-ON = 0
+               MOVE 'N' TO REQ-SCALE.
+           MOVE 0 TO WS-NOP.
+       SCALE-ON.
+           MOVE 1 TO SC-ON.
+           MOVE 4 TO SC-W.
+           MOVE LS-BOARD-COL-4 TO SC-BCOL.
+           IF REQ-SCALE = '3'
+               MOVE 3 TO SC-W
+               MOVE LS-BOARD-COL-3 TO SC-BCOL.
+           IF REQ-SCALE = 'T'
+               MOVE 1000 TO DS-LIMIT.
+           MOVE LS-BOARD-ROW TO SC-BROW.
+           MOVE LS-STATUS-ROW TO LAY-STATUS-ROW.
+           MOVE LS-GHOSTS-ROW TO LAY-GHOSTS-ROW.
+           MOVE LS-GHOSTS-COL TO LAY-GHOSTS-COL.
+           MOVE LS-MSG-ROW TO LAY-MSG-ROW.
+           MOVE LS-CMD-ROW TO LAY-CMD-ROW.
+           MOVE LS-HELP-ROW TO LAY-HELP-ROW.
+           MOVE LS-HELP-COL TO LAY-HELP-COL.
+           MOVE LS-SF-ROW TO LAY-SF-ROW.
+           MOVE WS-HELP-S TO WS-HELP-TXT.
+       SCALE-OFF.
+      * BACK TO THE G4 RENDERER: LAYOUT, HELP TEXT, LIMIT; THE TERMINAL
+      * IMAGE IS UNKNOWN NOW, SO THE NEXT SCREEN IS A FULL ONE.
+           MOVE 0 TO SC-ON.
+           MOVE 'N' TO REQ-SCALE.
+           MOVE 2048 TO DS-LIMIT.
+           MOVE SV-STATUS-ROW TO LAY-STATUS-ROW.
+           MOVE SV-GHOSTS-ROW TO LAY-GHOSTS-ROW.
+           MOVE SV-GHOSTS-COL TO LAY-GHOSTS-COL.
+           MOVE SV-MSG-ROW TO LAY-MSG-ROW.
+           MOVE SV-CMD-ROW TO LAY-CMD-ROW.
+           MOVE SV-HELP-ROW TO LAY-HELP-ROW.
+           MOVE SV-HELP-COL TO LAY-HELP-COL.
+           MOVE SV-SF-ROW TO LAY-SF-ROW.
+           MOVE WS-HELP-G TO WS-HELP-TXT.
+           MOVE 0 TO PREV-OK.
+           MOVE 0 TO DS-OVF.
+           MOVE 0 TO DS-LEN.
+           MOVE 'F' TO DS-KIND.
        INIT-HI.
            MOVE 0 TO WS-HP WS-HG WS-HE WS-HN WS-HW.
            IF REQ-HILITE = 'Y'
@@ -241,6 +435,20 @@
                MOVE GLY-GHOST-2 TO WS-GG.
            IF REQ-GLYPHS = 'G'
                PERFORM SET-GLYPHS-G.
+           IF SC-ON = 1
+               PERFORM SET-SPRITES.
+           MOVE 0 TO WS-NOP.
+       SET-SPRITES.
+      * MVS-GS SPRITE NUMBERS (PACPAL SPR-4 / SPR-3): PAC-MAN 1 RIGHT,
+      * 2 LEFT, 3 SHUT; GHOST 4 FRAME A, 5 FRAME B (SECOND FRAME = THE
+      * G3/G4 SECOND ANIMATION FRAME).
+           MOVE 1 TO SPR-PAC.
+           IF WS-FACE = 'L'
+               MOVE 2 TO SPR-PAC.
+           MOVE 4 TO SPR-GH.
+           IF REQ-ANIM = 'Y' AND VIS = 1
+               MOVE 3 TO SPR-PAC
+               MOVE 5 TO SPR-GH.
            MOVE 0 TO WS-NOP.
        SET-GLYPHS-G.
       * MVS-G4 GRAPHIC SPRITES: OPEN MOUTH FACING / GHOST, OR (SECOND
@@ -338,6 +546,23 @@
                           OR CU-CH (WS-X) = X-GG2)
                MOVE WS-GG TO CU-CH (WS-X).
            MOVE 0 TO WS-NOP.
+       TICK-BUILD-S.
+      * MVS-GS VISUAL TICK: THE SAME STATE DRAWN WITH THE OTHER FRAME,
+      * THEN ONLY THE CELLS THAT CHANGED (THE SPRITE TILES).
+           PERFORM TOGGLE-VIS.
+           PERFORM SET-GLYPHS.
+           MOVE MSG-LAST TO MSG-ON.
+           PERFORM BUILD-VS.
+           MOVE 0 TO MSG-ON.
+           MOVE 'T' TO DS-KIND.
+           MOVE 194 TO WS-BV.
+           PERFORM PUT-BYTE.
+           PERFORM DIFF-ALL.
+           IF WS-CHG = 0
+               MOVE 0 TO DS-LEN.
+           IF WS-CHG NOT = 0
+               PERFORM PUT-TAIL.
+           PERFORM KEEP-VS.
        DIFF-ALL.
            MOVE 0 TO IN-RUN.
            MOVE 0 TO RUN-CO.
@@ -377,8 +602,8 @@
            IF CU-CS (WS-X) = 1
                MOVE 8 TO WS-BV
                PERFORM PUT-BYTE.
-           ADD 1 TO DS-LEN.
-           MOVE CU-CH (WS-X) TO DS-BYTE (DS-LEN).
+           MOVE CU-CH (WS-X) TO WS-CHB.
+           PERFORM PUT-CHB.
        PUT-FIELD-PART.
       * INPUT FIELD DATA BYTE (ROW 18, COL 15): BLANK AGAIN, CURSOR IN.
            MOVE LAY-CMD-ROW TO WS-ROW.
@@ -409,9 +634,20 @@
        COMPOSE.
            MOVE 0 TO DS-LEN.
            MOVE 'F' TO DS-KIND.
+           IF SC-ON = 1
+               PERFORM COMPOSE-S
+           ELSE
+               PERFORM COMPOSE-G.
+           MOVE 0 TO WS-NOP.
+       COMPOSE-S.
+      * MVS-GS FULL SCREEN: VIRTUAL IMAGE, THEN ITS COMPRESSED STREAM.
+           PERFORM BUILD-VS.
+           MOVE 0 TO DS-LEN.
+           PERFORM ENCODE-S.
+       COMPOSE-G.
            MOVE 195 TO WS-BV.
            PERFORM PUT-BYTE.
-           MOVE 1 TO WS-ROW.
+           MOVE LAY-SF-ROW TO WS-ROW.
            MOVE 1 TO WS-COL.
            PERFORM PUT-SBA.
            MOVE 29 TO WS-BV.
@@ -424,10 +660,18 @@
            PERFORM SHOW-STATUS.
            IF GHOST-COUNT > 1
                PERFORM SHOW-GHOSTS.
-           PERFORM SHOW-BOARD-ROW VARYING WS-I FROM 1 BY 1
-               UNTIL WS-I > 10.
+           IF SC-ON = 1 AND CT-OK = 0
+               PERFORM CT-INIT.
+           IF SC-ON = 1
+               PERFORM SCALED-ROW VARYING CY FROM 1 BY 1
+                   UNTIL CY > 10
+           ELSE
+               PERFORM SHOW-BOARD-ROW VARYING WS-I FROM 1 BY 1
+                   UNTIL WS-I > 10.
            IF MSG-ON = 1
                PERFORM SHOW-MESSAGE.
+           IF BAN-ON = 1
+               PERFORM SHOW-BANNER.
            PERFORM SHOW-COMMAND.
            IF VS-MODE = 0
                PERFORM SHOW-FIELD.
@@ -463,7 +707,7 @@
                MOVE WS-XL23 TO WS-TXT
                MOVE 17 TO WS-TLEN.
            MOVE LAY-GHOSTS-ROW TO WS-ROW.
-           MOVE 2 TO WS-COL.
+           MOVE LAY-GHOSTS-COL TO WS-COL.
            PERFORM PUT-SBA.
            MOVE PAL-HUD TO WS-BV.
            PERFORM PUT-COLOUR.
@@ -575,8 +819,8 @@
            IF CELL-GE (WS-COL) = 1
                MOVE 8 TO WS-BV
                PERFORM PUT-BYTE.
-           ADD 1 TO DS-LEN.
-           MOVE LINE-CH (WS-COL) TO DS-BYTE (DS-LEN).
+           MOVE LINE-CH (WS-COL) TO WS-CHB.
+           PERFORM PUT-CHB.
        SHOW-MESSAGE.
            MOVE LAY-MSG-ROW TO WS-ROW.
            MOVE 2 TO WS-COL.
@@ -624,7 +868,7 @@
            PERFORM PUT-BYTE.
        SHOW-HELP.
            MOVE LAY-HELP-ROW TO WS-ROW.
-           MOVE 2 TO WS-COL.
+           MOVE LAY-HELP-COL TO WS-COL.
            PERFORM PUT-SBA.
            MOVE PAL-HELP TO WS-BV.
            PERFORM PUT-COLOUR.
@@ -676,8 +920,8 @@
            IF VS-MODE = 1
                PERFORM VS-CHAR
            ELSE
-               ADD 1 TO DS-LEN
-               MOVE TXT-CH (WS-I) TO DS-BYTE (DS-LEN).
+               MOVE TXT-CH (WS-I) TO WS-CHB
+               PERFORM PUT-CHB.
            MOVE 0 TO WS-NOP.
        VS-CHAR.
            MOVE TXT-CH (WS-I) TO CU-CH (VS-POS).
@@ -690,5 +934,356 @@
            ADD 1 TO VS-POS.
        PUT-BYTE.
            MOVE WS-BV TO BW-N.
-           ADD 1 TO DS-LEN.
-           MOVE BW-L TO DS-BYTE (DS-LEN).
+           MOVE BW-L TO WS-CHB.
+           PERFORM PUT-CHB.
+       PUT-CHB.
+      * MVS-GS SIZE GUARD: NEVER BEYOND DS-LIMIT (2048 = PAC-DS AND THE
+      * PACFSIO BUFFER); A STREAM THAT WOULD BE LONGER IS FLAGGED.
+           IF DS-LEN < DS-LIMIT
+               ADD 1 TO DS-LEN
+               MOVE WS-CHB TO DS-BYTE (DS-LEN)
+           ELSE
+               MOVE 1 TO DS-OVF.
+           MOVE 0 TO WS-NOP.
+      * ---------------------------------------------------------------
+      * MVS-GS SCALED BOARD: LOGICAL ROW CY -> 2 IMAGE ROWS OF TILES.
+       SCALED-ROW.
+           MOVE CY TO WS-I.
+           MOVE MAP-ROW (CY) TO WS-LINE.
+           PERFORM BASE-COLOUR THRU BASE-COLOUR-EXIT
+               VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
+           IF CY = PLAYER-Y
+               MOVE 'P' TO LINE-CH (PLAYER-X)
+               MOVE PAL-PLAYER TO CELL-COL (PLAYER-X).
+           PERFORM OVERLAY-GHOST THRU OVERLAY-GHOST-EXIT
+               VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
+           PERFORM S-TILE VARYING CX FROM 1 BY 1 UNTIL CX > 20.
+       S-TILE.
+           MOVE LINE-CH (CX) TO TL-KIND.
+           MOVE CELL-COL (CX) TO TL-COL.
+           PERFORM S-SUB VARYING SR FROM 1 BY 1 UNTIL SR > 2
+               AFTER SC FROM 1 BY 1 UNTIL SC > SC-W.
+       S-SUB.
+           MOVE SPACE TO TL-CH.
+           MOVE 0 TO TL-CO.
+           MOVE 0 TO TL-HI.
+           MOVE 0 TO TL-CS.
+           IF TL-KIND = '#'
+               PERFORM S-WALL
+           ELSE IF TL-KIND = '.'
+               PERFORM S-PELLET
+           ELSE IF TL-KIND = 'P'
+               MOVE SPR-PAC TO SPR-NO
+               PERFORM S-SPRITE
+           ELSE IF TL-KIND = 'G'
+               MOVE SPR-GH TO SPR-NO
+               PERFORM S-SPRITE.
+           COMPUTE VS-POS = (SC-BROW - 1 + (CY - 1) * 2 + SR - 1) * 80
+               + SC-BCOL + (CX - 1) * SC-W + SC - 1.
+           MOVE TL-CH TO CU-CH (VS-POS).
+           MOVE TL-CO TO CU-CO (VS-POS).
+           MOVE TL-HI TO CU-HI (VS-POS).
+           MOVE TL-CS TO CU-CS (VS-POS).
+       S-WALL.
+           COMPUTE CT-K = ((CY - 1) * 20 + CX - 1) * 8
+               + (SR - 1) * 4 + SC.
+           IF CT-CODE (CT-K) NOT = 0
+               MOVE CT-CODE (CT-K) TO BW-N
+               MOVE BW-L TO TL-CH
+               MOVE PAL-WALL TO TL-CO
+               MOVE 1 TO TL-CS.
+           MOVE 0 TO WS-NOP.
+       S-PELLET.
+           IF SR = 1 AND SC = LS-PEL-COL
+               MOVE X-PEL-G TO TL-CH
+               MOVE PAL-PELLET TO TL-CO
+               MOVE 1 TO TL-CS.
+           MOVE 0 TO WS-NOP.
+       S-SPRITE.
+      * F = BLANK IN REVERSE, T/B = UPPER/LOWER HALF BLOCK, E = EYE IN
+      * REVERSE (GE CODES FROM PACPAL), ' ' = BLANK. COLOUR OF THE CELL.
+           IF SC-W = 4
+               COMPUTE E-K = ((SPR-NO - 1) * 2 + SR - 1) * 4 + SC
+               MOVE SPR-4-CH (E-K) TO SPR-C
+           ELSE
+               COMPUTE E-K = ((SPR-NO - 1) * 2 + SR - 1) * 3 + SC
+               MOVE SPR-3-CH (E-K) TO SPR-C.
+           IF SPR-C NOT = SPACE
+               MOVE TL-COL TO TL-CO.
+           IF SPR-C = 'F' OR SPR-C = 'E'
+               MOVE HI-PLAYER TO TL-HI.
+           IF SPR-C = 'T'
+               MOVE SG-UPPER TO BW-N.
+           IF SPR-C = 'B'
+               MOVE SG-LOWER TO BW-N.
+           IF SPR-C = 'E'
+               MOVE SG-EYE TO BW-N.
+           IF SPR-C = 'T' OR SPR-C = 'B' OR SPR-C = 'E'
+               MOVE BW-L TO TL-CH
+               MOVE 1 TO TL-CS.
+           MOVE 0 TO WS-NOP.
+      * WALL CONTOUR TABLE, BUILT ONCE (WALLS NEVER CHANGE): 8 CODES PER
+      * LOGICAL CELL (ROW 1 AT +1..+W, ROW 2 AT +5..+4+W), 0 = BLANK.
+      * A NEIGHBOUR OUTSIDE THE MAP COUNTS AS OPEN (DOUBLE BORDER).
+       CT-INIT.
+           MOVE ALL '0' TO CT-TABLE.
+           PERFORM CT-CELL THRU CT-CELL-EXIT
+               VARYING CY FROM 1 BY 1 UNTIL CY > 10
+               AFTER CX FROM 1 BY 1 UNTIL CX > 20.
+           MOVE 1 TO CT-OK.
+       CT-CELL.
+           IF MAP-CELL (CY, CX) NOT = '#'
+               GO TO CT-CELL-EXIT.
+           MOVE CX TO WX.
+           COMPUTE WY = CY - 1.
+           PERFORM GET-W.
+           MOVE WW TO NB-N.
+           COMPUTE WY = CY + 1.
+           PERFORM GET-W.
+           MOVE WW TO NB-S.
+           COMPUTE WX = CX - 1.
+           PERFORM GET-W.
+           MOVE WW TO NB-SW.
+           MOVE CY TO WY.
+           PERFORM GET-W.
+           MOVE WW TO NB-W.
+           COMPUTE WY = CY - 1.
+           PERFORM GET-W.
+           MOVE WW TO NB-NW.
+           COMPUTE WX = CX + 1.
+           PERFORM GET-W.
+           MOVE WW TO NB-NE.
+           MOVE CY TO WY.
+           PERFORM GET-W.
+           MOVE WW TO NB-E.
+           COMPUTE WY = CY + 1.
+           PERFORM GET-W.
+           MOVE WW TO NB-SE.
+           COMPUTE CT-BASE = ((CY - 1) * 20 + CX - 1) * 8.
+           MOVE NB-N TO CN-V.
+           MOVE NB-W TO CN-H.
+           MOVE NB-NW TO CN-D.
+           MOVE SG-TL TO CN-OUT.
+           MOVE SG-BR TO CN-IN.
+           COMPUTE CT-K = CT-BASE + 1.
+           PERFORM CORNER.
+           MOVE NB-E TO CN-H.
+           MOVE NB-NE TO CN-D.
+           MOVE SG-TR TO CN-OUT.
+           MOVE SG-BL TO CN-IN.
+           COMPUTE CT-K = CT-BASE + SC-W.
+           PERFORM CORNER.
+           MOVE NB-S TO CN-V.
+           MOVE NB-W TO CN-H.
+           MOVE NB-SW TO CN-D.
+           MOVE SG-BL TO CN-OUT.
+           MOVE SG-TR TO CN-IN.
+           COMPUTE CT-K = CT-BASE + 5.
+           PERFORM CORNER.
+           MOVE NB-E TO CN-H.
+           MOVE NB-SE TO CN-D.
+           MOVE SG-BR TO CN-OUT.
+           MOVE SG-TL TO CN-IN.
+           COMPUTE CT-K = CT-BASE + 4 + SC-W.
+           PERFORM CORNER.
+           PERFORM CT-EDGE VARYING SC FROM 2 BY 1 UNTIL SC = SC-W.
+       CT-CELL-EXIT.
+           EXIT.
+       CT-EDGE.
+           IF NB-N = 0
+               COMPUTE CT-K = CT-BASE + SC
+               MOVE SG-HLINE TO CT-CODE (CT-K).
+           IF NB-S = 0
+               COMPUTE CT-K = CT-BASE + 4 + SC
+               MOVE SG-HLINE TO CT-CODE (CT-K).
+           MOVE 0 TO WS-NOP.
+       CORNER.
+           MOVE 0 TO CN-RES.
+           IF CN-V = 0 AND CN-H = 0
+               MOVE CN-OUT TO CN-RES
+           ELSE IF CN-V = 0
+               MOVE SG-HLINE TO CN-RES
+           ELSE IF CN-H = 0
+               MOVE SG-VLINE TO CN-RES
+           ELSE IF CN-D = 0
+               MOVE CN-IN TO CN-RES.
+           MOVE CN-RES TO CT-CODE (CT-K).
+       GET-W.
+           MOVE 0 TO WW.
+           IF WX > 0 AND WX < 21 AND WY > 0 AND WY < 11
+               PERFORM GET-W2.
+           MOVE 0 TO WS-NOP.
+       GET-W2.
+           IF MAP-CELL (WY, WX) = '#'
+               MOVE 1 TO WW.
+           MOVE 0 TO WS-NOP.
+      * MVS-GS END BANNER ON THE MESSAGE ROW (REVERSE, ITS COLOUR).
+       SHOW-BANNER.
+           MOVE ' END OF INPUT ' TO WS-BAN.
+           MOVE 14 TO BAN-LEN.
+           MOVE PAL-HELP TO BAN-CO.
+           IF F-QUIT = 1
+               MOVE ' QUIT ' TO WS-BAN
+               MOVE 6 TO BAN-LEN.
+           IF F-WON = 1
+               MOVE ' YOU WIN ' TO WS-BAN
+               MOVE 9 TO BAN-LEN
+               MOVE PAL-PLAYER TO BAN-CO.
+           IF F-LOST = 1
+               MOVE ' GAME OVER ' TO WS-BAN
+               MOVE 11 TO BAN-LEN
+               MOVE PAL-ERROR TO BAN-CO.
+           COMPUTE VS-POS = (LAY-MSG-ROW - 1) * 80 + 2.
+           PERFORM BAN-CELL VARYING E-K FROM 1 BY 1
+               UNTIL E-K > BAN-LEN.
+       BAN-CELL.
+           MOVE BAN-CH (E-K) TO CU-CH (VS-POS).
+           MOVE BAN-CO TO CU-CO (VS-POS).
+           MOVE HI-PLAYER TO CU-HI (VS-POS).
+           MOVE 0 TO CU-CS (VS-POS).
+           ADD 1 TO VS-POS.
+      * MVS-GS FULL-SCREEN ENCODER (IMAGE -> STREAM): SBA ONLY WHERE
+      * THE ADDRESS JUMPS, SA ONLY ON A CHANGE, GE BEFORE CP310 CODES,
+      * RA FOR A RUN OF EQUAL CELLS WHEN SHORTER, RUNS OF 4+ BLANKS
+      * SKIPPED (PACFSIO'S CLEAR PREFIX NULLS THE BUFFER). FIELD AT THE
+      * FIRST SF CELL AND AT THE COMMAND FIELD, AS IN THE G1 SCREENS.
+       ENCODE-S.
+           MOVE 195 TO WS-BV.
+           PERFORM PUT-BYTE.
+           COMPUTE E-SP1 = (LAY-SF-ROW - 1) * 80 + 1.
+           COMPUTE E-SPF = (LAY-CMD-ROW - 1) * 80 + 14.
+           MOVE 0 TO EC-CO.
+           MOVE 0 TO EC-HI.
+           MOVE 0 TO EPOS.
+           MOVE 1 TO EA.
+           PERFORM ENC-STEP UNTIL EA > 1920.
+           IF EC-HI NOT = 0
+               MOVE 0 TO WS-HV
+               PERFORM PUT-HILITE.
+           PERFORM PUT-TAIL.
+       ENC-STEP.
+           IF EA = E-SP1
+               PERFORM ENC-SF1
+           ELSE IF EA = E-SPF
+               PERFORM ENC-FLD
+           ELSE
+               PERFORM ENC-RUN THRU ENC-RUN-EXIT.
+           MOVE 0 TO WS-NOP.
+       ENC-SBA.
+           IF EPOS NOT = EA
+               MOVE EA TO E-K
+               MOVE 17 TO WS-BV
+               PERFORM PUT-BYTE
+               PERFORM PUT-ADDR.
+           MOVE 0 TO WS-NOP.
+       ENC-HI-OFF.
+           IF EC-HI NOT = 0
+               MOVE 0 TO EC-HI
+               MOVE 0 TO WS-HV
+               PERFORM PUT-HILITE.
+           MOVE 0 TO WS-NOP.
+       ENC-SF1.
+           PERFORM ENC-SBA.
+           PERFORM ENC-HI-OFF.
+           MOVE 29 TO WS-BV.
+           PERFORM PUT-BYTE.
+           MOVE 96 TO WS-BV.
+           PERFORM PUT-BYTE.
+           ADD 1 TO EA.
+           MOVE EA TO EPOS.
+       ENC-FLD.
+           PERFORM ENC-SBA.
+           PERFORM ENC-HI-OFF.
+           MOVE 29 TO WS-BV.
+           PERFORM PUT-BYTE.
+           MOVE 64 TO WS-BV.
+           PERFORM PUT-BYTE.
+           IF WS-HN NOT = 0
+               MOVE WS-HN TO WS-HV
+               PERFORM PUT-HILITE.
+           MOVE 19 TO WS-BV.
+           PERFORM PUT-BYTE.
+           MOVE 64 TO WS-BV.
+           PERFORM PUT-BYTE.
+           IF WS-HN NOT = 0
+               MOVE 0 TO WS-HV
+               PERFORM PUT-HILITE.
+           MOVE 29 TO WS-BV.
+           PERFORM PUT-BYTE.
+           MOVE 96 TO WS-BV.
+           PERFORM PUT-BYTE.
+           ADD 3 TO EA.
+           MOVE EA TO EPOS.
+       ENC-RUN.
+           MOVE EA TO ER.
+           MOVE 0 TO E-DONE.
+           PERFORM ENC-EXT UNTIL E-DONE = 1.
+           COMPUTE EL = ER - EA + 1.
+           MOVE 0 TO E-BLANK.
+           IF CU-CH (EA) = SPACE AND CU-HI (EA) = 0 AND CU-CS (EA) = 0
+               MOVE 1 TO E-BLANK.
+           IF E-BLANK = 1 AND EL > 3
+               COMPUTE EA = ER + 1
+               GO TO ENC-RUN-EXIT.
+           PERFORM ENC-SBA.
+           IF E-BLANK = 0 AND CU-CO (EA) NOT = EC-CO
+               MOVE CU-CO (EA) TO EC-CO
+               MOVE EC-CO TO WS-BV
+               PERFORM PUT-COLOUR.
+           IF CU-HI (EA) NOT = EC-HI
+               MOVE CU-HI (EA) TO EC-HI
+               MOVE EC-HI TO WS-HV
+               PERFORM PUT-HILITE.
+           MOVE 1 TO E-CB.
+           IF CU-CS (EA) = 1
+               MOVE 2 TO E-CB.
+           COMPUTE EN = EL * E-CB - E-CB.
+           IF EN > 3
+               PERFORM ENC-RA
+           ELSE
+               PERFORM ENC-LIT EL TIMES.
+           COMPUTE EA = ER + 1.
+           MOVE EA TO EPOS.
+       ENC-RUN-EXIT.
+           EXIT.
+       ENC-EXT.
+           COMPUTE EN = ER + 1.
+           IF EN > 1920 OR EN = E-SP1 OR EN = E-SPF
+               MOVE 1 TO E-DONE
+           ELSE
+               PERFORM ENC-CMP.
+           MOVE 0 TO WS-NOP.
+       ENC-CMP.
+           IF CU-CH (EN) NOT = CU-CH (EA)
+                  OR CU-CO (EN) NOT = CU-CO (EA)
+                  OR CU-HI (EN) NOT = CU-HI (EA)
+                  OR CU-CS (EN) NOT = CU-CS (EA)
+               MOVE 1 TO E-DONE
+           ELSE
+               MOVE EN TO ER.
+           MOVE 0 TO WS-NOP.
+       ENC-RA.
+      * REPEAT TO ADDRESS X'3C' (THE CELL AFTER THE RUN), [GE] CHAR.
+           MOVE 60 TO WS-BV.
+           PERFORM PUT-BYTE.
+           COMPUTE E-K = ER + 1.
+           IF E-K > 1920
+               MOVE 1 TO E-K.
+           PERFORM PUT-ADDR.
+           PERFORM ENC-LIT.
+       ENC-LIT.
+           IF CU-CS (EA) = 1
+               MOVE 8 TO WS-BV
+               PERFORM PUT-BYTE.
+           MOVE CU-CH (EA) TO WS-CHB.
+           PERFORM PUT-CHB.
+       PUT-ADDR.
+      * 12-BIT ADDRESS OF IMAGE CELL E-K (1-1920), TWO BYTES.
+           COMPUTE WS-ADDR = E-K - 1.
+           DIVIDE WS-ADDR BY 64 GIVING WS-HI REMAINDER WS-LO.
+           ADD 1 TO WS-HI.
+           ADD 1 TO WS-LO.
+           MOVE ADDR-CODE (WS-HI) TO WS-BV.
+           PERFORM PUT-BYTE.
+           MOVE ADDR-CODE (WS-LO) TO WS-BV.
+           PERFORM PUT-BYTE.
