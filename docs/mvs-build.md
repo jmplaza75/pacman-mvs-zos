@@ -182,5 +182,9 @@ Study + probe E11 (JOB 198) and design docs/GS-SCALED.md (approved, D31). Implem
 PACDISP/PACTSO/CLIST (core and PACFSIO untouched). Build + tests: `python3 tools/make_deck.py GS && python3 tools/run_deck.py
 build/GS.jcl`, then `python3 tests/test_gs.py build/PACBLDGS-<n>.txt`. COMPRESS JOB 199 first. JOB 200: 100 steps RC 0000, no
 warnings, oracle identical, 931 streams = models (26 G4 runs = SCALE(NO) regression + 18 GS runs), 395 scaled streams replayed on
-a 3270 image = model. CLIST reinstalled (JOB 201). Evidence: docs/evidence/gs-build-tsd.txt. Live check pending.
+a 3270 image = model. CLIST reinstalled (JOB 201). Evidence: docs/evidence/gs-build-tsd.txt. Live: 4x2 proportions PASS.
+Geometry (D32, docs/GS-GEOMETRY.md): probe E12 (JOBs 202/203, docs/evidence/gs-e12-geometry.md); implementation deck `GX`:
+`python3 tools/make_deck.py GX && python3 tools/run_deck.py build/GX.jcl`, then `python3 tests/test_gx.py build/PACBLDGX-<n>.txt`.
+COMPRESS JOB 204; JOB 207: 117 steps RC 0000, oracle identical, 1371 streams = models, 394 W x H replays = model. CLIST JOB 208.
+Evidence: docs/evidence/gs-geometry-build-tsd.txt. Live PASS (docs/evidence/gs-manual-c3270.md). MVS-GS closed (tag mvs-gs).
 

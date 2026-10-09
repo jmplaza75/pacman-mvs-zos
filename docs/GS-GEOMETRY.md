@@ -1,4 +1,4 @@
-# MVS-GS geometry integration - design (APPROVED 2026-10-09, D32)
+# MVS-GS geometry integration - design (APPROVED 2026-10-09, D32) - IMPLEMENTED, LIVE PASS, MVS-GS COMPLETE
 Part of MVS-GS (still open, uncommitted since checkpoint fbc52ab). Evidence: docs/evidence/gs-e12-geometry.md (probe E12,
 runs A-D). Study model: tools/geometry_model.py (mock-ups + exact byte counts with the MVS-GS encoder). Nothing in
 PACMAN is changed by this document.
@@ -173,4 +173,30 @@ CLEAR recovery); partial redraws in the selected canvas' coordinates; end-screen
 byte-identical on the DEFAULT/legacy path; tests for the model 2/3/4/5 and IBM-DYNAMIC Query Replies; explicit test that
 an unsupported / too-small alternate geometry falls back safely to 80 x 24.
 Future (NOT a GS dependency): probe E13 / 4 KB TPUT transport, as a graphics-ceiling investigation (richer HUD, 6x3 XL).
+
+## 13. Implementation (2026-10-09) - built and tested on Hercules (JOB 207); live PASS (docs/evidence/gs-manual-c3270.md)
+- PACFSIO: op SENX only (12 inserted lines, no existing line changed; tests/test_gx.py checks it against 7f56300).
+- PACQRY: QO-AW/QO-AH (X'A6' alternate size, else X'81' usable area, else 80x24); PACQRYT prints them.
+- PACPLAT: one switch before the query (`X'7E'`+WCC with COLOR A and CANVAS A, else `X'F5'`+WCC); REQ-CW/REQ-CH from the
+  reply; first full screen SEND (FULLSCR), later full screens SENX with the same command; buffer wider than 170 columns
+  -> line mode; TSD: CANVAS W X T M U L simulate a buffer, TSX lines print the switch and each full-screen transport.
+- PACSCR: GW x GH buffer (images up to 4095 cells; larger buffers use their first floor(4094/W) rows); families W / T /
+  B / G with origins; SHOW-TOP (title, tall score line), SHOW-HUD (compact side HUD); size guard W/T -> B -> G4.
+- PACREQ (+REQ-CANVAS, REQ-CW, REQ-CH), PACPAL (+LAY-MSG-COL, LAY-CMD-COL, LAY-STATUS-COL), PACMAIN (column 18),
+  CLIST (CANVAS(AUTO), operational note).
+- Tests: tests/ref_gx_screen.py (independent model), tests/test_gx.py; deck `GX` (job PACBLDGX). JOB 207: 117 steps RC 0000
+  (JOBs 205/206: IKF4072I-W in PACPLAT / PACSCR - paragraphs ending in an IF - fixed), no warnings, oracle identical,
+  1371 streams identical to the models (44 GS runs without column 18 = the GS/G4 regression, 17 geometry runs: 120x27
+  with QUIT/EOF/LOST/WIN banners, ticks, PA2 redraw, full mode; 132x27; 80x43; 80x32; 100x25 too small -> 80x24 GS
+  centred; 160x30 > 4095 cells -> 80x24 GS centred in the first 25 rows; 3x2, not scaled and no highlight centred; guard
+  cascade; explicit DEFAULT), 61 size switches and 297 full-screen transports as designed, 394 geometry streams replayed
+  on a W x H 3270 buffer = model, 20 PACQRY cases (incl. the live model 2/3/4/5/IBM-DYNAMIC replies). CLIST JOB 208.
+
+## 14. Outcome (2026-10-09)
+- Preferred canvas for the normal 120 x 30 macOS Terminal: 120 x 27 IBM-DYNAMIC (`c3270 -model 2 -oversize auto`).
+- 80 x 24 stays the universal fallback (COLOR(YES), CANVAS(DEFAULT), small or unsupported buffers, the size guard).
+- 132 x 27, 80 x 43, 80 x 32: supported layouts, alternate canvases proven live by E12.
+- The maze stays 80 x 20 at 4x2 on every canvas: larger canvases improve centring and HUD space, not the physical maze
+  scale (4x2 is the correctly proportioned tile on this terminal/font).
+- Operational rule: size the window before connecting; never shrink it below the negotiated canvas while connected.
 

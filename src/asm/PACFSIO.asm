@@ -13,6 +13,10 @@
 *                    SENP  MVS-G3 PARTIAL SEND: X'F1' (WRITE, NO ERASE)
 *                          + BUF (LEN BYTES, STARTING WITH THE WCC),
 *                          TPUT NOEDIT (PROBE E6, VARIANT W)
+*                    SENX  MVS-GS: TPUT NOEDIT OF BUF AS IT IS (LEN
+*                          BYTES); ITS FIRST BYTE IS THE 3270 COMMAND
+*                          CHOSEN BY PACPLAT: X'F5' ERASE/WRITE OR
+*                          X'7E' ERASE/WRITE ALTERNATE (PROBE E12)
 *                    RECV  TGET ASIS INTO BUF (RETRY EMPTY READS)
 *                    RECT  ONE TGET ASIS,NOWAIT (R15: 0 INPUT, 4 NONE,
 *                          ELSE ERROR); NONE = WAIT 0.5 S, LEN 0, RC 0
@@ -57,6 +61,8 @@ PACFSIO  CSECT
          BE    DOSENP
          CLC   0(4,2),=C'RECT'
          BE    DORECT
+         CLC   0(4,2),=C'SENX'
+         BE    DOSENX
          B     DONE
 DOFSON   DS    0H
          TCLEARQ OUTPUT
@@ -100,6 +106,12 @@ DOSENP   DS    0H
          LA    1,SENDBUF
          LH    0,0(4)
          AH    0,=H'1'
+         TPUT  (1),(0),NOEDIT
+         LR    6,15
+         B     DONE
+DOSENX   DS    0H
+         LR    1,3
+         LH    0,0(4)              LENGTH FROM THE CALLER (NEVER LA)
          TPUT  (1),(0),NOEDIT
          LR    6,15
          B     DONE

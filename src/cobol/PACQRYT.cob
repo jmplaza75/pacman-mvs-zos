@@ -33,6 +33,8 @@
            05  QO-COLOUR         PIC 9.
            05  QO-HILITE         PIC 9.
            05  QO-GE             PIC 9.
+           05  QO-AW             PIC 999.
+           05  QO-AH             PIC 999.
        01  CUR-NAME              PIC X(8) VALUE SPACES.
        01  WS-EOF                PIC 9 VALUE 0.
        01  WS-K                  PIC 99.
@@ -60,6 +62,10 @@
            05  RL-H              PIC 9.
            05  FILLER            PIC X(4) VALUE ' GE='.
            05  RL-GE             PIC 9.
+           05  FILLER            PIC X(4) VALUE ' AW='.
+           05  RL-AW             PIC 999.
+           05  FILLER            PIC X(4) VALUE ' AH='.
+           05  RL-AH             PIC 999.
        PROCEDURE DIVISION.
        MAIN-PARA.
            OPEN INPUT CARD-FILE.
@@ -113,4 +119,6 @@
            MOVE QO-COLOUR TO RL-C.
            MOVE QO-HILITE TO RL-H.
            MOVE QO-GE TO RL-GE.
+           MOVE QO-AW TO RL-AW.
+           MOVE QO-AH TO RL-AH.
            DISPLAY RES-LINE.

@@ -7,6 +7,9 @@ NOT EXPECTED = documented as unsupported by the emulator, to be confirmed by a p
 | Capability | Status | Evidence / test | Renderer |
 |---|---|---|---|
 | 3270 model / screen size | CONFIRMED 80 x 24 | E5 Query Reply usable area (JOB 156) | All |
+| Alternate screen size (Erase/Write Alternate) | CONFIRMED 80x32 (model 3), 80x43 (model 4), 132x27 (model 5), 120x27 (IBM-DYNAMIC, `-oversize auto`) | E12 live (JOBs 202/203, docs/evidence/gs-e12-geometry.md); game live on 120x27 (JOB 207 build) | GS |
+| Canvas negotiation | CONFIRMED fixed at connect | c3270 picks the model from the window at startup (silent downgrade to model 2 if too small); resize never renegotiates; shrinking below the canvas corrupts the c3270 display (unsupported) | GS |
+| TSO line mode in the alternate size | CONFIRMED | TK4- TSO issues its own Erase/Write Alternate at logon; PACMAN now sets the size itself before the query (D32) | GS |
 | TSO line-mode output + `STLINENO LINE=1` fresh screen | CONFIRMED | live c3270 validation (MVS-8, JOB 138 build; G0 metrics live: 4 frames, 3 clears) | G0 |
 | TSO terminal macros TPUT/TGET/STFSMODE/STLINENO/TCLEARQ | CONFIRMED (assemble) | IFOX00 JOB 137, docs/evidence/g0-tso-macros-probe.txt (STFSMODE has usermod ZP60009) | G1+ |
 | TSO full-screen (TPUT FULLSCR/TGET ASIS) | CONFIRMED | E2/E3 live: screen stays until ENTER, AIDs received, PA2 reshow works (twice), no `***` (JOBs 153-154) | G1+ |

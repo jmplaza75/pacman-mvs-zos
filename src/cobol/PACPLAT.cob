@@ -16,6 +16,15 @@
       * REQ-SCALE A/4/3/T IN, 4/3/T/N OUT: SCALING NEEDS TSC/TSD,
       * HIGHLIGHT Y AND GLYPHS G (FROM THE SAME QUERY, NO NEW ONE); AUTO
       * = 4. OP WAIT (TSC ONLY): PACTSO PAUSE BEFORE THE END LINES.
+      * MVS-GS GEOMETRY (D32): RIGHT AFTER FSON AND BEFORE THE QUERY ONE
+      * SIZE SWITCH (PACFSIO SENX): X'7E'+WCC (ERASE/WRITE ALTERNATE)
+      * WITH COLOR A AND CANVAS A, ELSE X'F5'+WCC (ERASE/WRITE, 80X24).
+      * THE ALTERNATE SIZE COMES FROM THE SAME REPLY (PACQRY) INTO
+      * REQ-CW/REQ-CH. THE FIRST FULL SCREEN STAYS A SEND (FULLSCR, NOT
+      * HELD AFTER THE QUERY, D28); LATER FULL SCREENS GO BY SENX WITH
+      * THE SAME COMMAND (SIZE RE-ESTABLISHED AFTER CLEAR / PA2).
+      * TSD: CANVAS W X T M U L SIMULATE A BUFFER; TSX LINES SHOW THE
+      * TRANSPORT DECISIONS.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACPLAT.
        ENVIRONMENT DIVISION.
@@ -60,7 +69,25 @@
            05  QO-COLOUR         PIC 9.
            05  QO-HILITE         PIC 9.
            05  QO-GE             PIC 9.
+           05  QO-AW             PIC 999.
+           05  QO-AH             PIC 999.
        01  WS-IDLE               PIC 9(4) VALUE 0.
+       01  CV-CMD                PIC 9(4) VALUE 245.
+       01  FULL-SENT             PIC 9 VALUE 0.
+       01  SX-AREA.
+           05  SX-CMD            PIC X.
+           05  SX-DATA           PIC X(2048).
+       01  SX-LEN                PIC S9(4) COMP.
+       01  TSX-SW.
+           05  FILLER            PIC X(11) VALUE 'TSX SWITCH '.
+           05  TS-CMD            PIC XX.
+           05  FILLER            PIC X VALUE ' '.
+           05  TS-W              PIC 999.
+           05  FILLER            PIC X VALUE 'X'.
+           05  TS-H              PIC 999.
+       01  TSX-FULL.
+           05  FILLER            PIC X(9) VALUE 'TSX FULL '.
+           05  TF-CMD            PIC X(5).
        LINKAGE SECTION.
        01  PAC-REQ COPY PACREQ.
        01  PAC-DS COPY PACDS.
@@ -85,6 +112,10 @@
        DO-INIT.
            IF REQ-MODE NOT = 'TSO' AND REQ-MODE NOT = 'TSD'
                MOVE 'BAT' TO REQ-MODE.
+           MOVE 80 TO REQ-CW.
+           MOVE 24 TO REQ-CH.
+           IF REQ-MODE = 'TSD'
+               PERFORM SIM-CANVAS.
            IF REQ-MODE = 'TSO'
                    AND (REQ-COLOR = 'A' OR REQ-COLOR = 'Y')
                PERFORM TRY-COLOUR THRU TRY-COLOUR-EXIT.
@@ -135,6 +166,17 @@
            IF FS-RC NOT = 0
                GO TO TRY-COLOUR-EXIT.
            MOVE 1 TO FS-ACTIVE.
+      * MVS-GS: THE BUFFER SIZE IS SET BEFORE THE QUERY (D32).
+           MOVE 245 TO CV-CMD.
+           IF REQ-COLOR = 'A' AND REQ-CANVAS = 'A'
+               MOVE 126 TO CV-CMD.
+           MOVE 195 TO HEXN.
+           MOVE HX-B TO SX-DATA.
+           MOVE 1 TO SX-LEN.
+           PERFORM SEND-SX.
+           IF FS-RC NOT = 0
+               PERFORM DO-FSOF THRU DO-FSOF-EXIT
+               GO TO TRY-COLOUR-EXIT.
            IF REQ-COLOR = 'Y'
                MOVE 'TSC' TO REQ-MODE
                GO TO TRY-COLOUR-EXIT.
@@ -148,16 +190,24 @@
                MOVE QO-COLOUR TO HAS-COLOUR
                MOVE QO-HILITE TO HAS-HILITE
                MOVE QO-GE TO HAS-GE.
+           IF FS-RC = 0 AND CV-CMD = 126
+               MOVE QO-AW TO REQ-CW
+               MOVE QO-AH TO REQ-CH.
            IF HAS-COLOUR = 1 AND HAS-HILITE = 1 AND REQ-HILITE = 'A'
                MOVE 'Y' TO REQ-HILITE.
            IF HAS-COLOUR = 1
                MOVE 'TSC' TO REQ-MODE
            ELSE
                PERFORM DO-FSOF THRU DO-FSOF-EXIT.
+      * A BUFFER WIDER THAN 170 COLUMNS CANNOT HOLD THE 80 X 24 SCREENS
+      * WITH 12-BIT ADDRESSES: LINE MODE (SAFE FALLBACK).
+           IF REQ-MODE = 'TSC' AND REQ-CW > 170
+               PERFORM FALL-BACK.
        TRY-COLOUR-EXIT.
            EXIT.
        DO-SEND.
            IF REQ-MODE = 'TSD'
+               PERFORM TSD-FULL
                PERFORM PRINT-STREAM THRU PRINT-STREAM-EXIT
                GO TO DO-SEND-EXIT.
            IF REQ-MODE NOT = 'TSC'
@@ -165,6 +215,18 @@
            IF DS-KIND NOT = 'F'
                PERFORM SEND-PART THRU SEND-PART-EXIT
                GO TO DO-SEND-EXIT.
+      * MVS-GS: ONLY THE FIRST FULL SCREEN IS A SEND (FULLSCR); LATER
+      * ONES ARE ERASE/WRITE (ALTERNATE) + THE STREAM BY SENX.
+           IF FULL-SENT = 1
+               MOVE DS-BUF TO SX-DATA
+               MOVE DS-LEN TO SX-LEN
+               PERFORM SEND-SX
+               IF FS-RC NOT = 0
+                   PERFORM FALL-BACK
+                   GO TO DO-SEND-EXIT
+               ELSE
+                   GO TO DO-SEND-EXIT.
+           MOVE 1 TO FULL-SENT.
            MOVE 'SEND' TO FS-OP.
            MOVE DS-LEN TO FS-LEN.
            CALL 'PACFSIO' USING FS-OP DS-BUF FS-LEN FS-RC.
@@ -172,6 +234,57 @@
                PERFORM FALL-BACK.
        DO-SEND-EXIT.
            EXIT.
+       SEND-SX.
+      * SENX: COMMAND CV-CMD + SX-LEN BYTES OF SX-DATA (TPUT NOEDIT).
+           MOVE CV-CMD TO HEXN.
+           MOVE HX-B TO SX-CMD.
+           COMPUTE FS-LEN = SX-LEN + 1.
+           MOVE 'SENX' TO FS-OP.
+           CALL 'PACFSIO' USING FS-OP SX-AREA FS-LEN FS-RC.
+       TSD-FULL.
+      * TSD: WHICH TRANSPORT A FULL SCREEN WOULD USE (TSX LINE).
+           IF DS-KIND = 'F'
+               MOVE 'FIRST' TO TF-CMD
+               IF FULL-SENT = 1
+                   PERFORM TSD-CMD
+                   DISPLAY TSX-FULL
+               ELSE
+                   MOVE 1 TO FULL-SENT
+                   DISPLAY TSX-FULL.
+           MOVE 0 TO WS-I.
+       TSD-CMD.
+           MOVE 'F5' TO TF-CMD.
+           IF CV-CMD = 126
+               MOVE '7E' TO TF-CMD.
+           MOVE 0 TO WS-I.
+       SIM-CANVAS.
+      * TSD (NO QUERY): CANVAS LETTERS SIMULATE THE ALTERNATE BUFFER.
+           MOVE 245 TO CV-CMD.
+           IF REQ-CANVAS = 'W'
+               MOVE 120 TO REQ-CW
+               MOVE 27 TO REQ-CH.
+           IF REQ-CANVAS = 'X'
+               MOVE 132 TO REQ-CW
+               MOVE 27 TO REQ-CH.
+           IF REQ-CANVAS = 'T'
+               MOVE 80 TO REQ-CW
+               MOVE 43 TO REQ-CH.
+           IF REQ-CANVAS = 'M'
+               MOVE 80 TO REQ-CW
+               MOVE 32 TO REQ-CH.
+           IF REQ-CANVAS = 'U'
+               MOVE 100 TO REQ-CW
+               MOVE 25 TO REQ-CH.
+           IF REQ-CANVAS = 'L'
+               MOVE 160 TO REQ-CW
+               MOVE 30 TO REQ-CH.
+           IF REQ-CW NOT = 80 OR REQ-CH NOT = 24
+               MOVE 126 TO CV-CMD.
+           PERFORM TSD-CMD.
+           MOVE TF-CMD TO TS-CMD.
+           MOVE REQ-CW TO TS-W.
+           MOVE REQ-CH TO TS-H.
+           DISPLAY TSX-SW.
        SEND-PART.
       * MVS-G3 PARTIAL SEND (WRITE X'F1' + TPUT NOEDIT, PROBE E6). A
       * FAILURE IS NOT FATAL: FULL REDRAW WITHOUT ANIMATION FROM NOW ON
@@ -250,6 +363,8 @@
            MOVE 'F' TO REQ-REDRAW.
            MOVE 'C' TO REQ-GLYPHS.
            MOVE 'N' TO REQ-SCALE.
+           MOVE 80 TO REQ-CW.
+           MOVE 24 TO REQ-CH.
        BYTE-VAL.
            MOVE IN-CH (WS-K) TO HX-B.
            MOVE HEXN TO WS-V.

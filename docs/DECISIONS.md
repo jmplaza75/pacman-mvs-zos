@@ -140,3 +140,5 @@
   command (PACFSIO op SENX, the one allowed extension), partials unchanged. Primary layout 120x27 (maze rows 4-23, columns
   21-100, compact side HUD), 132x27 wide, 80x43/80x32 tall, 80x24 GS fallback. The maze stays 4x2 (80x20). 4 KB TPUT (E13)
   is a future investigation, not a dependency.
+  Live (2026-10-09, JOB 207 build): 120x27 IBM-DYNAMIC PASS (centred maze, HUD, banners, CLEAR+PA2 recovery), 80x24 fallbacks
+  PASS. Preferred canvas for the normal 120x30 macOS Terminal: 120x27 IBM-DYNAMIC; 80x24 the universal fallback. MVS-GS closed.

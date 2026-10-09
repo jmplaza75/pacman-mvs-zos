@@ -6,6 +6,9 @@
       *   (MVS-G2), QO-GE 1 = QCODE X'85' WITH FLAG X'80' (GE) AND X'02'
       *   (CGCSGID PRESENT) AND A SET WHOSE CODE PAGE IS 310 (APL).
       * THE G1/G2 DECISIONS WERE MOVED HERE FROM PACPLAT UNCHANGED.
+      * MVS-GS: QO-AW/QO-AH = THE ALTERNATE SCREEN SIZE: QCODE X'A6'
+      * (IMPLICIT PARTITION, ALTERNATE WIDTH/HEIGHT AT +13/+15), ELSE
+      * QCODE X'81' (USABLE AREA, WIDTH/HEIGHT AT +6/+8), ELSE 80 X 24.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACQRY.
        ENVIRONMENT DIVISION.
@@ -35,6 +38,11 @@
        01  WS-STOP               PIC 9.
        01  WS-DSTOP              PIC 9.
        01  WS-NOP                PIC 9.
+       01  WS-W                  PIC 9(4).
+       01  UA-W                  PIC 9(4) VALUE 0.
+       01  UA-H                  PIC 9(4) VALUE 0.
+       01  IP-W                  PIC 9(4) VALUE 0.
+       01  IP-H                  PIC 9(4) VALUE 0.
        LINKAGE SECTION.
        01  QRY-AREA.
            05  QRY-CH            PIC X OCCURS 2048 TIMES.
@@ -43,12 +51,23 @@
            05  QO-COLOUR         PIC 9.
            05  QO-HILITE         PIC 9.
            05  QO-GE             PIC 9.
+           05  QO-AW             PIC 999.
+           05  QO-AH             PIC 999.
        PROCEDURE DIVISION USING QRY-AREA QRY-LEN QRY-OUT.
        MAIN-PARA.
            MOVE 0 TO QO-COLOUR.
            MOVE 0 TO QO-HILITE.
            MOVE 0 TO QO-GE.
+           MOVE 0 TO UA-W UA-H IP-W IP-H.
            PERFORM FIND-CAPS THRU FIND-CAPS-EXIT.
+           MOVE 80 TO QO-AW.
+           MOVE 24 TO QO-AH.
+           IF UA-W > 0 AND UA-H > 0 AND UA-W < 1000 AND UA-H < 1000
+               MOVE UA-W TO QO-AW
+               MOVE UA-H TO QO-AH.
+           IF IP-W > 0 AND IP-H > 0 AND IP-W < 1000 AND IP-H < 1000
+               MOVE IP-W TO QO-AW
+               MOVE IP-H TO QO-AH.
            GOBACK.
        FIND-CAPS.
       * QUERY REPLY = AID X'88' (136) + STRUCTURED FIELDS: LENGTH(2),
@@ -87,6 +106,10 @@
                MOVE 1 TO QO-HILITE.
            IF WS-ID = 129 AND WS-QC = 133 AND WS-L > 13
                PERFORM CHAR-SETS THRU CHAR-SETS-EXIT.
+           IF WS-ID = 129 AND WS-QC = 129 AND WS-L > 9
+               PERFORM USABLE THRU USABLE-EXIT.
+           IF WS-ID = 129 AND WS-QC = 166 AND WS-L > 16
+               PERFORM IMPLICIT THRU IMPLICIT-EXIT.
            IF WS-L < 4
                MOVE 1 TO WS-STOP
            ELSE
@@ -135,6 +158,43 @@
            IF WS-CP = 310
                MOVE 1 TO QO-GE.
            MOVE 0 TO WS-NOP.
+       USABLE.
+      * X'81' USABLE AREA: WIDTH AT +6, HEIGHT AT +8 (2 BYTES EACH).
+           COMPUTE WS-END = WS-P + 9.
+           IF WS-END > QRY-LEN
+               GO TO USABLE-EXIT.
+           COMPUTE WS-K = WS-P + 6.
+           PERFORM WORD-VAL.
+           MOVE WS-W TO UA-W.
+           COMPUTE WS-K = WS-P + 8.
+           PERFORM WORD-VAL.
+           MOVE WS-W TO UA-H.
+       USABLE-EXIT.
+           EXIT.
+       IMPLICIT.
+      * X'A6' IMPLICIT PARTITION: SELF-DEFINING PARAMETER X'01' AT +7,
+      * ALTERNATE WIDTH AT +13, ALTERNATE HEIGHT AT +15.
+           COMPUTE WS-END = WS-P + 16.
+           IF WS-END > QRY-LEN
+               GO TO IMPLICIT-EXIT.
+           COMPUTE WS-K = WS-P + 7.
+           PERFORM BYTE-VAL.
+           IF WS-V NOT = 1
+               GO TO IMPLICIT-EXIT.
+           COMPUTE WS-K = WS-P + 13.
+           PERFORM WORD-VAL.
+           MOVE WS-W TO IP-W.
+           COMPUTE WS-K = WS-P + 15.
+           PERFORM WORD-VAL.
+           MOVE WS-W TO IP-H.
+       IMPLICIT-EXIT.
+           EXIT.
+       WORD-VAL.
+           PERFORM BYTE-VAL.
+           COMPUTE WS-W = WS-V * 256.
+           ADD 1 TO WS-K.
+           PERFORM BYTE-VAL.
+           ADD WS-V TO WS-W.
        BYTE-VAL.
            MOVE QRY-CH (WS-K) TO HX-B.
            MOVE HEXN TO WS-V.

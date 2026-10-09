@@ -3,6 +3,7 @@ Probe: src/probe/PACGEP.cob + src/probe/PACFSC.asm + CLIST GEPROBE, deck `GEP` (
 (PACFSIO, GAME/MAP/AI untouched). Builds: JOB 202 (runs A0 and A); JOB 203 = the same probe with two cosmetic ruler
 fixes (every 9 of the units ruler was blank: one-digit counter overflow; rows 5..H-1 had no number: loop limit
 overwritten) - geometry logic unchanged. Evidence of the build: docs/evidence/gs-e12-probe-build.txt.
+Traces: run A0 ~/gs-geo-m4.txt, run A ~/gs-geo-m4b.txt, B ~/gs-geo-m5.txt, C0/C ~/gs-geo-m3.txt, D ~/gs-geo-ov.txt (outside the repo).
 Steps: S0 (FULLSCR) - Read Partition Query (NOEDIT) - S1 (FULLSCR, sizes) - S2 Erase/Write Alternate (NOEDIT X'7E') of a
 ruler screen of exactly the announced alternate size + after 1 s a partial Write (X'F1') on the last rows; ENTER: the
 cursor address is decoded in the alternate geometry - S3 Erase/Write (X'F5') back to the default size - line mode.

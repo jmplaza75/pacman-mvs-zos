@@ -40,6 +40,25 @@ def cases():
         ('ONLY85', r[:1] + r[P85:P85 + 27]),                            # AID + X'85' only
         ('SHORTDL', with85(r, body[:8] + b'\x03' + body[9:])),          # descriptor length < 4: ignored
         ('EMPTY', b''),                                                 # nothing received
+    ] + geometry_cases()
+
+
+def rec(name):
+    return bytes.fromhex((R / f'tests/qreply_{name}.hex').read_text().strip())
+
+
+def geometry_cases():
+    """MVS-GS: the replies recorded live by probe E12 (c3270 traces) and edge variants of the size fields."""
+    m3, m4, m5, dyn = rec('m3'), rec('m4'), rec('m5'), rec('dyn')
+    pa6 = REAL.find(b'\x81\xa6') - 2
+    pua = REAL.find(b'\x81\x81') - 2
+    assert pa6 > 0 and pua > 0
+    return [
+        ('M3', m3), ('M4', m4), ('M5', m5), ('DYN', dyn),                   # 80x32, 80x43, 132x27, 120x27
+        ('NOA6', sf_cut(dyn, dyn.find(b'\x81\xa6') - 2)),                  # no X'A6': usable area 120x27 used
+        ('NOA6UA', sf_cut(sf_cut(dyn, dyn.find(b'\x81\xa6') - 2), pua)),  # neither: 80x24
+        ('A6SDP2', dyn[:pa6 + 7] + b'\x02' + dyn[pa6 + 8:]),              # A6 with another parameter id: usable
+        ('TRUNCA6', dyn[:pa6 + 12]),                                      # reply ends inside X'A6': usable area
     ]
 
 
@@ -67,6 +86,27 @@ def expect(b):
             break
         p += n
     return c, h, g
+
+
+def expect_size(b):
+    """Independent statement of the MVS-GS rule (docs/GS-GEOMETRY.md 4): alternate size from X'A6' (parameter 1),
+    else the usable area X'81', else 80 x 24."""
+    ua = ip = None
+    if b and b[0] == 0x88:
+        p = 1
+        while p + 3 < len(b):
+            n, qid, qc = int.from_bytes(b[p:p + 2], 'big'), b[p + 2], b[p + 3]
+            if qid == 0x81 and qc == 0x81 and n > 9 and p + 10 <= len(b):
+                ua = (int.from_bytes(b[p + 6:p + 8], 'big'), int.from_bytes(b[p + 8:p + 10], 'big'))
+            if qid == 0x81 and qc == 0xA6 and n > 16 and p + 17 <= len(b) and b[p + 7] == 1:
+                ip = (int.from_bytes(b[p + 13:p + 15], 'big'), int.from_bytes(b[p + 15:p + 17], 'big'))
+            if n < 4:
+                break
+            p += n
+    for v in (ip, ua):
+        if v and 0 < v[0] < 1000 and 0 < v[1] < 1000:
+            return v
+    return 80, 24
 
 
 def cards():

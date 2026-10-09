@@ -22,3 +22,9 @@
       * MVS-GS SCALE: A AUTO, 4 (4X2), 3 (3X2), N NO; T = 4X2 WITH A
       * 1000-BYTE LIMIT (TEST OF THE SIZE GUARD). RESOLVED: 4/3/T/N.
            05  REQ-SCALE             PIC X.
+      * MVS-GS CANVAS: A AUTO (ALTERNATE SIZE FROM THE QUERY REPLY),
+      * D OR BLANK DEFAULT 80 X 24; TSD ONLY: W X T M U L = SIMULATED.
+      * REQ-CW / REQ-CH = THE RESOLVED BUFFER SIZE (0 = 80 X 24).
+           05  REQ-CANVAS            PIC X.
+           05  REQ-CW                PIC 999.
+           05  REQ-CH                PIC 999.

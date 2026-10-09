@@ -42,6 +42,8 @@ DECKS = {
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'GS': ('PACBLDGS', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY'],
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'GX': ('PACBLDGX', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -91,7 +93,7 @@ def run_step(step, pfx, load, sysin, parm=None):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -112,7 +114,8 @@ TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G2': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G3': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G4': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
-       'GS': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
+       'GS': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'GX': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
 TSD = {'G1': ['MOVES', 'TSORDR', 'MULTI', 'C3N2', 'DIE1'],
        # G2: (case, highlight flag in PARM column 13): 5 with highlights, 2 without (= G1 screens)
        'G2': [('MOVES', 'Y'), ('TSORDR', 'Y'), ('MULTI', 'Y'), ('C3N2', 'Y'), ('DIE1', 'Y'), ('MOVES', 'N'), ('DIE1', 'N')],
@@ -137,7 +140,18 @@ GS_RUNS = [
     ('MULTI', 'Y', 'Y', 'P', 'G', '3'), ('FACE', 'Y', 'Y', 'P', 'G', '3'), ('C3N2', 'Y', 'N', 'F', 'G', '3'),
     ('MOVES', 'Y', 'Y', 'P', 'G', 'A'), ('MOVES', 'N', 'Y', 'P', 'G', '4'), ('MOVES', 'Y', 'Y', 'P', 'B', '4'),
     ('MOVES', 'Y', 'Y', 'P', 'A', 'A'), ('MULTI', 'Y', 'Y', 'P', 'G', 'T'), ('TICKS', 'Y', 'Y', 'P', 'G', 'N')]
-TSD['GS'] = TSD['G4'] + GS_RUNS   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
+TSD['GS'] = TSD['G4'] + GS_RUNS
+# MVS-GS geometry (D32): the 44 GS runs unchanged (no column 18 = CANVAS DEFAULT, the regression) + (case, hilite, anim,
+# redraw, glyphs, scale, canvas) runs on simulated buffers: W 120x27, X 132x27, T 80x43, M 80x32, U 100x25 (too small),
+# L 160x30 (> 4095 cells), D explicit default
+GX_RUNS = [
+    ('MOVES', 'Y', 'Y', 'P', 'G', '4', 'W'), ('MULTI', 'Y', 'Y', 'P', 'G', '4', 'W'), ('C3N2', 'Y', 'Y', 'P', 'G', '4', 'W'),
+    ('TSORDR', 'Y', 'Y', 'P', 'G', '4', 'W'), ('TICKS', 'Y', 'Y', 'P', 'G', '4', 'W'), ('FACE', 'Y', 'Y', 'P', 'G', '4', 'X'),
+    ('MULTI', 'Y', 'Y', 'P', 'G', '4', 'T'), ('DIE1', 'Y', 'Y', 'P', 'G', '4', 'M'), ('EDGE2', 'Y', 'N', 'P', 'G', '4', 'W'),
+    ('MOVES', 'Y', 'N', 'F', 'G', '4', 'W'), ('MOVES', 'Y', 'Y', 'P', 'G', '4', 'U'), ('MOVES', 'Y', 'Y', 'P', 'G', '4', 'L'),
+    ('MULTI', 'Y', 'Y', 'P', 'G', '3', 'W'), ('MOVES', 'Y', 'Y', 'P', 'G', 'N', 'W'), ('MULTI', 'Y', 'Y', 'P', 'G', 'T', 'W'),
+    ('MOVES', 'Y', 'Y', 'P', 'G', '4', 'D'), ('TICKS', 'N', 'Y', 'P', 'G', '4', 'W')]
+TSD['GX'] = TSD['GS'] + GX_RUNS   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
 
 
 def tso_parm_and_cards(case):
@@ -177,7 +191,7 @@ def build(name, pfx):
         if hilite:
             parm = (parm + ' AI1 1' if parm == 'TSD' else parm).ljust(11) + 'N' + hilite
         out += run_step(f'TSD{i}', pfx, load, cards, parm=parm)
-    if name in ('G4', 'GS'):
+    if name in ('G4', 'GS', 'GX'):
         out += qry_test_steps(pfx)
     return out + '//\n'
 

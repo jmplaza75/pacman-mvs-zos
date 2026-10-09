@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (G5 cerrada; fase actual MVS-GS: docs/GS-SCALED.md).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-GS cerrada; siguiente fase: pendiente de decision del usuario).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -28,14 +28,18 @@ Evidence: docs/evidence/g5-probe-analysis.md, g5-c3270-e10-window.txt, g5-probe-
 MVS-G6 (multicolour/triple-plane PS): BLOCKED / NOT APPLICABLE in this environment (depends on PS, reason inherited from G5).
 Future option, not pursued: a PS-capable terminal/emulator in a separate compatibility branch (E10 reusable; no Vista/PCOMM dependency).
 
-MVS-GS IN PROGRESS: design approved (D31, checkpoint fbc52ab); implemented and PASS on Hercules (JOB 200, test_gs.py; CLIST
-JOB 201). Live: 4x2 proportions confirmed by the user (PASS). Geometry study done (probe E12, JOBs 202/203; 80x32, 80x43,
-132x27, 120x27 IBM-DYNAMIC all LIVE PASS; resize below the canvas = unsupported; latent wide-buffer defect found; evidence
-docs/evidence/gs-e12-geometry.md). PENDING: approval of docs/GS-GEOMETRY.md (wide/tall canvases, CANVAS option, PACFSIO
-op SENX), then its implementation + live check, then README + close (tag mvs-gs). Do not commit/tag before that.
-WAS NEXT: scaled renderer, preferably 2x2 (arcade-style wall contours deferred from G4), the next
-meaningful visual improvement for the real environment. Start by reading: CLAUDE.md, this file, docs/DECISIONS.md (D24-D30),
-docs/G4-GLYPHS.md (sec. on deferred contours), docs/G3-PARTIAL.md, docs/CAPABILITIES.md. Probe lessons (G1-G5): check every TPUT
-length (never `LA 0,n(0)`); any inbound (Query Reply too) locks the keyboard until a write with keyboard restore; ENTER on an
-unformatted screen sends the whole screen text (size TGET buffers or expect queued remainders); verify on the terminal side
-(c3270 -trace, tools/c3270_*.py) before concluding anything from visuals.
+MVS-GS COMPLETE (tag mvs-gs, 2026-10-09): scaled renderer + geometry integration.
+- 4x2 scaled renderer (D31, docs/GS-SCALED.md): maze 80 x 20, arcade contour walls, half-block sprites, end banner with a
+  3 s pause, SCALE(AUTO|4|3|NO); build JOB 200; 4x2 proportions confirmed live.
+- Geometry (D32, docs/GS-GEOMETRY.md; probe E12: 80x32, 80x43, 132x27, 120x27 IBM-DYNAMIC live PASS): CANVAS(AUTO|DEFAULT),
+  one size switch before the query, PACFSIO op SENX (the one extension), wide / tall / centred layouts, size guard
+  W/T -> 80x24 GS -> G4; build JOB 207 (tests/test_gx.py), CLIST JOB 208; live PASS (docs/evidence/gs-manual-c3270.md).
+- Preferred canvas for the normal 120 x 30 macOS Terminal: 120 x 27 IBM-DYNAMIC (`c3270 -model 2 -oversize auto
+  localhost:3270`); 80 x 24 is the universal fallback. Larger canvases improve centring / HUD space, not the maze scale
+  (80 x 20 at 4x2 everywhere).
+- Operational rule: size the terminal window before connecting; never shrink it below the negotiated canvas while
+  connected (c3270 cannot recover the display).
+- Regression to keep: tests/test_gx.py (+ test_gs.py, test_g4.py, test_core_frozen.py). Future, not a dependency: probe E13
+  (4 KB TPUT transport) for a richer HUD or a 6x3 maze.
+
+NEXT: NOT STARTED - wait for the user's go (no next phase chosen).

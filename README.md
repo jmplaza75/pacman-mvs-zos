@@ -75,6 +75,12 @@ EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'SCALE(NO)'         (or 3: smaller 3x2 maze)
 arcade-style double contour lines, Pac-Man and the ghosts are larger half-block sprites, and the game ends on a screen
 with a YOU WIN / GAME OVER / QUIT banner shown for 3 seconds. It needs colour, highlighting and the GRAPHIC glyphs (AUTO
 scales only when all three are active); otherwise the GLYPHS look above is used. See `docs/GS-SCALED.md`.
+`CANVAS(AUTO|DEFAULT)` (MVS-GS geometry, CLIST default AUTO) uses the terminal's larger alternate screen when it has one:
+on 120x27 or 132x27 the 4x2 maze is centred with a score/lives/ghosts panel on each side, on 80x32 / 80x43 it is centred
+vertically; DEFAULT keeps 80x24. The canvas is fixed when c3270 connects, so **size the terminal window before
+connecting and never shrink it below that size while connected** (c3270 cannot recover the display). For a usual
+120x30 macOS Terminal window: `c3270 -model 2 -oversize auto localhost:3270` (120x27). Other options: `-model 5`
+(window >= 132x30), `-model 4` (>= 46 rows), `-model 3` (>= 36 rows). See `docs/GS-GEOMETRY.md`.
 `GLYPHS(AUTO|GRAPHIC|BASE|CLASSIC)` (MVS-G4) picks the board look in colour mode: GRAPHIC and BASE draw walls as solid
 blue blocks (reverse video; `#` with `HILITE(NO)`); GRAPHIC draws pellets, Pac-Man and ghosts with APL symbols (3270 GE
 order, code page 310), BASE with normal characters; AUTO uses GRAPHIC when the capability query announces it (with
@@ -108,5 +114,9 @@ MVS-G5 (Programmed Symbols, isolated probe E10) is closed negative (tag `mvs-g5`
 TK4-/MVS 3.8J + TSO + c3270 environment (no loadable sets announced, Load PS rejected by c3270, no host-defined glyph shown);
 G4 is the production character-set ceiling. MVS-G6 (multicolour PS) is blocked / not applicable here. See
 `docs/evidence/g5-probe-analysis.md` (D30). Next visual step: a 2x2 scaled renderer.
+MVS-GS (scaled renderer and geometry: 4x2 maze with arcade contour walls and half-block sprites,
+`SCALE(...)` and `CANVAS(...)`, larger canvases up to 132x27; preferred 120x27 IBM-DYNAMIC for a 120x30 macOS Terminal,
+80x24 fallback; design `docs/GS-SCALED.md`, `docs/GS-GEOMETRY.md`) is complete (tag `mvs-gs`; Hercules JOBs 200/207 and
+live in c3270). The maze stays 80x20 at 4x2: larger canvases add centring and HUD space, not maze scale.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

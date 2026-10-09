@@ -16,6 +16,8 @@
       * BLANK CLASSIC (THE G3 SCREENS).
       * COLUMN 17 = SCALE (MVS-GS): A AUTO, 4 4X2, 3 3X2, N/BLANK NO
       * (THE G4 SCREENS).
+      * COLUMN 18 = CANVAS (MVS-GS GEOMETRY): A AUTO (THE TERMINAL'S
+      * ALTERNATE SIZE), D OR BLANK DEFAULT 80 X 24; TSD: SIMULATED.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -43,6 +45,7 @@
            05  PARM-REDRAW       PIC X.
            05  PARM-GLYPHS       PIC X.
            05  PARM-SCALE        PIC X.
+           05  PARM-CANVAS       PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
@@ -71,6 +74,11 @@
            MOVE 'N' TO REQ-SCALE.
            IF PARM-LEN > 16
                MOVE PARM-SCALE TO REQ-SCALE.
+           MOVE 'D' TO REQ-CANVAS.
+           MOVE 0 TO REQ-CW.
+           MOVE 0 TO REQ-CH.
+           IF PARM-LEN > 17
+               MOVE PARM-CANVAS TO REQ-CANVAS.
            MOVE SPACE TO REQ-SENDST.
            MOVE 'INIT' TO REQ-OP.
            CALL 'PACPLAT' USING PAC-REQ.

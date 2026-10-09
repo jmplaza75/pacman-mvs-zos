@@ -1,4 +1,4 @@
-# MVS-GS - scaled renderer: feasibility study and design (APPROVED 2026-10-08, D31)
+# MVS-GS - scaled renderer: feasibility study and design (APPROVED 2026-10-08, D31) - COMPLETE (tag mvs-gs)
 Baseline: tag `mvs-g5` (commit 6c44a64). Status: study + isolated probe E11 done; **PACMAN not modified**.
 Goal: 1 logical maze cell = several terminal cells, so the maze is much larger, walls are true arcade contours (not
 centre-lines, not filled blocks) and sprites are bigger; G4 stays the fallback; GAME/MAP/AI, PACFSIO untouched.
@@ -192,7 +192,7 @@ Visual proportions: approved from the geometry and the E11 results. The script-p
 NOT the physical aspect ratio; the live proportions of layout B have not yet been visually confirmed by the user
 (to be recorded at the live check).
 
-## 12. Implementation (2026-10-08) - built and tested on Hercules; live check pending
+## 12. Implementation (2026-10-08) - built and tested on Hercules; live PASS (proportions 2026-10-09)
 Changed (presentation/platform only; core freeze D22 intact, PACFSIO untouched):
 - PACSCR: scaled board drawn into the existing 1920-cell virtual image (tiles of 4x2 / 3x2; contour table CT-CODE
   built once from the map; sprites from PACPAL), full-screen encoder ENCODE-S (RA, RA+GE, blank skips, field orders),
@@ -221,4 +221,6 @@ Tests: tests/ref_gs_screen.py (independent model), tests/test_gs.py; deck `GS` (
 0000, no compiler warnings, oracle byte-identical, 931 TSC streams identical to the models (26 G4 runs without column 17
 = G4 regression, 18 GS runs: 4x2/3x2, QUIT/EOF/LOST/WIN banners, AUTO, no-highlight/BASE/CLASSIC fallbacks, guard T,
 explicit N), 395 scaled streams replayed on a 3270 buffer image equal to the model image, 12 PACQRY cases.
+Geometry integration (larger canvases, 120 x 27 preferred): docs/GS-GEOMETRY.md (D32). Live validation:
+docs/evidence/gs-manual-c3270.md. MVS-GS complete (tag mvs-gs).
 
