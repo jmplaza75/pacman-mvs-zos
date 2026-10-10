@@ -106,3 +106,23 @@ Modules:
 - c3270 for REALTIME: tools/c3270_rt.sh (keymap above), typeahead OFF by default in that launcher only.
 Tests (RT2): independent tests/ref_rt.py (built on the ref_mvs6 game model and the ref_gx_screen renderer) for batch
 REALTIME cases and TSD REALTIME streams; the existing regression suite and the 1.0-MVS oracle unchanged.
+
+## RT2 result (2026-10-10, Hercules JOB 222, docs/evidence/rt2-build.txt)
+Deck RT (job PACBLDRT, 137 steps RC 0000, no warnings) = the whole GX deck + PACRT + 12 batch and 6 TSD REALTIME runs.
+`tests/test_rt.py` PASS: TURN regression (tests/test_gx.py on the GX part: 1.0-MVS oracle unchanged, 61 GS/GX TSD runs,
+PACQRY), 12 batch REALTIME runs = tests/ref_rt.py line for line, 181 TSD REALTIME streams = model byte for byte (31 of
+them restore-only `C2 28 00 00`). Cases (tests/rtcases): RTLINE (runs to the wall, 4/5 cadence P B B B B, ghost-only
+quanta), RTCORNER (buffered corner), RTTTL (3-step expiry), RTREV (reversal), RTMULTI (several inputs in one quantum,
+latest wins), RTPRE (input before the start), RTSTILL (hit while stationary, 10-quantum freeze, respawn, LOST), RTPAUSE
+(pause/resume, invalid input, PA2 redraw, quit), RTLONG (1102 quanta, legacy TICK-COUNT wraps), RTWIN, RTEDGE /
+RTEDGE0 (last pellet eaten onto a ghost: WIN with a life lost / LOST). Core change authorised (docs/CORE_CHANGES.md).
+Defects found and fixed during RT2: PACPLAT signed VALUE (JOB 219, IKF2190I-W); BAT read-ahead event overwritten before
+the start (JOB 221). NOT exercised by RT2 (needs a live terminal, RT3): the TSC path (POLL, blocking RECV with the AID,
+CLOK / WDLN deadlines, PACTSO TIME / DLWT, keymap AIDs, D28 release, CLEAR).
+Behaviour details fixed by the implementation (within D33): a blocked player is not a PACGAME call (HUD LAST keeps the
+last real move, no BLOCKED); the HUD/end TURN counter is the legacy player-step count (mod 1000), QUANTA the wide RT
+counter; inputs before the start or during a pause are reported in the next quantum's IN; ENTER-typed input, invalid
+input or PA2 make that quantum's single write a prompt screen (field reset / full redraw); unknown AIDs are ignored;
+P + ENTER pauses (no visual pause indicator yet: RT3 presentation); the deciding quantum gets its frame, then the end
+banner as in TURN.
+

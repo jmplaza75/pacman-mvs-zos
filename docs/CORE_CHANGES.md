@@ -7,3 +7,7 @@ oracle must still pass.
 
 ## 2026-10-07 - baseline
 Core frozen at release 1.0-MVS (commit 89fe86b). No changes authorised yet.
+
+## 2026-10-10 - authorised by project owner (RT1 approval)
+Reason: MVS-RT RT2 (D33): PACGAME REQ-STEP selector - P player step only (no PACAI), G ghost step only (no player move, no tick), anything else = the existing turn (TURN always B; hit/life/no-swap rules unchanged). Approved with the RT1 design 2026-10-10.
+- src/cobol/PACGAME.cob: 33fdf171ddc19297 -> 41ad673a3270d4b3

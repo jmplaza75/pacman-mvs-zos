@@ -10,6 +10,11 @@
       * THE FRAME IS COMPOSED BY PACSCR AND SENT BY PACPLAT ONCE PER
       * READ (PRMT); NO LINE OUTPUT UNTIL THE END, WHEN PACPLAT FSOF
       * RESTORES LINE MODE BEFORE THE USUAL END LINES.
+      * MVS-RT (D33): OP RTQF = THE ONE FRAME OF A REALTIME QUANTUM.
+      * TSC/TSD: REQ-RTFR P = PRMT (INPUT FIELD RESET), F = PRMT AS A
+      * FULL REDRAW, ELSE PACSCR RTQF (ALWAYS ONE STREAM). BAT: THE RT
+      * STATUS LINE (QUANTUM, INPUTS, STEP KIND, DIRECTIONS, STATE) AND
+      * THE GHOSTS LINE. END ADDS 'QUANTA' IN REALTIME ONLY.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -73,6 +78,49 @@
            05  XL3-X             PIC 99.
            05  FILLER            PIC X VALUE ','.
            05  XL3-Y             PIC 99.
+       01  WS-RT-LINE.
+           05  FILLER            PIC X VALUE 'Q'.
+           05  RT-Q              PIC 9(7).
+           05  FILLER            PIC X(4) VALUE ' IN='.
+           05  RT-IN             PIC X(8).
+           05  FILLER            PIC X(3) VALUE ' K='.
+           05  RT-K              PIC X.
+           05  FILLER            PIC X(3) VALUE ' C='.
+           05  RT-C              PIC X.
+           05  FILLER            PIC X(3) VALUE ' R='.
+           05  RT-R              PIC X.
+           05  FILLER            PIC X(3) VALUE ' T='.
+           05  RT-T              PIC 9.
+           05  FILLER            PIC X(3) VALUE ' X='.
+           05  RT-X              PIC 99.
+           05  FILLER            PIC X(3) VALUE ' Y='.
+           05  RT-Y              PIC 99.
+           05  FILLER            PIC X(3) VALUE ' S='.
+           05  RT-S              PIC 9(4).
+           05  FILLER            PIC X(3) VALUE ' L='.
+           05  RT-L              PIC 999.
+           05  FILLER            PIC X(3) VALUE ' V='.
+           05  RT-V              PIC 9.
+           05  FILLER            PIC X(4) VALUE ' ST='.
+           05  RT-ST             PIC X(7).
+       01  WS-RTG1.
+           05  FILLER            PIC X(4) VALUE '  G='.
+           05  RG1-X             PIC 99.
+           05  FILLER            PIC X VALUE ','.
+           05  RG1-Y             PIC 99.
+       01  WS-RTG2.
+           05  FILLER            PIC X VALUE ' '.
+           05  RG2-X             PIC 99.
+           05  FILLER            PIC X VALUE ','.
+           05  RG2-Y             PIC 99.
+       01  WS-RTG3.
+           05  FILLER            PIC X VALUE ' '.
+           05  RG3-X             PIC 99.
+           05  FILLER            PIC X VALUE ','.
+           05  RG3-Y             PIC 99.
+       01  WS-QUANTA.
+           05  FILLER            PIC X(7) VALUE 'QUANTA '.
+           05  QU-N              PIC 9(7).
        LINKAGE SECTION.
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
@@ -93,7 +141,9 @@
            ELSE IF REQ-OP = 'END '
                PERFORM SHOW-END THRU SHOW-END-EXIT
            ELSE IF REQ-OP = 'PRMT'
-               PERFORM SHOW-PROMPT THRU SHOW-PROMPT-EXIT.
+               PERFORM SHOW-PROMPT THRU SHOW-PROMPT-EXIT
+           ELSE IF REQ-OP = 'RTQF'
+               PERFORM SHOW-RT.
            GOBACK.
        SCREEN-OP.
            IF REQ-OP = 'STAT'
@@ -104,6 +154,8 @@
                PERFORM SCR-PRMT THRU SCR-PRMT-EXIT
            ELSE IF REQ-OP = 'TICK'
                PERFORM SCR-TICK THRU SCR-TICK-EXIT
+           ELSE IF REQ-OP = 'RTQF'
+               PERFORM SCR-RTQF THRU SCR-RTQF-EXIT
            ELSE IF REQ-OP = 'END '
                PERFORM SCR-ENDS
                MOVE 'FSOF' TO REQ-OP
@@ -152,6 +204,60 @@
                    PERFORM SCR-RESEND.
        SCR-TICK-EXIT.
            EXIT.
+       SCR-RTQF.
+      * MVS-RT: EXACTLY ONE WRITE FOR THE QUANTUM, ALWAYS WITH THE
+      * KEYBOARD RESTORE: AFTER ENTER / INVALID INPUT / REDRAW THE
+      * PROMPT SCREEN (FIELD RESET; F = FULL), ELSE PACSCR RTQF.
+           IF REQ-RTFR = 'P' OR REQ-RTFR = 'F'
+               MOVE 'MOV' TO REQ-KIND
+               IF REQ-RTFR = 'F'
+                   MOVE 'RDR' TO REQ-KIND.
+           IF REQ-RTFR = 'P' OR REQ-RTFR = 'F'
+               MOVE 'PRMT' TO REQ-OP
+               PERFORM SCR-PRMT THRU SCR-PRMT-EXIT
+               MOVE 'RTQF' TO REQ-OP
+               GO TO SCR-RTQF-EXIT.
+           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
+           ADD DS-LEN TO M-CHARS.
+           MOVE 'SEND' TO REQ-OP.
+           MOVE SPACE TO REQ-SENDST.
+           CALL 'PACPLAT' USING PAC-REQ PAC-DS.
+           MOVE 'PRMT' TO REQ-OP.
+           IF REQ-SENDST = 'R'
+               PERFORM SCR-RESEND.
+           MOVE 'RTQF' TO REQ-OP.
+       SCR-RTQF-EXIT.
+           EXIT.
+       SHOW-RT.
+           MOVE REQ-RTQ TO RT-Q.
+           MOVE REQ-RTIN TO RT-IN.
+           MOVE REQ-STEP TO RT-K.
+           MOVE REQ-RTCUR TO RT-C.
+           MOVE REQ-RTREQ TO RT-R.
+           MOVE REQ-RTTTL TO RT-T.
+           MOVE PLAYER-X TO RT-X.
+           MOVE PLAYER-Y TO RT-Y.
+           MOVE SCORE TO RT-S.
+           MOVE PELLETS-LEFT TO RT-L.
+           MOVE LIVES TO RT-V.
+           MOVE GAME-STATE TO RT-ST.
+           DISPLAY WS-RT-LINE.
+           MOVE GH-X (1) TO RG1-X.
+           MOVE GH-Y (1) TO RG1-Y.
+           IF GHOST-COUNT > 1
+               MOVE GH-X (2) TO RG2-X
+               MOVE GH-Y (2) TO RG2-Y.
+           IF GHOST-COUNT > 2
+               MOVE GH-X (3) TO RG3-X
+               MOVE GH-Y (3) TO RG3-Y.
+           IF GHOST-COUNT = 1
+               DISPLAY WS-RTG1
+           ELSE IF GHOST-COUNT = 2
+               DISPLAY WS-RTG1 WS-RTG2
+           ELSE
+               DISPLAY WS-RTG1 WS-RTG2 WS-RTG3.
+           ADD 2 TO M-LINES.
+           ADD 85 TO M-CHARS.
        SCR-RESEND.
       * THE PARTIAL SEND FAILED (PACPLAT SWITCHED TO FULL REDRAW, NO
       * ANIMATION): SEND THE WHOLE SCREEN INSTEAD.
@@ -190,6 +296,9 @@
            DISPLAY 'TURNS ' TICK-COUNT.
            DISPLAY 'SCORE ' SCORE.
            DISPLAY 'LIVES ' LIVES.
+           IF REQ-PLAY = 'R'
+               MOVE REQ-RTQ TO QU-N
+               DISPLAY WS-QUANTA.
            ADD 4 TO M-LINES.
            ADD 26 TO M-CHARS.
            IF REQ-METRIC = 'M'

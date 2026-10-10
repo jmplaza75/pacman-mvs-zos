@@ -28,3 +28,23 @@
            05  REQ-CANVAS            PIC X.
            05  REQ-CW                PIC 999.
            05  REQ-CH                PIC 999.
+      * MVS-RT (D33): PLAY T TURN / R REALTIME. REQ-STEP FOR PACGAME
+      * MOVE: B PLAYER + GHOSTS (TURN), P PLAYER ONLY, G GHOSTS ONLY.
+      * REQ-AID = THE RAW AID BYTE OF THE LAST TSC INPUT. REQ-VIS = THE
+      * ANIMATION FRAME CHOSEN BY PACRT. REQ-TIME = MILLISECONDS (CLOCK
+      * OR DEADLINE). REQ-RTSTAT WAIT/RUN/PAUS/FRZ, REQ-RTQ QUANTUM,
+      * REQ-RTIN INPUTS OF THE QUANTUM, REQ-RTCUR/REQ-RTREQ/REQ-RTTTL
+      * CURRENT AND REQUESTED DIRECTION + TTL, REQ-RTFR FRAME OF THE
+      * QUANTUM (BLANK = RTQF, P = PROMPT, F = FULL REDRAW).
+           05  REQ-PLAY              PIC X.
+           05  REQ-STEP              PIC X.
+           05  REQ-AID               PIC X.
+           05  REQ-VIS               PIC 9.
+           05  REQ-TIME              PIC S9(9) COMP.
+           05  REQ-RTSTAT            PIC X(4).
+           05  REQ-RTQ               PIC 9(7).
+           05  REQ-RTIN              PIC X(8).
+           05  REQ-RTCUR             PIC X.
+           05  REQ-RTREQ             PIC X.
+           05  REQ-RTTTL             PIC 9.
+           05  REQ-RTFR              PIC X.

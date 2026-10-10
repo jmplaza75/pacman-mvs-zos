@@ -25,6 +25,12 @@
       * THE SAME COMMAND (SIZE RE-ESTABLISHED AFTER CLEAR / PA2).
       * TSD: CANVAS W X T M U L SIMULATE A BUFFER; TSX LINES SHOW THE
       * TRANSPORT DECISIONS.
+      * MVS-RT (D33): POLL = ONE NON-BLOCKING READ (PACFSIO POLL; NONE =
+      * REQ-INKEY N); RECV/POLL KEEP THE AID BYTE IN REQ-AID; REALTIME
+      * NEVER USES THE RECT IDLE POLLING (BLOCKING RECV BEFORE THE START
+      * AND IN PAUSE). CLOK = MILLISECONDS IN REQ-TIME (PACTSO TIME);
+      * WDLN = REQ-TIME + RT-PERIOD (WHOLE PERIODS ALREADY MISSED ARE
+      * SKIPPED), THEN WAIT UNTIL IT (PACTSO DLWT).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACPLAT.
        ENVIRONMENT DIVISION.
@@ -36,6 +42,12 @@
        01  TSO-OP                PIC X(4) VALUE 'CLS '.
        01  TSO-WAIT              PIC X(4) VALUE 'WAIT'.
        01  TSO-RC                PIC S9(4) COMP.
+       01  TSO-TIME              PIC X(4) VALUE 'TIME'.
+       01  TSO-DLWT              PIC X(4) VALUE 'DLWT'.
+       01  RT-PERIOD             PIC S9(9) COMP VALUE +150.
+       01  RT-LIM                PIC S9(9) COMP.
+       01  RT-NOW                PIC S9(9) COMP.
+       01  RT-NEXT               PIC S9(9) COMP.
        01  FS-OP                 PIC X(4).
        01  FS-LEN                PIC S9(4) COMP.
        01  FS-RC                 PIC S9(4) COMP.
@@ -107,7 +119,13 @@
            ELSE IF REQ-OP = 'FSOF'
                PERFORM DO-FSOF THRU DO-FSOF-EXIT
            ELSE IF REQ-OP = 'WAIT' AND REQ-MODE = 'TSC'
-               CALL 'PACTSO' USING TSO-WAIT TSO-RC.
+               CALL 'PACTSO' USING TSO-WAIT TSO-RC
+           ELSE IF REQ-OP = 'POLL'
+               PERFORM DO-POLL THRU DO-POLL-EXIT
+           ELSE IF REQ-OP = 'CLOK'
+               CALL 'PACTSO' USING TSO-TIME TSO-RC REQ-TIME
+           ELSE IF REQ-OP = 'WDLN'
+               PERFORM DO-WDLN.
            GOBACK.
        DO-INIT.
            IF REQ-MODE NOT = 'TSO' AND REQ-MODE NOT = 'TSD'
@@ -306,7 +324,7 @@
            IF REQ-MODE NOT = 'TSC'
                GO TO DO-RECV-EXIT.
            MOVE 'RECV' TO FS-OP.
-           IF REQ-ANIM = 'Y' AND REQ-REDRAW = 'P'
+           IF REQ-ANIM = 'Y' AND REQ-REDRAW = 'P' AND REQ-PLAY NOT = 'R'
                MOVE 'RECT' TO FS-OP.
            CALL 'PACFSIO' USING FS-OP IN-AREA FS-LEN FS-RC.
            IF FS-RC NOT = 0
@@ -328,11 +346,16 @@
            IF FS-LEN < 1
                PERFORM FALL-BACK
                GO TO DO-RECV-EXIT.
+           PERFORM PARSE-IN THRU PARSE-IN-EXIT.
+       DO-RECV-EXIT.
+           EXIT.
+       PARSE-IN.
            MOVE 'P' TO REQ-INKEY.
+           MOVE IN-CH (1) TO REQ-AID.
            MOVE 1 TO WS-K.
            PERFORM BYTE-VAL.
            IF WS-V NOT = 125
-               GO TO DO-RECV-EXIT.
+               GO TO PARSE-IN-EXIT.
            MOVE 'E' TO REQ-INKEY.
       * READ MODIFIED: AID, CURSOR(2), SBA X'11'(17) + ADDRESS(2), DATA.
            MOVE 4 TO WS-K.
@@ -340,8 +363,36 @@
            IF FS-LEN > 6 AND WS-V = 17
                PERFORM COPY-TEXT THRU COPY-TEXT-EXIT
                    VARYING WS-I FROM 1 BY 1 UNTIL WS-I > 8.
-       DO-RECV-EXIT.
+       PARSE-IN-EXIT.
            EXIT.
+       DO-POLL.
+      * MVS-RT: ONE NON-BLOCKING READ. N = NOTHING, E / P AS RECV, X =
+      * ERROR (NOW BACK IN TSO LINE MODE).
+           MOVE SPACES TO REQ-INTEXT.
+           MOVE 'X' TO REQ-INKEY.
+           IF REQ-MODE NOT = 'TSC'
+               GO TO DO-POLL-EXIT.
+           MOVE 'POLL' TO FS-OP.
+           CALL 'PACFSIO' USING FS-OP IN-AREA FS-LEN FS-RC.
+           IF FS-RC NOT = 0
+               PERFORM FALL-BACK
+               GO TO DO-POLL-EXIT.
+           MOVE 'N' TO REQ-INKEY.
+           IF FS-LEN > 0
+               PERFORM PARSE-IN THRU PARSE-IN-EXIT.
+       DO-POLL-EXIT.
+           EXIT.
+       DO-WDLN.
+      * MVS-RT ABSOLUTE DEADLINES: NEXT = LAST DEADLINE + PERIOD; WHOLE
+      * PERIODS ALREADY MISSED ARE SKIPPED; WAIT ONLY FOR THE REMAINDER.
+           COMPUTE RT-NEXT = REQ-TIME + RT-PERIOD.
+           CALL 'PACTSO' USING TSO-TIME TSO-RC RT-NOW.
+           COMPUTE RT-LIM = RT-NOW - RT-PERIOD.
+           PERFORM SKIP-PERIOD UNTIL RT-NEXT > RT-LIM.
+           MOVE RT-NEXT TO REQ-TIME.
+           CALL 'PACTSO' USING TSO-DLWT TSO-RC REQ-TIME.
+       SKIP-PERIOD.
+           ADD RT-PERIOD TO RT-NEXT.
        COPY-TEXT.
            COMPUTE WS-K = WS-I + 6.
            IF WS-K NOT > FS-LEN

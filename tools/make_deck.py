@@ -44,6 +44,8 @@ DECKS = {
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'GX': ('PACBLDGX', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY'],
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'RT': ('PACBLDRT', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -93,7 +95,7 @@ def run_step(step, pfx, load, sysin, parm=None):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -115,7 +117,8 @@ TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G3': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G4': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'GS': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
-       'GX': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
+       'GX': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'RT': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
 TSD = {'G1': ['MOVES', 'TSORDR', 'MULTI', 'C3N2', 'DIE1'],
        # G2: (case, highlight flag in PARM column 13): 5 with highlights, 2 without (= G1 screens)
        'G2': [('MOVES', 'Y'), ('TSORDR', 'Y'), ('MULTI', 'Y'), ('C3N2', 'Y'), ('DIE1', 'Y'), ('MOVES', 'N'), ('DIE1', 'N')],
@@ -151,7 +154,30 @@ GX_RUNS = [
     ('MOVES', 'Y', 'N', 'F', 'G', '4', 'W'), ('MOVES', 'Y', 'Y', 'P', 'G', '4', 'U'), ('MOVES', 'Y', 'Y', 'P', 'G', '4', 'L'),
     ('MULTI', 'Y', 'Y', 'P', 'G', '3', 'W'), ('MOVES', 'Y', 'Y', 'P', 'G', 'N', 'W'), ('MULTI', 'Y', 'Y', 'P', 'G', 'T', 'W'),
     ('MOVES', 'Y', 'Y', 'P', 'G', '4', 'D'), ('TICKS', 'N', 'Y', 'P', 'G', '4', 'W')]
-TSD['GX'] = TSD['GS'] + GX_RUNS   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
+TSD['GX'] = TSD['GS'] + GX_RUNS
+TSD['RT'] = TSD['GX']
+# MVS-RT (D33): REALTIME runs after the whole GX regression. Batch (PARM column 19 R): one card = one quantum
+# (tests/rtcases); TSD: (case, canvas) with COLOR N, HILITE Y, ANIM Y, REDRAW P, GLYPHS G, SCALE 4, PLAY R.
+RT_BAT = ['RTLINE', 'RTCORNER', 'RTTTL', 'RTREV', 'RTMULTI', 'RTPRE', 'RTSTILL', 'RTPAUSE', 'RTLONG', 'RTWIN', 'RTEDGE',
+          'RTEDGE0']
+RT_TSD = [('RTCORNER', 'W'), ('RTSTILL', 'W'), ('RTPAUSE', 'W'), ('RTPRE', 'W'), ('RTMULTI', 'W'), ('RTLINE', 'D')]
+
+
+def rt_parm_and_cards(case):
+    lines = text_of(ROOT / f'tests/rtcases/{case}.txt').splitlines(keepends=True)
+    if lines and lines[0][:1] == 'A':
+        return 'TSD ' + lines[0].rstrip('\n')[:5], ''.join(lines[1:])
+    return 'TSD AI1 1', ''.join(lines)
+
+
+def rt_steps(pfx, load):
+    out = ''
+    for i, c in enumerate(RT_BAT, 1):
+        out += run_step(f'RTB{i}', pfx, load, text_of(ROOT / f'tests/rtcases/{c}.txt'), parm='BAT'.ljust(18) + 'R')
+    for i, (c, cv) in enumerate(RT_TSD, 1):
+        parm, cards = rt_parm_and_cards(c)
+        out += run_step(f'RTT{i}', pfx, load, cards, parm=parm.ljust(11) + 'NYYPG4' + cv + 'R')
+    return out   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
 
 
 def tso_parm_and_cards(case):
@@ -191,8 +217,10 @@ def build(name, pfx):
         if hilite:
             parm = (parm + ' AI1 1' if parm == 'TSD' else parm).ljust(11) + 'N' + hilite
         out += run_step(f'TSD{i}', pfx, load, cards, parm=parm)
-    if name in ('G4', 'GS', 'GX'):
+    if name in ('G4', 'GS', 'GX', 'RT'):
         out += qry_test_steps(pfx)
+    if name == 'RT':
+        out += rt_steps(pfx, load)
     return out + '//\n'
 
 

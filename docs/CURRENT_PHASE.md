@@ -48,5 +48,7 @@ MVS-RT (real-time gameplay) STARTED 2026-10-09, plan approved: docs/RT-REALTIME.
 - RT1 APPROVED 2026-10-10: frozen design D33 in docs/RT-REALTIME.md (T = 150 ms, PF7/8/10/11, typeahead OFF, PACRT,
   PACGAME REQ-STEP, PACFSIO POLL, PACTSO TIME/deadline wait, PLAY(TURN|REALTIME)). TICK-COUNT > 999 wraps harmlessly
   (JOB 217): PACSTATE unchanged. No further probes.
-- CURRENT: RT2 (PACRT, PACGAME step selector, RT-LOOP, platform ops, tests/ref_rt.py, batch + TSD REALTIME cases on
-  Hercules). Stop after RT2 validation and report before RT3 (live integration).
+- RT2 DONE 2026-10-10 (Hercules JOB 222, tests/test_rt.py PASS, docs/evidence/rt2-build.txt): PACRT, PACGAME REQ-STEP
+  (authorised), RT-GAME loop, PACINPT/PACPLAT/PACDISP/PACSCR RT ops, PACFSIO POLL, PACTSO TIME/DLWT, PLAY(TURN|REALTIME)
+  (CLIST default TURN), tests/ref_rt.py + tests/rtcases. TURN regression unchanged.
+- NEXT: RT3 (live TSC integration on c3270 with tools/c3270_rt.sh) - WAITING FOR USER GO.

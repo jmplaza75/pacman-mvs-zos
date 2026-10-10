@@ -1,7 +1,7 @@
 {
- "baseline": "release 1.0-MVS (commit 89fe86b)",
+ "baseline": "authorised 2026-10-10 by project owner (RT1 approval)",
  "files": {
-  "src/cobol/PACGAME.cob": "33fdf171ddc19297ad899fd8e8d897d5be72f11a9551886a498490a0d978c2b6",
+  "src/cobol/PACGAME.cob": "41ad673a3270d4b33237e97758f7c6c279fef838a04ac7cd0bb663a52c5e78a7",
   "src/cobol/PACMAP.cob": "e950175efd22849d6c9f97155319d739b51a21e5768c40699fb3cc453afd7df6",
   "src/cobol/PACAI.cob": "d7c3e1fcfa90ccfb5bee74195661e326fa49a5e387e0e99dbc08e00e6621cb2f",
   "src/copy/PACSTATE.cpy": "197bbf9ddcbf4df7112e7bb182211bc3dbce550cc9c85feac57b1e9b5a141c43",

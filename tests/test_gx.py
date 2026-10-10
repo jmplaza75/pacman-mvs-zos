@@ -35,6 +35,11 @@ subprocess.run([sys.executable, str(R / 'tests/test_core_frozen.py')], check=Tru
 old = subprocess.run(['git', 'show', '7f56300:./src/asm/PACFSIO.asm'], cwd=R, capture_output=True, text=True,
                      check=True).stdout.splitlines()
 new = (R / 'src/asm/PACFSIO.asm').read_text().splitlines()
+# MVS-RT (D33): the POLL service (3 comment lines, 2 dispatch lines, the DOPOLL block) is checked by tests/test_rt.py
+if 'DOPOLL   DS    0H' in new:
+    a, b = new.index('DOPOLL   DS    0H'), new.index('RECTGOT  DS    0H')
+    new = [l for k, l in enumerate(new) if not a <= k < b]
+    new = [l for l in new if 'POLL' not in l and 'PROBE E14' not in l and 'WAIT: INPUT = LEN > 0' not in l]
 k, added = 0, []
 for line in new:
     if k < len(old) and line == old[k]:

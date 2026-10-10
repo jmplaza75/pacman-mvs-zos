@@ -21,6 +21,9 @@
 *                    RECT  ONE TGET ASIS,NOWAIT (R15: 0 INPUT, 4 NONE,
 *                          ELSE ERROR); NONE = WAIT 0.5 S, LEN 0, RC 0
 *                          (VISUAL TICK FOR THE CALLER)
+*                    POLL  MVS-RT: ONE TGET ASIS,NOWAIT INTO BUF, NO
+*                          WAIT: INPUT = LEN > 0, NONE = LEN 0, RC 0
+*                          (PROBE E14, DOCS/EVIDENCE/RT-E14-TIMING.MD)
 *                    FSOF  ESTAE CANCEL, STTMPMD OFF, STFSMODE OFF,
 *                          STLINENO LINE=1 (LINE MODE RESTORED)
 *          BUF X(2048)   LEN S9(4) COMP   RC S9(4) COMP
@@ -63,6 +66,8 @@ PACFSIO  CSECT
          BE    DORECT
          CLC   0(4,2),=C'SENX'
          BE    DOSENX
+         CLC   0(4,2),=C'POLL'
+         BE    DOPOLL
          B     DONE
 DOFSON   DS    0H
          TCLEARQ OUTPUT
@@ -127,6 +132,19 @@ DORECT   DS    0H
          SR    1,1                 RC 4: NO INPUT, R1 NOT USED
          STH   1,0(4)
          STIMER WAIT,BINTVL=HALFSEC
+         SR    6,6
+         B     DONE
+DOPOLL   DS    0H
+         LR    1,3
+         LA    0,2048
+         TGET  (1),(0),ASIS,NOWAIT
+         LR    6,15
+         LTR   15,15
+         BZ    RECTGOT             RC 0: INPUT, LENGTH IN R1
+         C     15,=F'4'
+         BNE   RECTERR             OTHER RC: ERROR (R1 UNDEFINED)
+         SR    1,1                 RC 4: NO INPUT, R1 NOT USED
+         STH   1,0(4)
          SR    6,6
          B     DONE
 RECTGOT  DS    0H

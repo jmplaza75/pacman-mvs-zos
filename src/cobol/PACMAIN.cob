@@ -18,6 +18,14 @@
       * (THE G4 SCREENS).
       * COLUMN 18 = CANVAS (MVS-GS GEOMETRY): A AUTO (THE TERMINAL'S
       * ALTERNATE SIZE), D OR BLANK DEFAULT 80 X 24; TSD: SIMULATED.
+      * COLUMN 19 = PLAY (MVS-RT, D33): R REALTIME, ANYTHING ELSE TURN.
+      * REALTIME (RT-GAME, SEPARATE FROM THE TURN LOOP) NEEDS TSC OR THE
+      * BAT / TSD REFERENCE MODES; TSO LINE MODE PLAYS TURN. BEFORE THE
+      * START: BLOCKING READS; THE FIRST DIRECTION STARTS THE CLOCK.
+      * EACH QUANTUM: ALL INPUT NOW AVAILABLE -> PACRT RIN, PACRT RQ,
+      * ONE FRAME (PACDISP RTQF), THEN THE NEXT ABSOLUTE DEADLINE
+      * (PACPLAT WDLN, TSC ONLY). PAUSE: BLOCKING READS. A LOST TSC
+      * SESSION CONTINUES AS TURN IN LINE MODE.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -31,6 +39,8 @@
        01  WS-CFG.
            05  WS-CFG-CH         PIC X OCCURS 5 TIMES.
        01  WS-K                  PIC 99.
+       01  RT-OVER               PIC 9 VALUE 0.
+       01  RT-FRAME              PIC X VALUE SPACE.
        LINKAGE SECTION.
        01  PARM-AREA.
            05  PARM-LEN          PIC S9(4) COMP.
@@ -46,6 +56,7 @@
            05  PARM-GLYPHS       PIC X.
            05  PARM-SCALE        PIC X.
            05  PARM-CANVAS       PIC X.
+           05  PARM-PLAY         PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
@@ -79,16 +90,24 @@
            MOVE 0 TO REQ-CH.
            IF PARM-LEN > 17
                MOVE PARM-CANVAS TO REQ-CANVAS.
+           MOVE 'T' TO REQ-PLAY.
+           IF PARM-LEN > 18 AND PARM-PLAY = 'R'
+               MOVE 'R' TO REQ-PLAY.
+           MOVE 'B' TO REQ-STEP.
            MOVE SPACE TO REQ-SENDST.
            MOVE 'INIT' TO REQ-OP.
            CALL 'PACPLAT' USING PAC-REQ.
+           IF REQ-MODE = 'TSO'
+               MOVE 'T' TO REQ-PLAY.
            MOVE 'RSET' TO REQ-OP.
            CALL 'PACGAME' USING PAC-STATE PAC-REQ.
            MOVE 'OPEN' TO REQ-OP.
            CALL 'PACINPT' USING PAC-REQ.
            MOVE 'HEAD' TO REQ-OP.
            CALL 'PACDISP' USING PAC-STATE PAC-REQ.
-           IF REQ-MODE = 'BAT'
+           IF REQ-PLAY = 'R'
+               PERFORM RT-GAME THRU RT-GAME-EXIT
+           ELSE IF REQ-MODE = 'BAT'
                PERFORM BAT-START THRU BAT-START-EXIT
            ELSE
                PERFORM TSO-START THRU TSO-START-EXIT.
@@ -102,6 +121,164 @@
            MOVE 'FINI' TO REQ-OP.
            CALL 'PACPLAT' USING PAC-REQ.
            STOP RUN.
+       RT-GAME.
+           MOVE 'RINI' TO REQ-OP.
+           CALL 'PACRT' USING PAC-STATE PAC-REQ.
+           IF REQ-MODE = 'BAT'
+               PERFORM RT-READB
+               PERFORM RT-CONFIG THRU RT-CONFIG-EXIT
+           ELSE IF PARM-LEN > 4
+               PERFORM COPY-PARM-CFG
+               MOVE 'PARM' TO REQ-OP
+               CALL 'PACINPT' USING PAC-REQ
+               PERFORM APPLY-CONFIG THRU APPLY-CONFIG-EXIT.
+           PERFORM SHOW-START.
+      * THE FIRST SCREEN (TSC/TSD; NOTHING IN BAT, WHERE THE EVENT READ
+      * AHEAD FOR THE CONFIGURATION MUST STAY IN REQ-KIND).
+           IF REQ-MODE NOT = 'BAT'
+               MOVE 'MOV' TO REQ-KIND
+               MOVE 'PRMT' TO REQ-OP
+               CALL 'PACDISP' USING PAC-STATE PAC-REQ
+               PERFORM RT-READB.
+           PERFORM RT-PRE THRU RT-PRE-EXIT
+               UNTIL REQ-RTSTAT NOT = 'WAIT' OR RT-OVER = 1.
+           IF RT-OVER = 0 AND REQ-MODE = 'TSC'
+               MOVE 'CLOK' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ.
+           PERFORM RT-QUANTUM THRU RT-QUANTUM-EXIT
+               UNTIL RT-OVER = 1.
+           IF REQ-PLAY = 'T' AND F-EOF = 0 AND F-QUIT = 0
+                             AND F-WON = 0 AND F-LOST = 0
+               MOVE 'B' TO REQ-STEP
+               PERFORM READ-INPUT THRU READ-INPUT-EXIT.
+       RT-GAME-EXIT.
+           EXIT.
+       RT-CONFIG.
+      * BATCH REALTIME: AN OPTIONAL FIRST CARD AI<L> <N>.
+           IF REQ-KIND = 'CFG'
+               MOVE 'CFG ' TO REQ-OP
+               CALL 'PACGAME' USING PAC-STATE PAC-REQ
+               PERFORM RT-READB.
+       RT-CONFIG-EXIT.
+           EXIT.
+       RT-READB.
+           MOVE SPACE TO REQ-INKEY.
+           MOVE 'RTRB' TO REQ-OP.
+           CALL 'PACINPT' USING PAC-REQ.
+       RT-READ.
+           MOVE SPACE TO REQ-INKEY.
+           MOVE 'RTRD' TO REQ-OP.
+           CALL 'PACINPT' USING PAC-REQ.
+       RT-PRE.
+      * BEFORE THE START: ONE EVENT, SHOWN AT ONCE IF IT NEEDS A SCREEN;
+      * A DIRECTION STARTS THE GAME (ITS QUANTUM IS THE FIRST ONE).
+           PERFORM RT-EVENT THRU RT-EVENT-EXIT.
+           IF RT-OVER = 1 OR REQ-RTSTAT NOT = 'WAIT'
+               GO TO RT-PRE-EXIT.
+           IF RT-FRAME NOT = SPACE
+               PERFORM RT-PRE-SCREEN.
+           PERFORM RT-READB.
+       RT-PRE-EXIT.
+           EXIT.
+       RT-PRE-SCREEN.
+           MOVE 'MOV' TO REQ-KIND.
+           IF RT-FRAME = 'F'
+               MOVE 'RDR' TO REQ-KIND.
+           MOVE 'PRMT' TO REQ-OP.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           MOVE SPACE TO RT-FRAME.
+       RT-QUANTUM.
+           PERFORM RT-COLLECT THRU RT-COLLECT-EXIT.
+           PERFORM RT-PAUSED THRU RT-PAUSED-EXIT
+               UNTIL REQ-RTSTAT NOT = 'PAUS' OR RT-OVER = 1.
+           IF RT-OVER = 1
+               GO TO RT-QUANTUM-EXIT.
+           MOVE 'RQ  ' TO REQ-OP.
+           CALL 'PACRT' USING PAC-STATE PAC-REQ.
+           MOVE RT-FRAME TO REQ-RTFR.
+           MOVE SPACE TO RT-FRAME.
+           MOVE 'RTQF' TO REQ-OP.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           IF F-WON = 1 OR F-LOST = 1
+               MOVE 1 TO RT-OVER
+               GO TO RT-QUANTUM-EXIT.
+           IF REQ-MODE = 'TSO'
+               MOVE 'T' TO REQ-PLAY
+               MOVE 1 TO RT-OVER
+               GO TO RT-QUANTUM-EXIT.
+           IF REQ-MODE = 'TSC'
+               MOVE 'WDLN' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ.
+       RT-QUANTUM-EXIT.
+           EXIT.
+       RT-COLLECT.
+      * EVERY INPUT AVAILABLE NOW (A CARD = THE INPUT OF ONE QUANTUM).
+           MOVE SPACES TO REQ-KIND.
+           PERFORM RT-DRAIN-ONE THRU RT-DRAIN-ONE-EXIT
+               UNTIL REQ-KIND = 'NON' OR RT-OVER = 1.
+       RT-COLLECT-EXIT.
+           EXIT.
+       RT-DRAIN-ONE.
+           PERFORM RT-READ.
+           PERFORM RT-EVENT THRU RT-EVENT-EXIT.
+       RT-DRAIN-ONE-EXIT.
+           EXIT.
+       RT-PAUSED.
+      * PAUSE: THE SCREEN, THEN BLOCKING READS UNTIL P (OR Q / EOF); THE
+      * CLOCK RESTARTS FROM NOW; WHAT FOLLOWS IN THE INPUT IS COLLECTED.
+           IF RT-FRAME = SPACE
+               MOVE 'P' TO RT-FRAME.
+           PERFORM RT-PRE-SCREEN.
+           PERFORM RT-PAUSE-ONE THRU RT-PAUSE-ONE-EXIT
+               UNTIL REQ-RTSTAT NOT = 'PAUS' OR RT-OVER = 1.
+           IF RT-OVER = 1
+               GO TO RT-PAUSED-EXIT.
+           IF REQ-MODE = 'TSC'
+               MOVE 'CLOK' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ.
+           PERFORM RT-COLLECT THRU RT-COLLECT-EXIT.
+       RT-PAUSED-EXIT.
+           EXIT.
+       RT-PAUSE-ONE.
+           PERFORM RT-READB.
+           PERFORM RT-EVENT THRU RT-EVENT-EXIT.
+           IF RT-OVER = 0 AND REQ-RTSTAT = 'PAUS'
+                          AND RT-FRAME NOT = SPACE
+               PERFORM RT-PRE-SCREEN.
+       RT-PAUSE-ONE-EXIT.
+           EXIT.
+       RT-EVENT.
+      * ONE INPUT EVENT: DIRECTIONS AND PAUSE GO TO PACRT, EVERY EVENT
+      * IS RECORDED THERE; Q / EOF END, A LOST TSC SESSION GOES TURN.
+           IF REQ-KIND = 'NON' OR REQ-KIND = 'IGN' OR REQ-KIND = 'CFG'
+               GO TO RT-EVENT-EXIT.
+           IF REQ-KIND = 'ERR'
+               MOVE 'T' TO REQ-PLAY
+               MOVE 1 TO RT-OVER
+               GO TO RT-EVENT-EXIT.
+           IF REQ-KIND = 'EOF'
+               MOVE 'EOF ' TO REQ-OP
+               CALL 'PACGAME' USING PAC-STATE PAC-REQ
+               MOVE 1 TO RT-OVER
+               GO TO RT-EVENT-EXIT.
+           MOVE 'RIN ' TO REQ-OP.
+           CALL 'PACRT' USING PAC-STATE PAC-REQ.
+           IF REQ-KIND = 'QUI'
+               MOVE 'QUIT' TO REQ-OP
+               CALL 'PACGAME' USING PAC-STATE PAC-REQ
+               MOVE 1 TO RT-OVER
+               GO TO RT-EVENT-EXIT.
+           IF REQ-INKEY = 'E' AND RT-FRAME = SPACE
+               MOVE 'P' TO RT-FRAME.
+           IF REQ-KIND = 'INV'
+               MOVE 'INVL' TO REQ-OP
+               CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           IF REQ-KIND = 'INV' AND RT-FRAME = SPACE
+               MOVE 'P' TO RT-FRAME.
+           IF REQ-KIND = 'RDR'
+               MOVE 'F' TO RT-FRAME.
+       RT-EVENT-EXIT.
+           EXIT.
        BAT-START.
            PERFORM READ-INPUT THRU READ-INPUT-EXIT.
            PERFORM CHECK-CONFIG THRU CHECK-CONFIG-EXIT.

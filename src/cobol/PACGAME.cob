@@ -3,6 +3,9 @@
       *       CFG   APPLY REQ-LEVEL / REQ-COUNT FROM THE CONFIG CARD
       *       INIT  LOAD MAP, PLACE GHOSTS, COUNT PELLETS
       *       MOVE  ONE TURN (REQ-DIR, REQ-CHAR)   QUIT  EOF
+      *       MVS-RT (D33): REQ-STEP P = PLAYER STEP ONLY (NO PACAI),
+      *       G = GHOST STEP ONLY (NO PLAYER MOVE, NO TICK), ANYTHING
+      *       ELSE = THE WHOLE TURN (B). SAME HIT / LIFE RULES.
       * RULES : SEE DOCS/DECISIONS.MD D7, D9, D11, D14.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACGAME.
@@ -33,6 +36,8 @@
                PERFORM DO-CONFIG
            ELSE IF REQ-OP = 'INIT'
                PERFORM DO-INIT
+           ELSE IF REQ-OP = 'MOVE' AND REQ-STEP = 'G'
+               PERFORM DO-GHOSTS
            ELSE IF REQ-OP = 'MOVE'
                PERFORM DO-MOVE
            ELSE IF REQ-OP = 'QUIT'
@@ -106,6 +111,9 @@
                PERFORM EAT-PELLET THRU EAT-PELLET-EXIT.
            PERFORM ROUND-END THRU ROUND-END-EXIT.
            PERFORM SET-STATE THRU SET-STATE-EXIT.
+       DO-GHOSTS.
+           PERFORM ROUND-END THRU ROUND-END-EXIT.
+           PERFORM SET-STATE THRU SET-STATE-EXIT.
        AIM-MOVE.
            IF REQ-DIR = 'U'
                SUBTRACT 1 FROM NEW-Y
@@ -133,6 +141,7 @@
            MOVE 0 TO F-HIT.
            PERFORM CHECK-HIT THRU CHECK-HIT-EXIT.
            IF F-HIT = 0 AND F-WON = 0 AND AI-LEVEL > 0
+                        AND REQ-STEP NOT = 'P'
                CALL 'PACAI' USING PAC-STATE
                PERFORM CHECK-HIT THRU CHECK-HIT-EXIT.
            IF F-HIT = 1
