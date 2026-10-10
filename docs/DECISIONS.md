@@ -142,3 +142,11 @@
   is a future investigation, not a dependency.
   Live (2026-10-09, JOB 207 build): 120x27 IBM-DYNAMIC PASS (centred maze, HUD, banners, CLEAR+PA2 recovery), 80x24 fallbacks
   PASS. Preferred canvas for the normal 120x30 macOS Terminal: 120x27 IBM-DYNAMIC; 80x24 the universal fallback. MVS-GS closed.
+- D33 (MVS-RT) REALTIME design, docs/RT-REALTIME.md "RT1 frozen design" (approved 2026-10-10, from RT0 probe E14,
+  docs/evidence/rt-e14-timing.md): T = 150 ms with absolute deadlines (175 ms fallback; not 100 ms); arrows -> PF7/8/10/11
+  via the c3270 launcher keymap with typeahead OFF; U/D/L/R + ENTER fallback; drain all AIDs each quantum into one
+  requested-direction slot (latest wins, TTL 3 player steps); ghosts 4/5 by integer accumulator; exactly one write per
+  active quantum with keyboard restore, never conditional on an AID (CLEAR is swallowed by TSO; PA2 = redraw);
+  press-to-start (D28 release); separate RT-LOOP, terminal-independent PACRT, PACGAME REQ-STEP B/P/G (TURN = B), PACFSIO
+  POLL, PACTSO TIME / deadline wait; PLAY(TURN|REALTIME), TURN default and byte-identical. TICK-COUNT wraps harmlessly
+  (display only, JOB 217): PACSTATE unchanged. RT0 has no valid physical 4-key burst; accepted as an RT3 control issue.

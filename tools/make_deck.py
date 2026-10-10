@@ -410,9 +410,45 @@ def gep_deck(pfx):
     return out + '//\n'
 
 
+def rtp_deck(pfx):
+    """MVS-RT probe E14 (timing / input, isolated from PACMAN): PACRTP + probe clock service PACRTA, linked with the
+    UNCHANGED production modules compiled from the library members of the mvs-gs build (PACGAME PACMAP PACAI PACSCR
+    PACPLAT PACQRY) and assembled from the repository (PACFSIO PACTSO) -> LOAD(PACRTP), CLIST RTPROBE, log datasets
+    E14Q/E14N/E14T/E14U (created if missing), one batch run (TSD 120x27: clock-only and compose-only segments)."""
+    out = job_card('PACRTP01', 'PACMAN PROBE E14') + f'//* PREFIX {pfx}\n'
+    out += '//ALOG     EXEC PGM=IEFBR14\n'
+    for s in 'QNTU':
+        out += (f'//E14{s}     DD DSN={pfx}.E14{s},DISP=(MOD,CATLG),\n'
+                '//            UNIT=SYSDA,SPACE=(TRK,(30,15)),\n'
+                '//            DCB=(RECFM=FB,LRECL=80,BLKSIZE=3120)\n')
+    out += upload('SRC1', pfx, 'COBOL', 'PACRTP', text_of(ROOT / 'src/probe/PACRTP.cob'))
+    mods = ['PACRTP', 'PACGAME', 'PACMAP', 'PACAI', 'PACSCR', 'PACPLAT', 'PACQRY']
+    for i, m in enumerate(mods, 1):
+        out += compile_step(f'COB{i}', pfx, m, f'OBJ{i}')
+    asms = [('PACRTA', ROOT / 'src/probe/PACRTA.asm'), ('PACFSIO', ROOT / 'src/asm/PACFSIO.asm'),
+            ('PACTSO', ROOT / 'src/asm/PACTSO.asm')]
+    for i, (m, path) in enumerate(asms, 1):
+        out += asm_step(f'ASM{i}', f'OBJA{i}', text_of(path))
+    out += link_step(pfx, [f'OBJ{i}' for i in range(1, 8)] + ['OBJA1', 'OBJA2', 'OBJA3'], 'PACRTP', 'PACRTP')
+    out += upload('CLS1', pfx, 'CLIST', 'RTPROBE', text_of(ROOT / 'src/probe/RTPROBE.clist').replace('@@PREFIX@@', pfx))
+    out += ("//BATCH    EXEC PGM=PACRTP,COND=(0,NE),PARM='BA'\n"
+            f'//STEPLIB  DD DSN={pfx}.LOAD,DISP=SHR\n'
+            '//E14LOG   DD SYSOUT=A\n//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n')
+    return out + '//\n'
+
+
+def rtl_deck(pfx):
+    """MVS-RT probe E14: print the four log datasets (after the live runs)."""
+    out = job_card('PACRTL01', 'PACMAN E14 LOGS')
+    for i, s in enumerate('QNTU', 1):
+        out += (f'//LIST{i}    EXEC PGM=IEBGENER\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+                f'//SYSUT1   DD DSN={pfx}.E14{s},DISP=SHR\n//SYSUT2   DD SYSOUT=A\n')
+    return out + '//\n'
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'COMPRESS'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'COMPRESS'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -425,6 +461,10 @@ if __name__ == '__main__':
         text = clist_deck(pfx)
     elif a.deck == 'COMPRESS':
         text = compress_deck(pfx)
+    elif a.deck == 'RTP':
+        text = rtp_deck(pfx)
+    elif a.deck == 'RTL':
+        text = rtl_deck(pfx)
     elif a.deck == 'GEP':
         text = gep_deck(pfx)
     elif a.deck == 'GSP':

@@ -42,4 +42,11 @@ MVS-GS COMPLETE (tag mvs-gs, 2026-10-09): scaled renderer + geometry integration
 - Regression to keep: tests/test_gx.py (+ test_gs.py, test_g4.py, test_core_frozen.py). Future, not a dependency: probe E13
   (4 KB TPUT transport) for a richer HUD or a 6x3 maze.
 
-NEXT: NOT STARTED - wait for the user's go (no next phase chosen).
+MVS-RT (real-time gameplay) STARTED 2026-10-09, plan approved: docs/RT-REALTIME.md (baseline mvs-gs, 62ab854).
+- RT0 CLOSED 2026-10-10: isolated probe E14 (src/probe/PACRTP.cob + PACRTA.asm, CLIST RTPROBE, build JOB 211, logs JOBs
+  213-216). Evidence and conclusions: docs/evidence/rt-e14-timing.md. PACMAN and the frozen core unchanged.
+- RT1 APPROVED 2026-10-10: frozen design D33 in docs/RT-REALTIME.md (T = 150 ms, PF7/8/10/11, typeahead OFF, PACRT,
+  PACGAME REQ-STEP, PACFSIO POLL, PACTSO TIME/deadline wait, PLAY(TURN|REALTIME)). TICK-COUNT > 999 wraps harmlessly
+  (JOB 217): PACSTATE unchanged. No further probes.
+- CURRENT: RT2 (PACRT, PACGAME step selector, RT-LOOP, platform ops, tests/ref_rt.py, batch + TSD REALTIME cases on
+  Hercules). Stop after RT2 validation and report before RT3 (live integration).
