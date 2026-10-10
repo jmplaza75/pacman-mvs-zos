@@ -40,7 +40,16 @@ words = ' '.join(a.keywords)
 x(f'String("EXEC \'{a.prefix}.CLIST(PACMAN)\' \'{words}\'")')
 x('Enter()')
 end = time.time() + 60
-while not any('COMMAND ===>' in l for l in screen()):
+while True:
+    s = screen()
+    if any('COMMAND ===>' in l for l in s):
+        break
+    bottom = [l.strip() for l in s if l.strip()][-1:]
+    if bottom == ['***'] or any('ASSUMED' in l or l.startswith(' IKJ') for l in s):
+        raise SystemExit('TSO stopped before the game (*** or a TSO message on the screen): ' + ' | '.join(
+            l.strip() for l in s[-6:] if l.strip()))
+    if any('PACMAN MVS-6 SMART GHOSTS' in l for l in s):
+        raise SystemExit('PACMAN started in LINE MODE (no colour full-screen): REALTIME not possible, TURN instead')
     if time.time() > end:
         raise SystemExit('no game screen within 60 s')
     time.sleep(0.5)

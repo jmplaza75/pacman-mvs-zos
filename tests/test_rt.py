@@ -97,6 +97,12 @@ tsd = {(c, cv): ref_rt.tsd(cards(c), cv) for c, cv in RT_TSD}
 minimal = sum(f == bytes([0xC2, 0x28, 0x00, 0x00]) for _, fs in tsd.values() for f in fs)
 assert minimal > 0 and all(f[0] in (0xC2, 0xC3) for _, fs in tsd.values() for f in fs)
 assert max(len(f) for _, fs in tsd.values() for f in fs) <= 2048
+# RT3: every installed CLIST line (prefix substituted) must end by column 72 (73-80 = sequence numbers in TSO;
+# a 73-column CALL line lost its closing quote: ENDING QUOTE ASSUMED, live 2026-10-10)
+for clist in [R / 'src/clist/PACMAN.clist'] + sorted((R / 'src/probe').glob('RT*.clist')):
+    for n, line in enumerate(clist.read_text().replace('@@PREFIX@@', 'HERC01.PACMAN').splitlines(), 1):
+        assert len(line) <= 72 or line.lstrip().startswith('/*'), (clist.name, n, len(line))
+
 # RT3 pause: PF9 (X'F9' = 249) is a pause AID; the PAUSED banner is on every pause screen and gone after the resume
 inp = (R / 'src/cobol/PACINPT.cob').read_text()
 assert re.search(r"IF WS-V = 249\n\s+MOVE 'P' TO RT-C\n\s+PERFORM RT-CHAR\.", inp), 'PF9 must map to pause'
