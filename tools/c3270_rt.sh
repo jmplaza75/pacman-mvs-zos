@@ -7,6 +7,10 @@
 # Usage: tools/c3270_rt.sh [TRACEFILE]      TYPEAHEAD=true tools/c3270_rt.sh   (typeahead on)
 set -eu
 KEYMAP='<Key>UP: PF(7)\n<Key>DOWN: PF(8)\n<Key>LEFT: PF(10)\n<Key>RIGHT: PF(11)'
+# RT3: P / p -> PF9 (pause) only in the TEMPORARY keymap 'pacgame', switched on by tools/rt_play.sh while a game
+# runs, so logon, password and TSO commands keep a normal 'p'.
+GAMEKEYS='<Key>p: PF(9)\n<Key>P: PF(9)'
 set -- -model 2 -oversize auto -scriptport 4001 -xrm 'c3270.keymap: pacman' -xrm "c3270.keymap.pacman: $KEYMAP" \
+  -xrm "c3270.keymap.pacgame: $GAMEKEYS" \
   ${1:+-trace -tracefile "$1"} -xrm "c3270.typeahead: ${TYPEAHEAD:-false}"
 exec c3270 "$@" localhost:3270

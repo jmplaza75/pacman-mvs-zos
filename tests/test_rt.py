@@ -97,6 +97,17 @@ tsd = {(c, cv): ref_rt.tsd(cards(c), cv) for c, cv in RT_TSD}
 minimal = sum(f == bytes([0xC2, 0x28, 0x00, 0x00]) for _, fs in tsd.values() for f in fs)
 assert minimal > 0 and all(f[0] in (0xC2, 0xC3) for _, fs in tsd.values() for f in fs)
 assert max(len(f) for _, fs in tsd.values() for f in fs) <= 2048
+# RT3 pause: PF9 (X'F9' = 249) is a pause AID; the PAUSED banner is on every pause screen and gone after the resume
+inp = (R / 'src/cobol/PACINPT.cob').read_text()
+assert re.search(r"IF WS-V = 249\n\s+MOVE 'P' TO RT-C\n\s+PERFORM RT-CHAR\.", inp), 'PF9 must map to pause'
+launcher = (R / 'tools/c3270_rt.sh').read_text()
+assert '<Key>UP: PF(7)' in launcher and '<Key>DOWN: PF(8)' in launcher and '<Key>LEFT: PF(10)' in launcher \
+    and '<Key>RIGHT: PF(11)' in launcher and 'c3270.keymap.pacgame' in launcher and '<Key>p: PF(9)' in launcher
+paused = ' PAUSED '.encode('cp037')
+ps = tsd[('RTPAUSE', 'W')][1]
+idx = [k for k, f in enumerate(ps) if paused in f]
+assert len(idx) >= 2 and all(ps[k][0] == 0xC3 for k in idx) and paused not in ps[idx[-1] + 1] and \
+    ps[idx[-1] + 1][0] == 0xC2, idx
 print('local checks PASS:', len(RT_BAT), 'batch cases,', len(RT_TSD), 'TSD runs,',
       sum(len(fs) for _, fs in tsd.values()), 'model streams,', minimal, 'restore-only streams')
 

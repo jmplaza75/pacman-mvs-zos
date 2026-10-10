@@ -13,6 +13,9 @@ R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / 'tests'))
 from ref_mvs6 import Game, parse_config, MAP0, START, GSTARTS, GDIR0  # noqa: E402
 import ref_gx_screen as gx  # noqa: E402
+import ref_gs_screen as gs  # noqa: E402
+
+gs.BANNERS.setdefault('PAUSE', (' PAUSED ', gs.HELP))   # RT3: while paused the message row shows this banner
 
 TTL, FREEZE, GH_NUM, GH_DEN, ANIM_Q = 3, 10, 4, 5, 3
 D = {'U': (0, -1), 'D': (0, 1), 'L': (-1, 0), 'R': (1, 0)}
@@ -177,8 +180,10 @@ def run(cards, tsd=None, cfg=None):
     def prmt(rdr):
         if geo is None:
             return
+        paused = c.status() == 'PAUS'
         show = st['msg_on']
-        cur = gx.image(geo, g, g.cmd, g.res, show, True, c.vis, face())
+        cur = gx.image(geo, g, g.cmd, g.res, None if paused else show, True, c.vis, face(),
+                       'PAUSE' if paused else None)
         frames.append(gx.full(geo, cur) if st['prev'] is None or rdr else gx.partial(geo, cur, st['prev'], 'P'))
         st['prev'], st['msg_last'], st['msg_on'] = cur, show, None
 
@@ -220,7 +225,7 @@ def run(cards, tsd=None, cfg=None):
         event(e)
         if st['over'] or c.started:
             break
-        if st['frame'] != ' ':
+        if e[0] != 'NON':                       # RT3: every input gets a screen (keyboard restore)
             pre_screen()
         e = read()
 
@@ -238,8 +243,9 @@ def run(cards, tsd=None, cfg=None):
                 st['frame'] = 'P'
             pre_screen()
             while c.status() == 'PAUS' and not st['over']:
-                event(read())
-                if not st['over'] and c.status() == 'PAUS' and st['frame'] != ' ':
+                e = read()
+                event(e)
+                if not st['over'] and c.status() == 'PAUS' and e[0] != 'NON':
                     pre_screen()
             if st['over']:
                 break

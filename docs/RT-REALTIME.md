@@ -126,3 +126,16 @@ input or PA2 make that quantum's single write a prompt screen (field reset / ful
 P + ENTER pauses (no visual pause indicator yet: RT3 presentation); the deciding quantum gets its frame, then the end
 banner as in TURN.
 
+## RT3 (live integration) - pre-live changes (2026-10-10, JOB 223 = tests/test_rt.py PASS, CLIST JOB 224)
+- Pause AID: PF9 toggles pause/resume (PACINPT); P + ENTER stays the fallback. The launcher keeps the arrow mappings
+  permanent and adds P/p -> PF9 only in the TEMPORARY keymap `pacgame`, which tools/rt_play.py switches on when the game
+  screen appears and off at READY (c3270 4.5 TemporaryKeymap, checked offline at the logon screen): logon, password and
+  TSO commands keep a normal 'p'.
+- Pause indicator: while paused the message row shows the ` PAUSED ` banner (help colour, reverse) instead of a message;
+  maze frozen; blocking reads; on resume the banner is cleared by the next frame and the schedule restarts at now (the
+  resumed quantum runs at once, the next at now + 150 ms; no catch-up). Directions are kept across a pause.
+- Integration defect fixed before going live: before the start and during a pause every input event now gets a prompt
+  screen (keyboard restore); before, an arrow pressed while paused left the keyboard locked and, with typeahead off, the
+  PF9 to resume would have been lost.
+- Live tools: tools/rt_play.py (start a REALTIME game + game keys), tools/c3270_rt_game.py (trace acceptance report).
+

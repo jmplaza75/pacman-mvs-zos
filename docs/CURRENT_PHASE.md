@@ -51,4 +51,5 @@ MVS-RT (real-time gameplay) STARTED 2026-10-09, plan approved: docs/RT-REALTIME.
 - RT2 DONE 2026-10-10 (Hercules JOB 222, tests/test_rt.py PASS, docs/evidence/rt2-build.txt): PACRT, PACGAME REQ-STEP
   (authorised), RT-GAME loop, PACINPT/PACPLAT/PACDISP/PACSCR RT ops, PACFSIO POLL, PACTSO TIME/DLWT, PLAY(TURN|REALTIME)
   (CLIST default TURN), tests/ref_rt.py + tests/rtcases. TURN regression unchanged.
-- NEXT: RT3 (live TSC integration on c3270 with tools/c3270_rt.sh) - WAITING FOR USER GO.
+- RT3 IN PROGRESS (approved 2026-10-10): PF9 pause + PAUSED banner, restore after every pre-start/pause input (JOB 223,
+  CLIST JOB 224). Live c3270 acceptance pending.
