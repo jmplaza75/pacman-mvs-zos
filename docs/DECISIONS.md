@@ -183,3 +183,6 @@
   The collision order of GP1-POWER 4.4 is authoritative. No GP2 behaviour in GP1.
   GP1.2 (JOB 238, tests/test_gp1.py PASS): no frightened move in the step where a fright starts; GHOSTS EATEN is
   the last end line; LEVEL1 has no dead ends (dead-end flee unreachable, blocked pending reversal tested).
+  GP1.3 screens (JOB 240, GP1-POWER section 10): ARCADE status line variant (61 columns, S= 7 digits, PW, FR),
+  power pellet blinking, frightened ghosts blue / white (warning) not reversed outside the scaled sprites, eyes `"`
+  drawn under Pac-Man and the other ghosts; CLASSIC streams byte-identical.

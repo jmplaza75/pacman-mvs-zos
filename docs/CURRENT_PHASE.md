@@ -70,6 +70,10 @@ MVS-GP1 IN PROGRESS (started 2026-10-11 on the user's go): power pellets under R
 - GP1.2 COMPLETE (2026-10-11): core change authorised (docs/CORE_CHANGES.md), PACARC, PARM column 21, ARCADE text
   lines; deck GP1 JOB 238: 192 steps RC 0000, S1/CLASSIC regression PASS, 26 ARCADE runs = tests/ref_arcade.py;
   evidence docs/evidence/gp1-build-text.txt. Test: `python3 tests/test_gp1.py build/PACBLGP1-238.txt`.
-- NEXT: GP1.3 screens (PACSCR/PACPAL, design section 6) - not started; CLIST with RULES not installed yet.
-  Then GP1.4 live, README, tag mvs-gp1.
+- GP1.2 committed as checkpoint bc419f7 (no tag).
+- GP1.3 COMPLETE (2026-10-11): ARCADE screens in PACSCR/PACPAL (all glyph profiles, scaled families, partial redraw,
+  ticks, REALTIME); deck GP1 JOB 240: 214 steps RC 0000, S1/CLASSIC regression PASS, 21 ARCADE TSD runs = 939 model
+  streams; evidence docs/evidence/gp1-screens-tsd.txt; design section 10.
+- NEXT: GP1.4 live c3270 acceptance - NOT STARTED, waits for the user's go. CLIST (RULES(CLASSIC) default) not yet
+  installed. Then README, tag mvs-gp1.
 Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).

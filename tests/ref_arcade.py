@@ -29,7 +29,7 @@ class Arcade(Game):
             assert (x, y) != START and (x, y) not in GSTARTS[:n]
             self.grid[y - 1][x - 1] = 'o'
         self.left = sum(r.count('.') + r.count('o') for r in self.grid)
-        self.play, self.ascore, self.power, self.eaten = play, 0, 4, 0
+        self.arc, self.play, self.ascore, self.power, self.eaten = True, play, 0, 4, 0
         self.cmd, self.res, self.ticks = ' ', 'START  ', 0
         self.death_reset()
         self.evt, self.pts, self.moven = '    ', 0, 1
@@ -185,6 +185,11 @@ class Arcade(Game):
         self.state = 'LOST   ' if self.lost else 'WON    ' if self.won else 'RUNNING'
         self.t = self.ticks % 1000
         self.score = self.ascore % 10000
+
+    def step(self, u):
+        """The TURN interface of the screen models (ref_g4_screen / ref_gx_screen frames)."""
+        self.turn('T', u)
+        return self.res
 
     # ---- text
     def arc_line(self):

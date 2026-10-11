@@ -185,3 +185,27 @@ every ARCADE stream. Sound unchanged (S1 events; no new bells in GP1).
   column-21 CLASSIC runs = oracle/model. Evidence: docs/evidence/gp1-build-text.txt.
 - Earlier phase tests pin their own sources to their tags; they run as regressions with `PACMAN_LATER_PHASE` set
   (test_rt, test_s1), the listing/behaviour checks unchanged.
+
+## 10. GP1.3 result (2026-10-11): screens COMPLETE, live acceptance (GP1.4) not started
+Display rules as built (section 6 made precise; display only, the game state is never changed):
+- Status line (80x24 G1-G4, GS layout B, tall): ARCADE variant of the same 61 columns,
+  `T001 R MOVED   S=0001234 L=099 V=3 ST=RUNNING PW=3 FR=017` (X/Y and the ghost 1 position are left out: the board
+  shows them, and layout B has the ghosts field at column 64). Tall score line `SCORE 0001234 PELLETS 099  TURN 001
+  LIVES` (same 44 columns). Wide HUD: SCORE 7 digits; ghost icon and position in the frightened / warning / eyes
+  colour. Wide / tall title `P A C - M A N   A R C A D E`.
+- Power pellet: `o` (all unscaled profiles, base set, never GE) white, blinking (X'F1') when highlighting is on;
+  scaled: sprite 6 (lower halves over upper halves in the middle columns), blinking.
+- Frightened ghost: its normal glyph / sprite frames, blue (X'F1'), white in the warning window (0 < FR <= the
+  warning constant); unscaled without reverse video (so it never looks like a filled wall block), scaled with the
+  sprite body reversed and the eye cells not reversed.
+- Eyes: `"` white (unscaled, never GE), scaled sprite 7 (the eye cells only, white, not reversed). Drawn first, so
+  Pac-Man and the other ghosts cover them (a NORMAL ghost on an eyes cell is always visible). The BAT/TSO text board
+  of GP1.2 keeps its index-order overlay.
+- Unchanged: CLASSIC streams, partial redraw (the image diff), ticks, REALTIME one-write-per-quantum, S1 bells (only
+  start / death / win), the size guard (largest ARCADE stream 1913 bytes, 120x27 first screen).
+Changed: PACPAL (append-only: PAL-POWER, HI-POWER, PAL-FRIGHT, PAL-WARN, PAL-EYES, GLY-EYES, SPR-4X, SPR-3X), PACSCR
+(PAC-ARC parameter, ARCADE paragraphs), PACDISP (PAC-ARC to PACSCR). Core, PACMAIN, PACRT, input and platform side
+unchanged since GP1.2. Models: ref_g2/g4/gs/gx_screen ARCADE branches (g.arc), ref_rt game/controller hooks.
+JOB 240 (after COMPRESS JOB 239): 214 steps RC 0000, no warnings, S1/CLASSIC regression PASS, GP1.2 text PASS, 21
+ARCADE TSD runs = 939 model streams. Evidence: docs/evidence/gp1-screens-tsd.txt. CLIST not installed (RULES(CLASSIC)
+stays the default; RULES(ARCADE) by keyword for the live test).

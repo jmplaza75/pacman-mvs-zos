@@ -82,10 +82,12 @@ def image(geo, g, cmd, res, msg, anim, vis, face, banner=None):
     for j in range(20):
         for i in range(80):
             img[geo.a(b0 + j, c0 + i)] = base[j * 80 + i]
+    arc = getattr(g, 'arc', False)
+    title = (c0 + 26, 'P A C - M A N   A R C A D E') if arc else (c0 + 33, 'P A C - M A N')
     if geo.fam == 'W':
-        put(img, geo, b0 - 2, c0 + 33, 'P A C - M A N', PLAYER)
+        put(img, geo, b0 - 2, title[0], title[1], PLAYER)
         left = c0 - 18
-        lines = [('SCORE', '%04d' % g.score), ('PELLETS', '%03d' % g.left), ('TURN', '%03d' % g.t),
+        lines = [('SCORE', '%07d' % g.ascore if arc else '%04d' % g.score), ('PELLETS', '%03d' % g.left), ('TURN', '%03d' % g.t),
                  ('LAST', f'{cmd} {res}'), ('STATE', g.state), ('LIVES', '')]
         for k, (label, value) in enumerate(lines):
             put(img, geo, b0 + 1 + 2 * k, left, label.ljust(8) + value.ljust(9), HUD)
@@ -94,14 +96,22 @@ def image(geo, g, cmd, res, msg, anim, vis, face, banner=None):
         right = c0 + 82
         put(img, geo, b0 + 1, right, 'GHOSTS  AI%d' % g.ai, HUD)
         for k, (gx, gy, _) in enumerate(g.gh):
-            img[geo.a(b0 + 3 + k, right)] = (GHOST_ICON, GHOSTS[k], 0, 1)
-            put(img, geo, b0 + 3 + k, right + 2, '%02d,%02d' % (gx, gy), GHOSTS[k])
+            colour = GHOSTS[k]
+            if arc and g.mode[k] == 'F':
+                colour = g4.fright_colour(g)
+            elif arc and g.mode[k] == 'E':
+                colour = g4.EYESC
+            img[geo.a(b0 + 3 + k, right)] = (GHOST_ICON, colour, 0, 1)
+            put(img, geo, b0 + 3 + k, right + 2, '%02d,%02d' % (gx, gy), colour)
         put(img, geo, b0 + 13, right, 'U D L R ENTER', HELP)
         put(img, geo, b0 + 14, right, 'Q QUIT  PA2', HELP)
         mrow, mcol, crow, ccol = b0 + 21, c0, b0 + 22, c0
     else:
-        put(img, geo, b0 - 4, c0 + 33, 'P A C - M A N', PLAYER)
-        put(img, geo, b0 - 2, c0 + 1, 'SCORE %04d   PELLETS %03d   TURN %03d   LIVES ' % (g.score, g.left, g.t), HUD)
+        put(img, geo, b0 - 4, title[0], title[1], PLAYER)
+        line = 'SCORE %04d   PELLETS %03d   TURN %03d   LIVES ' % (g.score, g.left, g.t)
+        if arc:
+            line = 'SCORE %07d PELLETS %03d  TURN %03d   LIVES ' % (g.ascore, g.left, g.t)
+        put(img, geo, b0 - 2, c0 + 1, line, HUD)
         for k in range(g.lives):
             img[geo.a(b0 - 2, c0 + 45 + 2 * k)] = (LIFE, PLAYER, 0, 1)
         put(img, geo, b0 + 21, c0 + 1, status(g, cmd, res).ljust(61), HUD)
@@ -222,7 +232,7 @@ def relocate(geo, ds):
     return bytes(out)
 
 
-def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='D', snap=None):
+def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='D', snap=None, mk=Game, d='cases'):
     """The whole TSD run. Resolution as PACPLAT in TSD: glyph AUTO = CLASSIC; scale A = 4; scaled only with
     highlight and GRAPHIC glyphs. snap: optional ref_snap.Log ((lives, won) per screen sent, MVS-S1)."""
     prof = {'G': 'G', 'B': 'B', 'C': 'C', 'A': 'C'}[glyphs]
@@ -232,17 +242,17 @@ def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='
     geo = Geo(canvas, s != 'N', 3 if s == '3' else 4)
     limit = 1000 if s == 'T' else 2048
     if s == 'N':
-        return [relocate(geo, f) for f in g4.frames(case, hi, anim, redraw, prof, snap=snap)]
+        return [relocate(geo, f) for f in g4.frames(case, hi, anim, redraw, prof, snap=snap, mk=mk, d=d)]
     # the size guard can only trip at the first screen in practice (scale T): find the family that fits it
-    ai, n, cards = parse_config((R / f'tests/cases/{case}.txt').read_text().splitlines())
+    ai, n, cards = parse_config((R / f'tests/{d}/{case}.txt').read_text().splitlines())
     while geo.fam != 'G':
-        first = full(geo, image(geo, Game(ai, n), ' ', 'START  ', None, anim, 0 if anim else 1, 'R'))
+        first = full(geo, image(geo, mk(ai, n), ' ', 'START  ', None, anim, 0 if anim else 1, 'R'))
         if len(first) <= limit:
             break
         geo.down()
     if geo.fam == 'G':
-        return [relocate(geo, f) for f in g4.frames(case, True, anim, redraw, 'G', snap=snap)]
-    g = Game(ai, n)
+        return [relocate(geo, f) for f in g4.frames(case, True, anim, redraw, 'G', snap=snap, mk=mk, d=d)]
+    g = mk(ai, n)
     st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R'}
     out = Rec(snap, lambda: (g.lives, g.won))
 

@@ -1,0 +1,109 @@
+# MVS-GP1 GP1.3 screens - Hercules JOB 240 (2026-10-11): ARCADE rendering (D36, docs/GP1-POWER.md 6 and 10)
+Deck GP1 = the whole S1 deck (CLASSIC regression) + the GP1.2 ARCADE text runs + a second marker + 21 ARCADE TSD dry
+runs. Libraries compressed first: JOB 239. First GP1.3 build, no attempt failed.
+```
+$ python3 tests/test_gp1.py build/PACBLGP1-240.txt
+local checks PASS (core frozen, oracle loaded)
+GP1.3 local checks PASS: 16 TURN and 5 REALTIME ARCADE TSD runs, 939 model streams, largest 1913 bytes
+local checks PASS: 12 edge cases reached; 18 TURN, 6 REALTIME, 2 TSO ARCADE model runs
+MVS-GP1 GP1.3 PASS: 21 ARCADE TSD runs = 939 model streams
+MVS-GP1 GP1.2 PASS: 214 steps RC 0000; S1 regression: MVS-S1 PASS: 161 steps RC 0000; RT regression: MVS-RT RT2 PA ...; 26 ARCADE runs = model ( 11363 lines ); 3 column-21 CLASSIC runs = oracle/model
+```
+CLASSIC: the S1 part of the listing (every G1-GX TSD stream, RT and SOUND streams, the 1.0-MVS oracle) passes
+tests/test_s1.py unchanged, i.e. CLASSIC screen streams are byte-identical.
+ARCADE TSD runs (end word, streams, largest stream, indexes of the streams with the S1 alarm bit):
+```
+GQT1   GPAI0    hi=Y anim=Y redraw=P glyphs=C scale=N canvas=D sound=N  QUIT streams=52   max=665   bells=[]
+GQT2   GPAI0    hi=Y anim=N redraw=F glyphs=B scale=N canvas=D sound=N  QUIT streams=52   max=851   bells=[]
+GQT3   GPHOME   hi=Y anim=Y redraw=P glyphs=G scale=N canvas=D sound=N  QUIT streams=23   max=937   bells=[]
+GQT4   GPTWOF   hi=N anim=Y redraw=P glyphs=G scale=N canvas=D sound=N  QUIT streams=50   max=709   bells=[]
+GQT5   GPTICK   hi=Y anim=Y redraw=P glyphs=G scale=N canvas=D sound=N  QUIT streams=61   max=949   bells=[]
+GQT6   GPAI0    hi=Y anim=Y redraw=P glyphs=G scale=4 canvas=W sound=N  QUIT streams=53   max=1913  bells=[]
+GQT7   GPHOME   hi=Y anim=Y redraw=P glyphs=G scale=4 canvas=D sound=Y  QUIT streams=24   max=1668  bells=[0, 19]
+GQT8   GPFN     hi=Y anim=Y redraw=P glyphs=G scale=3 canvas=D sound=N  QUIT streams=35   max=1593  bells=[]
+GQT9   GPDEYE   hi=Y anim=Y redraw=P glyphs=G scale=4 canvas=T sound=N  QUIT streams=25   max=1810  bells=[]
+GQT10  GPREVB   hi=Y anim=Y redraw=P glyphs=G scale=4 canvas=X sound=N  QUIT streams=51   max=1815  bells=[]
+GQT11  GPPOW2   hi=Y anim=N redraw=F glyphs=G scale=4 canvas=W sound=N  QUIT streams=8    max=1815  bells=[]
+GQT12  GPLASTO  hi=Y anim=Y redraw=P glyphs=G scale=4 canvas=W sound=Y  WIN  streams=146  max=1815  bells=[0, 145]
+GQT13  GPTICK   hi=Y anim=Y redraw=P glyphs=G scale=4 canvas=W sound=N  QUIT streams=62   max=1913  bells=[]
+GQT14  GPAI0    hi=Y anim=Y redraw=P glyphs=G scale=T canvas=W sound=N  QUIT streams=52   max=949   bells=[]
+GQT15  GPWALKF  hi=Y anim=Y redraw=P glyphs=G scale=4 canvas=M sound=N  QUIT streams=8    max=1765  bells=[]
+GQT16  GPTSO    hi=Y anim=Y redraw=P glyphs=G scale=4 canvas=W sound=N  QUIT streams=25   max=1861  bells=[]
+GQR1   RTGPA    REALTIME canvas=W sound=Y  QUIT streams=49   max=1913  bells=[0, 47]
+GQR2   RTGPD    REALTIME canvas=W sound=Y  QUIT streams=32   max=1913  bells=[0, 28]
+GQR3   RTGPP    REALTIME canvas=W sound=N  QUIT streams=50   max=1913  bells=[]
+GQR4   RTGPA    REALTIME canvas=D sound=N  QUIT streams=49   max=1713  bells=[]
+GQR5   RTGPD    REALTIME canvas=T sound=N  QUIT streams=32   max=1810  bells=[]
+```
+Model image of the 120x27 wide layout, GPAI0 after T026 (power pellet tile at 19,4 blinking; eyes at 19,9; ghosts 2
+and 3 frightened (blue); 7-digit score; ARCADE title) - colours not shown:
+```
+
+                                              P A C - M A N   A R C A D E
+
+                    ┌──────────────────────────────────────────────────────────────────────────────┐
+  SCORE   0000960   │  ┌────────────────────────────────┐      ┌────────────────────────────────┐  │  GHOSTS  AI0
+                    │  │     •   •   •   •   •   •   •  │      │ •   •   •   •   •   •   •  ▄°°▄│  │
+  PELLETS 074       │  │                                │      │                            █▀█▀│  │  ∩ 19,09
+                    │  │    ┌──────┐ •  ┌──────────┐ •  │      │ •  ┌──────────┐ •  ┌──────┐ •  │  │  ∩ 02,09
+  TURN    026       │  │    └──────┘    └──────────┘    └──────┘    └──────────┘    └──────┘    │  │  ∩ 19,02
+                    │  │     •   •   •   •   •   •   •   •   •   •   •   •   •   •   •   •   ▄▄ │  │
+  LAST    U MOVED   │  │                                                                     ▀▀ │  │
+                    │  │    ┌──────┐ •  ┌──┐ •  ┌──────────────────────┐ •  ┌──┐ •  ┌──────┐ •  │  │
+  STATE   RUNNING   │  │    └──────┘    │  │    └───────┐      ┌───────┘    │  │    └──────┘    │  │
+                    │  │     •   •   •  │  │ •   •   •  │      │ •   •   •  │  │ •   •   •   •  │  │
+  LIVES   ⊂ ⊂ ⊂     │  │                │  │            │      │            │  │                │  │
+                    │  │    ┌──────┐ •  │  └───────┐ •  │      │ •  ┌───────┘  │ •  ┌──────┐▄█▀ │  │
+                    │  │    └──────┘    └──────────┘    └──────┘    └──────────┘    └──────┘▀█▄ │  │  U D L R ENTER
+                    │  │     •   •   •   •   •   •   •   •   •   •   •   •   •   •   •   •      │  │  Q QUIT  PA2
+                    │  │                                                                        │  │
+                    │  │▄°°▄                                                                 °° │  │
+                    │  │█▀█▀                                                                    │  │
+                    │  └────────────────────────────────────────────────────────────────────────┘  │
+                    └──────────────────────────────────────────────────────────────────────────────┘
+
+
+                    COMMAND ===>
+
+```
+Step return codes of the copybooks, compiles, link and GP1.3 steps (JES log):
+```
+20.37.31 JOB  240  PACBLGP1   CPY1                IEBGENER  RC= 0000
+20.37.31 JOB  240  PACBLGP1   CPY2                IEBGENER  RC= 0000
+20.37.31 JOB  240  PACBLGP1   CPY3                IEBGENER  RC= 0000
+20.37.31 JOB  240  PACBLGP1   CPY4                IEBGENER  RC= 0000
+20.37.32 JOB  240  PACBLGP1   CPY5                IEBGENER  RC= 0000
+20.37.32 JOB  240  PACBLGP1   CPY6                IEBGENER  RC= 0000
+20.37.32 JOB  240  PACBLGP1   COB1                IKFCBL00  RC= 0000
+20.37.32 JOB  240  PACBLGP1   COB2                IKFCBL00  RC= 0000
+20.37.32 JOB  240  PACBLGP1   COB3                IKFCBL00  RC= 0000
+20.37.32 JOB  240  PACBLGP1   COB4                IKFCBL00  RC= 0000
+20.37.33 JOB  240  PACBLGP1   COB5                IKFCBL00  RC= 0000
+20.37.33 JOB  240  PACBLGP1   COB6                IKFCBL00  RC= 0000
+20.37.33 JOB  240  PACBLGP1   COB7                IKFCBL00  RC= 0000
+20.37.33 JOB  240  PACBLGP1   COB8                IKFCBL00  RC= 0000
+20.37.33 JOB  240  PACBLGP1   COB9                IKFCBL00  RC= 0000
+20.37.34 JOB  240  PACBLGP1   LINK                IEWL      RC= 0000
+20.38.39 JOB  240  PACBLGP1   GP13MARK            IEBGENER  RC= 0000
+20.38.39 JOB  240  PACBLGP1   GQT1                PACMAIN   RC= 0000
+20.38.39 JOB  240  PACBLGP1   GQT2                PACMAIN   RC= 0000
+20.38.39 JOB  240  PACBLGP1   GQT3                PACMAIN   RC= 0000
+20.38.40 JOB  240  PACBLGP1   GQT4                PACMAIN   RC= 0000
+20.38.40 JOB  240  PACBLGP1   GQT5                PACMAIN   RC= 0000
+20.38.42 JOB  240  PACBLGP1   GQT6                PACMAIN   RC= 0000
+20.38.42 JOB  240  PACBLGP1   GQT7                PACMAIN   RC= 0000
+20.38.43 JOB  240  PACBLGP1   GQT8                PACMAIN   RC= 0000
+20.38.43 JOB  240  PACBLGP1   GQT9                PACMAIN   RC= 0000
+20.38.45 JOB  240  PACBLGP1   GQT10               PACMAIN   RC= 0000
+20.38.45 JOB  240  PACBLGP1   GQT11               PACMAIN   RC= 0000
+20.38.48 JOB  240  PACBLGP1   GQT12               PACMAIN   RC= 0000
+20.38.50 JOB  240  PACBLGP1   GQT13               PACMAIN   RC= 0000
+20.38.51 JOB  240  PACBLGP1   GQT14               PACMAIN   RC= 0000
+20.38.51 JOB  240  PACBLGP1   GQT15               PACMAIN   RC= 0000
+20.38.52 JOB  240  PACBLGP1   GQT16               PACMAIN   RC= 0000
+20.38.53 JOB  240  PACBLGP1   GQR1                PACMAIN   RC= 0000
+20.38.54 JOB  240  PACBLGP1   GQR2                PACMAIN   RC= 0000
+20.38.55 JOB  240  PACBLGP1   GQR3                PACMAIN   RC= 0000
+20.38.56 JOB  240  PACBLGP1   GQR4                PACMAIN   RC= 0000
+20.38.57 JOB  240  PACBLGP1   GQR5                PACMAIN   RC= 0000
+```

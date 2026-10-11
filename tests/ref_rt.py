@@ -145,9 +145,10 @@ def events(cards):
         yield evs
 
 
-def run(cards, tsd=None, cfg=None, snap=None):
+def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None):
     """The PACMAIN RT-GAME driver. tsd = None (BAT) or a canvas letter (TSD); cfg = (ai, n) from the PARM (TSD).
-    snap: optional ref_snap.Log ((lives, won) per screen sent, MVS-S1)."""
+    snap: optional ref_snap.Log ((lives, won) per screen sent, MVS-S1). mk_game / mk_ctl (MVS-GP1): the ARCADE game
+    and controller of tests/ref_arcade.py (TSD screens only; its end lines come from the game)."""
     stream = []
     for evs in events(cards):
         stream += [e for e in evs] + [('NON', ' ', ' ')]
@@ -164,8 +165,8 @@ def run(cards, tsd=None, cfg=None, snap=None):
     if tsd is None and first[0] == 'CFG':
         ai, n, _ = parse_config([cards[0]])
         first = read()
-    g = RTGame(ai, n)
-    c = Controller(g)
+    g = (mk_game or RTGame)(ai, n)
+    c = (mk_ctl or Controller)(g)
     st = {'prev': None, 'msg_on': None, 'msg_last': None, 'face': 'R', 'frame': ' ', 'over': False}
     geo = None
     if tsd is not None:
@@ -269,6 +270,8 @@ def run(cards, tsd=None, cfg=None, snap=None):
     end = 'LOST' if g.lost else 'WIN' if g.won else st.get('end', 'EOF')
     if geo is not None and geo.fam != 'G':
         frames.append(gx.full(geo, gx.image(geo, g, g.cmd, g.res, None, True, c.vis, face(), end)))
+    if hasattr(g, 'end_lines'):
+        return out + g.end_lines(end, c.q), frames
     out += [end, f'TURNS {g.t:03d}', f'SCORE {g.score:04d}', f'LIVES {g.lives}', f'QUANTA {c.q:07d}']
     return out, frames
 
@@ -294,10 +297,10 @@ def simulate(cards):
     return run(list(cards))[0]
 
 
-def tsd(cards, canvas, snap=None):
+def tsd(cards, canvas, snap=None, mk_game=None, mk_ctl=None):
     """(parm config, cards) as the TSD deck runs them: the config card goes to the PARM."""
     ai, n, rest = parse_config(list(cards))
-    return run(rest, tsd=canvas, cfg=(ai, n), snap=snap)
+    return run(rest, tsd=canvas, cfg=(ai, n), snap=snap, mk_game=mk_game, mk_ctl=mk_ctl)
 
 
 if __name__ == '__main__':

@@ -41,6 +41,13 @@
       * IMAGE ON THE TERMINAL YET = PRMT. RT3: WHILE PAUSED (REQ-RTSTAT
       * PAUS) THE MESSAGE ROW SHOWS THE ' PAUSED ' BANNER (HELP COLOUR,
       * REVERSE) INSTEAD OF A MESSAGE.
+      * MVS-GP1 (D36, ARC-ON = 1, DOCS/GP1-POWER.MD 6): POWER PELLET
+      * 'o' (SCALED: SPRITE 6), BLINKING WITH HIGHLIGHTING; FRIGHTENED
+      * GHOSTS BLUE / WHITE IN THE WARNING WINDOW (NOT REVERSED OUTSIDE
+      * THE SPRITES, SCALED EYES NOT REVERSED); EYES '"' (SCALED:
+      * SPRITE 7) DRAWN UNDER PAC-MAN AND THE OTHER GHOSTS; THE ARCADE
+      * STATUS LINE (7-DIGIT SCORE, PW, FR), TALL SCORE LINE, WIDE HUD
+      * SCORE AND GHOST COLOURS, ARCADE TITLE. CALLED WITH PAC-ARC.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACSCR.
        ENVIRONMENT DIVISION.
@@ -244,9 +251,46 @@
        01  SPR-GH                PIC 9 VALUE 4.
        01  SPR-NO                PIC 9.
        01  SPR-4-T.
-           05  SPR-4-CH          PIC X OCCURS 40 TIMES.
+           05  SPR-4-CH          PIC X OCCURS 56 TIMES.
+       01  SPR-4-R REDEFINES SPR-4-T.
+           05  SPR-4-A           PIC X(40).
+           05  SPR-4-B           PIC X(16).
        01  SPR-3-T.
-           05  SPR-3-CH          PIC X OCCURS 30 TIMES.
+           05  SPR-3-CH          PIC X OCCURS 42 TIMES.
+       01  SPR-3-R REDEFINES SPR-3-T.
+           05  SPR-3-A           PIC X(30).
+           05  SPR-3-B           PIC X(12).
+       01  SPR-FR                PIC 9 VALUE 0.
+       01  WS-HPW                PIC 999 VALUE 0.
+       01  HUD-NUM7              PIC 9(7).
+       01  WS-ARC-ST.
+           05  FILLER            PIC X VALUE 'T'.
+           05  AS-TURN           PIC 999.
+           05  FILLER            PIC X VALUE ' '.
+           05  AS-CMD            PIC X.
+           05  FILLER            PIC X VALUE ' '.
+           05  AS-RESULT         PIC X(7).
+           05  FILLER            PIC X(3) VALUE ' S='.
+           05  AS-SCORE          PIC 9(7).
+           05  FILLER            PIC X(3) VALUE ' L='.
+           05  AS-LEFT           PIC 999.
+           05  FILLER            PIC X(3) VALUE ' V='.
+           05  AS-LIVES          PIC 9.
+           05  FILLER            PIC X(4) VALUE ' ST='.
+           05  AS-STATE          PIC X(7).
+           05  FILLER            PIC X(4) VALUE ' PW='.
+           05  AS-PW             PIC 9.
+           05  FILLER            PIC X(4) VALUE ' FR='.
+           05  AS-FR             PIC 999.
+           05  FILLER            PIC X(4) VALUE SPACES.
+       01  TALL-LINE-A.
+           05  FILLER            PIC X(6) VALUE 'SCORE '.
+           05  TA-SCORE          PIC 9(7).
+           05  FILLER            PIC X(9) VALUE ' PELLETS '.
+           05  TA-PEL            PIC 999.
+           05  FILLER            PIC X(7) VALUE '  TURN '.
+           05  TA-TURN           PIC 999.
+           05  FILLER            PIC X(9) VALUE '   LIVES '.
        01  SPR-C                 PIC X.
        01  CT-OK                 PIC 9 VALUE 0.
        01  CT-TABLE.
@@ -301,7 +345,8 @@
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
        01  PAC-DS COPY PACDS.
-       PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-DS.
+       01  PAC-ARC COPY PACARC.
+       PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-DS PAC-ARC.
        MAIN-PARA.
            IF TAB-OK = 0
                PERFORM INIT-TAB.
@@ -444,8 +489,10 @@
       * IS OFF) AND THE BUFFER GEOMETRY (REQ-CW X REQ-CH, 0 = 80 X 24).
       * THE G1-G4 LAYOUT IS KEPT FOR A LATER FALLBACK.
            MOVE 1 TO SC-INIT.
-           MOVE SPR-4 TO SPR-4-T.
-           MOVE SPR-3 TO SPR-3-T.
+           MOVE SPR-4 TO SPR-4-A.
+           MOVE SPR-4X TO SPR-4-B.
+           MOVE SPR-3 TO SPR-3-A.
+           MOVE SPR-3X TO SPR-3-B.
            MOVE LAY-STATUS-ROW TO SV-STATUS-ROW.
            MOVE LAY-GHOSTS-ROW TO SV-GHOSTS-ROW.
            MOVE LAY-GHOSTS-COL TO SV-GHOSTS-COL.
@@ -598,8 +645,9 @@
            MOVE 0 TO DS-LEN.
            MOVE 'F' TO DS-KIND.
        INIT-HI.
-           MOVE 0 TO WS-HP WS-HG WS-HE WS-HN WS-HW.
+           MOVE 0 TO WS-HP WS-HG WS-HE WS-HN WS-HW WS-HPW.
            IF REQ-HILITE = 'Y'
+               MOVE HI-POWER TO WS-HPW
                MOVE HI-WALL TO WS-HW
                MOVE HI-PLAYER TO WS-HP
                MOVE HI-GHOST TO WS-HG
@@ -892,6 +940,8 @@
            MOVE PAL-HUD TO WS-BV.
            PERFORM PUT-COLOUR.
            MOVE WS-STATUS-LINE TO WS-TXT.
+           IF ARC-ON = 1
+               PERFORM ARC-STATUS.
            MOVE 61 TO WS-TLEN.
            PERFORM PUT-TEXT.
        SHOW-GHOSTS.
@@ -915,6 +965,9 @@
            MOVE MAP-ROW (WS-I) TO WS-LINE.
            PERFORM BASE-COLOUR THRU BASE-COLOUR-EXIT
                VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
+           IF ARC-ON = 1
+               PERFORM OVERLAY-EYES THRU OVERLAY-EYES-EXIT
+                   VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
            IF WS-I = PLAYER-Y
                MOVE 'P' TO LINE-CH (PLAYER-X)
                MOVE PAL-PLAYER TO CELL-COL (PLAYER-X)
@@ -947,12 +1000,18 @@
                MOVE WS-GP TO LINE-CH (WS-COL).
            IF LINE-CH (WS-COL) = 'G'
                MOVE WS-GG TO LINE-CH (WS-COL).
+           IF LINE-CH (WS-COL) = 'F'
+               MOVE WS-GG TO LINE-CH (WS-COL).
+           IF LINE-CH (WS-COL) = 'Y'
+               MOVE GLY-EYES TO LINE-CH (WS-COL).
            MOVE 0 TO WS-NOP.
        PROF-CELL.
       * MVS-G4: '#' -> FILLED BLOCK (BLANK + REVERSE, WALL COLOUR KEPT)
       * WHEN HIGHLIGHTING IS ON, ELSE '#' AS IT IS; '.' -> THE PELLET
       * GLYPH. IN GRAPHIC THE PELLETS AND SPRITES ARE GE CELLS.
            IF LINE-CH (WS-COL) = SPACE
+               GO TO PROF-CELL-EXIT.
+           IF LINE-CH (WS-COL) = 'o' OR LINE-CH (WS-COL) = GLY-EYES
                GO TO PROF-CELL-EXIT.
            IF LINE-CH (WS-COL) = '#'
                PERFORM WALL-CELL
@@ -987,10 +1046,15 @@
                MOVE PAL-WALL TO CELL-COL (WS-COL).
            IF LINE-CH (WS-COL) = '.'
                MOVE PAL-PELLET TO CELL-COL (WS-COL).
+           IF LINE-CH (WS-COL) = 'o'
+               MOVE PAL-POWER TO CELL-COL (WS-COL)
+               MOVE WS-HPW TO CELL-HI (WS-COL).
        BASE-COLOUR-EXIT.
            EXIT.
        OVERLAY-GHOST.
            IF WS-I NOT = GH-Y (WS-G)
+               GO TO OVERLAY-GHOST-EXIT.
+           IF ARC-ON = 1 AND ARC-GM (WS-G) = 'E'
                GO TO OVERLAY-GHOST-EXIT.
            MOVE GH-X (WS-G) TO WS-GX.
            MOVE 'G' TO LINE-CH (WS-GX).
@@ -1001,6 +1065,11 @@
                MOVE PAL-GHOST-2 TO CELL-COL (WS-GX).
            IF WS-G = 3
                MOVE PAL-GHOST-3 TO CELL-COL (WS-GX).
+           IF ARC-ON = 1 AND ARC-GM (WS-G) = 'F'
+               MOVE 'F' TO LINE-CH (WS-GX)
+               MOVE 0 TO CELL-HI (WS-GX)
+               PERFORM SET-FRC
+               MOVE TL-COL TO CELL-COL (WS-GX).
        OVERLAY-GHOST-EXIT.
            EXIT.
        PUT-CELL.
@@ -1155,6 +1224,9 @@
            MOVE MAP-ROW (CY) TO WS-LINE.
            PERFORM BASE-COLOUR THRU BASE-COLOUR-EXIT
                VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
+           IF ARC-ON = 1
+               PERFORM OVERLAY-EYES THRU OVERLAY-EYES-EXIT
+                   VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
            IF CY = PLAYER-Y
                MOVE 'P' TO LINE-CH (PLAYER-X)
                MOVE PAL-PLAYER TO CELL-COL (PLAYER-X).
@@ -1171,6 +1243,7 @@
            MOVE 0 TO TL-CO.
            MOVE 0 TO TL-HI.
            MOVE 0 TO TL-CS.
+           MOVE 0 TO SPR-FR.
            IF TL-KIND = '#'
                PERFORM S-WALL
            ELSE IF TL-KIND = '.'
@@ -1180,6 +1253,16 @@
                PERFORM S-SPRITE
            ELSE IF TL-KIND = 'G'
                MOVE SPR-GH TO SPR-NO
+               PERFORM S-SPRITE
+           ELSE IF TL-KIND = 'F'
+               MOVE SPR-GH TO SPR-NO
+               MOVE 1 TO SPR-FR
+               PERFORM S-SPRITE
+           ELSE IF TL-KIND = 'o'
+               MOVE 6 TO SPR-NO
+               PERFORM S-SPRITE
+           ELSE IF TL-KIND = 'Y'
+               MOVE 7 TO SPR-NO
                PERFORM S-SPRITE.
            COMPUTE VS-POS = (SC-BROW - 1 + (CY - 1) * 2 + SR - 1) * GW
                + SC-BCOL + (CX - 1) * SC-W + SC - 1.
@@ -1211,6 +1294,8 @@
            ELSE
                COMPUTE E-K = ((SPR-NO - 1) * 2 + SR - 1) * 3 + SC
                MOVE SPR-3-CH (E-K) TO SPR-C.
+           IF SPR-FR = 1 AND SPR-C = 'E'
+               MOVE 'e' TO SPR-C.
            IF SPR-C NOT = SPACE
                MOVE TL-COL TO TL-CO.
            IF SPR-C = 'F' OR SPR-C = 'E'
@@ -1219,11 +1304,13 @@
                MOVE SG-UPPER TO BW-N.
            IF SPR-C = 'B'
                MOVE SG-LOWER TO BW-N.
-           IF SPR-C = 'E'
+           IF SPR-C = 'E' OR SPR-C = 'e'
                MOVE SG-EYE TO BW-N.
-           IF SPR-C = 'T' OR SPR-C = 'B' OR SPR-C = 'E'
+           IF SPR-C = 'T' OR SPR-C = 'B' OR SPR-C = 'E' OR SPR-C = 'e'
                MOVE BW-L TO TL-CH
                MOVE 1 TO TL-CS.
+           IF TL-KIND = 'o' AND SPR-C NOT = SPACE
+               MOVE WS-HPW TO TL-HI.
            MOVE 0 TO WS-NOP.
       * WALL CONTOUR TABLE, BUILT ONCE (WALLS NEVER CHANGE): 8 CODES PER
       * LOGICAL CELL (ROW 1 AT +1..+W, ROW 2 AT +5..+4+W), 0 = BLANK.
@@ -1506,6 +1593,8 @@
            PERFORM PUT-COLOUR.
            MOVE 'P A C - M A N' TO WS-TXT.
            MOVE 13 TO WS-TLEN.
+           IF ARC-ON = 1
+               PERFORM ARC-TITLE.
            PERFORM PUT-TEXT.
            IF FAM = 'T'
                PERFORM SHOW-TALL-LINE.
@@ -1520,6 +1609,11 @@
            MOVE PAL-HUD TO WS-BV.
            PERFORM PUT-COLOUR.
            MOVE TALL-LINE TO WS-TXT.
+           IF ARC-ON = 1
+               MOVE ARC-SCORE TO TA-SCORE
+               MOVE PELLETS-LEFT TO TA-PEL
+               MOVE TICK-COUNT TO TA-TURN
+               MOVE TALL-LINE-A TO WS-TXT.
            MOVE 44 TO WS-TLEN.
            PERFORM PUT-TEXT.
            COMPUTE W-L = W-C0 + 45.
@@ -1531,6 +1625,9 @@
            MOVE 'SCORE' TO HL-LABEL.
            MOVE SCORE TO HUD-NUM4.
            MOVE HUD-NUM4 TO HL-VALUE.
+           IF ARC-ON = 1
+               MOVE ARC-SCORE TO HUD-NUM7
+               MOVE HUD-NUM7 TO HL-VALUE.
            COMPUTE WS-ROW = W-B0 + 1.
            PERFORM HUD-LEFT.
            MOVE 'PELLETS' TO HL-LABEL.
@@ -1601,6 +1698,10 @@
                MOVE PAL-GHOST-2 TO TL-COL.
            IF WS-G = 3
                MOVE PAL-GHOST-3 TO TL-COL.
+           IF ARC-ON = 1 AND ARC-GM (WS-G) = 'F'
+               PERFORM SET-FRC.
+           IF ARC-ON = 1 AND ARC-GM (WS-G) = 'E'
+               MOVE PAL-EYES TO TL-COL.
            MOVE W-R TO WS-COL.
            MOVE GGH-1 TO BW-N.
            PERFORM PUT-GE-CELL.
@@ -1626,3 +1727,38 @@
            MOVE TL-COL TO CU-CO (VS-POS).
            MOVE 0 TO CU-HI (VS-POS).
            MOVE 1 TO CU-CS (VS-POS).
+      * ------------- MVS-GP1 ARCADE SCREENS (D36, ARC-ON = 1) ------
+       ARC-STATUS.
+           MOVE TICK-COUNT TO AS-TURN.
+           MOVE LAST-CMD TO AS-CMD.
+           MOVE LAST-RESULT TO AS-RESULT.
+           MOVE ARC-SCORE TO AS-SCORE.
+           MOVE PELLETS-LEFT TO AS-LEFT.
+           MOVE LIVES TO AS-LIVES.
+           MOVE GAME-STATE TO AS-STATE.
+           MOVE ARC-POWER TO AS-PW.
+           MOVE ARC-FR TO AS-FR.
+           MOVE WS-ARC-ST TO WS-TXT.
+       ARC-TITLE.
+           MOVE 'P A C - M A N   A R C A D E' TO WS-TXT.
+           MOVE 27 TO WS-TLEN.
+           SUBTRACT 7 FROM WS-COL.
+           PERFORM PUT-SBA.
+           MOVE PAL-PLAYER TO WS-BV.
+           PERFORM PUT-COLOUR.
+       SET-FRC.
+      * FRIGHTENED COLOUR IN TL-COL: BLUE, WHITE IN THE WARNING WINDOW.
+           MOVE PAL-FRIGHT TO TL-COL.
+           IF ARC-FR > 0 AND ARC-FR NOT > ARC-KWARN
+               MOVE PAL-WARN TO TL-COL.
+           MOVE 0 TO WS-NOP.
+       OVERLAY-EYES.
+      * EYES FIRST: PAC-MAN AND THE OTHER GHOSTS ARE DRAWN OVER THEM.
+           IF ARC-GM (WS-G) NOT = 'E' OR WS-I NOT = GH-Y (WS-G)
+               GO TO OVERLAY-EYES-EXIT.
+           MOVE GH-X (WS-G) TO WS-GX.
+           MOVE 'Y' TO LINE-CH (WS-GX).
+           MOVE PAL-EYES TO CELL-COL (WS-GX).
+           MOVE 0 TO CELL-HI (WS-GX).
+       OVERLAY-EYES-EXIT.
+           EXIT.

@@ -64,7 +64,8 @@ def contour(grid, x, y, w):
     return [top, bot]
 
 
-def sprite(w, name, colour, ghost):
+def sprite(w, name, colour, ghost, fright=False):
+    """fright (MVS-GP1): a frightened ghost's eye cells are not in reverse video."""
     px = PIX[w][name]
     rows = []
     for j in (0, 2):
@@ -74,7 +75,7 @@ def sprite(w, name, colour, ghost):
             if a and b:
                 cell = (0x40, colour, REVERSE, 0)
                 if ghost and j == 0 and i in EYES[w]:
-                    cell = (EYE, colour, REVERSE, 1)
+                    cell = (EYE, colour, 0 if fright else REVERSE, 1)
             elif a:
                 cell = (UPPER, colour, 0, 1)
             elif b:
@@ -84,6 +85,21 @@ def sprite(w, name, colour, ghost):
             row.append(cell)
         rows.append(row)
     return rows
+
+
+def arc_tile(w, kind):
+    """MVS-GP1 extra tiles: power pellet (pixels .##. in the middle rows: lower halves over upper halves, white,
+    blinking) and eyes (the ghost's eye cells only, white, not reversed)."""
+    tile = [[(0x40, 0, 0, 0)] * w for _ in range(2)]
+    mid = (1, 2) if w == 4 else (1,)
+    if kind == 'o':
+        for i in mid:
+            tile[0][i] = (LOWER, g4.POWER, BLINK, 1)
+            tile[1][i] = (UPPER, g4.POWER, BLINK, 1)
+    else:
+        for i in EYES[w]:
+            tile[0][i] = (EYE, g4.EYESC, 0, 1)
+    return tile
 
 
 def image(g, cmd, res, msg, w, anim, vis, face, banner=None):
@@ -105,11 +121,19 @@ def image(g, cmd, res, msg, w, anim, vis, face, banner=None):
         for x in range(20):
             c = g.grid[y][x]
             tile = None
+            arc = getattr(g, 'arc', False)
             for k, (gx, gy, _) in enumerate(g.gh):
-                if (gx - 1, gy - 1) == (x, y):
+                if (gx - 1, gy - 1) == (x, y) and arc and g.mode[k] == 'F':
+                    tile = sprite(w, 'GB' if second else 'GA', g4.fright_colour(g), True, True)
+                elif (gx - 1, gy - 1) == (x, y) and not (arc and g.mode[k] == 'E'):
                     tile = sprite(w, 'GB' if second else 'GA', GHOSTS[k], True)
             if tile is None and (g.x - 1, g.y - 1) == (x, y):
                 tile = pac
+            if tile is None and arc and any(g.mode[k] == 'E' and (gx - 1, gy - 1) == (x, y)
+                                            for k, (gx, gy, _) in enumerate(g.gh)):
+                tile = arc_tile(w, 'E')
+            if tile is None and c == 'o':
+                tile = arc_tile(w, 'o')
             if tile is None and c == '#':
                 tile = [[(code, WALL, 0, 1) if code else (0x40, 0, 0, 0) for code in row]
                         for row in contour(g.grid, x, y, w)]

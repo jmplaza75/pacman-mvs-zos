@@ -16,6 +16,13 @@ from ref_g2_screen import (e, sba, sa, sh, status, WALL, PELLET, PLAYER, GHOSTS,
                            HELP_TEXT, REVERSE, BLINK, UNDERSCORE)
 
 GE = 0x08
+# MVS-GP1 ARCADE (docs/GP1-POWER.md 6): power pellet 'o' white (blink with highlighting), frightened ghosts blue / white
+# in the warning window without reverse, eyes '"' white without reverse, drawn under Pac-Man and the other ghosts
+POWER, FRIGHT, WARN, EYESC = 0xF7, 0xF1, 0xF7, 0xF7
+
+
+def fright_colour(g):
+    return WARN if 0 < g.fr <= g.k()[1] else FRIGHT
 # CP310 code points as observed live in c3270 (docs/evidence/g4-probe-analysis.md, rows AX/9X/DX)
 CP310 = {'•': 0xA3, '⊂': 0x9B, '⊃': 0x9A, '○': 0x9D, '∩': 0xAA, '⍝': 0xDF}
 
@@ -45,12 +52,20 @@ def cells(g, cmd, res, msg, hi, prof, anim, vis, face):
                 row.append([0x40 if filled else e('#')[0], WALL, REVERSE if filled else 0, 'wall'])
             elif c == '.':
                 row.append([e('.')[0] if prof == 'C' else CP310['•'] if prof == 'G' else 0xB3, PELLET, 0, 'glyph'])
+            elif c == 'o':
+                row.append([e('o')[0], POWER, BLINK if hi else 0, 'base'])
             else:
                 row.append([0x40, 0, 0, 'open'])
+        arc = getattr(g, 'arc', False)
+        for k, (gx, gy, _) in enumerate(g.gh):
+            if arc and g.mode[k] == 'E' and gy == j + 1:
+                row[gx - 1] = [e('"')[0], EYESC, 0, 'base']
         if g.y == j + 1:
             row[g.x - 1] = [pl, PLAYER, REVERSE if hi else 0, 'glyph']
         for k, (gx, gy, _) in enumerate(g.gh):
-            if gy == j + 1:
+            if gy == j + 1 and arc and g.mode[k] == 'F':
+                row[gx - 1] = [gh, fright_colour(g), 0, 'glyph']
+            elif gy == j + 1 and not (arc and g.mode[k] == 'E'):
                 row[gx - 1] = [gh, GHOSTS[k], REVERSE if hi else 0, 'glyph']
         for i, (b, col, h, kind) in enumerate(row):
             ge = 1 if prof == 'G' and kind == 'glyph' else 0
@@ -128,11 +143,12 @@ def partial(cur, prev, kind, hi):
     return bytes(out + [0x28, 0x00, 0x00])
 
 
-def frames(case, hi=False, anim=False, redraw='F', prof='C', faces=None, snap=None):
+def frames(case, hi=False, anim=False, redraw='F', prof='C', faces=None, snap=None, mk=Game, d='cases'):
     """faces: optional list that receives the Pac-Man facing used for every logical screen (for the tests).
-    snap: optional ref_snap.Log that receives (lives, won) for every screen sent (MVS-S1)."""
-    ai, n, cards = parse_config((R / f'tests/cases/{case}.txt').read_text().splitlines())
-    g = Game(ai, n)
+    snap: optional ref_snap.Log that receives (lives, won) for every screen sent (MVS-S1).
+    mk / d (MVS-GP1): the game class (ref_arcade.Arcade for RULES(ARCADE)) and the case directory under tests/."""
+    ai, n, cards = parse_config((R / f'tests/{d}/{case}.txt').read_text().splitlines())
+    g = mk(ai, n)
     st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R'}
     out = Rec(snap, lambda: (g.lives, g.won))
 

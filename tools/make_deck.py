@@ -262,6 +262,40 @@ def gp1_steps(pfx, load):
     return out
 
 
+# MVS-GP1 GP1.3 (screens): after the GP1.2 runs, a second marker, then RULES(ARCADE) TSD dry runs. TURN: (case of
+# tests/gpcases, hilite, anim, redraw, glyphs, scale, canvas, sound) with PARM column 19 T and column 21 A: the three
+# glyph profiles unscaled, 4x2 / 3x2 scaled on every family (W 120x27, X 132x27, T 80x43, M 80x32, B 80x24), the size
+# guard (scale T), ticks and a redraw (GPTICK), full redraw, SOUND. REALTIME: (case, canvas, sound), COLOR N, HILITE Y,
+# ANIM Y, REDRAW P, GLYPHS G, SCALE 4.
+GP13_TURN = [('GPAI0', 'Y', 'Y', 'P', 'C', 'N', 'D', 'N'), ('GPAI0', 'Y', 'N', 'F', 'B', 'N', 'D', 'N'),
+             ('GPHOME', 'Y', 'Y', 'P', 'G', 'N', 'D', 'N'), ('GPTWOF', 'N', 'Y', 'P', 'G', 'N', 'D', 'N'),
+             ('GPTICK', 'Y', 'Y', 'P', 'G', 'N', 'D', 'N'), ('GPAI0', 'Y', 'Y', 'P', 'G', '4', 'W', 'N'),
+             ('GPHOME', 'Y', 'Y', 'P', 'G', '4', 'D', 'Y'), ('GPFN', 'Y', 'Y', 'P', 'G', '3', 'D', 'N'),
+             ('GPDEYE', 'Y', 'Y', 'P', 'G', '4', 'T', 'N'), ('GPREVB', 'Y', 'Y', 'P', 'G', '4', 'X', 'N'),
+             ('GPPOW2', 'Y', 'N', 'F', 'G', '4', 'W', 'N'), ('GPLASTO', 'Y', 'Y', 'P', 'G', '4', 'W', 'Y'),
+             ('GPTICK', 'Y', 'Y', 'P', 'G', '4', 'W', 'N'), ('GPAI0', 'Y', 'Y', 'P', 'G', 'T', 'W', 'N'),
+             ('GPWALKF', 'Y', 'Y', 'P', 'G', '4', 'M', 'N'), ('GPTSO', 'Y', 'Y', 'P', 'G', '4', 'W', 'N')]
+GP13_RT = [('RTGPA', 'W', 'Y'), ('RTGPD', 'W', 'Y'), ('RTGPP', 'W', 'N'), ('RTGPA', 'D', 'N'), ('RTGPD', 'T', 'N')]
+GP13_MARK = 'PACMAN-GP1-SCREEN-RUNS-FOLLOW'
+
+
+def gp_parm_and_cards(case, mode):
+    lines = text_of(ROOT / f'tests/gpcases/{case}.txt').splitlines(keepends=True)
+    return f'{mode} ' + lines[0].rstrip('\n')[:5], ''.join(lines[1:])
+
+
+def gp13_steps(pfx, load):
+    out = ('//GP13MARK EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+           f'//SYSUT1   DD *\n{GP13_MARK}\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    for i, (c, h, a, r, g, sc, cv, snd) in enumerate(GP13_TURN, 1):
+        parm, cards = gp_parm_and_cards(c, 'TSD')
+        out += run_step(f'GQT{i}', pfx, load, cards, parm=parm.ljust(11) + 'N' + h + a + r + g + sc + cv + 'T' + snd + 'A')
+    for i, (c, cv, snd) in enumerate(GP13_RT, 1):
+        parm, cards = gp_parm_and_cards(c, 'TSD')
+        out += run_step(f'GQR{i}', pfx, load, cards, parm=parm.ljust(11) + 'NYYPG4' + cv + 'R' + snd + 'A')
+    return out
+
+
 def tso_parm_and_cards(case):
     """Interactive mode takes the config from the PARM ('TSO AI3 2'), not from a first card."""
     lines = (ROOT / f'tests/cases/{case}.txt').read_text(encoding='ascii').splitlines(keepends=True)
@@ -307,6 +341,7 @@ def build(name, pfx):
         out += s1_steps(pfx, load)
     if name == 'GP1':
         out += gp1_steps(pfx, load)
+        out += gp13_steps(pfx, load)
     return out + '//\n'
 
 

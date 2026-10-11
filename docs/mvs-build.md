@@ -208,3 +208,5 @@ Model tests/ref_arcade.py, cases tests/gpcases (tests/search_gp1.py). Build + te
 python3 tools/run_deck.py build/GP1.jcl`, then `python3 tests/test_gp1.py build/PACBLGP1-<n>.txt`. COMPRESS JOB 237;
 JOB 238: 192 steps RC 0000, no warnings, S1 regression (CLASSIC) PASS, 26 ARCADE runs = model, 3 column-21 CLASSIC
 runs = oracle. Evidence: docs/evidence/gp1-build-text.txt. GP1.3 (screens) next.
+GP1.3 screens: PACPAL (append-only), PACSCR, PACDISP; same deck and test (second marker, 21 ARCADE TSD runs vs the
+screen models). COMPRESS JOB 239; JOB 240: 214 steps RC 0000, all checks PASS. Evidence: docs/evidence/gp1-screens-tsd.txt.

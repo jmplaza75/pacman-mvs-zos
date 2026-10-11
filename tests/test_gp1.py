@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MVS-GP1 GP1.2 acceptance (docs/GP1-POWER.md, D36): RULES(ARCADE) core and text output.
+"""MVS-GP1 acceptance (docs/GP1-POWER.md, D36): GP1.2 RULES(ARCADE) core and text output, GP1.3 ARCADE screens.
 Local:    the authorised core change only (docs/CORE_CHANGES.md 2026-10-11); against mvs-s1 the CLASSIC code keeps every
           line except the listed signature / display lines; the screen side (PACSCR, PACPAL, PACDS, PACINPT, PACPLAT,
           PACQRY, PACFSIO, PACTSO) is untouched in GP1.2; constants in one place and equal to the design; the independent
@@ -9,6 +9,10 @@ Hercules: test_gp1.py GP1-LISTING (deck GP1 = the whole S1 deck, a marker step, 
   - everything before the marker passes tests/test_s1.py (CLASSIC: S1/RT/GX/... regression and the 1.0-MVS oracle);
   - every ARCADE run (BAT TURN, BAT REALTIME, TSO line mode) equals the model line for line;
   - PARM column 21 present but not A (C, blank, X) = CLASSIC: the 1.0-MVS oracle / the RT model.
+GP1.3 (after the second marker): every ARCADE TSD stream (TURN and REALTIME, all glyph profiles, scaled families,
+ticks, redraw, size guard, SOUND bells) equals the screen models (ref_g4/gs/gx_screen with ref_arcade) byte for byte,
+with its end lines; locally the GP1.3 source changes against the GP1.2 checkpoint bc419f7 are pinned (PACPAL
+append-only, PACSCR/PACDISP listed lines only, core / input / platform untouched).
 """
 import difflib
 import os
@@ -25,7 +29,10 @@ os.environ['PACMAN_LATER_PHASE'] = 'GP1'
 import ref_arcade as A  # noqa: E402
 import ref_rt  # noqa: E402
 import search_gp1 as S  # noqa: E402
-from make_deck import GP1_BAT, GP1_CLASSIC, GP1_MARK, GP1_RT, GP1_TSO, build  # noqa: E402
+from make_deck import GP1_BAT, GP1_CLASSIC, GP1_MARK, GP1_RT, GP1_TSO, GP13_MARK, GP13_RT, GP13_TURN, build  # noqa: E402
+import ref_g4_screen as g4  # noqa: E402
+import ref_gx_screen as gx  # noqa: E402
+from ref_snap import Log  # noqa: E402
 from test_g0 import BANNER, blocks, oracle  # noqa: E402
 
 
@@ -41,7 +48,7 @@ def cards(d, c):
 # 1. sources -------------------------------------------------------------------------------------------------------
 subprocess.run([sys.executable, str(R / 'tests/test_core_frozen.py')], check=True, stdout=subprocess.DEVNULL)
 assert 'MVS-GP1 GP1.2 (D36' in (R / 'docs/CORE_CHANGES.md').read_text()
-for f in ('src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy', 'maps/LEVEL1.txt', 'src/cobol/PACSCR.cob', 'src/copy/PACPAL.cpy',
+for f in ('src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy', 'maps/LEVEL1.txt',
           'src/copy/PACDS.cpy', 'src/cobol/PACINPT.cob', 'src/cobol/PACPLAT.cob', 'src/cobol/PACQRY.cob',
           'src/asm/PACFSIO.asm', 'src/asm/PACTSO.asm'):
     assert git_show('mvs-s1', f) == (R / f).read_text().splitlines(), f
@@ -54,9 +61,41 @@ REMOVED = {   # the only mvs-s1 lines that changed (USING lists / CALL signature
     'PACMAP': ["               MOVE 1 TO M-FLAG."],
     'PACAI': ["       PROCEDURE DIVISION USING PAC-STATE."],
     'PACRT': ["       PROCEDURE DIVISION USING PAC-STATE PAC-REQ.", "           CALL 'PACGAME' USING PAC-STATE PAC-REQ."],
-    'PACDISP': ["       PROCEDURE DIVISION USING PAC-STATE PAC-REQ.", "           DISPLAY 'SCORE ' SCORE.",
-                "               MOVE 'G' TO WS-LINE-CELL (WS-GX)."],
+    'PACDISP': ["       PROCEDURE DIVISION USING PAC-STATE PAC-REQ.", "           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.",
+                "           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.",
+                "           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.", "           DISPLAY 'SCORE ' SCORE.",
+                "               MOVE 'G' TO WS-LINE-CELL (WS-GX).",
+                "           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS."],
 }
+# GP1.3 (screens) against the GP1.2 checkpoint: PACPAL append-only, PACSCR only the listed lines, PACDISP only the PACSCR
+# calls (now with PAC-ARC); the core, PACMAIN, PACRT and the input / platform side unchanged since GP1.2
+GP12 = 'bc419f7'
+for f in ('src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob', 'src/copy/PACARC.cpy', 'maps/ARCADE1.txt',
+          'src/cobol/PACMAIN.cob', 'src/cobol/PACRT.cob', 'src/copy/PACREQ.cpy', 'src/clist/PACMAN.clist'):
+    assert git_show(GP12, f) == (R / f).read_text().splitlines(), f
+old, new = git_show(GP12, 'src/copy/PACPAL.cpy'), (R / 'src/copy/PACPAL.cpy').read_text().splitlines()
+assert new[:len(old)] == old, 'PACPAL must grow append-only'
+assert [l.split()[1] for l in new[len(old):] if l[6:7] != '*'] == ['PAL-POWER', 'HI-POWER', 'PAL-FRIGHT', 'PAL-WARN',
+                                                                  'PAL-EYES', 'GLY-EYES', 'SPR-4X', 'SPR-3X']
+pal = '\n'.join(new)
+for name, v in (('PAL-POWER', g4.POWER), ('HI-POWER', 0xF1), ('PAL-FRIGHT', g4.FRIGHT), ('PAL-WARN', g4.WARN),
+                ('PAL-EYES', g4.EYESC)):
+    assert re.search(name + r'\s+PIC 999 VALUE ' + str(v) + r'\.', pal), name
+assert "GLY-EYES              PIC X VALUE '\"'." in pal
+assert "' BB  TT  ee     '" in pal and "' B  T  e    '" in pal        # power / eyes tiles of ref_gs_screen.arc_tile
+old, new = git_show(GP12, 'src/cobol/PACSCR.cob'), (R / 'src/cobol/PACSCR.cob').read_text().splitlines()
+assert [d[2:] for d in difflib.ndiff(old, new) if d[:2] == '- '] == [
+    '           05  SPR-4-CH          PIC X OCCURS 40 TIMES.', '           05  SPR-3-CH          PIC X OCCURS 30 TIMES.',
+    '       PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-DS.', '           MOVE SPR-4 TO SPR-4-T.',
+    '           MOVE SPR-3 TO SPR-3-T.', '           MOVE 0 TO WS-HP WS-HG WS-HE WS-HN WS-HW.',
+    "           IF SPR-C = 'E'", "           IF SPR-C = 'T' OR SPR-C = 'B' OR SPR-C = 'E'"]
+old, new = git_show(GP12, 'src/cobol/PACDISP.cob'), (R / 'src/cobol/PACDISP.cob').read_text().splitlines()
+assert all(d[2:].strip() == "CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS." for d in difflib.ndiff(old, new) if d[:2] == '- ')
+scr = (R / 'src/cobol/PACSCR.cob').read_text()
+calls = re.findall(r"CALL 'PACSCR' USING ([^\n]*)\n([^\n]*)", (R / 'src/cobol/PACDISP.cob').read_text())
+assert len(calls) == 6 and all(v.strip() in ('PAC-ARC', 'PAC-ARC.') for _, v in calls), calls
+assert not re.search(r'\b(DISPLAY|ACCEPT|READ|OPEN|WRITE)\b',
+                     '\n'.join(l for l in scr.splitlines() if l[6:7] != '*')), 'PACSCR stays a pure composer'
 for name in ('PACGAME', 'PACMAP', 'PACAI', 'PACRT', 'PACDISP', 'PACMAIN'):
     old, new = git_show('mvs-s1', f'src/cobol/{name}.cob'), (R / f'src/cobol/{name}.cob').read_text().splitlines()
     removed = [d[2:] for d in difflib.ndiff(old, new) if d[:2] == '- ']
@@ -64,7 +103,7 @@ for name in ('PACGAME', 'PACMAP', 'PACAI', 'PACRT', 'PACDISP', 'PACMAIN'):
         assert removed and all(re.fullmatch(r"\s+CALL '(PACGAME|PACRT|PACDISP)' USING PAC-STATE PAC-REQ\.", l)
                                for l in removed), removed
     else:
-        assert removed == REMOVED[name], (name, removed)
+        assert sorted(removed) == sorted(REMOVED[name]), (name, removed)
 for name in ('PACMAIN', 'PACRT', 'PACDISP', 'PACGAME'):   # nobody calls the ARCADE modules without the ARCADE state
     src = (R / f'src/cobol/{name}.cob').read_text()
     calls = re.findall(r"CALL '(PACGAME|PACRT|PACDISP)' USING ([^\n]*)\n([^\n]*)", src)
@@ -201,6 +240,70 @@ for c in GP1_TSO:
     tso_out[c] = A.simulate(cs[1:], prompts=True, cfg=(ai, n), redraw=True)
 t = [l for l in tso_out['GPTSO'] if re.match(r'T\d{3} ', l)]
 assert len(t) == len(set(t)) + 1, 'GPTSO: one redraw repeats a frame'
+
+
+# GP1.3 screen models -----------------------------------------------------------------------------------------------
+def arc_turn(ai, n):
+    return A.Arcade(ai, n, 'T')
+
+
+def arc_rt(ai, n):
+    return A.Arcade(ai, n, 'R')
+
+
+def bells(frames, log, sound):
+    """The S1 bell rule, unchanged (tests/test_s1.py): first screen, fewer lives than the previous screen, first screen
+    after the win; a pending bell at the end of a game without an end screen goes on C6 28 00 00."""
+    if sound != 'Y':
+        return list(frames), []
+    last, won, out, rung = None, False, [], []
+
+    def ring(snap):
+        nonlocal last, won
+        lv, w = snap
+        b = last is None or lv < last or (w and not won)
+        won, last = won or w, lv
+        return b
+    for k, (f, snap) in enumerate(zip(frames, log)):
+        b = ring(snap)
+        out.append(bytes([f[0] | 0x04]) + f[1:] if b else f)
+        if b:
+            rung.append(k)
+    if ring(log.state()):
+        out.append(bytes([0xC6, 0x28, 0x00, 0x00]))
+        rung.append(len(frames))
+    return out, rung
+
+
+scr_turn, scr_rt = [], []
+for run in GP13_TURN:
+    c, h, a, r, gl, sc, cv, snd = run
+    log = Log()
+    fs = gx.frames(c, h == 'Y', a == 'Y', r, gl, sc, cv, snap=log, mk=arc_turn, d='gpcases')
+    scr_turn.append((run, bells(fs, log, snd), A.simulate([l for l in cards('gpcases', c)])[-5:]))
+for run in GP13_RT:
+    c, cv, snd = run
+    log = Log()
+    end, fs = ref_rt.tsd(cards('gpcases', c), cv, snap=log, mk_game=arc_rt, mk_ctl=A.ArcadeRT)
+    scr_rt.append((run, bells(fs, log, snd), end[-6:]))
+allf = [f for _, (fs, _), _ in scr_turn + scr_rt for f in fs]
+assert max(len(f) for f in allf) <= 2048
+blob = b''.join(allf)
+assert bytes([0x28, 0x42, g4.FRIGHT]) in blob and bytes([0x28, 0x41, 0xF1]) in blob          # fright colour, blink
+assert any(b'\x96' in f and b'\x28\x41\xf1' in f for _, (fs, _), _ in scr_turn[:1] for f in fs)  # o blinking (C)
+assert any(e for _, (fs, _), _ in scr_turn[:5] for e in [b'\x7f' in f for f in fs]), 'eyes \" on the unscaled boards'
+# frightened ghosts drawn white in the warning window (GPAI0 T021-T024): the model image proves it, PACSCR = model
+cs = cards('gpcases', 'GPAI0')
+ai, n, rest = A.parse_config(cs)
+g = A.Arcade(ai, n, 'T')
+for u in rest[:21]:
+    g.step(u)
+assert g.warning() and g4.fright_colour(g) == g4.WARN
+img = g4.cells(g, rest[20], g.res, None, True, 'G', True, 0, 'R')
+assert any(col == g4.WARN and b == g4.CP310['∩'] and h == 0 for b, col, h, ge in img)
+assert [r[0][7] for r in scr_turn].count('Y') == 2 and all(len(rg) >= 1 for r, (_, rg), _ in scr_turn if r[7] == 'Y')
+print('GP1.3 local checks PASS:', len(GP13_TURN), 'TURN and', len(GP13_RT), 'REALTIME ARCADE TSD runs,', len(allf),
+      'model streams, largest', max(len(f) for f in allf), 'bytes')
 print('local checks PASS:', len(S.PRED) + 2, 'edge cases reached;', len(GP1_BAT), 'TURN,', len(GP1_RT), 'REALTIME,',
       len(GP1_TSO), 'TSO ARCADE model runs')
 
@@ -213,7 +316,7 @@ if len(sys.argv) == 2:
     assert len(rcs) == nsteps and all(r == '0000' for _, r in rcs), (nsteps, len(rcs), [x for x in rcs if x[1] != '0000'])
     assert not [l for l in lines if re.search(r'IKF\d{4}I-[WCE]', l)], 'compiler warnings'
     cut = lines.index(GP1_MARK)
-    gp1_only = re.compile(r'(CPY6|GP1MARK|GP[BRTC]\d+)$')
+    gp1_only = re.compile(r'(CPY6|GP1MARK|GP13MARK|GP[BRTC]\d+|GQ[TR]\d+)$')
     head = []
     for l in lines[:cut]:
         m = re.search(r'PACBLGP1\s+(\w+)\s+\S+\s+RC=', l)
@@ -239,6 +342,36 @@ if len(sys.argv) == 2:
         w = batch_or[c] if kind == 'BAT' else [l.rstrip() for l in ref_rt.simulate(cards('rtcases', c))]
         assert tail[s:s + len(w)] == w, ('CLASSIC column 21', repr(col), c)
         assert 'RULES ARCADE' not in tail[s:s + len(w)]
+    # GP1.3: TSD streams after the second marker, run by run (end lines: 5 TURN / 6 REALTIME)
+    cut2 = lines.index(GP13_MARK)
+    t2, j, ns = lines[cut2 + 1:], 0, 0
+
+    def tsd_run(nend):
+        global j
+        streams = []
+        while t2[j].rstrip() not in ('WIN', 'LOST', 'QUIT', 'EOF'):
+            m = re.match(r'TSD FRAME LEN(\d{4})$', t2[j])
+            j += 1
+            if not m:
+                continue
+            hexs = ''
+            while t2[j].startswith('TSD ') and not t2[j].startswith('TSD FRAME'):
+                hexs += t2[j][4:].strip()
+                j += 1
+            data = bytes.fromhex(hexs)
+            assert len(data) == int(m.group(1))
+            streams.append(data)
+        ends = [l.rstrip() for l in t2[j:j + nend]]
+        j += nend
+        return streams, ends
+    for run, (wstreams, _), wend in scr_turn + scr_rt:
+        got, ends = tsd_run(len(wend))
+        assert len(got) == len(wstreams), (run, len(got), len(wstreams))
+        for x, (p, q) in enumerate(zip(got, wstreams)):
+            assert p == q, (run, x, next((y for y in range(min(len(p), len(q))) if p[y] != q[y]), min(len(p), len(q))))
+        assert ends == wend, (run, ends, wend)
+        ns += len(got)
+    print('MVS-GP1 GP1.3 PASS:', len(GP13_TURN) + len(GP13_RT), 'ARCADE TSD runs =', ns, 'model streams')
     print('MVS-GP1 GP1.2 PASS:', len(rcs), 'steps RC 0000; S1 regression:', s1.stdout.strip().splitlines()[-1][:60], '...;',
           len(want), 'ARCADE runs = model (', sum(len(w) for w in want), 'lines );', len(GP1_CLASSIC),
           'column-21 CLASSIC runs = oracle/model')

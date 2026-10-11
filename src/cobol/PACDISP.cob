@@ -200,6 +200,7 @@
                ADD 1 TO M-FRAMES
            ELSE IF REQ-OP = 'INVL'
                CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
+                   PAC-ARC
            ELSE IF REQ-OP = 'PRMT'
                PERFORM SCR-PRMT THRU SCR-PRMT-EXIT
            ELSE IF REQ-OP = 'TICK'
@@ -215,7 +216,8 @@
        SCREEN-OP-EXIT.
            EXIT.
        SCR-PRMT.
-           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
+           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
+                   PAC-ARC.
            ADD DS-LEN TO M-CHARS.
            PERFORM SET-BELL.
            MOVE 'SEND' TO REQ-OP.
@@ -233,6 +235,7 @@
            IF REQ-SCALE NOT = 'N'
                MOVE 'ENDS' TO REQ-OP
                CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
+                   PAC-ARC
                PERFORM SCR-ENDS-SEND.
            IF DS-LEN = 0
                PERFORM SCR-END-BELL.
@@ -274,7 +277,8 @@
            MOVE LIVES TO SB-LIVES.
        SCR-TICK.
       * MVS-G3: VISUAL TICK (GLYPH FRAME ONLY). NO CHANGE = NO SEND.
-           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
+           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
+                   PAC-ARC.
            IF DS-LEN > 0
                ADD DS-LEN TO M-CHARS
                PERFORM SET-BELL
@@ -299,7 +303,8 @@
                PERFORM SCR-PRMT THRU SCR-PRMT-EXIT
                MOVE 'RTQF' TO REQ-OP
                GO TO SCR-RTQF-EXIT.
-           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
+           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
+                   PAC-ARC.
            ADD DS-LEN TO M-CHARS.
            PERFORM SET-BELL.
            MOVE 'SEND' TO REQ-OP.
@@ -348,7 +353,8 @@
       * THE PARTIAL SEND FAILED (PACPLAT SWITCHED TO FULL REDRAW, NO
       * ANIMATION): SEND THE WHOLE SCREEN INSTEAD.
            MOVE 'FULL' TO REQ-OP.
-           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
+           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
+                   PAC-ARC.
            ADD DS-LEN TO M-CHARS.
            MOVE 'SEND' TO REQ-OP.
            CALL 'PACPLAT' USING PAC-REQ PAC-DS.

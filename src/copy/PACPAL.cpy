@@ -89,3 +89,17 @@
                'BF TF  FB FTBFBTFTBEBFTFBEBTFT'.
       * PELLET: SUB-CELL (ROW 1, COLUMN 2) OF ITS TILE, CP310 X'A3'.
            05  LS-PEL-COL            PIC 9 VALUE 2.
+      * MVS-GP1 RULES(ARCADE) (D36, DOCS/GP1-POWER.MD 6): POWER PELLET
+      * 'o' WHITE, BLINKING WHEN HIGHLIGHTING IS ON; FRIGHTENED GHOSTS
+      * BLUE (WHITE IN THE WARNING WINDOW), NOT IN REVERSE OUTSIDE THE
+      * SCALED SPRITES; EYES '"' WHITE (SCALED: THE EYE CELLS ONLY).
+           05  PAL-POWER             PIC 999 VALUE 247.
+           05  HI-POWER              PIC 999 VALUE 241.
+           05  PAL-FRIGHT            PIC 999 VALUE 241.
+           05  PAL-WARN              PIC 999 VALUE 247.
+           05  PAL-EYES              PIC 999 VALUE 247.
+           05  GLY-EYES              PIC X VALUE '"'.
+      * SCALED EXTRA SPRITES 6 POWER PELLET, 7 EYES (CODES AS SPR-4;
+      * e = EYE NOT IN REVERSE, ALSO USED FOR A FRIGHTENED GHOST'S E).
+           05  SPR-4X                PIC X(16) VALUE ' BB  TT  ee     '.
+           05  SPR-3X                PIC X(12) VALUE ' B  T  e    '.

@@ -39,6 +39,9 @@ def sh(v):
 
 
 def status(g, cmd, res):
+    if getattr(g, 'arc', False):          # MVS-GP1 ARCADE status line (docs/GP1-POWER.md 6): 7-digit score, PW, FR
+        return (f'T{g.t:03d} {cmd} {res} S={g.ascore:07d} L={g.left:03d} V={g.lives} ST={g.state} '
+                f'PW={g.power} FR={g.fr:03d}')
     return (f'T{g.t:03d} {cmd} {res} X={g.x:02d} Y={g.y:02d} S={g.score:04d} L={g.left:03d} '
             f'G={g.gh[0][0]:02d},{g.gh[0][1]:02d} V={g.lives} ST={g.state}')
 
