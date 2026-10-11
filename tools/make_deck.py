@@ -171,7 +171,12 @@ def rt_parm_and_cards(case):
 
 
 def rt_steps(pfx, load):
-    out = ''
+    # RT3: the PACTSO clock (TIME / DLWT) tested in batch by the driver PACTSOT (LOAD(PACTSOT), not the game)
+    out = upload('SRCT', pfx, 'COBOL', 'PACTSOT', text_of(ROOT / 'src/cobol/PACTSOT.cob'))
+    out += compile_step('COBT', pfx, 'PACTSOT', 'OBJT')
+    out += asm_step('ASMT', 'OBJAT', text_of(ROOT / 'src/asm/PACTSO.asm'))
+    out += link_step(pfx, ['OBJT', 'OBJAT'], 'PACTSOT', 'PACTSOT', step='LINKT')
+    out += run_step('TSOT1', pfx, 'PACTSOT', None)
     for i, c in enumerate(RT_BAT, 1):
         out += run_step(f'RTB{i}', pfx, load, text_of(ROOT / f'tests/rtcases/{c}.txt'), parm='BAT'.ljust(18) + 'R')
     for i, (c, cv) in enumerate(RT_TSD, 1):

@@ -138,4 +138,10 @@ banner as in TURN.
   screen (keyboard restore); before, an arrow pressed while paused left the keyboard locked and, with typeahead off, the
   PF9 to resume would have been lost.
 - Live tools: tools/rt_play.py (start a REALTIME game + game keys), tools/c3270_rt_game.py (trace acceptance report).
+- Live defects found in RT3 and fixed: (1) the installed CLIST CALL line reached column 73 (sequence columns): ENDING
+  QUOTE ASSUMED, '***' hold, line-mode TURN fallback -> PARM built with SET &P; tests/test_rt.py checks column 72.
+  (2) PACTSO DLWT multiplied the wrong register (missing LR 1,0): each wait lasted about the time elapsed since the start
+  (frames 23, 45, 88, 175, 350 ... ms apart, keyboard locked until the late frame; seen as a persistent X Wait). Fixed;
+  new batch clock test PACTSOT (20 deadlines 150 ms apart + one already passed) in the RT deck. JOB 226: test_rt PASS,
+  142 steps RC 0000, wake lateness <= 13 ms (docs/evidence/rt3-build.txt).
 

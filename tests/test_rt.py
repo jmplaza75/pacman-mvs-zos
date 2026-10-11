@@ -120,13 +120,13 @@ print('local checks PASS:', len(RT_BAT), 'batch cases,', len(RT_TSD), 'TSD runs,
 if len(sys.argv) == 2:
     lines = Path(sys.argv[1]).read_text().splitlines()
     nsteps = len(re.findall(r'^//\w+\s+EXEC PGM=', build('RT', 'HERC01.PACMAN'), re.M))
-    rcs = re.findall(r'PACBLDRT\s+(\w+)\s+(?:IEBGENER|IKFCBL00|IFOX00|IEWL|PACMAIN|PACQRYT)\s+RC= (\d{4})', '\n'.join(lines))
+    rcs = re.findall(r'PACBLDRT\s+(\w+)\s+(?:IEBGENER|IKFCBL00|IFOX00|IEWL|PACMAIN|PACQRYT|PACTSOT)\s+RC= (\d{4})', '\n'.join(lines))
     assert len(rcs) == nsteps and all(r == '0000' for _, r in rcs), (nsteps, len(rcs), [x for x in rcs if x[1] != '0000'])
     assert not [l for l in lines if re.search(r'IKF\d{4}I-[WCE]', l)], 'compiler warnings'
     # the GX part: everything up to the first banner after the PACQRY lines, with the RT-only steps removed
     lastq = max(i for i, l in enumerate(lines) if l.startswith('QRY ') and 'LEN=' in l)
     cut = next(i for i in range(lastq, len(lines)) if lines[i] == BANNER)
-    rt_only = {'SRC10', 'COB10'} | {f'RTB{i}' for i in range(1, len(RT_BAT) + 1)} | \
+    rt_only = {'SRC10', 'COB10', 'SRCT', 'COBT', 'ASMT', 'LINKT', 'TSOT1'} | {f'RTB{i}' for i in range(1, len(RT_BAT) + 1)} | \
         {f'RTT{i}' for i in range(1, len(RT_TSD) + 1)}
     head = []
     for l in lines[:cut]:
@@ -138,6 +138,13 @@ if len(sys.argv) == 2:
         tf.write('\n'.join(head) + '\n')
     gx = subprocess.run([sys.executable, str(R / 'tests/test_gx.py'), tf.name], capture_output=True, text=True)
     assert gx.returncode == 0, gx.stdout[-2000:] + gx.stderr[-3000:]
+    # RT3: PACTSO clock in batch: 20 absolute deadlines 150 ms apart, then a deadline already passed (no wait)
+    tsot = [re.match(r'TSOT (\S\S) DL= *(-?\d+) NOW= *(-?\d+) RC= *(-?\d+)', l) for l in lines if l.startswith('TSOT ')]
+    assert len(tsot) == 21 and all(tsot), len(tsot)
+    rows = [(m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4))) for m in tsot]
+    assert all(rc == 0 and 0 <= now - dl <= 30 for _, dl, now, rc in rows[:20]), rows[:20]
+    assert all(120 <= b[2] - a[2] <= 180 for a, b in zip(rows, rows[1:20])), [b[2] - a[2] for a, b in zip(rows, rows[1:20])]
+    assert rows[20][0] == 'LA' and rows[20][3] == 4 and rows[20][2] - rows[19][2] <= 30, rows[20]
     tail = lines[cut:]
     # batch REALTIME blocks: banner .. QUANTA
     starts = [i for i, l in enumerate(tail) if l == BANNER]
@@ -173,5 +180,6 @@ if len(sys.argv) == 2:
             assert a == b, (case, x, next((y for y in range(min(len(a), len(b))) if a[y] != b[y]), min(len(a), len(b))))
         nstreams += len(streams)
         j += 1
+    print('PACTSO clock: 20 deadlines, wake late by', max(now - dl for _, dl, now, _ in rows[:20]), 'ms at most;')
     print('MVS-RT RT2 PASS:', len(rcs), 'steps RC 0000; GX regression:', gx.stdout.strip().splitlines()[-1][:60], '...;',
           len(RT_BAT), 'batch REALTIME runs = model;', nstreams, 'TSD REALTIME streams = model')

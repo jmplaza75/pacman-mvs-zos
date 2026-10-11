@@ -62,7 +62,8 @@ DODLWT   DS    0H
          L     0,0(5)              DEADLINE (MS)
          SR    0,1                 REMAINDER = DEADLINE - NOW
          BNP   LATE
-         M     0,=F'1000'          MS -> US IN R0/R1 (R0 = 0 HERE)
+         LR    1,0                 THE REMAINDER INTO R1 (M USES R1)
+         M     0,=F'1000'          MS -> US IN R0/R1
          SLDL  0,12                US -> TOD UNITS (BIT 51 = 1 US)
          STM   0,1,MICDW
          STIMER WAIT,MICVL=MICDW
