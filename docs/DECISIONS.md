@@ -150,3 +150,8 @@
   press-to-start (D28 release); separate RT-LOOP, terminal-independent PACRT, PACGAME REQ-STEP B/P/G (TURN = B), PACFSIO
   POLL, PACTSO TIME / deadline wait; PLAY(TURN|REALTIME), TURN default and byte-identical. TICK-COUNT wraps harmlessly
   (display only, JOB 217): PACSTATE unchanged. RT0 has no valid physical 4-key burst; accepted as an RT3 control issue.
+- D34 (MVS-RT) REALTIME is the PACMAN CLIST default (`PLAY(REALTIME)`), approved by the user after the RT3 live PASS
+  (2026-10-11, docs/evidence/rt3-live.md); `PLAY(TURN)` is the compatibility mode and direct calls without PARM column
+  19 stay TURN (D17). Pause = PF9 (P in the launcher's temporary keymap) or P + ENTER, with a PAUSED banner; RT3 live
+  defects fixed: CLIST CALL line beyond column 72, PACTSO DLWT register (batch clock test PACTSOT added).
+

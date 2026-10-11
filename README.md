@@ -58,7 +58,19 @@ The card file has one command per line. An optional first line `AI<l> <n>` picks
 for example `AI3 2`. The game is printed in the job listing.
 
 ## Play interactively (TSO, 3270)
-Log on to TSO (`c3270 localhost:3270`) and run from `READY`:
+**Real time (MVS-RT, the default):** size a macOS Terminal window to 120x30, start the terminal with the game keymap and
+log on to TSO, then start the game from a second shell:
+```
+TYPEAHEAD=false tools/c3270_rt.sh          (c3270 120x27, arrows = PF7/8/10/11, typeahead off)
+python3 tools/rt_play.py                   (at TSO READY: EXEC ... 'PLAY(REALTIME)', P = PF9 pause while it runs)
+```
+Pac-Man waits until the first arrow, then keeps moving by himself every 150 ms; the ghosts move on their own (4/5 of
+his speed). An arrow pressed before an opening is remembered for 3 steps and taken at the first chance; the opposite
+arrow reverses at once. P (PF9) pauses and resumes (`PAUSED` banner), PA2 redraws, Q + ENTER quits; U/D/L/R/P + ENTER
+also work. Do not use CLEAR (TSO swallows it). Without colour full-screen mode the game plays TURN. Design and
+measurements: `docs/RT-REALTIME.md` (D33, D34), `docs/evidence/rt-e14-timing.md`, `docs/evidence/rt3-live.md`.
+**Turn by turn (compatibility):** `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'PLAY(TURN)'` plays one move per command, as
+below. Log on to TSO (`c3270 localhost:3270`) and run from `READY` (add `PLAY(TURN)` for the turn-by-turn game):
 ```
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)'
 EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'AI(3) GHOSTS(2)'
@@ -118,5 +130,9 @@ MVS-GS (scaled renderer and geometry: 4x2 maze with arcade contour walls and hal
 `SCALE(...)` and `CANVAS(...)`, larger canvases up to 132x27; preferred 120x27 IBM-DYNAMIC for a 120x30 macOS Terminal,
 80x24 fallback; design `docs/GS-SCALED.md`, `docs/GS-GEOMETRY.md`) is complete (tag `mvs-gs`; Hercules JOBs 200/207 and
 live in c3270). The maze stays 80x20 at 4x2: larger canvases add centring and HUD space, not maze scale.
+MVS-RT (real-time gameplay: `PLAY(REALTIME|TURN)`, REALTIME the CLIST default; 150 ms absolute-deadline clock,
+arrows = PF7/8/10/11, PF9 pause, buffered turns, autonomous ghosts at 4/5 speed, one write per quantum with keyboard
+restore; probe E14 + design D33 in `docs/RT-REALTIME.md`) is complete (tag `mvs-rt`; Hercules JOB 226 and live in c3270,
+`docs/evidence/rt3-live.md`). TURN is unchanged (1.0-MVS oracle and all earlier regressions pass).
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

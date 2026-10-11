@@ -39,8 +39,18 @@ if not starts:
     raise SystemExit('no game screen in the trace')
 i0 = starts[0]
 ev = ev[i0:]
-end = next((i for i, e in enumerate(ev) if e[0] == '<' and any(b in e[2] for b in BANNERS.values())), len(ev) - 1)
-banner = next((k for k, b in BANNERS.items() if b in ev[end][2]), None) if end < len(ev) - 1 else None
+HELP_QUIT = 'Q QUIT '.encode('cp037')                 # the HUD help text, not a banner
+
+
+def banner_of(b):
+    for k, v in BANNERS.items():
+        if b.count(v) > (b.count(HELP_QUIT) if k == ' QUIT ' else 0):
+            return k
+    return None
+
+
+end = next((i for i, e in enumerate(ev) if i > 0 and e[0] == '<' and banner_of(e[2])), len(ev) - 1)
+banner = banner_of(ev[end][2]) if end < len(ev) - 1 else None
 ev = ev[:end + 1]
 rows, outs, aids, locks, lock_t = [], [], [], [], None
 paused, pauses, first_aid = None, [], None

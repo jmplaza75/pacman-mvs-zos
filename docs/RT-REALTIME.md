@@ -1,6 +1,7 @@
-# MVS-RT real-time gameplay - plan and frozen design (D33)
+# MVS-RT real-time gameplay - plan, frozen design (D33) and result
 Baseline: tag `mvs-gs`, commit 62ab854. Plan approved 2026-10-09. RT0 (probe E14) CLOSED 2026-10-10
-(docs/evidence/rt-e14-timing.md). RT1 design APPROVED 2026-10-10 (section "RT1 frozen design" below). Next: RT2.
+(docs/evidence/rt-e14-timing.md). RT1 design APPROVED 2026-10-10. RT2 Hercules validation 2026-10-10. RT3 live PASS
+2026-10-11 (docs/evidence/rt3-live.md). MVS-RT COMPLETE (tag `mvs-rt`): REALTIME is the CLIST default (D34).
 
 ## Goal
 From `direction + ENTER -> one logical turn` to real time: Pac-Man moves on a logical clock, ghosts move on their own under
@@ -144,4 +145,21 @@ banner as in TURN.
   (frames 23, 45, 88, 175, 350 ... ms apart, keyboard locked until the late frame; seen as a persistent X Wait). Fixed;
   new batch clock test PACTSOT (20 deadlines 150 ms apart + one already passed) in the RT deck. JOB 226: test_rt PASS,
   142 steps RC 0000, wake lateness <= 13 ms (docs/evidence/rt3-build.txt).
+
+## RT3 live result and RT4 closure (2026-10-11)
+Live c3270 checklist PASS (user): start from rest with one arrow, continuous movement without ENTER, autonomous ghosts,
+buffered turns, reversal, held keys without stale backlog, PF9 pause with PAUSED and clean resume, PA2 redraw, death
+freeze and respawn, QUIT banner and end lines with QUANTA. Trace `~/rt3-live2.txt` (docs/evidence/rt3-live.md): frames
+every 150 ms (median 150, p95 160), every one of the 44 AIDs answered by a write within 147 ms, 30 restore-only writes,
+no catch-up after the pause, no backlog (7 autorepeats dropped while locked). `~/rt3-live1.txt` is failed integration
+evidence only (CLIST column 73, then the DLWT register defect), both fixed.
+TURN: unchanged - the whole TURN/GX regression and the 1.0-MVS oracle pass in the final build (JOB 226); direct calls
+without PARM column 19 still play TURN.
+CLIST default (D34): `PLAY(REALTIME)`; `PLAY(TURN)` is the compatibility mode (one move per command, the mvs-gs game).
+REALTIME falls back to TURN by itself when colour full-screen mode is not available (line mode). Recommended terminal:
+`tools/c3270_rt.sh` (keymap, typeahead off) and `python3 tools/rt_play.py` (starts the game and switches the P = PF9
+pause key on only while it runs); with a plain c3270, PF7/8/10/11/PF9 or U/D/L/R/P + ENTER work too.
+Known limits: speed is fixed (T = 150 ms, player every quantum, ghosts 4/5); fast multi-key bursts with typeahead off
+can drop a key pressed while the keyboard is locked (accepted, D33); long pauses and the waits before the start use the
+existing blocking RECV path (not separately soak-tested).
 

@@ -42,14 +42,13 @@ MVS-GS COMPLETE (tag mvs-gs, 2026-10-09): scaled renderer + geometry integration
 - Regression to keep: tests/test_gx.py (+ test_gs.py, test_g4.py, test_core_frozen.py). Future, not a dependency: probe E13
   (4 KB TPUT transport) for a richer HUD or a 6x3 maze.
 
-MVS-RT (real-time gameplay) STARTED 2026-10-09, plan approved: docs/RT-REALTIME.md (baseline mvs-gs, 62ab854).
-- RT0 CLOSED 2026-10-10: isolated probe E14 (src/probe/PACRTP.cob + PACRTA.asm, CLIST RTPROBE, build JOB 211, logs JOBs
-  213-216). Evidence and conclusions: docs/evidence/rt-e14-timing.md. PACMAN and the frozen core unchanged.
-- RT1 APPROVED 2026-10-10: frozen design D33 in docs/RT-REALTIME.md (T = 150 ms, PF7/8/10/11, typeahead OFF, PACRT,
-  PACGAME REQ-STEP, PACFSIO POLL, PACTSO TIME/deadline wait, PLAY(TURN|REALTIME)). TICK-COUNT > 999 wraps harmlessly
-  (JOB 217): PACSTATE unchanged. No further probes.
-- RT2 DONE 2026-10-10 (Hercules JOB 222, tests/test_rt.py PASS, docs/evidence/rt2-build.txt): PACRT, PACGAME REQ-STEP
-  (authorised), RT-GAME loop, PACINPT/PACPLAT/PACDISP/PACSCR RT ops, PACFSIO POLL, PACTSO TIME/DLWT, PLAY(TURN|REALTIME)
-  (CLIST default TURN), tests/ref_rt.py + tests/rtcases. TURN regression unchanged.
-- RT3 IN PROGRESS (approved 2026-10-10): PF9 pause + PAUSED banner, restore after every pre-start/pause input (JOB 223,
-  CLIST JOB 224). Live c3270 acceptance pending.
+MVS-RT COMPLETE (tag mvs-rt, 2026-10-11): real-time gameplay (D33, D34; docs/RT-REALTIME.md).
+- RT0 probe E14 (docs/evidence/rt-e14-timing.md): T = 150 ms, PF7/8/10/11, typeahead off, D28 released by the first AID.
+- RT2 (JOB 222) and final build JOB 226: PACRT, PACGAME REQ-STEP (authorised), RT-GAME loop, PACFSIO POLL, PACTSO
+  TIME/DLWT (+ batch clock test PACTSOT), PF9 pause + PAUSED; tests/test_rt.py PASS (TURN/GX regression and 1.0-MVS
+  oracle unchanged, 12 batch + 182 TSD REALTIME streams = tests/ref_rt.py).
+- RT3 live PASS (docs/evidence/rt3-live.md); CLIST default PLAY(REALTIME), PLAY(TURN) compatibility (JOB 227).
+- Play: `TYPEAHEAD=false tools/c3270_rt.sh` (120x30 window), log on, then `python3 tools/rt_play.py`.
+- Regression to keep: tests/test_rt.py (+ test_gx.py, test_gs.py, test_g4.py, test_core_frozen.py).
+
+NEXT: NOT STARTED - wait for the user's go (no next phase chosen).
