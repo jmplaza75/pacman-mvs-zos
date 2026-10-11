@@ -19,6 +19,7 @@ from ref_g2_screen import (e, sa, sh, status, HUD, ERROR, HELP, PLAYER, GHOSTS, 
                            CODES)
 import ref_g4_screen as g4  # noqa: E402
 import ref_gs_screen as gs  # noqa: E402
+from ref_snap import Rec  # noqa: E402
 
 CANVASES = {'W': (120, 27), 'X': (132, 27), 'T': (80, 43), 'M': (80, 32), 'U': (100, 25), 'L': (160, 30)}
 LIFE, GHOST_ICON = 0x9B, 0xAA
@@ -221,9 +222,9 @@ def relocate(geo, ds):
     return bytes(out)
 
 
-def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='D'):
+def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='D', snap=None):
     """The whole TSD run. Resolution as PACPLAT in TSD: glyph AUTO = CLASSIC; scale A = 4; scaled only with
-    highlight and GRAPHIC glyphs."""
+    highlight and GRAPHIC glyphs. snap: optional ref_snap.Log ((lives, won) per screen sent, MVS-S1)."""
     prof = {'G': 'G', 'B': 'B', 'C': 'C', 'A': 'C'}[glyphs]
     s = '4' if scale == 'A' else scale
     if s not in '43T' or not hi or prof != 'G':
@@ -231,7 +232,7 @@ def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='
     geo = Geo(canvas, s != 'N', 3 if s == '3' else 4)
     limit = 1000 if s == 'T' else 2048
     if s == 'N':
-        return [relocate(geo, f) for f in g4.frames(case, hi, anim, redraw, prof)]
+        return [relocate(geo, f) for f in g4.frames(case, hi, anim, redraw, prof, snap=snap)]
     # the size guard can only trip at the first screen in practice (scale T): find the family that fits it
     ai, n, cards = parse_config((R / f'tests/cases/{case}.txt').read_text().splitlines())
     while geo.fam != 'G':
@@ -240,10 +241,10 @@ def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='
             break
         geo.down()
     if geo.fam == 'G':
-        return [relocate(geo, f) for f in g4.frames(case, True, anim, redraw, 'G')]
+        return [relocate(geo, f) for f in g4.frames(case, True, anim, redraw, 'G', snap=snap)]
     g = Game(ai, n)
     st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R'}
-    out = []
+    out = Rec(snap, lambda: (g.lives, g.won))
 
     def img(cmd, res, msg, banner=None):
         return image(geo, g, cmd, res, msg, anim, st['vis'], st['face'], banner)

@@ -7,7 +7,7 @@ ANIM(NO) REDRAW(FULL), COLOR(NO)). Design, results, known limitation: docs/G3-PA
 KNOWN LIMITATION (D28, investigation closed deliberately): in TK4-/MVS 3.8J + TSO + c3270, COLOR(AUTO) performs a capability Query Reply
 that leaves the idle ticks held until the first AID; after the first input the animation works normally. COLOR(YES) HILITE(YES) skips the
 query and the animation starts immediately (recommended on TK4-/c3270). Not a fault of the mechanics or of the G3 renderer.
-Pending note (from G1, not G3 work): the ESTAE abend-restore exit in PACFSIO is implemented but not validated live.
+Pending note (from G1, not G3 work): the ESTAE abend-restore exit in PACFSIO is implemented but not validated live. S1 live 1 (unplanned 0C4 in full-screen mode) came back to READY in line mode, consistent with the exit working; the controlled test stays in RP.
 
 1.0-MVS is the immutable functional baseline; z/OS out of scope.
 
@@ -51,4 +51,15 @@ MVS-RT COMPLETE (tag mvs-rt, 2026-10-11): real-time gameplay (D33, D34; docs/RT-
 - Play: `TYPEAHEAD=false tools/c3270_rt.sh` (120x30 window), log on, then `python3 tools/rt_play.py`.
 - Regression to keep: tests/test_rt.py (+ test_gx.py, test_gs.py, test_g4.py, test_core_frozen.py).
 
-NEXT: NOT STARTED - wait for the user's go (no next phase chosen).
+Post-RT roadmap APPROVED with amendments (2026-10-11): docs/ROADMAP-POST-RT.md, order S1 -> GP1 -> GP2 -> HS -> RP -> S2 -> G7
+-> G8 / 2.0-MVS-MAX (final MVS release). GP1/GP2 may change the core only under RULES(ARCADE); CLASSIC stays 1.0-MVS.
+
+MVS-S1 IN PROGRESS (sound, D35): probe E15 live PASS (docs/evidence/s1-e15-alarm.md: the WCC alarm is audible through SENX,
+SEND and SENP). SOUND(AUTO|YES|NO) built and tested on Hercules: JOB 233 (tests/test_s1.py PASS: RT/GX/TURN regression and
+1.0-MVS oracle unchanged, 15 SOUND TSD runs = model with 38 bells, line/batch modes silent), CLIST SOUND(AUTO) JOB 234.
+Evidence docs/evidence/s1-build-tsd.txt. Live 1 (2026-10-11): bells PASS (AUTO and NO), BUT every game end abended 0C4-4:
+latent RT2 defect in PACTSO (WAIT fell into DOTIME: wild store), fixed with one `B DONE` (docs/evidence/s1-live-0c4.md);
+rebuild JOB 236 PASS. Live 2 (docs/evidence/s1-live.md): PASS for AUTO and NO, both traced games ended LOST cleanly (end
+lines, READY, no error); a QUIT end is not in the trace (same end path). PENDING: user decision to close (tag mvs-s1).
+Do not start GP1 or S2 until S1 is closed and the user says go. E15 data for S2: 3 bells audible back to back and 0.5 s apart.
+Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).

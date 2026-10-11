@@ -11,6 +11,7 @@ from pathlib import Path
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / 'tests'))
 from ref_mvs6 import Game, parse_config  # noqa: E402
+from ref_snap import Rec  # noqa: E402
 from ref_g2_screen import (e, sba, sa, sh, status, WALL, PELLET, PLAYER, GHOSTS, HUD, ERROR, HELP,  # noqa: E402
                            HELP_TEXT, REVERSE, BLINK, UNDERSCORE)
 
@@ -127,12 +128,13 @@ def partial(cur, prev, kind, hi):
     return bytes(out + [0x28, 0x00, 0x00])
 
 
-def frames(case, hi=False, anim=False, redraw='F', prof='C', faces=None):
-    """faces: optional list that receives the Pac-Man facing used for every logical screen (for the tests)."""
+def frames(case, hi=False, anim=False, redraw='F', prof='C', faces=None, snap=None):
+    """faces: optional list that receives the Pac-Man facing used for every logical screen (for the tests).
+    snap: optional ref_snap.Log that receives (lives, won) for every screen sent (MVS-S1)."""
     ai, n, cards = parse_config((R / f'tests/cases/{case}.txt').read_text().splitlines())
     g = Game(ai, n)
     st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R'}
-    out = []
+    out = Rec(snap, lambda: (g.lives, g.won))
 
     def image(cmd, res, msg):
         return cells(g, cmd, res, msg, hi, prof, anim, st['vis'], st['face'])

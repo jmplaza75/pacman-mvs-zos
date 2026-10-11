@@ -15,6 +15,13 @@
       * FULL REDRAW, ELSE PACSCR RTQF (ALWAYS ONE STREAM). BAT: THE RT
       * STATUS LINE (QUANTUM, INPUTS, STEP KIND, DIRECTIONS, STATE) AND
       * THE GHOSTS LINE. END ADDS 'QUANTA' IN REALTIME ONLY.
+      * MVS-S1: BEFORE EVERY SCREEN SENT, SET-BELL READS THE STATE
+      * (NEVER CHANGES IT): REQ-BELL Y ON THE FIRST SCREEN (START),
+      * WHEN LIVES FELL SINCE THE LAST SCREEN (DEATH, THE LAST ONE TOO)
+      * AND ON THE FIRST SCREEN AFTER THE WIN; PACPLAT RINGS ONLY WITH
+      * SOUND Y.
+      * WITHOUT AN END SCREEN (NOT SCALED) A PENDING ALARM GOES ON A
+      * RESTORE-ONLY WRITE (C2 28 00 00) BEFORE LINE MODE RETURNS.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -36,6 +43,13 @@
        01  M-CHARS               PIC 9(7) VALUE 0.
        01  WS-NOP                PIC 9.
        01  M-CLEARS              PIC 9(4) VALUE 0.
+       01  SB-SENT               PIC 9 VALUE 0.
+       01  SB-LIVES              PIC 9 VALUE 0.
+       01  SB-WON                PIC 9 VALUE 0.
+       01  HEXW.
+           05  HX-Z              PIC X VALUE LOW-VALUE.
+           05  HX-B              PIC X.
+       01  HEXN REDEFINES HEXW   PIC 9(4) COMP.
        01  WS-MET.
            05  FILLER            PIC X(15) VALUE 'METRICS FRAMES='.
            05  MT-FRAMES         PIC 9(4).
@@ -167,6 +181,7 @@
        SCR-PRMT.
            CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
            ADD DS-LEN TO M-CHARS.
+           PERFORM SET-BELL.
            MOVE 'SEND' TO REQ-OP.
            MOVE SPACE TO REQ-SENDST.
            CALL 'PACPLAT' USING PAC-REQ PAC-DS.
@@ -178,24 +193,55 @@
        SCR-ENDS.
       * MVS-GS: SCALED ONLY - ONE FINAL SCREEN WITH THE END BANNER, THEN
       * A SHORT PAUSE (PACPLAT WAIT, NO INPUT IS READ) BEFORE LINE MODE.
+           MOVE 0 TO DS-LEN.
            IF REQ-SCALE NOT = 'N'
                MOVE 'ENDS' TO REQ-OP
                CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
                PERFORM SCR-ENDS-SEND.
+           IF DS-LEN = 0
+               PERFORM SCR-END-BELL.
            MOVE 'END ' TO REQ-OP.
        SCR-ENDS-SEND.
            IF DS-LEN > 0
                ADD DS-LEN TO M-CHARS
+               PERFORM SET-BELL
                MOVE 'SEND' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ PAC-DS
                MOVE 'WAIT' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ.
            MOVE 0 TO WS-NOP.
+       SCR-END-BELL.
+           PERFORM SET-BELL.
+           IF REQ-BELL = 'Y' AND REQ-SOUND = 'Y'
+               MOVE 194 TO HEXN
+               MOVE HX-B TO DS-BYTE (1)
+               MOVE 40 TO HEXN
+               MOVE HX-B TO DS-BYTE (2)
+               MOVE LOW-VALUE TO DS-BYTE (3)
+               MOVE LOW-VALUE TO DS-BYTE (4)
+               MOVE 4 TO DS-LEN
+               MOVE 'P' TO DS-KIND
+               ADD DS-LEN TO M-CHARS
+               MOVE 'SEND' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ PAC-DS.
+           MOVE 'N' TO REQ-BELL.
+       SET-BELL.
+           MOVE 'N' TO REQ-BELL.
+           IF SB-SENT = 0
+               MOVE 'Y' TO REQ-BELL.
+           IF SB-SENT = 1 AND LIVES < SB-LIVES
+               MOVE 'Y' TO REQ-BELL.
+           IF F-WON = 1 AND SB-WON = 0
+               MOVE 'Y' TO REQ-BELL
+               MOVE 1 TO SB-WON.
+           MOVE 1 TO SB-SENT.
+           MOVE LIVES TO SB-LIVES.
        SCR-TICK.
       * MVS-G3: VISUAL TICK (GLYPH FRAME ONLY). NO CHANGE = NO SEND.
            CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
            IF DS-LEN > 0
                ADD DS-LEN TO M-CHARS
+               PERFORM SET-BELL
                MOVE 'SEND' TO REQ-OP
                MOVE SPACE TO REQ-SENDST
                CALL 'PACPLAT' USING PAC-REQ PAC-DS
@@ -219,6 +265,7 @@
                GO TO SCR-RTQF-EXIT.
            CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS.
            ADD DS-LEN TO M-CHARS.
+           PERFORM SET-BELL.
            MOVE 'SEND' TO REQ-OP.
            MOVE SPACE TO REQ-SENDST.
            CALL 'PACPLAT' USING PAC-REQ PAC-DS.

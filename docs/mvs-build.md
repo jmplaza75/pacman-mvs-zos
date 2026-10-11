@@ -188,3 +188,15 @@ Geometry (D32, docs/GS-GEOMETRY.md): probe E12 (JOBs 202/203, docs/evidence/gs-e
 COMPRESS JOB 204; JOB 207: 117 steps RC 0000, oracle identical, 1371 streams = models, 394 W x H replays = model. CLIST JOB 208.
 Evidence: docs/evidence/gs-geometry-build-tsd.txt. Live PASS (docs/evidence/gs-manual-c3270.md). MVS-GS closed (tag mvs-gs).
 
+
+## MVS-S1: sound (2026-10-11)
+Probe E15 first (isolated: src/probe/PACS1P.cob + PACS1A.asm from tools/gen_probe_e15.py + the unchanged PACFSIO; deck `S1P`,
+JOB 228; live PASS `ANS=NYYY33`, docs/evidence/s1-e15-alarm.md). Implementation (D35): PACREQ +REQ-SOUND/REQ-BELL, PACMAIN PARM
+column 20, PACPLAT (SOUND resolution, SET-ALARM on the WCC), PACDISP (SET-BELL, end bell-only write), CLIST SOUND(AUTO); the
+core, PACRT, PACSCR, PACINPT, PACFSIO and PACTSO unchanged. Reference models gained an optional (lives, won) snapshot hook
+(tests/ref_snap.py). Build + tests: `python3 tools/make_deck.py S1 && python3 tools/run_deck.py build/S1.jcl`, then
+`python3 tests/test_s1.py build/PACBLDS1-<n>.txt`. JOB 230: IKF4072I-W (SET-ALARM ended with an IF); JOB 231: SE37 in LINK
+(LOAD full) -> `make_deck.py COMPRESS` now also compresses LOAD (JOB 232). JOB 233: 161 steps RC 0000, no warnings, test_rt
+PASS on the RT part, 15 SOUND runs = model (1785 streams, 38 bells), 3 silent runs = oracle/model. CLIST JOB 234.
+Evidence: docs/evidence/s1-build-tsd.txt. Live 1: bells PASS; game end 0C4-4 from a latent RT2 PACTSO defect (WAIT fell
+into DOTIME), fixed by one `B DONE` (docs/evidence/s1-live-0c4.md); COMPRESS JOB 235, rebuild JOB 236 PASS. Live retest pending.

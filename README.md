@@ -67,7 +67,9 @@ python3 tools/rt_play.py                   (at TSO READY: EXEC ... 'PLAY(REALTIM
 Pac-Man waits until the first arrow, then keeps moving by himself every 150 ms; the ghosts move on their own (4/5 of
 his speed). An arrow pressed before an opening is remembered for 3 steps and taken at the first chance; the opposite
 arrow reverses at once. P (PF9) pauses and resumes (`PAUSED` banner), PA2 redraws, Q + ENTER quits; U/D/L/R/P + ENTER
-also work. Do not use CLEAR (TSO swallows it). Without colour full-screen mode the game plays TURN. Design and
+also work. Do not use CLEAR (TSO swallows it). Without colour full-screen mode the game plays TURN.
+Sound (MVS-S1): the terminal bell rings when the game starts, when Pac-Man dies and when he wins (`SOUND(AUTO)`, the
+default; `SOUND(NO)` = silent). Turn on macOS Terminal > Settings > Profiles > Advanced > "Audible bell". Design and
 measurements: `docs/RT-REALTIME.md` (D33, D34), `docs/evidence/rt-e14-timing.md`, `docs/evidence/rt3-live.md`.
 **Turn by turn (compatibility):** `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'PLAY(TURN)'` plays one move per command, as
 below. Log on to TSO (`c3270 localhost:3270`) and run from `READY` (add `PLAY(TURN)` for the turn-by-turn game):
@@ -134,5 +136,9 @@ MVS-RT (real-time gameplay: `PLAY(REALTIME|TURN)`, REALTIME the CLIST default; 1
 arrows = PF7/8/10/11, PF9 pause, buffered turns, autonomous ghosts at 4/5 speed, one write per quantum with keyboard
 restore; probe E14 + design D33 in `docs/RT-REALTIME.md`) is complete (tag `mvs-rt`; Hercules JOB 226 and live in c3270,
 `docs/evidence/rt3-live.md`). TURN is unchanged (1.0-MVS oracle and all earlier regressions pass).
+MVS-S1 (sound: `SOUND(AUTO|YES|NO)`, the 3270 alarm - the terminal bell - on start, death and win in colour full-screen
+mode; probe E15 `docs/evidence/s1-e15-alarm.md`, D35): built and tested on Hercules (JOB 233), live check pending.
+The bell is sent by MVS in the 3270 data stream; only hearing it depends on the client (the terminal's bell setting).
+Roadmap to the final MVS release 2.0-MVS-MAX: `docs/ROADMAP-POST-RT.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

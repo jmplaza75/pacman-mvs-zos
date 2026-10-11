@@ -1,0 +1,51 @@
+# MVS-S1 build - Hercules JOB 233 (rebuilt as JOB 236 after the PACTSO fix: same results, 161 steps RC 0000,
+# test_s1 PASS; docs/evidence/s1-live-0c4.md)
+# First S1 build: JOB 233 (deck S1 = the whole RT deck + marker + SOUND runs), 2026-10-11
+Earlier attempts: JOB 230 IKF4072I-W in PACPLAT SET-ALARM (paragraph ended with an IF; fixed), JOB 231 SE37 in LINK
+(HERC01.PACMAN.LOAD full; COMPRESS now also compresses LOAD, JOB 232). Libraries compressed first: JOB 229/232.
+CLIST with SOUND(AUTO) installed: JOB 234 (IEBGENER RC 0000).
+```
+local checks PASS (core frozen, oracle loaded)
+local checks PASS: 10 TURN and 5 REALTIME SOUND runs, 38 bells in 1785 model streams
+MVS-S1 PASS: 161 steps RC 0000; RT regression: MVS-RT RT2 PASS: 142 steps RC 0000; GX regression: ...; 15 SOUND runs = 1785 model streams with 38 bells; 3 silent runs = oracle/model
+```
+SOUND runs (after the marker step): end word, streams, indexes of the streams sent with the alarm bit (WCC C6/C7)
+```
+S1T1   DIE1 Y Y P G 4 W Y     QUIT streams=30   bells at [0, 24]
+S1T2   LOST0 Y Y P G 4 W Y    LOST streams=73   bells at [0, 24, 48, 72]
+S1T3   WIN0 Y N P G 4 W Y     WIN  streams=184  bells at [0, 183]
+S1T4   EDGE3 Y Y P G 4 W Y    WIN  streams=320  bells at [0, 319]
+S1T5   DIE1 Y Y P G N D Y     QUIT streams=29   bells at [0, 24]
+S1T6   LOST0 Y Y P G N D Y    LOST streams=73   bells at [0, 24, 48, 72] last=C6280000 (bell-only write)
+S1T7   WIN0 Y N F C N D Y     WIN  streams=184  bells at [0, 183] last=C6280000 (bell-only write)
+S1T8   EDGE1 Y N F C N D Y    LOST streams=164  bells at [0, 21, 51, 163] last=C6280000 (bell-only write)
+S1T9   DIE1 Y Y P G 4 W A     QUIT streams=30   bells at [0, 24]
+S1T10  DIE1 Y Y P G 4 W N     QUIT streams=30   bells at []
+S1R1   RTSTILL W Y            LOST streams=119  bells at [0, 27, 72, 117]
+S1R2   RTEDGE W Y             WIN  streams=161  bells at [0, 125, 159]
+S1R3   RTEDGE0 W Y            LOST streams=186  bells at [0, 65, 137, 184]
+S1R4   RTWIN W Y              WIN  streams=185  bells at [0, 183]
+S1R5   RTPAUSE W Y            QUIT streams=17   bells at [0]
+```
+Step return codes of the S1 part (JES log):
+```
+18.55.23 JOB  233  PACBLDS1   S1MARK              IEBGENER  RC= 0000
+18.55.24 JOB  233  PACBLDS1   S1T1                PACMAIN   RC= 0000
+18.55.26 JOB  233  PACBLDS1   S1T2                PACMAIN   RC= 0000
+18.55.29 JOB  233  PACBLDS1   S1T3                PACMAIN   RC= 0000
+18.55.36 JOB  233  PACBLDS1   S1T4                PACMAIN   RC= 0000
+18.55.37 JOB  233  PACBLDS1   S1T5                PACMAIN   RC= 0000
+18.55.37 JOB  233  PACBLDS1   S1T6                PACMAIN   RC= 0000
+18.55.38 JOB  233  PACBLDS1   S1T7                PACMAIN   RC= 0000
+18.55.38 JOB  233  PACBLDS1   S1T8                PACMAIN   RC= 0000
+18.55.39 JOB  233  PACBLDS1   S1T9                PACMAIN   RC= 0000
+18.55.39 JOB  233  PACBLDS1   S1T10               PACMAIN   RC= 0000
+18.55.42 JOB  233  PACBLDS1   S1R1                PACMAIN   RC= 0000
+18.55.46 JOB  233  PACBLDS1   S1R2                PACMAIN   RC= 0000
+18.55.49 JOB  233  PACBLDS1   S1R3                PACMAIN   RC= 0000
+18.55.53 JOB  233  PACBLDS1   S1R4                PACMAIN   RC= 0000
+18.55.54 JOB  233  PACBLDS1   S1R5                PACMAIN   RC= 0000
+18.55.54 JOB  233  PACBLDS1   S1S1                PACMAIN   RC= 0000
+18.55.54 JOB  233  PACBLDS1   S1S2                PACMAIN   RC= 0000
+18.55.54 JOB  233  PACBLDS1   S1S3                PACMAIN   RC= 0000
+```

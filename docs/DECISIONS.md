@@ -155,3 +155,14 @@
   19 stay TURN (D17). Pause = PF9 (P in the launcher's temporary keymap) or P + ENTER, with a PAUSED banner; RT3 live
   defects fixed: CLIST CALL line beyond column 72, PACTSO DLWT register (batch clock test PACTSOT added).
 
+- D35 (MVS-S1) Sound = the 3270 alarm (probe E15, docs/evidence/s1-e15-alarm.md: audible through SENX, SEND and SENP;
+  3 bells audible back to back and 0.5 s apart). `SOUND(AUTO|YES|NO)` (PARM column 20; absent = NO, so every earlier
+  reference stays byte-identical; CLIST default AUTO). The alarm is base 3270: AUTO = YES in colour full-screen mode
+  (TSC, and the TSD dry run), NO in line mode and batch. Display/platform only, core untouched: PACDISP SET-BELL reads
+  the state before every screen sent - first screen (start), fewer lives than at the previous screen (death, the last
+  one too), first screen after the win; one bell per screen (death + win in one move ring once). PACPLAT SET-ALARM sets
+  WCC bit X'04' on that same stream (C3 -> C7, C2 -> C6): no extra write, except at the end of a game without an end
+  screen (not scaled), where a pending bell goes on one restore-only write C6 28 00 00 before line mode. Tests:
+  tests/test_s1.py (JOB 233: RT deck unchanged + 15 SOUND TSD runs = model with 38 bells + 3 silent runs = oracle).
+  Live 1: a latent RT2 defect surfaced at every game end (PACTSO WAIT fell into DOTIME, wild store, 0C4-4); fixed in
+  PACTSO (one `B DONE`), static check in tests/test_s1.py (batch cannot reach that path); docs/evidence/s1-live-0c4.md.

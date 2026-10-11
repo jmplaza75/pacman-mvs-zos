@@ -48,6 +48,7 @@ KNOWN    DS    0H
 PAUSE    DS    0H
          STIMER WAIT,BINTVL=WAITT
          SR    4,4
+         B     DONE                MVS-S1: NEVER FALL INTO DOTIME
 DOTIME   DS    0H
          L     5,8(1)              THIRD PARAMETER: MS
          LA    5,0(5)

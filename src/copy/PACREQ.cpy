@@ -48,3 +48,9 @@
            05  REQ-RTREQ             PIC X.
            05  REQ-RTTTL             PIC 9.
            05  REQ-RTFR              PIC X.
+      * MVS-S1 SOUND (PARM COLUMN 20): A AUTO, Y YES, N/BLANK NO. OUT
+      * OF PACPLAT INIT: Y ONLY IN TSC (OR THE TSD DRY RUN), ELSE N.
+      * REQ-BELL Y: PACDISP ASKS FOR THE 3270 ALARM (WCC BIT X'04') ON
+      * THE STREAM IT SENDS NOW (START, DEATH, WIN; PROBE E15).
+           05  REQ-SOUND             PIC X.
+           05  REQ-BELL              PIC X.

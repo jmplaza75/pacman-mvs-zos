@@ -46,6 +46,8 @@ DECKS = {
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'RT': ('PACBLDRT', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    'S1': ('PACBLDS1', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -95,7 +97,7 @@ def run_step(step, pfx, load, sysin, parm=None):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -118,7 +120,8 @@ TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G4': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'GS': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'GX': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
-       'RT': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
+       'RT': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'S1': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
 TSD = {'G1': ['MOVES', 'TSORDR', 'MULTI', 'C3N2', 'DIE1'],
        # G2: (case, highlight flag in PARM column 13): 5 with highlights, 2 without (= G1 screens)
        'G2': [('MOVES', 'Y'), ('TSORDR', 'Y'), ('MULTI', 'Y'), ('C3N2', 'Y'), ('DIE1', 'Y'), ('MOVES', 'N'), ('DIE1', 'N')],
@@ -156,6 +159,7 @@ GX_RUNS = [
     ('MOVES', 'Y', 'Y', 'P', 'G', '4', 'D'), ('TICKS', 'N', 'Y', 'P', 'G', '4', 'W')]
 TSD['GX'] = TSD['GS'] + GX_RUNS
 TSD['RT'] = TSD['GX']
+TSD['S1'] = TSD['RT']
 # MVS-RT (D33): REALTIME runs after the whole GX regression. Batch (PARM column 19 R): one card = one quantum
 # (tests/rtcases); TSD: (case, canvas) with COLOR N, HILITE Y, ANIM Y, REDRAW P, GLYPHS G, SCALE 4, PLAY R.
 RT_BAT = ['RTLINE', 'RTCORNER', 'RTTTL', 'RTREV', 'RTMULTI', 'RTPRE', 'RTSTILL', 'RTPAUSE', 'RTLONG', 'RTWIN', 'RTEDGE',
@@ -183,6 +187,43 @@ def rt_steps(pfx, load):
         parm, cards = rt_parm_and_cards(c)
         out += run_step(f'RTT{i}', pfx, load, cards, parm=parm.ljust(11) + 'NYYPG4' + cv + 'R')
     return out   # colour screens dry run (PARM 'TSD ...', hex output)   # replayed in interactive mode (PARM='TSO')
+
+
+# MVS-S1: after the whole RT deck (the regression, SOUND absent = N), a marker step, then SOUND runs (PARM column 20).
+# TURN TSD: (case, hilite, anim, redraw, glyphs, scale, canvas, sound) with column 19 T; scaled (end screen) and not
+# scaled (bell-only write before line mode), start / death / last death / win / death + win in one move, AUTO and NO.
+S1_TURN = [('DIE1', 'Y', 'Y', 'P', 'G', '4', 'W', 'Y'), ('LOST0', 'Y', 'Y', 'P', 'G', '4', 'W', 'Y'),
+           ('WIN0', 'Y', 'N', 'P', 'G', '4', 'W', 'Y'), ('EDGE3', 'Y', 'Y', 'P', 'G', '4', 'W', 'Y'),
+           ('DIE1', 'Y', 'Y', 'P', 'G', 'N', 'D', 'Y'), ('LOST0', 'Y', 'Y', 'P', 'G', 'N', 'D', 'Y'),
+           ('WIN0', 'Y', 'N', 'F', 'C', 'N', 'D', 'Y'), ('EDGE1', 'Y', 'N', 'F', 'C', 'N', 'D', 'Y'),
+           ('DIE1', 'Y', 'Y', 'P', 'G', '4', 'W', 'A'), ('DIE1', 'Y', 'Y', 'P', 'G', '4', 'W', 'N')]
+# REALTIME TSD (case, canvas, sound): COLOR N, HILITE Y, ANIM Y, REDRAW P, GLYPHS G, SCALE 4, PLAY R
+S1_RT = [('RTSTILL', 'W', 'Y'), ('RTEDGE', 'W', 'Y'), ('RTEDGE0', 'W', 'Y'), ('RTWIN', 'W', 'Y'), ('RTPAUSE', 'W', 'Y')]
+# line and batch modes ignore SOUND: (kind, case) - BAT TURN, BAT REALTIME, TSO line mode (COLOR AUTO fails in batch)
+S1_SILENT = [('BAT', 'LOST0'), ('RTB', 'RTSTILL'), ('TSO', 'DIE1')]
+S1_MARK = 'PACMAN-S1-SOUND-RUNS-FOLLOW'
+
+
+def s1_steps(pfx, load):
+    out = ('//S1MARK   EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+           f'//SYSUT1   DD *\n{S1_MARK}\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    for i, (c, h, a, r, g, sc, cv, snd) in enumerate(S1_TURN, 1):
+        parm, cards = tso_parm_and_cards(c)
+        parm = 'TSD' + parm[3:]
+        parm = (parm + ' AI1 1' if parm == 'TSD' else parm).ljust(11) + 'N' + h + a + r + g + sc + cv + 'T' + snd
+        out += run_step(f'S1T{i}', pfx, load, cards, parm=parm)
+    for i, (c, cv, snd) in enumerate(S1_RT, 1):
+        parm, cards = rt_parm_and_cards(c)
+        out += run_step(f'S1R{i}', pfx, load, cards, parm=parm.ljust(11) + 'NYYPG4' + cv + 'R' + snd)
+    for i, (kind, c) in enumerate(S1_SILENT, 1):
+        if kind == 'BAT':
+            out += run_step(f'S1S{i}', pfx, load, text_of(ROOT / f'tests/cases/{c}.txt'), parm='BAT'.ljust(19) + 'Y')
+        elif kind == 'RTB':
+            out += run_step(f'S1S{i}', pfx, load, text_of(ROOT / f'tests/rtcases/{c}.txt'), parm='BAT'.ljust(18) + 'RY')
+        else:
+            parm, cards = tso_parm_and_cards(c)
+            out += run_step(f'S1S{i}', pfx, load, cards, parm=parm.ljust(11) + 'AAAPAAAAY')
+    return out
 
 
 def tso_parm_and_cards(case):
@@ -222,10 +263,12 @@ def build(name, pfx):
         if hilite:
             parm = (parm + ' AI1 1' if parm == 'TSD' else parm).ljust(11) + 'N' + hilite
         out += run_step(f'TSD{i}', pfx, load, cards, parm=parm)
-    if name in ('G4', 'GS', 'GX', 'RT'):
+    if name in ('G4', 'GS', 'GX', 'RT', 'S1'):
         out += qry_test_steps(pfx)
-    if name == 'RT':
+    if name in ('RT', 'S1'):
         out += rt_steps(pfx, load)
+    if name == 'S1':
+        out += s1_steps(pfx, load)
     return out + '//\n'
 
 
@@ -267,9 +310,10 @@ def alloc_deck(pfx):
 def compress_deck(pfx):
     """Maintenance: compress the source libraries in place (IEBCOPY). Every build re-uploads every member and a PDS
     never reuses the space of replaced members, so the COBOL library eventually ends with SE37 (MVS-G4, JOB 193).
-    Only the COBOL and COPY libraries; all their members are rebuilt from git by any build deck."""
+    The COBOL, COPY and (MVS-S1, JOB 231: SE37 in LINK) LOAD libraries; every member is rebuilt from git by a build
+    or probe deck."""
     out = job_card('PACCMP10', 'PACMAN COMPRESS')
-    for i, lib in enumerate(('COBOL', 'COPY'), 1):
+    for i, lib in enumerate(('COBOL', 'COPY', 'LOAD'), 1):
         out += (f'//CMP{i}     EXEC PGM=IEBCOPY\n//SYSPRINT DD SYSOUT=A\n'
                 f'//LIB      DD DSN={pfx}.{lib},DISP=OLD\n'
                 '//SYSUT3   DD UNIT=SYSDA,SPACE=(TRK,(5,5))\n'
@@ -443,6 +487,21 @@ def gep_deck(pfx):
     return out + '//\n'
 
 
+def s1p_deck(pfx):
+    """MVS-S1 probe E15 (3270 WCC alarm, isolated from PACMAN): PACS1P + PACS1A (tools/gen_probe_e15.py) + the UNCHANGED
+    production PACFSIO -> LOAD(PACS1P), CLIST S1PROBE, one batch run (must print 'E15 RC=0004': not a TSO session,
+    nothing sent)."""
+    out = job_card('PACS1P01', 'PACMAN S1 PROBE E15') + f'//* PREFIX {pfx}\n'
+    out += upload('SRC1', pfx, 'COBOL', 'PACS1P', text_of(ROOT / 'src/probe/PACS1P.cob'))
+    out += compile_step('COB1', pfx, 'PACS1P', 'OBJ1')
+    out += asm_step('ASM1', 'OBJA1', text_of(ROOT / 'src/probe/PACS1A.asm'))
+    out += asm_step('ASM2', 'OBJA2', text_of(ROOT / 'src/asm/PACFSIO.asm'))
+    out += link_step(pfx, ['OBJ1', 'OBJA1', 'OBJA2'], 'PACS1P', 'PACS1P')
+    out += upload('CLS1', pfx, 'CLIST', 'S1PROBE', text_of(ROOT / 'src/probe/S1PROBE.clist').replace('@@PREFIX@@', pfx))
+    out += run_step('BATCH', pfx, 'PACS1P', None)
+    return out + '//\n'
+
+
 def rtp_deck(pfx):
     """MVS-RT probe E14 (timing / input, isolated from PACMAN): PACRTP + probe clock service PACRTA, linked with the
     UNCHANGED production modules compiled from the library members of the mvs-gs build (PACGAME PACMAP PACAI PACSCR
@@ -481,7 +540,7 @@ def rtl_deck(pfx):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'COMPRESS'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'COMPRESS'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -494,6 +553,8 @@ if __name__ == '__main__':
         text = clist_deck(pfx)
     elif a.deck == 'COMPRESS':
         text = compress_deck(pfx)
+    elif a.deck == 'S1P':
+        text = s1p_deck(pfx)
     elif a.deck == 'RTP':
         text = rtp_deck(pfx)
     elif a.deck == 'RTL':

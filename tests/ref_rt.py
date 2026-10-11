@@ -14,6 +14,7 @@ sys.path.insert(0, str(R / 'tests'))
 from ref_mvs6 import Game, parse_config, MAP0, START, GSTARTS, GDIR0  # noqa: E402
 import ref_gx_screen as gx  # noqa: E402
 import ref_gs_screen as gs  # noqa: E402
+from ref_snap import Rec  # noqa: E402
 
 gs.BANNERS.setdefault('PAUSE', (' PAUSED ', gs.HELP))   # RT3: while paused the message row shows this banner
 
@@ -144,8 +145,9 @@ def events(cards):
         yield evs
 
 
-def run(cards, tsd=None, cfg=None):
-    """The PACMAIN RT-GAME driver. tsd = None (BAT) or a canvas letter (TSD); cfg = (ai, n) from the PARM (TSD)."""
+def run(cards, tsd=None, cfg=None, snap=None):
+    """The PACMAIN RT-GAME driver. tsd = None (BAT) or a canvas letter (TSD); cfg = (ai, n) from the PARM (TSD).
+    snap: optional ref_snap.Log ((lives, won) per screen sent, MVS-S1)."""
     stream = []
     for evs in events(cards):
         stream += [e for e in evs] + [('NON', ' ', ' ')]
@@ -156,7 +158,7 @@ def run(cards, tsd=None, cfg=None):
         e = stream[min(pos[0], len(stream) - 1)]
         pos[0] += 1
         return e
-    out, frames = [], []
+    out, frames = [], Rec(snap, lambda: (g.lives, g.won))
     first = read() if tsd is None else None
     ai, n = cfg or (1, 1)
     if tsd is None and first[0] == 'CFG':
@@ -292,10 +294,10 @@ def simulate(cards):
     return run(list(cards))[0]
 
 
-def tsd(cards, canvas):
+def tsd(cards, canvas, snap=None):
     """(parm config, cards) as the TSD deck runs them: the config card goes to the PARM."""
     ai, n, rest = parse_config(list(cards))
-    return run(rest, tsd=canvas, cfg=(ai, n))
+    return run(rest, tsd=canvas, cfg=(ai, n), snap=snap)
 
 
 if __name__ == '__main__':

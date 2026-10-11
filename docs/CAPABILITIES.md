@@ -24,7 +24,7 @@ NOT EXPECTED = documented as unsupported by the emulator, to be confirmed by a p
 | Vector / host graphics (GDDM, GOCA) | NOT ANNOUNCED | E5 Query Reply has no graphics-related codes; x3270 documents no graphics | G7 |
 | Capability detection (Read Partition Query) | CONFIRMED | E5: TPUT NOEDIT WSF, reply AID 88 at TGET ASIS without user action; codes 80 81 84 85 86 87 88 95 A1 A6 | G1, G9 |
 | Colour renderer TSC (G1) | CONFIRMED | live c3270: clean full-screen colour game, moves, INVALID, PA2, Q (JOBs 157/161) | G1 |
-| Audible alarm (WCC alarm bit) | PENDING | c3270 rings the terminal bell on the WCC alarm - S1 probe | S1 |
+| Audible alarm (WCC alarm bit) | CONFIRMED (E15 live) | X'04' in the WCC reaches c3270 through SENX, SEND and SENP and rings the Mac terminal bell (Terminal "Audible bell" on); 3 bells audible back to back and 0.5 s apart; docs/evidence/s1-e15-alarm.md | S1 |
 | Partial screen update (Write X'F1' + TPUT NOEDIT) | CONFIRMED (probe E6, live) | docs/evidence/g3-probe-analysis.md; ASIS variant erases the screen | G3+ |
 | Idle animation (visual tick between inputs) | CONFIRMED with COLOR(YES); with COLOR(AUTO) only after the first input (TSO holds NOEDIT output after the capability Query Reply; investigation closed, D28) | docs/G3-PARTIAL.md, docs/evidence/g3-game-timeline*.txt | G3 |
 | Viable update rate | CONFIRMED (turn-based); partial redraw built (G3), 4-5x fewer bytes per turn | docs/G3-PARTIAL.md, JOB 169 | G3/G8 |
