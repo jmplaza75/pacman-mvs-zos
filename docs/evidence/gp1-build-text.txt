@@ -1,0 +1,135 @@
+# MVS-GP1 GP1.2 build - Hercules JOB 238 (2026-10-11): RULES(ARCADE) core and text output (D36, docs/GP1-POWER.md)
+Deck GP1 = the whole S1 deck (CLASSIC regression) + the core copybook PACARC (CPY6) + marker step + 26 ARCADE runs + 3
+column-21 CLASSIC runs. Libraries compressed first: JOB 237 (IEBCOPY CMP1-3 RC 0000). First build, no attempt failed.
+Core change authorised before the build (docs/CORE_CHANGES.md 2026-10-11, tests/core_baseline.json).
+```
+$ python3 tests/test_gp1.py build/PACBLGP1-238.txt
+local checks PASS (core frozen, oracle loaded)
+local checks PASS: 12 edge cases reached; 18 TURN, 6 REALTIME, 2 TSO ARCADE model runs
+MVS-GP1 GP1.2 PASS: 192 steps RC 0000; S1 regression: MVS-S1 PASS: 161 steps RC 0000; RT regression: MVS-RT RT2 PA ...; 26 ARCADE runs = model ( 11363 lines ); 3 column-21 CLASSIC runs = oracle/model
+```
+Runs after the marker (end word, 7-digit score, ghosts eaten) - every block equal to tests/ref_arcade.py line for line:
+```
+GPB1 GPAI0                         QUIT  SCORE 0001310  GHOSTS EATEN 003
+GPB2 GPHOME                        QUIT  SCORE 0000370  GHOSTS EATEN 001
+GPB3 GPDEYE                        QUIT  SCORE 0000450  GHOSTS EATEN 001
+GPB4 GPDFR                         QUIT  SCORE 0000350  GHOSTS EATEN 001
+GPB5 GPFN                          QUIT  SCORE 0001260  GHOSTS EATEN 003
+GPB6 GPFWALK                       QUIT  SCORE 0000350  GHOSTS EATEN 001
+GPB7 GPLASTH                       LOST  SCORE 0001340  GHOSTS EATEN 001
+GPB8 GPLASTO                       WIN   SCORE 0001160  GHOSTS EATEN 000
+GPB9 GPPOW2                        QUIT  SCORE 0000140  GHOSTS EATEN 000
+GPB10 GPPOWE                       QUIT  SCORE 0000350  GHOSTS EATEN 001
+GPB11 GPREVB                       QUIT  SCORE 0000720  GHOSTS EATEN 001
+GPB12 GPTIE                        QUIT  SCORE 0000120  GHOSTS EATEN 000
+GPB13 GPTWOF                       QUIT  SCORE 0001520  GHOSTS EATEN 004
+GPB14 GPWALKF                      QUIT  SCORE 0000290  GHOSTS EATEN 001
+GPB15 MULTI                        EOF   SCORE 0000070  GHOSTS EATEN 000
+GPB16 C3N2                         LOST  SCORE 0000000  GHOSTS EATEN 000
+GPB17 RAND                         EOF   SCORE 0000140  GHOSTS EATEN 000
+GPB18 LOST1                        EOF   SCORE 0000390  GHOSTS EATEN 000
+GPR1 RTGPA                         QUIT  SCORE 0000880  GHOSTS EATEN 002
+GPR2 RTGPD                         QUIT  SCORE 0000430  GHOSTS EATEN 001
+GPR3 RTGPP                         QUIT  SCORE 0000880  GHOSTS EATEN 002
+GPR4 RTSTILL                       LOST  SCORE 0000070  GHOSTS EATEN 000
+GPR5 RTMULTI                       QUIT  SCORE 0000040  GHOSTS EATEN 000
+GPR6 RTPAUSE                       QUIT  SCORE 0000090  GHOSTS EATEN 000
+GPT1 TSO GPTSO                     QUIT  SCORE 0000370  GHOSTS EATEN 001
+GPT2 TSO GPAI0                     QUIT  SCORE 0001310  GHOSTS EATEN 003
+GPC1 BAT LOST0 col21='C'           LOST  SCORE 0230     (CLASSIC: no ARCADE lines)
+GPC2 BAT MULTI col21=' '           EOF   SCORE 0070     (CLASSIC: no ARCADE lines)
+GPC3 RTB RTSTILL col21='X'         LOST  SCORE 0070     (CLASSIC: no ARCADE lines)
+```
+GPB1 GPAI0 (AI0, 3 ghosts) start frame as printed by PACDISP (SYSOUT):
+```
+PACMAN MVS-6 SMART GHOSTS
+RULES ARCADE
+T000   START   X=02 Y=02 S=0000 L=098 G=19,09 V=3 ST=READY
+A S=0000000 PW=4 FR=000 FT=000 FA=0 CH=0 EV=     P=0000 N=000 M=N000 N000 N000
+G2=02,09 G3=19,02
+####################
+#P.......##.......G#
+#.##.###.##.###.##.#
+#o................o#
+#.##.#.######.#.##.#
+#....#...##...#....#
+#.##.###.##.###.##.#
+#o................o#
+#G................G#
+####################
+T001 D MOVED   X=02 Y=03 S=0010 L=097 G=19,09 V=3 ST=RUNNING
+```
+GPB2 GPHOME around T019 (eyes on Pac-Man's home cell: revival deferred at T017/T018, revived NORMAL during the fright at
+T019 and Pac-Man walks into it: DIED, fright/chain/eyes reset):
+```
+T018 R MOVED   X=03 Y=09 S=0350 L=092 G=19,09 V=3 ST=RUNNING
+A S=0000350 PW=2 FR=008 FT=012 FA=0 CH=1 EV=     P=0000 N=001 M=F000 E001
+G2=02,09
+####################
+# .......##........#
+# ##.###.##.###.##.#
+# ................o#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+# ................o#
+#EP...............F#
+####################
+T019 L DIED    X=02 Y=02 S=0350 L=092 G=19,09 V=2 ST=RUNNING
+A S=0000350 PW=2 FR=000 FT=000 FA=0 CH=0 EV=     P=0000 N=001 M=N000 N000
+G2=02,09
+####################
+#P.......##........#
+# ##.###.##.###.##.#
+# ................o#
+# ##.#.######.#.##.#
+# ...#...##...#....#
+# ##.###.##.###.##.#
+# ................o#
+#G ...............G#
+####################
+```
+Step return codes of the GP1-only steps and the compiles (JES log):
+```
+20.24.50 JOB  238  PACBLGP1   CPY6                IEBGENER  RC= 0000
+20.24.50 JOB  238  PACBLGP1   COB1                IKFCBL00  RC= 0000
+20.24.50 JOB  238  PACBLGP1   COB2                IKFCBL00  RC= 0000
+20.24.50 JOB  238  PACBLGP1   COB3                IKFCBL00  RC= 0000
+20.24.50 JOB  238  PACBLGP1   COB4                IKFCBL00  RC= 0000
+20.24.50 JOB  238  PACBLGP1   COB5                IKFCBL00  RC= 0000
+20.24.50 JOB  238  PACBLGP1   COB6                IKFCBL00  RC= 0000
+20.24.51 JOB  238  PACBLGP1   COB7                IKFCBL00  RC= 0000
+20.24.51 JOB  238  PACBLGP1   COB8                IKFCBL00  RC= 0000
+20.24.51 JOB  238  PACBLGP1   COB9                IKFCBL00  RC= 0000
+20.24.51 JOB  238  PACBLGP1   LINK                IEWL      RC= 0000
+20.25.54 JOB  238  PACBLGP1   GP1MARK             IEBGENER  RC= 0000
+20.25.54 JOB  238  PACBLGP1   GPB1                PACMAIN   RC= 0000
+20.25.54 JOB  238  PACBLGP1   GPB2                PACMAIN   RC= 0000
+20.25.54 JOB  238  PACBLGP1   GPB3                PACMAIN   RC= 0000
+20.25.54 JOB  238  PACBLGP1   GPB4                PACMAIN   RC= 0000
+20.25.54 JOB  238  PACBLGP1   GPB5                PACMAIN   RC= 0000
+20.25.54 JOB  238  PACBLGP1   GPB6                PACMAIN   RC= 0000
+20.25.54 JOB  238  PACBLGP1   GPB7                PACMAIN   RC= 0000
+20.25.54 JOB  238  PACBLGP1   GPB8                PACMAIN   RC= 0000
+20.25.54 JOB  238  PACBLGP1   GPB9                PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPB10               PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPB11               PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPB12               PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPB13               PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPB14               PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPB15               PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPB16               PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPB17               PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPB18               PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPR1                PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPR2                PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPR3                PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPR4                PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPR5                PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPR6                PACMAIN   RC= 0000
+20.25.55 JOB  238  PACBLGP1   GPT1                PACMAIN   RC= 0000
+20.25.56 JOB  238  PACBLGP1   GPT2                PACMAIN   RC= 0000
+20.25.56 JOB  238  PACBLGP1   GPC1                PACMAIN   RC= 0000
+20.25.56 JOB  238  PACBLGP1   GPC2                PACMAIN   RC= 0000
+20.25.56 JOB  238  PACBLGP1   GPC3                PACMAIN   RC= 0000
+```

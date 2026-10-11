@@ -65,5 +65,11 @@ MVS-S1 COMPLETE (tag mvs-s1, 2026-10-11): sound = the 3270 alarm (D35).
   (docs/evidence/s1-live.md).
 - Regression to keep: tests/test_s1.py (+ test_rt, test_gx, test_gs, test_g4, test_core_frozen).
 
-NEXT: MVS-GP1 (power pellets, RULES(ARCADE)) per docs/ROADMAP-POST-RT.md - NOT STARTED, wait for the user's go.
+MVS-GP1 IN PROGRESS (started 2026-10-11 on the user's go): power pellets under RULES(ARCADE).
+- GP1.1 design docs/GP1-POWER.md: D36 APPROVED and frozen (2026-10-11, user decisions in its section 8).
+- GP1.2 COMPLETE (2026-10-11): core change authorised (docs/CORE_CHANGES.md), PACARC, PARM column 21, ARCADE text
+  lines; deck GP1 JOB 238: 192 steps RC 0000, S1/CLASSIC regression PASS, 26 ARCADE runs = tests/ref_arcade.py;
+  evidence docs/evidence/gp1-build-text.txt. Test: `python3 tests/test_gp1.py build/PACBLGP1-238.txt`.
+- NEXT: GP1.3 screens (PACSCR/PACPAL, design section 6) - not started; CLIST with RULES not installed yet.
+  Then GP1.4 live, README, tag mvs-gp1.
 Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).

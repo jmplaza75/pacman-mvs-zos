@@ -166,3 +166,20 @@
   tests/test_s1.py (JOB 233: RT deck unchanged + 15 SOUND TSD runs = model with 38 bells + 3 silent runs = oracle).
   Live 1: a latent RT2 defect surfaced at every game end (PACTSO WAIT fell into DOTIME, wild store, 0C4-4); fixed in
   PACTSO (one `B DONE`), static check in tests/test_s1.py (batch cannot reach that path); docs/evidence/s1-live-0c4.md.
+- D36 (MVS-GP1) Power pellets under `RULES(ARCADE)`, design docs/GP1-POWER.md (approved by the user 2026-10-11).
+  `RULES` = PARM column 21 (`A` ARCADE, anything else/absent CLASSIC = 1.0-MVS byte for byte; CLIST default CLASSIC
+  until G8). ARCADE state in the new copybook PACARC (own 01), passed explicitly to PACGAME/PACAI/PACRT/PACDISP/PACSCR;
+  PACSTATE untouched, no CLASSIC field repurposed (SCORE only mirrors the low 4 digits of the 7-digit ARC-SCORE).
+  Core change (authorised): PACMAP op LDA (power pellets `o` at (2,4) (19,4) (2,8) (19,8), existing corridor cells),
+  EAT flag 2 on `o`, CNT counts `o`; PACGAME ATIK + ARCADE move/hit branches; PACAI flee + per-class cadence.
+  Rules: `o` 50 points, ghosts 200/400/800/1600 by chain; a new `o` restarts the fright (no added time) and resets
+  the chain; eyes are non-lethal and ignore new power pellets; an eaten ghost jumps home as eyes and waits, then
+  revives NORMAL even during a fright (one more tick while Pac-Man stands on the home cell); a death resets fright,
+  chain, accumulators and eyes; pause freezes every GP1 timer. Frightened move: pending reversal first, then the
+  maximum Manhattan distance from Pac-Man, tie order U,D,L,R, no seed use; AI0 stays still. Cadence: TURN frightened
+  1 move every 2 Pac-Man turns; REALTIME frightened accumulator + 2 due at >= 5 = 2/5 of the quanta (40 % of
+  Pac-Man, half of the 4/5 normal-ghost rate) - two different discrete rules, neither called "half speed".
+  Constants in one PACGAME table (TURN/REALTIME): fright 20 / 40 (6 s), warning 5 / 10 (1.5 s), eyes 10 / 20 (3 s).
+  The collision order of GP1-POWER 4.4 is authoritative. No GP2 behaviour in GP1.
+  GP1.2 (JOB 238, tests/test_gp1.py PASS): no frightened move in the step where a fright starts; GHOSTS EATEN is
+  the last end line; LEVEL1 has no dead ends (dead-end flee unreachable, blocked pending reversal tested).

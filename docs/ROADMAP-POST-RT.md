@@ -1,6 +1,6 @@
 # Post-RT roadmap: gameplay, polish and final release (APPROVED with amendments, 2026-10-11)
 Status: roadmap approved by the user on 2026-10-11 (decisions below). Phases still start one at a time, on the user's go.
-MVS-S1 COMPLETE (tag mvs-s1, 2026-10-11). Next: GP1, not started (waits for the user's go).
+MVS-S1 COMPLETE (tag mvs-s1, 2026-10-11). GP1 in progress: D36 approved, GP1.2 (core + text) COMPLETE JOB 238; GP1.3 screens next.
 
 ## Where the project stands
 - Mechanics: 1.0-MVS core (frozen, tests/core_baseline.json): 20x10 maze, 100 pellets x 10 points, 3 lives, 1-3 ghosts,

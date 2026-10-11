@@ -17,7 +17,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CORE = ['src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob',
-        'src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy', 'maps/LEVEL1.txt']
+        'src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy', 'maps/LEVEL1.txt',
+        'src/copy/PACARC.cpy', 'maps/ARCADE1.txt']      # MVS-GP1 (D36): the ARCADE state and power pellet map
 BASE = ROOT / 'tests/core_baseline.json'
 LOG = ROOT / 'docs/CORE_CHANGES.md'
 

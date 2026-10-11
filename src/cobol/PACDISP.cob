@@ -22,6 +22,10 @@
       * SOUND Y.
       * WITHOUT AN END SCREEN (NOT SCALED) A PENDING ALARM GOES ON A
       * RESTORE-ONLY WRITE (C2 28 00 00) BEFORE LINE MODE RETURNS.
+      * MVS-GP1 (D36, ARC-ON = 1): 'RULES ARCADE' AFTER THE BANNER, ONE
+      * ARCADE LINE (7-DIGIT SCORE, FRIGHT, CHAIN, EVENT, GHOST MODES)
+      * AFTER EACH STATUS / RT GHOSTS LINE, GHOSTS F (FRIGHTENED) AND E
+      * (EYES) ON THE BOARD, END 'SCORE NNNNNNN' + 'GHOSTS EATEN NNN'.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -132,13 +136,44 @@
            05  RG3-X             PIC 99.
            05  FILLER            PIC X VALUE ','.
            05  RG3-Y             PIC 99.
+       01  WS-ARC-LINE.
+           05  FILLER            PIC X(4) VALUE 'A S='.
+           05  AL-S              PIC 9(7).
+           05  FILLER            PIC X(4) VALUE ' PW='.
+           05  AL-PW             PIC 9.
+           05  FILLER            PIC X(4) VALUE ' FR='.
+           05  AL-FR             PIC 999.
+           05  FILLER            PIC X(4) VALUE ' FT='.
+           05  AL-FT             PIC 999.
+           05  FILLER            PIC X(4) VALUE ' FA='.
+           05  AL-FA             PIC 9.
+           05  FILLER            PIC X(4) VALUE ' CH='.
+           05  AL-CH             PIC 9.
+           05  FILLER            PIC X(4) VALUE ' EV='.
+           05  AL-EV             PIC X(4).
+           05  FILLER            PIC X(3) VALUE ' P='.
+           05  AL-P              PIC 9(4).
+           05  FILLER            PIC X(3) VALUE ' N='.
+           05  AL-N              PIC 999.
+           05  FILLER            PIC X(3) VALUE ' M='.
+           05  AL-M1             PIC X.
+           05  AL-W1             PIC 999.
+       01  WS-ARC-G2.
+           05  FILLER            PIC X VALUE ' '.
+           05  AL-M2             PIC X.
+           05  AL-W2             PIC 999.
+       01  WS-ARC-G3.
+           05  FILLER            PIC X VALUE ' '.
+           05  AL-M3             PIC X.
+           05  AL-W3             PIC 999.
        01  WS-QUANTA.
            05  FILLER            PIC X(7) VALUE 'QUANTA '.
            05  QU-N              PIC 9(7).
        LINKAGE SECTION.
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
-       PROCEDURE DIVISION USING PAC-STATE PAC-REQ.
+       01  PAC-ARC COPY PACARC.
+       PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-ARC.
        MAIN-PARA.
            IF REQ-MODE = 'TSC' OR REQ-MODE = 'TSD'
                PERFORM SCREEN-OP THRU SCREEN-OP-EXIT
@@ -146,6 +181,7 @@
                DISPLAY 'PACMAN MVS-6 SMART GHOSTS'
                ADD 1 TO M-LINES
                ADD 25 TO M-CHARS
+               PERFORM ARC-HEAD THRU ARC-HEAD-EXIT
            ELSE IF REQ-OP = 'STAT'
                PERFORM SHOW-STATE THRU SHOW-STATE-EXIT
            ELSE IF REQ-OP = 'INVL'
@@ -305,6 +341,9 @@
                DISPLAY WS-RTG1 WS-RTG2 WS-RTG3.
            ADD 2 TO M-LINES.
            ADD 85 TO M-CHARS.
+           IF ARC-ON = 1
+               PERFORM SHOW-ARC.
+           MOVE 0 TO WS-NOP.
        SCR-RESEND.
       * THE PARTIAL SEND FAILED (PACPLAT SWITCHED TO FULL REDRAW, NO
       * ANIMATION): SEND THE WHOLE SCREEN INSTEAD.
@@ -341,11 +380,19 @@
                DISPLAY 'EOF'
                ADD 3 TO M-CHARS.
            DISPLAY 'TURNS ' TICK-COUNT.
-           DISPLAY 'SCORE ' SCORE.
+           IF ARC-ON = 1
+               DISPLAY 'SCORE ' ARC-SCORE
+               ADD 3 TO M-CHARS
+           ELSE
+               DISPLAY 'SCORE ' SCORE.
            DISPLAY 'LIVES ' LIVES.
            IF REQ-PLAY = 'R'
                MOVE REQ-RTQ TO QU-N
                DISPLAY WS-QUANTA.
+           IF ARC-ON = 1
+               DISPLAY 'GHOSTS EATEN ' ARC-EATEN
+               ADD 1 TO M-LINES
+               ADD 16 TO M-CHARS.
            ADD 4 TO M-LINES.
            ADD 26 TO M-CHARS.
            IF REQ-METRIC = 'M'
@@ -376,6 +423,8 @@
            DISPLAY WS-STATUS-LINE.
            ADD 1 TO M-LINES.
            ADD 61 TO M-CHARS.
+           IF ARC-ON = 1
+               PERFORM SHOW-ARC.
            IF GHOST-COUNT > 1
                PERFORM SHOW-EXTRA THRU SHOW-EXTRA-EXIT.
            PERFORM SHOW-ROW VARYING WS-ROW FROM 1 BY 1
@@ -394,7 +443,9 @@
        OVERLAY-GHOST.
            IF WS-ROW = GH-Y (WS-G)
                MOVE GH-X (WS-G) TO WS-GX
-               MOVE 'G' TO WS-LINE-CELL (WS-GX).
+               MOVE 'G' TO WS-LINE-CELL (WS-GX)
+               IF ARC-ON = 1 AND ARC-GM (WS-G) NOT = 'N'
+                   MOVE ARC-GM (WS-G) TO WS-LINE-CELL (WS-GX).
        OVERLAY-GHOST-EXIT.
            EXIT.
        SHOW-EXTRA.
@@ -411,3 +462,36 @@
                ADD 17 TO M-CHARS.
        SHOW-EXTRA-EXIT.
            EXIT.
+      * ------------- MVS-GP1 ARCADE TEXT (D36, ARC-ON = 1) ----------
+       ARC-HEAD.
+           IF ARC-ON = 0
+               GO TO ARC-HEAD-EXIT.
+           DISPLAY 'RULES ARCADE'.
+           ADD 1 TO M-LINES.
+           ADD 12 TO M-CHARS.
+       ARC-HEAD-EXIT.
+           EXIT.
+       SHOW-ARC.
+           MOVE ARC-SCORE TO AL-S.
+           MOVE ARC-POWER TO AL-PW.
+           MOVE ARC-FR TO AL-FR.
+           MOVE ARC-FTURN TO AL-FT.
+           MOVE ARC-FACC TO AL-FA.
+           MOVE ARC-CHAIN TO AL-CH.
+           MOVE ARC-EVT TO AL-EV.
+           MOVE ARC-PTS TO AL-P.
+           MOVE ARC-EATEN TO AL-N.
+           MOVE ARC-GM (1) TO AL-M1.
+           MOVE ARC-GW (1) TO AL-W1.
+           MOVE ARC-GM (2) TO AL-M2.
+           MOVE ARC-GW (2) TO AL-W2.
+           MOVE ARC-GM (3) TO AL-M3.
+           MOVE ARC-GW (3) TO AL-W3.
+           IF GHOST-COUNT = 1
+               DISPLAY WS-ARC-LINE
+           ELSE IF GHOST-COUNT = 2
+               DISPLAY WS-ARC-LINE WS-ARC-G2
+           ELSE
+               DISPLAY WS-ARC-LINE WS-ARC-G2 WS-ARC-G3.
+           ADD 1 TO M-LINES.
+           ADD 80 TO M-CHARS.

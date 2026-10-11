@@ -200,3 +200,11 @@ core, PACRT, PACSCR, PACINPT, PACFSIO and PACTSO unchanged. Reference models gai
 PASS on the RT part, 15 SOUND runs = model (1785 streams, 38 bells), 3 silent runs = oracle/model. CLIST JOB 234.
 Evidence: docs/evidence/s1-build-tsd.txt. Live 1: bells PASS; game end 0C4-4 from a latent RT2 PACTSO defect (WAIT fell
 into DOTIME), fixed by one `B DONE` (docs/evidence/s1-live-0c4.md); COMPRESS JOB 235, rebuild JOB 236 PASS. Live 2/3 PASS (LOST and QUIT ends, docs/evidence/s1-live.md). MVS-S1 closed (tag mvs-s1).
+
+## MVS-GP1: power pellets, RULES(ARCADE) (in progress, 2026-10-11)
+Design docs/GP1-POWER.md (D36, approved). GP1.2 core + text: authorised core change (PACMAP/PACGAME/PACAI, new core
+copybook PACARC, maps/ARCADE1.txt), PACRT/PACMAIN/PACDISP, PACREQ +REQ-RULES (PARM column 21 `A`), CLIST RULES source.
+Model tests/ref_arcade.py, cases tests/gpcases (tests/search_gp1.py). Build + tests: `python3 tools/make_deck.py GP1 &&
+python3 tools/run_deck.py build/GP1.jcl`, then `python3 tests/test_gp1.py build/PACBLGP1-<n>.txt`. COMPRESS JOB 237;
+JOB 238: 192 steps RC 0000, no warnings, S1 regression (CLASSIC) PASS, 26 ARCADE runs = model, 3 column-21 CLASSIC
+runs = oracle. Evidence: docs/evidence/gp1-build-text.txt. GP1.3 (screens) next.

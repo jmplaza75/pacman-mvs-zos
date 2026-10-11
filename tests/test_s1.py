@@ -14,6 +14,7 @@ Bell rule: the first screen (start); any screen sent with fewer lives than the p
 the first screen sent after the win. One alarm per screen (a death and the win in one move ring once).
 """
 import difflib
+import os
 import re
 import subprocess
 import sys
@@ -84,16 +85,23 @@ def rt_model(run):
 
 # 1. only the display/platform side changed
 subprocess.run([sys.executable, str(R / 'tests/test_core_frozen.py')], check=True, stdout=subprocess.DEVNULL)
-for f in ('src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob', 'src/cobol/PACRT.cob',
-          'src/cobol/PACSCR.cob', 'src/cobol/PACINPT.cob', 'src/cobol/PACQRY.cob', 'src/copy/PACSTATE.cpy',
-          'src/copy/PACMREQ.cpy', 'src/copy/PACPAL.cpy', 'src/copy/PACDS.cpy', 'src/asm/PACFSIO.asm'):
-    assert git_show('mvs-rt', f) == (R / f).read_text().splitlines(), f
+# MVS-GP1: PACMAN_LATER_PHASE (set by a later phase's test that runs this file as a regression) skips ONLY the
+# source-equality / diff-set pins against mvs-rt, which authorised later changes make intentionally false; the later
+# test checks its own diff set. Structural guards (PACTSO fall-through, PACREQ append-only) and every behaviour,
+# listing and oracle check below always run.
+LATER = os.environ.get('PACMAN_LATER_PHASE')
+if not LATER:
+    for f in ('src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob', 'src/cobol/PACRT.cob',
+              'src/cobol/PACSCR.cob', 'src/cobol/PACINPT.cob', 'src/cobol/PACQRY.cob', 'src/copy/PACSTATE.cpy',
+              'src/copy/PACMREQ.cpy', 'src/copy/PACPAL.cpy', 'src/copy/PACDS.cpy', 'src/asm/PACFSIO.asm'):
+        assert git_show('mvs-rt', f) == (R / f).read_text().splitlines(), f
 # PACTSO: mvs-rt + ONE line. S1 live 0C4 (reason 4) at the end of every scaled game: since RT2 the WAIT path (PAUSE)
 # fell through into DOTIME, which took a third parameter from 8(R1) (garbage after STIMER, WAIT has two) and stored
 # the clock there. Batch cannot reach PAUSE (not TSO: WAIT ends before it), so the check is static.
 old, new = git_show('mvs-rt', 'src/asm/PACTSO.asm'), (R / 'src/asm/PACTSO.asm').read_text().splitlines()
 added = [d[2:] for d in difflib.ndiff(old, new) if d[:2] == '+ ']
-assert [d for d in difflib.ndiff(old, new) if d[:2] == '- '] == [] and len(added) == 1 and added[0].split()[:2] == ['B', 'DONE']
+if not LATER:
+    assert [d for d in difflib.ndiff(old, new) if d[:2] == '- '] == [] and len(added) == 1 and added[0].split()[:2] == ['B', 'DONE']
 code = [l for l in new if l.strip() and not l.startswith('*')]
 k = next(i for i, l in enumerate(code) if l.startswith('PAUSE '))
 assert code[k + 1].split()[0] == 'STIMER' and code[k + 2].split()[:2] == ['SR', '4,4'] and \
@@ -106,12 +114,14 @@ for i, l in enumerate(code[1:], 1):
             or l.split()[0] == 'HAVET0', (l, code[i - 1])
 old_req, new_req = git_show('mvs-rt', 'src/copy/PACREQ.cpy'), (R / 'src/copy/PACREQ.cpy').read_text().splitlines()
 assert new_req[:len(old_req)] == old_req, 'PACREQ must grow append-only'
-assert [l.split()[1] for l in new_req[len(old_req):] if l[6:7] != '*'] == ['REQ-SOUND', 'REQ-BELL']
-for name in ('PACMAIN', 'PACDISP', 'PACPLAT'):       # added lines only, nothing removed
-    old, new = git_show('mvs-rt', f'src/cobol/{name}.cob'), (R / f'src/cobol/{name}.cob').read_text().splitlines()
-    removed = [d for d in difflib.ndiff(old, new) if d[:2] == '- ']
-    allowed = {'PACDISP': 4, 'PACMAIN': 0, 'PACPLAT': 0}[name]  # PACDISP: one comment re-wrapped, SCR-ENDS reshaped
-    assert len(removed) <= allowed, (name, removed)
+fields = [l.split()[1] for l in new_req[len(old_req):] if l[6:7] != '*']
+assert fields[:2] == ['REQ-SOUND', 'REQ-BELL'] and (LATER or len(fields) == 2), fields
+if not LATER:
+    for name in ('PACMAIN', 'PACDISP', 'PACPLAT'):       # added lines only, nothing removed
+        old, new = git_show('mvs-rt', f'src/cobol/{name}.cob'), (R / f'src/cobol/{name}.cob').read_text().splitlines()
+        removed = [d for d in difflib.ndiff(old, new) if d[:2] == '- ']
+        allowed = {'PACDISP': 4, 'PACMAIN': 0, 'PACPLAT': 0}[name]  # PACDISP: one comment re-wrapped, SCR-ENDS reshaped
+        assert len(removed) <= allowed, (name, removed)
 disp = (R / 'src/cobol/PACDISP.cob').read_text()
 sb = disp[disp.index('       SET-BELL.'):]
 sb = sb[:sb.index('\n       ', 20) if re.search(r'\n       [A-Z]', sb[20:]) else len(sb)]
@@ -120,7 +130,7 @@ for n, line in enumerate((R / 'src/clist/PACMAN.clist').read_text().replace('@@P
                          .splitlines(), 1):
     assert len(line) <= 72 or line.lstrip().startswith('/*'), ('PACMAN.clist', n, len(line))
 clist = (R / 'src/clist/PACMAN.clist').read_text()
-assert 'SOUND(AUTO)' in clist and '&V&Y&U)' in clist
+assert 'SOUND(AUTO)' in clist and ('&V&Y&U)' in clist or LATER)   # the PARM order is pinned by the later test
 
 # 2. the model with the bells
 turn = [turn_model(x) for x in S1_TURN]

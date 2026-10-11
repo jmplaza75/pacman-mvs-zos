@@ -11,6 +11,7 @@ Hercules: test_rt.py RT-LISTING (deck RT = the whole GX deck + PACRT + 12 batch 
     stream with WCC restore, including quanta where nothing changed (C2 28 00 00).
 """
 import difflib
+import os
 import re
 import subprocess
 import sys
@@ -36,10 +37,15 @@ def cards(case):
 
 # 1. core: only the REQ-STEP selector was added to PACGAME (authorised in docs/CORE_CHANGES.md)
 subprocess.run([sys.executable, str(R / 'tests/test_core_frozen.py')], check=True, stdout=subprocess.DEVNULL)
-old, new = git_show('mvs-gs', 'src/cobol/PACGAME.cob'), (R / 'src/cobol/PACGAME.cob').read_text().splitlines()
-diff = [d for d in difflib.ndiff(old, new) if d[:2] in ('+ ', '- ')]
-assert all(d[0] == '+' for d in diff) and len(diff) == 9, diff
-for f in ('src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob', 'src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy'):
+# MVS-GP1: a later phase that changes these sources on purpose (authorised, docs/CORE_CHANGES.md) runs this file as a
+# regression with PACMAN_LATER_PHASE set; its own test checks the sources then.
+if not os.environ.get('PACMAN_LATER_PHASE'):
+    old, new = git_show('mvs-gs', 'src/cobol/PACGAME.cob'), (R / 'src/cobol/PACGAME.cob').read_text().splitlines()
+    diff = [d for d in difflib.ndiff(old, new) if d[:2] in ('+ ', '- ')]
+    assert all(d[0] == '+' for d in diff) and len(diff) == 9, diff
+    for f in ('src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob'):
+        assert git_show('mvs-gs', f) == (R / f).read_text().splitlines(), f
+for f in ('src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy'):
     assert git_show('mvs-gs', f) == (R / f).read_text().splitlines(), f
 old_req = git_show('mvs-gs', 'src/copy/PACREQ.cpy')
 assert (R / 'src/copy/PACREQ.cpy').read_text().splitlines()[:len(old_req)] == old_req, 'PACREQ must grow append-only'

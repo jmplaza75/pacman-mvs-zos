@@ -28,6 +28,8 @@
       * SESSION CONTINUES AS TURN IN LINE MODE.
       * COLUMN 20 = SOUND (MVS-S1): A AUTO, Y YES, N/BLANK NO (THE 3270
       * ALARM ON START, DEATH AND WIN; COLOUR FULL-SCREEN ONLY).
+      * COLUMN 21 = RULES (MVS-GP1, D36): A ARCADE (POWER PELLETS, STATE
+      * PAC-ARC), ANYTHING ELSE CLASSIC (1.0-MVS).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -38,6 +40,7 @@
        WORKING-STORAGE SECTION.
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
+       01  PAC-ARC COPY PACARC.
        01  WS-CFG.
            05  WS-CFG-CH         PIC X OCCURS 5 TIMES.
        01  WS-K                  PIC 99.
@@ -60,6 +63,7 @@
            05  PARM-CANVAS       PIC X.
            05  PARM-PLAY         PIC X.
            05  PARM-SOUND        PIC X.
+           05  PARM-RULES        PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
@@ -100,6 +104,9 @@
            IF PARM-LEN > 19
                MOVE PARM-SOUND TO REQ-SOUND.
            MOVE 'N' TO REQ-BELL.
+           MOVE 'C' TO REQ-RULES.
+           IF PARM-LEN > 20
+               MOVE PARM-RULES TO REQ-RULES.
            MOVE 'B' TO REQ-STEP.
            MOVE SPACE TO REQ-SENDST.
            MOVE 'INIT' TO REQ-OP.
@@ -107,11 +114,13 @@
            IF REQ-MODE = 'TSO'
                MOVE 'T' TO REQ-PLAY.
            MOVE 'RSET' TO REQ-OP.
-           CALL 'PACGAME' USING PAC-STATE PAC-REQ.
+           CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            MOVE 'OPEN' TO REQ-OP.
            CALL 'PACINPT' USING PAC-REQ.
            MOVE 'HEAD' TO REQ-OP.
-           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            IF REQ-PLAY = 'R'
                PERFORM RT-GAME THRU RT-GAME-EXIT
            ELSE IF REQ-MODE = 'BAT'
@@ -122,7 +131,8 @@
                UNTIL F-EOF = 1 OR F-QUIT = 1 OR F-WON = 1
                   OR F-LOST = 1.
            MOVE 'END ' TO REQ-OP.
-           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            MOVE 'CLOS' TO REQ-OP.
            CALL 'PACINPT' USING PAC-REQ.
            MOVE 'FINI' TO REQ-OP.
@@ -130,7 +140,8 @@
            STOP RUN.
        RT-GAME.
            MOVE 'RINI' TO REQ-OP.
-           CALL 'PACRT' USING PAC-STATE PAC-REQ.
+           CALL 'PACRT' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            IF REQ-MODE = 'BAT'
                PERFORM RT-READB
                PERFORM RT-CONFIG THRU RT-CONFIG-EXIT
@@ -146,6 +157,7 @@
                MOVE 'MOV' TO REQ-KIND
                MOVE 'PRMT' TO REQ-OP
                CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC
                PERFORM RT-READB.
            PERFORM RT-PRE THRU RT-PRE-EXIT
                UNTIL REQ-RTSTAT NOT = 'WAIT' OR RT-OVER = 1.
@@ -165,6 +177,7 @@
            IF REQ-KIND = 'CFG'
                MOVE 'CFG ' TO REQ-OP
                CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC
                PERFORM RT-READB.
        RT-CONFIG-EXIT.
            EXIT.
@@ -194,7 +207,8 @@
            IF RT-FRAME = 'F'
                MOVE 'RDR' TO REQ-KIND.
            MOVE 'PRMT' TO REQ-OP.
-           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            MOVE SPACE TO RT-FRAME.
        RT-QUANTUM.
            PERFORM RT-COLLECT THRU RT-COLLECT-EXIT.
@@ -203,11 +217,13 @@
            IF RT-OVER = 1
                GO TO RT-QUANTUM-EXIT.
            MOVE 'RQ  ' TO REQ-OP.
-           CALL 'PACRT' USING PAC-STATE PAC-REQ.
+           CALL 'PACRT' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            MOVE RT-FRAME TO REQ-RTFR.
            MOVE SPACE TO RT-FRAME.
            MOVE 'RTQF' TO REQ-OP.
-           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            IF F-WON = 1 OR F-LOST = 1
                MOVE 1 TO RT-OVER
                GO TO RT-QUANTUM-EXIT.
@@ -268,20 +284,24 @@
            IF REQ-KIND = 'EOF'
                MOVE 'EOF ' TO REQ-OP
                CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC
                MOVE 1 TO RT-OVER
                GO TO RT-EVENT-EXIT.
            MOVE 'RIN ' TO REQ-OP.
-           CALL 'PACRT' USING PAC-STATE PAC-REQ.
+           CALL 'PACRT' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            IF REQ-KIND = 'QUI'
                MOVE 'QUIT' TO REQ-OP
                CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC
                MOVE 1 TO RT-OVER
                GO TO RT-EVENT-EXIT.
            IF REQ-INKEY = 'E' AND RT-FRAME = SPACE
                MOVE 'P' TO RT-FRAME.
            IF REQ-KIND = 'INV'
                MOVE 'INVL' TO REQ-OP
-               CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+               CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            IF REQ-KIND = 'INV' AND RT-FRAME = SPACE
                MOVE 'P' TO RT-FRAME.
            IF REQ-KIND = 'RDR'
@@ -315,37 +335,44 @@
            ADD 1 TO WS-K.
        SHOW-START.
            MOVE 'INIT' TO REQ-OP.
-           CALL 'PACGAME' USING PAC-STATE PAC-REQ.
+           CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            MOVE 'STAT' TO REQ-OP.
-           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
        APPLY-CONFIG.
            IF REQ-KIND = 'CFG'
                MOVE 'CFG ' TO REQ-OP
-               CALL 'PACGAME' USING PAC-STATE PAC-REQ.
+               CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
        APPLY-CONFIG-EXIT.
            EXIT.
        READ-INPUT.
            MOVE 'PRMT' TO REQ-OP.
-           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            MOVE 'READ' TO REQ-OP.
            CALL 'PACINPT' USING PAC-REQ.
            PERFORM IDLE-TICK UNTIL REQ-KIND NOT = 'TCK'.
            IF REQ-KIND = 'EOF'
                MOVE 'EOF ' TO REQ-OP
-               CALL 'PACGAME' USING PAC-STATE PAC-REQ.
+               CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
        READ-INPUT-EXIT.
            EXIT.
        IDLE-TICK.
       * MVS-G3 VISUAL TICK: THE WAIT FOR INPUT WAS INTERRUPTED BY AN
       * IDLE TICK. ONLY THE SCREEN CHANGES; NO GAME CALL, NO TURN.
            MOVE 'TICK' TO REQ-OP.
-           CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+           CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
            MOVE 'READ' TO REQ-OP.
            CALL 'PACINPT' USING PAC-REQ.
        CHECK-CONFIG.
            IF REQ-KIND = 'CFG'
                MOVE 'CFG ' TO REQ-OP
                CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC
                PERFORM READ-INPUT THRU READ-INPUT-EXIT.
        CHECK-CONFIG-EXIT.
            EXIT.
@@ -359,16 +386,21 @@
            IF REQ-KIND = 'MOV'
                MOVE 'MOVE' TO REQ-OP
                CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC
                MOVE 'STAT' TO REQ-OP
                CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC
            ELSE IF REQ-KIND = 'QUI'
                MOVE 'QUIT' TO REQ-OP
                CALL 'PACGAME' USING PAC-STATE PAC-REQ
+                   PAC-ARC
            ELSE IF REQ-KIND = 'RDR'
                MOVE 'STAT' TO REQ-OP
                CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC
            ELSE
                MOVE 'INVL' TO REQ-OP
-               CALL 'PACDISP' USING PAC-STATE PAC-REQ.
+               CALL 'PACDISP' USING PAC-STATE PAC-REQ
+                   PAC-ARC.
        DISPATCH-EXIT.
            EXIT.

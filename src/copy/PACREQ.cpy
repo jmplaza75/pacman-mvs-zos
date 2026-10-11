@@ -54,3 +54,6 @@
       * THE STREAM IT SENDS NOW (START, DEATH, WIN; PROBE E15).
            05  REQ-SOUND             PIC X.
            05  REQ-BELL              PIC X.
+      * MVS-GP1 RULES (PARM COLUMN 21, D36): A ARCADE, ANYTHING ELSE
+      * CLASSIC (1.0-MVS). PACGAME RSET SETS ARC-ON FROM IT.
+           05  REQ-RULES             PIC X.

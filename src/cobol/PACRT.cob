@@ -17,6 +17,11 @@
       * OUT (EVERY OP): REQ-RTSTAT WAIT/RUN /PAUS/FRZ , REQ-RTQ,
       *      REQ-RTCUR, REQ-RTREQ, REQ-RTTTL, REQ-VIS; RQ ALSO REQ-RTIN
       *      (THE QUANTUM'S INPUTS) AND REQ-STEP (B P G - OR F).
+      * MVS-GP1 (D36, ARC-ON = 1): EACH RUNNING QUANTUM FIRST CALLS
+      *      PACGAME ATIK (FRIGHT TICK), THEN THE FRIGHTENED GHOSTS'
+      *      ACCUMULATOR ARC-FACC + ARC-KFINC (DUE AT >= 5, 2/5 OF THE
+      *      QUANTA) BESIDE THE NORMAL ONE (4/5); ARC-MOVEN/ARC-MOVEF
+      *      TELL PACAI WHICH GHOSTS MOVE. A DEATH RESETS RT-ACC.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACRT.
        ENVIRONMENT DIVISION.
@@ -57,7 +62,8 @@
        LINKAGE SECTION.
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
-       PROCEDURE DIVISION USING PAC-STATE PAC-REQ.
+       01  PAC-ARC COPY PACARC.
+       PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-ARC.
        MAIN-PARA.
            IF REQ-OP = 'RINI'
                PERFORM DO-RINI
@@ -129,11 +135,17 @@
                SUBTRACT 1 FROM RT-FRZ
                MOVE 'F' TO REQ-STEP
                GO TO DO-RQ-EXIT.
+           IF ARC-ON = 1
+               PERFORM ARC-QUANTUM THRU ARC-QUANTUM-EXIT.
            MOVE 0 TO WS-GDUE.
            ADD GH-NUM TO RT-ACC.
            IF RT-ACC NOT < GH-DEN
                SUBTRACT GH-DEN FROM RT-ACC
                MOVE 1 TO WS-GDUE.
+           IF ARC-ON = 1
+               MOVE WS-GDUE TO ARC-MOVEN
+               IF ARC-MOVEF = 1
+                   MOVE 1 TO WS-GDUE.
            IF RT-REQ NOT = SPACE
                PERFORM APPLY-REQ.
            MOVE 0 TO WS-PMOVE.
@@ -172,8 +184,10 @@
            MOVE RT-CUR TO REQ-DIR.
            MOVE RT-CUR TO REQ-CHAR.
            MOVE 'MOVE' TO REQ-OP.
-           CALL 'PACGAME' USING PAC-STATE PAC-REQ.
+           CALL 'PACGAME' USING PAC-STATE PAC-REQ PAC-ARC.
            MOVE 'RQ  ' TO REQ-OP.
+           IF LIVES < WS-LIVES AND ARC-ON = 1
+               MOVE 0 TO RT-ACC.
            IF WS-KIND NOT = 'G'
                ADD 1 TO RT-STEPS.
            IF LIVES < WS-LIVES AND F-LOST = 0
@@ -202,6 +216,19 @@
            IF M-FLAG = 0
                MOVE 1 TO WS-LEGAL.
        LEGAL-EXIT.
+           EXIT.
+       ARC-QUANTUM.
+           MOVE 'ATIK' TO REQ-OP.
+           CALL 'PACGAME' USING PAC-STATE PAC-REQ PAC-ARC.
+           MOVE 'RQ  ' TO REQ-OP.
+           MOVE 0 TO ARC-MOVEF.
+           IF ARC-FR = 0
+               GO TO ARC-QUANTUM-EXIT.
+           ADD ARC-KFINC TO ARC-FACC.
+           IF ARC-FACC NOT < GH-DEN
+               SUBTRACT GH-DEN FROM ARC-FACC
+               MOVE 1 TO ARC-MOVEF.
+       ARC-QUANTUM-EXIT.
            EXIT.
        PUBLISH.
            MOVE RT-Q TO REQ-RTQ.
