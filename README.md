@@ -137,7 +137,7 @@ arrows = PF7/8/10/11, PF9 pause, buffered turns, autonomous ghosts at 4/5 speed,
 restore; probe E14 + design D33 in `docs/RT-REALTIME.md`) is complete (tag `mvs-rt`; Hercules JOB 226 and live in c3270,
 `docs/evidence/rt3-live.md`). TURN is unchanged (1.0-MVS oracle and all earlier regressions pass).
 MVS-S1 (sound: `SOUND(AUTO|YES|NO)`, the 3270 alarm - the terminal bell - on start, death and win in colour full-screen
-mode; probe E15 `docs/evidence/s1-e15-alarm.md`, D35): built and tested on Hercules (JOB 233), live check pending.
+mode; probe E15 `docs/evidence/s1-e15-alarm.md`, D35): complete (tag `mvs-s1`; Hercules JOB 236 and live in c3270, `docs/evidence/s1-live.md`).
 The bell is sent by MVS in the 3270 data stream; only hearing it depends on the client (the terminal's bell setting).
 Roadmap to the final MVS release 2.0-MVS-MAX: `docs/ROADMAP-POST-RT.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration

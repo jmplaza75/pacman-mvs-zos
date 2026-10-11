@@ -199,4 +199,4 @@ core, PACRT, PACSCR, PACINPT, PACFSIO and PACTSO unchanged. Reference models gai
 (LOAD full) -> `make_deck.py COMPRESS` now also compresses LOAD (JOB 232). JOB 233: 161 steps RC 0000, no warnings, test_rt
 PASS on the RT part, 15 SOUND runs = model (1785 streams, 38 bells), 3 silent runs = oracle/model. CLIST JOB 234.
 Evidence: docs/evidence/s1-build-tsd.txt. Live 1: bells PASS; game end 0C4-4 from a latent RT2 PACTSO defect (WAIT fell
-into DOTIME), fixed by one `B DONE` (docs/evidence/s1-live-0c4.md); COMPRESS JOB 235, rebuild JOB 236 PASS. Live retest pending.
+into DOTIME), fixed by one `B DONE` (docs/evidence/s1-live-0c4.md); COMPRESS JOB 235, rebuild JOB 236 PASS. Live 2/3 PASS (LOST and QUIT ends, docs/evidence/s1-live.md). MVS-S1 closed (tag mvs-s1).

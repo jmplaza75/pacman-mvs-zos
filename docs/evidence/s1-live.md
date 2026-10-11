@@ -31,3 +31,17 @@ Note: both traced games ended LOST (GAME OVER). The ENTER at 20:49:28.765 came d
 after the end; no QUIT banner appears in this trace. The QUIT end runs the same path (end screen, PACPLAT WAIT ->
 PACTSO WAIT, FSOF) with another banner text; the QUIT end screen and its end lines are covered in batch (TSD) by
 tests/test_s1.py (S1T1, S1T5, S1T9, S1T10, S1R5) and tests/test_rt.py.
+
+## Live 3 - QUIT end after the fix (`~/s1-live4.txt`, JOB 236 build) - PASS
+User checklist: start bell, Q + ENTER while alive, QUIT banner, ~3 s wait, QUIT/TURNS/SCORE/LIVES/QUANTA, READY, no
+ENDED DUE TO ERROR - all PASS. Trace:
+```
+31 writes, 1 with the alarm bit: 20:53:44.994 F1 C7 (first game screen = start)
+20:53:53.664 inbound ENTER with 'Q'
+20:53:53.691 EraseWriteAlternate = QUIT end banner (no alarm)
+20:53:56.703 line mode (3.0 s later): QUIT / TURNS 000 / SCORE 0000 / LIVES 3 / QUANTA 0000000 / READY
+`PACMAIN ENDED DUE TO ERROR`: 0 occurrences.
+```
+Q was entered before the first arrow (TURNS 000, QUANTA 0: the clock had not started); the end path is the same
+(end screen, PACPLAT WAIT -> PACTSO WAIT, FSOF), the one that abended in live 1.
+Result: MVS-S1 live PASS - bells (start, death, last death), SOUND(NO) silent, LOST and QUIT ends clean.

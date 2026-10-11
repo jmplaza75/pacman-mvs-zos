@@ -54,12 +54,16 @@ MVS-RT COMPLETE (tag mvs-rt, 2026-10-11): real-time gameplay (D33, D34; docs/RT-
 Post-RT roadmap APPROVED with amendments (2026-10-11): docs/ROADMAP-POST-RT.md, order S1 -> GP1 -> GP2 -> HS -> RP -> S2 -> G7
 -> G8 / 2.0-MVS-MAX (final MVS release). GP1/GP2 may change the core only under RULES(ARCADE); CLASSIC stays 1.0-MVS.
 
-MVS-S1 IN PROGRESS (sound, D35): probe E15 live PASS (docs/evidence/s1-e15-alarm.md: the WCC alarm is audible through SENX,
-SEND and SENP). SOUND(AUTO|YES|NO) built and tested on Hercules: JOB 233 (tests/test_s1.py PASS: RT/GX/TURN regression and
-1.0-MVS oracle unchanged, 15 SOUND TSD runs = model with 38 bells, line/batch modes silent), CLIST SOUND(AUTO) JOB 234.
-Evidence docs/evidence/s1-build-tsd.txt. Live 1 (2026-10-11): bells PASS (AUTO and NO), BUT every game end abended 0C4-4:
-latent RT2 defect in PACTSO (WAIT fell into DOTIME: wild store), fixed with one `B DONE` (docs/evidence/s1-live-0c4.md);
-rebuild JOB 236 PASS. Live 2 (docs/evidence/s1-live.md): PASS for AUTO and NO, both traced games ended LOST cleanly (end
-lines, READY, no error); a QUIT end is not in the trace (same end path). PENDING: user decision to close (tag mvs-s1).
-Do not start GP1 or S2 until S1 is closed and the user says go. E15 data for S2: 3 bells audible back to back and 0.5 s apart.
+MVS-S1 COMPLETE (tag mvs-s1, 2026-10-11): sound = the 3270 alarm (D35).
+- Probe E15 live PASS (docs/evidence/s1-e15-alarm.md): WCC bit X'04' audible through SENX, SEND and SENP; for S2:
+  3 bells audible back to back and 0.5 s apart.
+- SOUND(AUTO|YES|NO) (PARM column 20, absent = NO; CLIST default AUTO): bell on start, each death and the win, colour
+  full-screen only; display/platform only (PACDISP SET-BELL, PACPLAT SET-ALARM), core untouched. Final build JOB 236,
+  tests/test_s1.py PASS (docs/evidence/s1-build-tsd.txt).
+- Live 1 found an 0C4-4 at every game end: latent RT2 defect in PACTSO (WAIT fell into DOTIME, wild store), fixed by
+  one `B DONE` (docs/evidence/s1-live-0c4.md). Live 2/3 PASS: LOST and QUIT ends clean, AUTO rings, NO silent
+  (docs/evidence/s1-live.md).
+- Regression to keep: tests/test_s1.py (+ test_rt, test_gx, test_gs, test_g4, test_core_frozen).
+
+NEXT: MVS-GP1 (power pellets, RULES(ARCADE)) per docs/ROADMAP-POST-RT.md - NOT STARTED, wait for the user's go.
 Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).
