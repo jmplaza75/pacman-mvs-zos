@@ -12,6 +12,7 @@ core change, tests/core_baseline.json unchanged. Batch and TSO line-mode SYSOUT 
 | RP.0 | ESTAE live validation (section 7) - independent of the rest, done first | docs/evidence/rp-estae-live.md |
 | RP.1 | this design | user approval, D39 frozen |
 | RP.2 | PACRT (publish freeze count + death cell), PACREQ (appended), PACSCR/PACPAL/PACDISP (sections 2-5), models | deck `RP` (TSD runs = model), regression decks GP2/GP23/HS rerun |
+| RP.2b | D40 startup hardening (section 11): PACQRY validity + bounded selection, PACPLAT TRY-COLOUR loop | PACQRYT sequence cases = model; every earlier reference unchanged |
 | RP.3 | `SPEED(NORMAL\|FAST)` (section 6): PARM column 24, PACPLAT period, CLIST | deck `RP` + CLIST job; live capture analysed |
 | RP.4 | live c3270 checklist + the 10-minute pause soak (section 8) | docs/evidence/rp-live.md, README, CURRENT_PHASE, tag `mvs-rp` |
 
@@ -124,3 +125,56 @@ same session before the first direction. The TK4- JWT / TSO wait limits are read
 3. Level-clear maze flash: OUT. Between levels: the GP2.3 frame, then READY! in the last 4 freeze quanta.
 4. `SPEED(NORMAL|FAST)` = 150 / 125 ms for any REALTIME game (CLASSIC included), opt-in, default NORMAL.
 5. ESTAE validation through the separate test driver PACRPE (no abend hook in the game), run first as RP.0.
+
+## 11. D40 startup hardening (PROPOSED 2026-10-12; inside RP, before RP.4; user constraints of 2026-10-12)
+Found by RP.0 (docs/evidence/rp-estae-live1.md, rp-estae-live2.md): with line output pending at game start TSO shows
+`***`; the ENTER that releases it is queued and TRY-COLOUR's single query read takes it as the reply -> line-mode
+fallback, and the real reply is later read as commands. Not an RP.0 / ESTAE defect.
+
+### 11.1 Valid Query Reply (PACQRY, pure; new output QO-VALID, appended to QRY-OUT)
+A record is a valid Query Reply only if ALL hold: length >= 5; byte 1 = AID X'88'; it is an exact chain of structured
+fields from byte 2 to the last byte, each with length LL >= 4 (2 bytes, LL = 0 not accepted), ID X'81' and its whole
+length inside the record; the first field is QCODE X'80' (Summary). Every recorded reply (tests/qreply_*.hex) and the
+live RP.0 reply (180 bytes once telnet escaping is removed) satisfy it. ENTER / PF / PA / CLEAR AIDs, typed data, empty
+input, truncated or overlong replies, a wrong field ID or a broken chain are invalid. Capability parsing (colour,
+highlight, GE, sizes) is unchanged; its results are used ONLY from the accepted record.
+
+### 11.2 Bounded selection (PACQRY, pure state step; QS-ACT / QS-NREC / QS-NWAIT appended to QRY-OUT)
+One PACQRY call = one inbound event: a record (length > 0) or an empty read (length 0 = one 0.5 s wait). PACPLAT zeroes
+QS-NREC / QS-NWAIT before the first event.
+- valid record -> QS-ACT `A` (accept; this record's capabilities are used);
+- invalid record -> QS-NREC + 1; empty read -> QS-NWAIT + 1;
+- then QS-ACT `F` (fallback) when QS-NREC = 8 or QS-NWAIT = 6, else `R` (read again).
+Bounds: the first read is today's blocking QRY read (unchanged); after it at most 8 rejected records and 6 empty waits
+(3 s); the fallback drain reads at most 8 more records.
+
+### 11.3 PACPLAT TRY-COLOUR (the only I/O change; PACFSIO unchanged, existing op RECT)
+- `QRY` exactly as today (query + first read) -> PACQRY. FS-RC not 0 -> today's path (no colour).
+- While QS-ACT = `R`: `RECT` (one TGET NOWAIT; none = 0.5 s wait, length 0) -> PACQRY. A RECT error -> `F`.
+- `A`: HAS-COLOUR / HAS-HILITE / HAS-GE / size from QRY-OUT, exactly as today.
+- `F`: HAS-* = 0 -> today's conservative fallback (FSOF, line mode) after a drain: `RECT` until an empty read (at most
+  8), records discarded. Skipped and drained records are consumed by TGET and never reach the game or line mode.
+- Normal clean start (first record valid): `A` at once, no extra PACFSIO call: the same host writes, the same reads,
+  the same timing. D28 press-to-start is untouched (nothing after the accepted reply changes). COLOR(YES) (no query),
+  TSD and batch never enter this code: every TSD / TSC model stream, the 1.0-MVS oracle and all CLASSIC references
+  stay byte-identical.
+
+### 11.4 Tests (D9, D10, D12)
+PACQRYT gains a sequence mode (test driver only; its existing single-reply lines unchanged): cards with a record number
+in column 9 form one sequence; a card without hex = an empty read. One line per sequence:
+`QSL name ACT=a NREC=nn NWAIT=nn C=n H=n GE=n`; expected values from an independent Python model (tests/qry_cases.py).
+| Case | Sequence | Expected |
+|---|---|---|
+| Q1 valid first | real reply | A, NREC 0, NWAIT 0, C/H/GE 1 (= clean start: no extra read) |
+| Q2 ENTER first | `7D` + cursor; real reply | A, NREC 1 |
+| Q3 typed junk | `7D` + cursor + SBA + EBCDIC text; real reply | A, NREC 1 |
+| Q4 other AIDs | PF9 `F9`, PA2 `6E`, CLEAR `6D`; real reply | A, NREC 3 |
+| Q5 malformed | truncated reply; LL overrun; wrong ID X'82'; no Summary first; LL = 0; then real reply | A, NREC 5 |
+| Q6 empty reads | ENTER, 3 empty reads, real reply | A, NREC 1, NWAIT 3 |
+| Q7 no reply (records) | 8 invalid records | F, NREC 8 |
+| Q8 no reply (time) | ENTER, 6 empty reads | F, NWAIT 6 |
+| Q9 single-record validity | each existing case (C3270 ... ONLY85) and the 4 recorded terminal replies | V as the model |
+Clean start unchanged (constraint 6): Q1 + all earlier references byte-identical (TSD streams, oracle, PACQRYT lines) +
+a source check that PACPLAT reads again only while QS-ACT = `R`. Live (RP.4): (a) a normal start = the same wire shape
+as hs-live (`7E C3`, query, reply, screen, no extra read); (b) the RP.0 reproduction (RPESTAE E3, then the game):
+`***`, ENTER -> the full-screen game (no line-mode fallback, no `INVALID COMMAND`).

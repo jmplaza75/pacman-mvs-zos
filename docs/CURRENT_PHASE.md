@@ -121,6 +121,6 @@ MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gamep
 - RP.0 live 1 (docs/evidence/rp-estae-live1.md) and live 2 (docs/evidence/rp-estae-live2.md): ESTAE recovery PASS
   (E1; E2 twice, each followed by a clean full-screen game; E3 control twice). RP.0 CLOSED. The startup `***` follows
   every E3 and no E2: it comes from line output written by an abended program, not from the exit -> D40 (open).
-- D40 startup hardening (OPEN, not designed): TSO `***` before the full-screen switch makes the capability query read
+- D40 startup hardening (inside RP as step RP.2b, before RP.4; design PROPOSED in docs/RP-POLISH.md section 11): TSO `***` before the full-screen switch makes the capability query read
   the user's ENTER as the reply -> line-mode fallback (stray `A` / `X` commands). RP.2 proceeds locally; the installed
   game build is unchanged.
