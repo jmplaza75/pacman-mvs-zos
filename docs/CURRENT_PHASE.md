@@ -112,4 +112,6 @@ MVS-HS COMPLETE (tag mvs-hs, 2026-10-12). Regression to keep: tests/test_hs.py (
 build/PACBLG23-263.txt build/PACBLGP2-262.txt`; runs test_gp2 with PACMAN_LATER_PHASE=HS) + test_gs, test_g4,
 test_core_frozen. Install note: the high-score dataset <prefix>.DATA (deck DATA once, or ALLOC on a fresh install) is
 outside the build libraries; COMPRESS and rebuilds never touch it.
-NEXT (roadmap): MVS-RP polish - NOT STARTED, wait for the user's go. S2 not started.
+MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gameplay polish (docs/RP-POLISH.md).
+- RP.1 design D39 APPROVED and frozen (2026-10-12): ARCADE-only visuals, fruit popup in, no level-clear flash, SPEED
+  for any REALTIME game, ESTAE via the test driver PACRPE. Next step: RP.0 (ESTAE live validation). S2 not started.

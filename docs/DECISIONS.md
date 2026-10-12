@@ -231,3 +231,14 @@
   HS.2 (JOB 260, tests/test_hs.py): H1-H15 = the independent model tests/ref_hs.py; the ESTAE exit is deleted after
   a retry too (E16b). HS.3 live PASS (docs/evidence/hs-live.md); the live higher-score case ended with QUIT, LOST and
   the other end paths are covered by HS.2.
+- D39 (MVS-RP) Presentation and gameplay polish, design docs/RP-POLISH.md (approved by the user 2026-10-12). Display,
+  platform and test work only: GAME / MAP / AI / PACARC untouched, batch and line-mode SYSOUT byte-identical in both
+  rule sets. ARCADE full-screen only (CLASSIC screens byte-identical): READY! over the central wall bar (y 4, x 8-13)
+  before the first direction and in the last 4 quanta of a death / level-clear freeze; death animation (6 frames at
+  the death cell, published by PACRT with the freeze count; final death played by PACDISP before GAME OVER); no
+  level-clear flash; score popups for an eaten ghost and the eaten fruit (one 4x2 tile, 6 quanta, display state in
+  PACSCR, no game freeze); HUD high score = max(REQ-HISCORE, ARC-SCORE) when HS is R / Z; end screen with SCORE /
+  HIGH SCORE / NEW HIGH SCORE. An RP decoration over DS-LIMIT is dropped for that frame, never the G4 fallback.
+  `SPEED(NORMAL|FAST)` = 150 / 125 ms, PARM column 24, any REALTIME game. ESTAE validated live by the test driver
+  PACRPE (forced 0C7 in full-screen mode, also after a PACHSIO call), not by a hook in the game. Soak: 10-minute pause
+  and 10-minute pre-start wait in one live session.
