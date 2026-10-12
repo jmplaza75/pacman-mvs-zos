@@ -74,6 +74,9 @@ MVS-GP1 IN PROGRESS (started 2026-10-11 on the user's go): power pellets under R
 - GP1.3 COMPLETE (2026-10-11): ARCADE screens in PACSCR/PACPAL (all glyph profiles, scaled families, partial redraw,
   ticks, REALTIME); deck GP1 JOB 240: 214 steps RC 0000, S1/CLASSIC regression PASS, 21 ARCADE TSD runs = 939 model
   streams; evidence docs/evidence/gp1-screens-tsd.txt; design section 10.
-- NEXT: GP1.4 live c3270 acceptance - NOT STARTED, waits for the user's go. CLIST (RULES(CLASSIC) default) not yet
-  installed. Then README, tag mvs-gp1.
+- GP1.4 live PASS (2026-10-11/12, docs/evidence/gp1-live.md): CLIST JOB 241 (default RULES(CLASSIC)); 2 games
+  replayed by tools/c3270_gp1_trace.py = model byte for byte; pause / PA2 during a fright covered by RTGPP / GQR3.
+MVS-GP1 COMPLETE (tag mvs-gp1, 2026-10-12). Regression to keep: tests/test_gp1.py (+ test_s1, test_rt, test_gx,
+test_gs, test_g4, test_core_frozen). NEXT: MVS-GP2 (progression) per docs/ROADMAP-POST-RT.md - NOT STARTED, wait for
+the user's go.
 Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).

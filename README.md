@@ -71,6 +71,10 @@ also work. Do not use CLEAR (TSO swallows it). Without colour full-screen mode t
 Sound (MVS-S1): the terminal bell rings when the game starts, when Pac-Man dies and when he wins (`SOUND(AUTO)`, the
 default; `SOUND(NO)` = silent). Turn on macOS Terminal > Settings > Profiles > Advanced > "Audible bell". Design and
 measurements: `docs/RT-REALTIME.md` (D33, D34), `docs/evidence/rt-e14-timing.md`, `docs/evidence/rt3-live.md`.
+**Arcade rules (MVS-GP1):** `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE)'` adds 4 blinking power pellets `o`
+(50 points), blue frightened ghosts (white just before the end; 40 quanta = 6 s, 20 turns in TURN) that flee more slowly,
+eaten ghosts 200/400/800/1600 that go home as eyes and revive, and a 7-digit score. `RULES(CLASSIC)` (the default) is
+the 1.0-MVS game. Design: `docs/GP1-POWER.md` (D36).
 **Turn by turn (compatibility):** `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'PLAY(TURN)'` plays one move per command, as
 below. Log on to TSO (`c3270 localhost:3270`) and run from `READY` (add `PLAY(TURN)` for the turn-by-turn game):
 ```
@@ -139,6 +143,8 @@ restore; probe E14 + design D33 in `docs/RT-REALTIME.md`) is complete (tag `mvs-
 MVS-S1 (sound: `SOUND(AUTO|YES|NO)`, the 3270 alarm - the terminal bell - on start, death and win in colour full-screen
 mode; probe E15 `docs/evidence/s1-e15-alarm.md`, D35): complete (tag `mvs-s1`; Hercules JOB 236 and live in c3270, `docs/evidence/s1-live.md`).
 The bell is sent by MVS in the 3270 data stream; only hearing it depends on the client (the terminal's bell setting).
+MVS-GP1 (power pellets under `RULES(ARCADE)`, D36; CLASSIC byte-identical): complete (tag `mvs-gp1`; Hercules JOB 240
+(`tests/test_gp1.py`), live in c3270 with both games byte-identical to the model, `docs/evidence/gp1-live.md`).
 Roadmap to the final MVS release 2.0-MVS-MAX: `docs/ROADMAP-POST-RT.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.
