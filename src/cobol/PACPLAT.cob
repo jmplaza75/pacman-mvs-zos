@@ -35,6 +35,13 @@
       * IS BASE 3270: NOTHING TO DETECT, A = Y). SEND WITH REQ-BELL Y
       * AND SOUND Y SETS THE ALARM BIT X'04' IN THE WCC (DS-BYTE 1):
       * C3 -> C7, C2 -> C6, ON THE STREAM ALREADY BEING SENT (E15).
+      * MVS-RP D40 (DOCS/RP-POLISH.MD 11): THE QUERY READ ACCEPTS ONLY A
+      * VALID QUERY REPLY (PACQRY QS-ACT A). AN ENTER / AID / TYPED OR
+      * BROKEN RECORD IS READ PAST (PACFSIO RECT: NOWAIT, 0.5 S WHEN
+      * NONE) AT MOST 8 RECORDS / 6 EMPTY READS; NO VALID REPLY = THE
+      * LINE-MODE FALLBACK, AFTER A DRAIN (AT MOST 8 RECORDS) SO NO
+      * STARTUP INPUT REACHES THE GAME. A VALID FIRST RECORD: NO EXTRA
+      * READ AT ALL (THE START IS UNCHANGED).
       * MVS-HS (D38): HSRD / HSWR = THE ARCADE HIGH SCORE IN THE PDS
       * MEMBER ON DD PACHS (PACHSIO; GAME NEVER SEES IT). HSRD SETS
       * REQ-HSST N (NO DD), R (VALID RECORD), Z (MISSING / EMPTY /
@@ -95,6 +102,13 @@
            05  QO-GE             PIC 9.
            05  QO-AW             PIC 999.
            05  QO-AH             PIC 999.
+           05  QO-VALID          PIC 9.
+           05  QS-ACT            PIC X.
+           05  QS-NREC           PIC 99.
+           05  QS-NWAIT          PIC 99.
+       01  QD-N                  PIC 99 VALUE 0.
+       01  QD-MORE               PIC 9 VALUE 0.
+       01  WS-NOP                PIC 9 VALUE 0.
        01  WS-IDLE               PIC 9(4) VALUE 0.
        01  CV-CMD                PIC 9(4) VALUE 245.
        01  FULL-SENT             PIC 9 VALUE 0.
@@ -240,8 +254,18 @@
            MOVE 0 TO HAS-COLOUR.
            MOVE 0 TO HAS-HILITE.
            MOVE 0 TO HAS-GE.
+           MOVE 'F' TO QS-ACT.
            IF FS-RC = 0
+               MOVE 0 TO QS-NREC
+               MOVE 0 TO QS-NWAIT
                CALL 'PACQRY' USING IN-AREA FS-LEN QRY-OUT
+               PERFORM QRY-MORE THRU QRY-MORE-EXIT
+                   UNTIL QS-ACT NOT = 'R'.
+           IF FS-RC = 0 AND QS-ACT = 'F'
+               PERFORM QRY-DRAIN.
+           IF QS-ACT NOT = 'A'
+               MOVE 4 TO FS-RC.
+           IF FS-RC = 0
                MOVE QO-COLOUR TO HAS-COLOUR
                MOVE QO-HILITE TO HAS-HILITE
                MOVE QO-GE TO HAS-GE.
@@ -260,6 +284,28 @@
                PERFORM FALL-BACK.
        TRY-COLOUR-EXIT.
            EXIT.
+       QRY-MORE.
+      * D40: ONE MORE STARTUP EVENT (A RECORD, OR NONE AFTER 0.5 S).
+           MOVE 'RECT' TO FS-OP.
+           CALL 'PACFSIO' USING FS-OP IN-AREA FS-LEN FS-RC.
+           IF FS-RC NOT = 0
+               MOVE 'F' TO QS-ACT
+               GO TO QRY-MORE-EXIT.
+           CALL 'PACQRY' USING IN-AREA FS-LEN QRY-OUT.
+       QRY-MORE-EXIT.
+           EXIT.
+       QRY-DRAIN.
+      * D40: NO VALID REPLY: WHAT IS STILL QUEUED IS READ AND DROPPED.
+           MOVE 0 TO QD-N.
+           MOVE 1 TO QD-MORE.
+           PERFORM QRY-DRAIN-ONE UNTIL QD-MORE = 0 OR QD-N > 7.
+       QRY-DRAIN-ONE.
+           ADD 1 TO QD-N.
+           MOVE 'RECT' TO FS-OP.
+           CALL 'PACFSIO' USING FS-OP IN-AREA FS-LEN FS-RC.
+           IF FS-RC NOT = 0 OR FS-LEN = 0
+               MOVE 0 TO QD-MORE.
+           MOVE 0 TO WS-NOP.
        DO-SEND.
            IF REQ-BELL = 'Y' AND REQ-SOUND = 'Y'
                PERFORM SET-ALARM.

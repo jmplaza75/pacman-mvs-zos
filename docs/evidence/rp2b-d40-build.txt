@@ -1,0 +1,44 @@
+# MVS-RP RP.2b: D40 startup hardening (2026-10-12; design docs/RP-POLISH.md 11, approved)
+# Changed: PACQRY (QO-VALID + one-event selection QS-ACT/QS-NREC/QS-NWAIT, appended to QRY-OUT), PACPLAT TRY-COLOUR
+# (QRY-MORE via PACFSIO RECT while QS-ACT = R, QRY-DRAIN after F, capabilities only from an accepted reply),
+# PACQRYT sequence mode (test driver). PACFSIO, core, input, screens unchanged. Model: tests/qry_cases.py valid/select.
+# JOB 273: SRC7 AB SE37 (COBOL library full) -> COMPRESS JOB 274 (3 x IEBCOPY RC 0000) -> JOB 275:
+RP sources PASS (core frozen, append-only copies, ARCADE-only RP code, D40 read loop)
+RP local checks PASS: 42 TURN and 18 REALTIME TSD runs, 6265 model streams, largest 1992 bytes; edges 23 + config 9
+MVS-RP RP.2 PASS: 100 steps RC 0000; 60 ARCADE TSD runs = 6265 model streams
+MVS-RP RP.2b D40 PASS: 29 startup sequences = model (valid first, ENTER / junk / AIDs / malformed then valid, empty reads, fallback by records and by time, single-record validity)
+# QSL lines of JOB 275 (= tests/qry_cases.py seq_lines):
+QSL Q1VALID  ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL Q2ENTER  ACT=A NREC=01 NWAIT=00 C=1 H=1 GE=1
+QSL Q3JUNK   ACT=A NREC=01 NWAIT=00 C=1 H=1 GE=1
+QSL Q4AIDS   ACT=A NREC=03 NWAIT=00 C=1 H=1 GE=1
+QSL Q5BAD    ACT=A NREC=05 NWAIT=00 C=1 H=1 GE=1
+QSL Q6WAIT   ACT=A NREC=01 NWAIT=03 C=1 H=1 GE=1
+QSL Q7FALL   ACT=F NREC=08 NWAIT=00 C=0 H=0 GE=0
+QSL Q8TIME   ACT=F NREC=01 NWAIT=06 C=0 H=0 GE=0
+QSL Q9ALT    ACT=A NREC=01 NWAIT=00 C=1 H=1 GE=1
+QSL VC3270   ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL VNOALT   ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=0
+QSL VNOGF    ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=0
+QSL VNOCP310 ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=0
+QSL VNO85    ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=0
+QSL VNOCOLOR ACT=A NREC=00 NWAIT=00 C=0 H=1 GE=1
+QSL VNOTQRY  ACT=R NREC=01 NWAIT=00 C=0 H=0 GE=0
+QSL VTRUNC85 ACT=R NREC=01 NWAIT=00 C=0 H=0 GE=0
+QSL VDBCS    ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL VONLY85  ACT=R NREC=01 NWAIT=00 C=0 H=0 GE=0
+QSL VSHORTDL ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=0
+QSL VEMPTY   ACT=R NREC=00 NWAIT=01 C=0 H=0 GE=0
+QSL VM3      ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL VM4      ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL VM5      ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL VDYN     ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL VNOA6    ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL VNOA6UA  ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL VA6SDP2  ACT=A NREC=00 NWAIT=00 C=1 H=1 GE=1
+QSL VTRUNCA6 ACT=R NREC=01 NWAIT=00 C=0 H=0 GE=0
+# Regression on the same sources into PACRPD (listings normalised PACRPD -> PACMAIN):
+# GP2 JOB 276:
+MVS-GP2 GP2.2 PASS: 237 steps RC 0000; S1 regression: MVS-S1 PASS: 162 steps RC 0000; RT regression: MVS-RT RT2 PA ...; 71 ARCADE runs = model ( 52640 lines ); 2 columns 21-23 CLASSIC runs = oracle/model
+# HS JOB 277:
+MVS-HS HS.2 PASS: 71 steps (HSFILL RC 0012, the rest RC 0000); 21 runs = model + HS lines ( 23869 text lines, 394 TSD streams = RP models) ; 9 member prints = model; CLIST block both paths

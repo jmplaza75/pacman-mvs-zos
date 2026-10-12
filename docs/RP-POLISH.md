@@ -130,7 +130,7 @@ same session before the first direction. The TK4- JWT / TSO wait limits are read
 4. `SPEED(NORMAL|FAST)` = 150 / 125 ms for any REALTIME game (CLASSIC included), opt-in, default NORMAL.
 5. ESTAE validation through the separate test driver PACRPE (no abend hook in the game), run first as RP.0.
 
-## 11. D40 startup hardening (PROPOSED 2026-10-12; inside RP, before RP.4; user constraints of 2026-10-12)
+## 11. D40 startup hardening (APPROVED 2026-10-12, implemented RP.2b: JOB 275, docs/evidence/rp2b-d40-build.txt)
 Found by RP.0 (docs/evidence/rp-estae-live1.md, rp-estae-live2.md): with line output pending at game start TSO shows
 `***`; the ENTER that releases it is queued and TRY-COLOUR's single query read takes it as the reply -> line-mode
 fallback, and the real reply is later read as commands. Not an RP.0 / ESTAE defect.

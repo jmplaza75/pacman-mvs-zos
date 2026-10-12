@@ -55,7 +55,16 @@ assert st.index('GO TO RP-STATE-EXIT') < st.index('PU-START'), 'nothing before t
 disp = (R / 'src/cobol/PACDISP.cob').read_text()
 assert '           IF ARC-ON = 1 AND F-LOST = 1 AND REQ-PLAY = \'R\'\n               PERFORM FINAL-DEATH.' in disp
 subprocess.run([sys.executable, str(R / 'tests/test_core_frozen.py')], check=True, stdout=subprocess.DEVNULL)
-print('RP sources PASS (core frozen, append-only copies, ARCADE-only RP code)')
+# RP.2b D40 (section 11): PACPLAT reads again only while QS-ACT = R (a test-before PERFORM: a valid first reply
+# = no extra read), drains only after F, and takes the capabilities only from an accepted reply; PACFSIO unchanged
+plat = (R / 'src/cobol/PACPLAT.cob').read_text()
+tc = plat[plat.index('       TRY-COLOUR.'):plat.index('       TRY-COLOUR-EXIT.')]
+assert '''               PERFORM QRY-MORE THRU QRY-MORE-EXIT
+                   UNTIL QS-ACT NOT = 'R'.''' in tc and "IF FS-RC = 0 AND QS-ACT = 'F'\n               PERFORM QRY-DRAIN." in tc
+assert "IF QS-ACT NOT = 'A'\n               MOVE 4 TO FS-RC." in tc
+assert tc.index("MOVE 4 TO FS-RC.") < tc.index('MOVE QO-COLOUR TO HAS-COLOUR')
+assert plat.count("MOVE 'RECT' TO FS-OP") == 3      # the TURN idle tick (G3) + QRY-MORE + QRY-DRAIN-ONE
+print('RP sources PASS (core frozen, append-only copies, ARCADE-only RP code, D40 read loop)')
 
 
 # 2. the models --------------------------------------------------------------------------------------------------------
@@ -117,7 +126,7 @@ def listing_check(path):
     lines = Path(path).read_text().splitlines()
     deck = build('RP', 'HERC01.PACMAN')
     nsteps = len(re.findall(r'^//\w+\s+EXEC PGM=', deck, re.M))
-    rcs = re.findall(r'PACBLDRP\s+(\w+)\s+(?:IEBGENER|IEBUPDTE|IEFBR14|IKFCBL00|IFOX00|IEWL|PACRPD)\s+RC= (\d{4})',
+    rcs = re.findall(r'PACBLDRP\s+(\w+)\s+(?:IEBGENER|IEBUPDTE|IEFBR14|IKFCBL00|IFOX00|IEWL|PACRPD|PACQRYT)\s+RC= (\d{4})',
                      '\n'.join(lines))
     assert len(rcs) == nsteps and all(rc == '0000' for _, rc in rcs), \
         (nsteps, len(rcs), [x for x in rcs if x[1] != '0000'])
@@ -148,5 +157,14 @@ def listing_check(path):
     print('MVS-RP RP.2 PASS:', len(rcs), 'steps RC 0000;', len(runs), 'ARCADE TSD runs =', ns, 'model streams')
 
 
+def d40_check(path):
+    from qry_cases import seq_lines
+    got = [l.rstrip() for l in Path(path).read_text().splitlines() if l.startswith('QSL ')]
+    assert got == seq_lines(), [(a, b) for a, b in zip(got, seq_lines()) if a != b] or (len(got), len(seq_lines()))
+    print('MVS-RP RP.2b D40 PASS:', len(got), 'startup sequences = model (valid first, ENTER / junk / AIDs /',
+          'malformed then valid, empty reads, fallback by records and by time, single-record validity)')
+
+
 if ARGS:
     listing_check(ARGS[0])
+    d40_check(ARGS[0])

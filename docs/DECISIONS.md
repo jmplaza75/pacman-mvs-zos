@@ -242,9 +242,11 @@
   `SPEED(NORMAL|FAST)` = 150 / 125 ms, PARM column 24, any REALTIME game. ESTAE validated live by the test driver
   PACRPE (forced 0C7 in full-screen mode, also after a PACHSIO call), not by a hook in the game. Soak: 10-minute pause
   and 10-minute pre-start wait in one live session.
-- D40 (OPEN, recorded 2026-10-12 from RP.0 live 1/2, docs/evidence/rp-estae-live1.md, rp-estae-live2.md) Startup
+- D40 (APPROVED 2026-10-12, implemented in RP.2b; recorded from RP.0 live 1/2, docs/evidence/rp-estae-live1.md, rp-estae-live2.md) Startup
   hardening. When line-mode output is pending at game start (seen after a program that wrote line output and then
   abended), TSO shows `***` before PACPLAT's full-screen switch; the ENTER that releases it is queued as input and
   TRY-COLOUR's QRY read takes it as the Query Reply (no X'88' -> HAS-COLOUR 0 -> line-mode fallback; the real reply is
-  then read as commands, `INVALID COMMAND A` / `X`). Not caused by the PACFSIO ESTAE exit (RP.0 PASS). Fix to be
-  designed and approved: e.g. the QRY read skips inbound records that are not a Query Reply (bounded), then re-queries.
+  then read as commands, `INVALID COMMAND A` / `X`). Not caused by the PACFSIO ESTAE exit (RP.0 PASS). Fix
+  (docs/RP-POLISH.md 11): PACQRY accepts only a structurally valid Query Reply (AID X'88', exact chain of X'81'
+  fields, Summary first); PACPLAT reads past anything else with PACFSIO RECT, at most 8 records / 6 empty reads,
+  then the line-mode fallback after a drain; a valid first reply = no extra read (start unchanged); no re-query.

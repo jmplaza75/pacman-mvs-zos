@@ -9,6 +9,15 @@
       * MVS-GS: QO-AW/QO-AH = THE ALTERNATE SCREEN SIZE: QCODE X'A6'
       * (IMPLICIT PARTITION, ALTERNATE WIDTH/HEIGHT AT +13/+15), ELSE
       * QCODE X'81' (USABLE AREA, WIDTH/HEIGHT AT +6/+8), ELSE 80 X 24.
+      * MVS-RP D40 (DOCS/RP-POLISH.MD 11): QO-VALID 1 = A STRUCTURALLY
+      * VALID QUERY REPLY (LENGTH >= 5, AID X'88', AN EXACT CHAIN OF
+      * FIELDS LL >= 4 WITH ID X'81' TO THE LAST BYTE, THE FIRST ONE
+      * QCODE X'80' SUMMARY). EVERY CALL IS ALSO ONE STARTUP EVENT OF
+      * THE CALLER'S SELECTION (QS-NREC/QS-NWAIT ZEROED BY THE CALLER
+      * BEFORE THE FIRST): LENGTH 0 = AN EMPTY READ (QS-NWAIT + 1), AN
+      * INVALID RECORD QS-NREC + 1; QS-ACT A = ACCEPT THIS RECORD, F =
+      * GIVE UP (8 RECORDS OR 6 EMPTY READS), R = READ AGAIN. THE
+      * CAPABILITY OUTPUTS ARE COMPUTED AS BEFORE FOR EVERY RECORD.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACQRY.
        ENVIRONMENT DIVISION.
@@ -43,6 +52,11 @@
        01  UA-H                  PIC 9(4) VALUE 0.
        01  IP-W                  PIC 9(4) VALUE 0.
        01  IP-H                  PIC 9(4) VALUE 0.
+       01  VA-P                  PIC 9(4).
+       01  VA-L                  PIC 9(4).
+       01  VA-E                  PIC 9(4).
+       01  VA-N                  PIC 9(4).
+       01  VA-STOP               PIC 9.
        LINKAGE SECTION.
        01  QRY-AREA.
            05  QRY-CH            PIC X OCCURS 2048 TIMES.
@@ -53,6 +67,10 @@
            05  QO-GE             PIC 9.
            05  QO-AW             PIC 999.
            05  QO-AH             PIC 999.
+           05  QO-VALID          PIC 9.
+           05  QS-ACT            PIC X.
+           05  QS-NREC           PIC 99.
+           05  QS-NWAIT          PIC 99.
        PROCEDURE DIVISION USING QRY-AREA QRY-LEN QRY-OUT.
        MAIN-PARA.
            MOVE 0 TO QO-COLOUR.
@@ -68,7 +86,66 @@
            IF IP-W > 0 AND IP-H > 0 AND IP-W < 1000 AND IP-H < 1000
                MOVE IP-W TO QO-AW
                MOVE IP-H TO QO-AH.
+           PERFORM VALIDATE THRU VALIDATE-EXIT.
+           PERFORM SELECT-STEP.
            GOBACK.
+       VALIDATE.
+           MOVE 0 TO QO-VALID.
+           IF QRY-LEN < 5
+               GO TO VALIDATE-EXIT.
+           MOVE 1 TO WS-K.
+           PERFORM BYTE-VAL.
+           IF WS-V NOT = 136
+               GO TO VALIDATE-EXIT.
+           MOVE 2 TO VA-P.
+           MOVE 0 TO VA-N.
+           MOVE 0 TO VA-STOP.
+           PERFORM VAL-SF THRU VAL-SF-EXIT UNTIL VA-STOP > 0.
+           IF VA-STOP = 1
+               MOVE 1 TO QO-VALID.
+       VALIDATE-EXIT.
+           EXIT.
+       VAL-SF.
+      * VA-STOP 1 = THE CHAIN ENDS EXACTLY AT THE LAST BYTE, 2 = BAD.
+           IF VA-P > QRY-LEN AND VA-N > 0
+               MOVE 1 TO VA-STOP
+               GO TO VAL-SF-EXIT.
+           COMPUTE VA-E = VA-P + 3.
+           IF VA-E > QRY-LEN
+               MOVE 2 TO VA-STOP
+               GO TO VAL-SF-EXIT.
+           MOVE VA-P TO WS-K.
+           PERFORM WORD-VAL.
+           MOVE WS-W TO VA-L.
+           COMPUTE VA-E = VA-P + VA-L - 1.
+           IF VA-L < 4 OR VA-E > QRY-LEN
+               MOVE 2 TO VA-STOP
+               GO TO VAL-SF-EXIT.
+           COMPUTE WS-K = VA-P + 2.
+           PERFORM BYTE-VAL.
+           IF WS-V NOT = 129
+               MOVE 2 TO VA-STOP
+               GO TO VAL-SF-EXIT.
+           COMPUTE WS-K = VA-P + 3.
+           PERFORM BYTE-VAL.
+           IF VA-N = 0 AND WS-V NOT = 128
+               MOVE 2 TO VA-STOP
+               GO TO VAL-SF-EXIT.
+           ADD 1 TO VA-N.
+           ADD VA-L TO VA-P.
+       VAL-SF-EXIT.
+           EXIT.
+       SELECT-STEP.
+           IF QRY-LEN < 1
+               ADD 1 TO QS-NWAIT
+           ELSE IF QO-VALID = 0
+               ADD 1 TO QS-NREC.
+           MOVE 'R' TO QS-ACT.
+           IF QS-NREC NOT < 8 OR QS-NWAIT NOT < 6
+               MOVE 'F' TO QS-ACT.
+           IF QO-VALID = 1
+               MOVE 'A' TO QS-ACT.
+           MOVE 0 TO WS-NOP.
        FIND-CAPS.
       * QUERY REPLY = AID X'88' (136) + STRUCTURED FIELDS: LENGTH(2),
       * X'81' (129), QCODE. COLOUR SUPPORT = QCODE X'86' (134).

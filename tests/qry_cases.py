@@ -115,6 +115,81 @@ def cards():
         hx = b.hex().upper()
         chunks = [hx[k:k + 64] for k in range(0, len(hx), 64)] or ['']
         out += ''.join(f'{name:<8} {c}\n' for c in chunks)
+    for name, events in sequences():      # MVS-RP D40: one startup event per change of the column-9 digit
+        for k, b in enumerate(events, 1):
+            hx = b.hex().upper()
+            chunks = [hx[i:i + 64] for i in range(0, len(hx), 64)] or ['']
+            out += ''.join(f'{name:<8}{k % 10}{c}\n' for c in chunks)
+    return out
+
+
+# ---- MVS-RP D40 (docs/RP-POLISH.md 11): startup selection, written from the design ------------------------------
+ENTER = bytes([0x7D, 0xC7, 0xE5])                                   # ENTER, cursor, no data (the RP.0 live record)
+JUNK = bytes([0x7D, 0xC1, 0xF9, 0x11, 0xC1, 0xF9]) + 'ABC'.encode('cp037')   # ENTER with a typed field
+PF9, PA2, CLEAR = bytes([0xF9, 0xC1, 0xF9]), bytes([0x6E]), bytes([0x6D])
+
+
+def valid(b):
+    """A structurally valid Query Reply: >= 5 bytes, AID X'88', an exact chain of fields (length >= 4, ID X'81')
+    to the last byte, the first one Summary (QCODE X'80')."""
+    if len(b) < 5 or b[0] != 0x88:
+        return False
+    p, n = 1, 0
+    while p < len(b):
+        if p + 4 > len(b):
+            return False
+        ln = int.from_bytes(b[p:p + 2], 'big')
+        if ln < 4 or p + ln > len(b) or b[p + 2] != 0x81 or (n == 0 and b[p + 3] != 0x80):
+            return False
+        p, n = p + ln, n + 1
+    return n > 0
+
+
+def select(events):
+    """(action, rejected records, empty reads, (colour, highlight, ge)): A on the first valid reply; F after 8
+    rejected records or 6 empty reads; R if the events end first."""
+    nrec = nwait = 0
+    for b in events:
+        if valid(b):
+            return 'A', nrec, nwait, expect(b)
+        if b:
+            nrec += 1
+        else:
+            nwait += 1
+        if nrec >= 8 or nwait >= 6:
+            return 'F', nrec, nwait, (0, 0, 0)
+    return 'R', nrec, nwait, (0, 0, 0)
+
+
+def sequences():
+    r = REAL
+    over = (500).to_bytes(2, 'big') + r[3:]
+    first = int.from_bytes(r[1:3], 'big')
+    seqs = [
+        ('Q1VALID', [r]),                                               # clean start: accepted at once
+        ('Q2ENTER', [ENTER, r]),
+        ('Q3JUNK', [JUNK, r]),
+        ('Q4AIDS', [PF9, PA2, CLEAR, r]),
+        ('Q5BAD', [r[:100], r[:1] + over, r[:3] + b'\x82' + r[4:], sf_cut(r, 1), r[:1] + b'\x00\x00' + r[3:], r]),
+        ('Q6WAIT', [ENTER, b'', b'', b'', r]),
+        ('Q7FALL', [ENTER] * 8 + [r]),                                  # 8 rejected records: fallback (r unread)
+        ('Q8TIME', [ENTER] + [b''] * 6 + [r]),                          # 6 empty reads: fallback
+        ('Q9ALT', [r[:1] + r[1 + first:]] + [r]),                       # the Summary cut: invalid, then valid
+    ]
+    names = set()
+    for name, b in cases():                                             # every single reply as a 1-event sequence
+        v = 'V' + name[:7]
+        assert v not in names
+        names.add(v)
+        seqs.append((v, [b]))
+    return seqs
+
+
+def seq_lines():
+    out = []
+    for name, ev in sequences():
+        a, n, w, (c, h, g) = select(ev)
+        out.append(f'QSL {name:<8} ACT={a} NREC={n:02d} NWAIT={w:02d} C={c} H={h} GE={g}')
     return out
 
 

@@ -608,7 +608,7 @@ def build(name, pfx, load_override=None):
         if hilite:
             parm = (parm + ' AI1 1' if parm == 'TSD' else parm).ljust(11) + 'N' + hilite
         out += run_step(f'TSD{i}', pfx, load, cards, parm=parm)
-    if name in ('G4', 'GS', 'GX', 'RT', 'S1', 'GP1', 'GP2'):
+    if name in ('G4', 'GS', 'GX', 'RT', 'S1', 'GP1', 'GP2', 'RP'):
         out += qry_test_steps(pfx)
     if name in ('RT', 'S1', 'GP1', 'GP2'):
         out += rt_steps(pfx, load)

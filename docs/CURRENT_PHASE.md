@@ -128,4 +128,8 @@ MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gamep
   death frames, popups, HUD high score, end line, decoration-drop size rule), PACDISP (final death frames); models
   tests/ref_rp.py (+ gs/gx/g4/rt hooks), cases tests/rpcases, tests/search_rp.py, tests/test_rp.py. Deck RP JOB 270
   (load member PACRPD): 95 steps RC 0000, 60 ARCADE TSD runs = 6265 model streams; regression GP2 JOB 271, HS JOB 272
-  PASS (docs/evidence/rp2-build-tsd.txt). Installed PACMAIN unchanged until RP.2b is green.
+  PASS (docs/evidence/rp2-build-tsd.txt).
+- RP.2b D40 COMPLETE (2026-10-12, NOT installed): PACQRY validity + bounded selection, PACPLAT read loop + drain,
+  PACQRYT sequence mode; deck RP JOB 275 (after COMPRESS JOB 274): 100 steps RC 0000, 60 TSD runs = model, 29 startup
+  sequences = model; regression GP2 JOB 276, HS JOB 277 PASS (docs/evidence/rp2b-d40-build.txt). Next: RP.3 SPEED,
+  then install + RP.4 live. Test: `python3 tests/test_rp.py build/PACBLDRP-275.txt`.

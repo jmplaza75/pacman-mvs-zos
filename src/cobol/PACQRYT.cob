@@ -3,6 +3,12 @@
       * HEX (UP TO 32 PER CARD); CONSECUTIVE CARDS WITH THE SAME NAME
       * ARE ONE REPLY. FOR EVERY REPLY ONE LINE IS PRINTED:
       *   QRY NAME     LEN=NNNN C=N H=N GE=N  (COLOUR, HILITE, GE).
+      * MVS-RP D40: A DIGIT IN COLUMN 9 = SEQUENCE MODE: THE CARDS OF
+      * ONE NAME ARE STARTUP EVENTS, ONE PER DIGIT CHANGE (A CARD
+      * WITHOUT HEX = AN EMPTY READ), FED TO PACQRY UNTIL QS-ACT IS
+      * NOT R, AS PACPLAT DOES; ONE LINE PER SEQUENCE:
+      *   QSL NAME     ACT=A NREC=NN NWAIT=NN C=N H=N GE=N
+      * (C/H/GE OF THE ACCEPTED RECORD, 0 WHEN NONE WAS ACCEPTED).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACQRYT.
        ENVIRONMENT DIVISION.
@@ -23,7 +29,7 @@
        WORKING-STORAGE SECTION.
        01  WS-CARD.
            05  CD-NAME           PIC X(8).
-           05  FILLER            PIC X.
+           05  CD-SEQ            PIC X.
            05  CD-HEX            PIC X OCCURS 64 TIMES.
            05  FILLER            PIC X(7).
        01  Q-AREA.
@@ -35,7 +41,28 @@
            05  QO-GE             PIC 9.
            05  QO-AW             PIC 999.
            05  QO-AH             PIC 999.
+           05  QO-VALID          PIC 9.
+           05  QS-ACT            PIC X.
+           05  QS-NREC           PIC 99.
+           05  QS-NWAIT          PIC 99.
        01  CUR-NAME              PIC X(8) VALUE SPACES.
+       01  CUR-SEQ               PIC X VALUE SPACE.
+       01  SEQ-ON                PIC 9 VALUE 0.
+       01  SL-LINE.
+           05  FILLER            PIC X(4) VALUE 'QSL '.
+           05  SL-NAME           PIC X(8).
+           05  FILLER            PIC X(5) VALUE ' ACT='.
+           05  SL-ACT            PIC X.
+           05  FILLER            PIC X(6) VALUE ' NREC='.
+           05  SL-NREC           PIC 99.
+           05  FILLER            PIC X(7) VALUE ' NWAIT='.
+           05  SL-NWAIT          PIC 99.
+           05  FILLER            PIC X(3) VALUE ' C='.
+           05  SL-C              PIC 9.
+           05  FILLER            PIC X(3) VALUE ' H='.
+           05  SL-H              PIC 9.
+           05  FILLER            PIC X(4) VALUE ' GE='.
+           05  SL-GE             PIC 9.
        01  WS-EOF                PIC 9 VALUE 0.
        01  WS-K                  PIC 99.
        01  WS-HV                 PIC 99.
@@ -72,7 +99,7 @@
            MOVE 0 TO Q-LEN.
            PERFORM READ-CARD THRU READ-CARD-EXIT UNTIL WS-EOF = 1.
            IF CUR-NAME NOT = SPACES
-               PERFORM EVAL-REPLY.
+               PERFORM FLUSH-NAME.
            CLOSE CARD-FILE.
            DISPLAY 'QRY TEST END'.
            STOP RUN.
@@ -81,11 +108,12 @@
                AT END MOVE 1 TO WS-EOF
                GO TO READ-CARD-EXIT.
            IF CD-NAME NOT = CUR-NAME AND CUR-NAME NOT = SPACES
-               PERFORM EVAL-REPLY.
+               PERFORM FLUSH-NAME.
+           IF CD-NAME = CUR-NAME AND SEQ-ON = 1 AND CD-SEQ NOT = CUR-SEQ
+               PERFORM SEQ-EVENT.
            IF CD-NAME NOT = CUR-NAME
-               MOVE CD-NAME TO CUR-NAME
-               MOVE 0 TO Q-LEN
-               MOVE SPACES TO Q-AREA.
+               PERFORM NEW-NAME.
+           MOVE CD-SEQ TO CUR-SEQ.
            MOVE 1 TO WS-K.
            PERFORM ADD-BYTE UNTIL WS-K > 63.
        READ-CARD-EXIT.
@@ -112,7 +140,45 @@
            SUBTRACT 1 FROM WS-D.
        NEXT-DIGIT.
            ADD 1 TO WS-D.
+       NEW-NAME.
+           MOVE CD-NAME TO CUR-NAME.
+           MOVE 0 TO Q-LEN.
+           MOVE SPACES TO Q-AREA.
+           MOVE 0 TO SEQ-ON.
+           IF CD-SEQ NOT = SPACE
+               MOVE 1 TO SEQ-ON.
+           MOVE 0 TO QS-NREC.
+           MOVE 0 TO QS-NWAIT.
+           MOVE 'R' TO QS-ACT.
+           MOVE 0 TO SL-C.
+           MOVE 0 TO SL-H.
+           MOVE 0 TO SL-GE.
+       FLUSH-NAME.
+           IF SEQ-ON = 1
+               PERFORM SEQ-EVENT
+               PERFORM SEQ-PRINT
+           ELSE
+               PERFORM EVAL-REPLY.
+           MOVE 0 TO WS-NOP.
+       SEQ-EVENT.
+      * ONE STARTUP EVENT; AFTER A DECISION (A / F) NO MORE IS READ.
+           IF QS-ACT = 'R'
+               CALL 'PACQRY' USING Q-AREA Q-LEN Q-OUT.
+           IF QS-ACT = 'A'
+               MOVE QO-COLOUR TO SL-C
+               MOVE QO-HILITE TO SL-H
+               MOVE QO-GE TO SL-GE.
+           MOVE 0 TO Q-LEN.
+           MOVE SPACES TO Q-AREA.
+       SEQ-PRINT.
+           MOVE CUR-NAME TO SL-NAME.
+           MOVE QS-ACT TO SL-ACT.
+           MOVE QS-NREC TO SL-NREC.
+           MOVE QS-NWAIT TO SL-NWAIT.
+           DISPLAY SL-LINE.
        EVAL-REPLY.
+           MOVE 0 TO QS-NREC.
+           MOVE 0 TO QS-NWAIT.
            CALL 'PACQRY' USING Q-AREA Q-LEN Q-OUT.
            MOVE CUR-NAME TO RL-NAME.
            MOVE Q-LEN TO RL-LEN.
