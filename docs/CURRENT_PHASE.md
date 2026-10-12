@@ -114,4 +114,7 @@ test_core_frozen. Install note: the high-score dataset <prefix>.DATA (deck DATA 
 outside the build libraries; COMPRESS and rebuilds never touch it.
 MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gameplay polish (docs/RP-POLISH.md).
 - RP.1 design D39 APPROVED and frozen (2026-10-12): ARCADE-only visuals, fruit popup in, no level-clear flash, SPEED
-  for any REALTIME game, ESTAE via the test driver PACRPE. Next step: RP.0 (ESTAE live validation). S2 not started.
+  for any REALTIME game, ESTAE via the test driver PACRPE. S2 not started.
+- RP.0 build PASS (deck RPE JOB 266: src/probe/PACRPE.cob + RPESTAE.clist, production PACFSIO/PACHSIO unchanged,
+  no warnings, both batch runs end S0C7 = trigger proven; docs/evidence/rp-estae-build.txt). Live checklist
+  docs/evidence/rp-estae-checklist.md: WAITING for the user's live c3270 run.

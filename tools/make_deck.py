@@ -924,9 +924,25 @@ def hsp_deck(pfx):
     return out + '//\n'
 
 
+def rpe_deck(pfx):
+    """MVS-RP RP.0 (D39): ESTAE live test driver PACRPE, linked with the UNCHANGED production PACFSIO and PACHSIO ->
+    LOAD(PACRPE), CLIST RPESTAE. Two batch runs (not a TSO session: nothing sent) prove the forced-abend trigger:
+    both steps must end with system abend 0C7 after their lines (B2 reads the high-score member, read only)."""
+    out = job_card('PACRPE01', 'PACMAN RP.0 ESTAE') + f'//* PREFIX {pfx}\n'
+    out += upload('SRC1', pfx, 'COBOL', 'PACRPE', text_of(ROOT / 'src/probe/PACRPE.cob'))
+    out += compile_step('COB1', pfx, 'PACRPE', 'OBJ1')
+    out += asm_step('ASM1', 'OBJA1', text_of(ROOT / 'src/asm/PACFSIO.asm'))
+    out += asm_step('ASM2', 'OBJA2', text_of(ROOT / 'src/asm/PACHSIO.asm'))
+    out += link_step(pfx, ['OBJ1', 'OBJA1', 'OBJA2'], 'PACRPE', 'PACRPE')
+    out += upload('CLS1', pfx, 'CLIST', 'RPESTAE', text_of(ROOT / 'src/probe/RPESTAE.clist').replace('@@PREFIX@@', pfx))
+    out += run_step('B1', pfx, 'PACRPE', None, parm='E1')
+    out += run_step('B2', pfx, 'PACRPE', None, parm='E2', dd=f'DSN={pfx}.DATA(HISCORE),DISP=SHR', cond='EVEN')
+    return out + '//\n'
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'HSP', 'DATA', 'COMPRESS'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'HSP', 'RPE', 'DATA', 'COMPRESS'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -945,6 +961,8 @@ if __name__ == '__main__':
         text = s1p_deck(pfx)
     elif a.deck == 'HSP':
         text = hsp_deck(pfx)
+    elif a.deck == 'RPE':
+        text = rpe_deck(pfx)
     elif a.deck == 'DATA':
         text = data_deck(pfx)
     elif a.deck == 'RTP':
