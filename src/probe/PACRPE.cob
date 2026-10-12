@@ -63,7 +63,8 @@
                MOVE PARM-CASE TO WS-CASE.
            IF WS-CASE NOT = 'E2' AND WS-CASE NOT = 'E3'
                MOVE 'E1' TO WS-CASE.
-           DISPLAY 'RPE CASE ' WS-CASE ' START'.
+      * NO LINE OUTPUT BEFORE FSON (RP.0 LIVE 1: A LINE WRITTEN BEFORE
+      * THE FULL-SCREEN SWITCH MADE TSO HOLD THE SCREEN WITH '***').
            IF WS-CASE = 'E2'
                CALL 'PACHSIO' USING HS-OP HS-RC HS-DDN HS-REC.
            MOVE HS-RC TO LS-RC.
@@ -71,6 +72,7 @@
            CALL 'PACFSIO' USING FS-OP FS-BUF FS-LEN FS-RC.
            IF FS-RC NOT = 0
                MOVE FS-RC TO LF-RC
+               DISPLAY 'RPE CASE ' WS-CASE ' START'
                DISPLAY L-FS
                DISPLAY L-HS
                DISPLAY 'RPE NOT A TSO SESSION: NOTHING SENT'

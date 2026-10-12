@@ -16,3 +16,14 @@ Start c3270 with a trace kept OUTSIDE the repository (it contains the logon):
 
 Note for each case whether the CLIST's `RPESTAE Ex AFTER CALL LASTCC=...` line appeared (does a CLIST go on after an
 abend in CALL?). Afterwards tell Claude the trace file name; the trace is decoded independently for the evidence.
+
+## Retest after live 1 (driver JOB 267; diagnosis docs/evidence/rp-estae-live1.md)
+One fresh session, trace `tools/c3270_rt.sh ~/rp-estae-live2.txt`, log on, then six commands; Q ends each game.
+| # | Command | Pass |
+|---|---|---|
+| R1 | `EXEC 'HERC01.PACMAN.CLIST(RPESTAE)' 'CASE(E2)'`, ENTER on the E2 screen | the E2 screen is SHOWN (no `***`), then `ENDED DUE TO ERROR+`, READY |
+| R2 | `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE)'`, Q | full-screen game at once (no `***`), clean end |
+| R3 | `EXEC 'HERC01.PACMAN.CLIST(RPESTAE)' 'CASE(E3)'`, ENTER | line `RPE E3 LINE MODE RESTORED, FORCING 0C7`, abend message, READY |
+| R4 | `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE)'`, Q | as R2 |
+If a `***` appears anywhere: note where, press ENTER, go on (the trace shows the rest). E1 is not repeated: live 1
+already showed it clean (TIME and the next commands normal).

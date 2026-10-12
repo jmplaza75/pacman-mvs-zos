@@ -117,4 +117,8 @@ MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gamep
   for any REALTIME game, ESTAE via the test driver PACRPE. S2 not started.
 - RP.0 build PASS (deck RPE JOB 266: src/probe/PACRPE.cob + RPESTAE.clist, production PACFSIO/PACHSIO unchanged,
   no warnings, both batch runs end S0C7 = trigger proven; docs/evidence/rp-estae-build.txt). Live checklist
-  docs/evidence/rp-estae-checklist.md: WAITING for the user's live c3270 run.
+  docs/evidence/rp-estae-checklist.md.
+- RP.0 live 1 (docs/evidence/rp-estae-live1.md): E1/E2 recovery to READY PASS, E3 not in the trace; the relaunched
+  game met a TSO `***` hold and fell back to line mode (the ENTER was read as the Query Reply). Cause: the driver wrote
+  a line before FSON (fixed, JOB 267). Latent: TRY-COLOUR takes any inbound record as the reply (open item). WAITING
+  for the short retest R1-R4. RP.2 may proceed locally; the installed game build is not replaced until RP.0 closes.
