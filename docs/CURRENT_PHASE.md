@@ -93,5 +93,7 @@ MVS-GP2 IN PROGRESS (started 2026-10-12 on the user's go): levels, progression a
   defaults). Evidence docs/evidence/gp2-screens-tsd.txt; design section 11. Test:
   `python3 tests/test_gp2.py build/PACBLGP2-247.txt build/PACBLG23-246.txt`.
   GP2.3 approved by the user (level-clear alarm kept, compact 80x24 HUD accepted); committed as a checkpoint.
-  GP2.4 live c3270 acceptance IN PREPARATION (checklist docs/evidence/gp2-live-checklist.md). No mvs-gp2 tag yet.
+  GP2.4 live c3270 acceptance: checklist APPROVED (docs/evidence/gp2-live-checklist.md); scenarios A/B/C
+  (tests/gp2live, tools/gp2_live.py driver, tools/c3270_gp2_trace.py replay analyser) committed before the live run;
+  waiting for the user's live session. Scenarios frozen (change only for a documented driver defect). No mvs-gp2 tag.
 Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).
