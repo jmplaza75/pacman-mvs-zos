@@ -5,8 +5,13 @@ TSO READY; only the game / READY screens are read (never the logon). The analysi
 trace by tools/c3270_gp2_trace.py (replay through the independent model): this driver only sends keys.
 REALTIME (A, C): the first card is sent on the start screen; then every card is sent right after the host write of
 the previous quantum (x3270if 'KEY Wait(5,Output)' = the key, then the next write), so card k is the input of
-quantum k as in the batch card rules (tests/ref_rt.py). '.' = no key, U/D/L/R = PF7/8/10/11, P = PF9 (pause; the
+quantum k as in the batch card rules (tests/ref_rt.py). '.' = PF1, U/D/L/R = PF7/8/10/11, P = PF9 (pause; the
 driver then holds the pause --pause seconds before the resuming P), * = PA2, Q = Q + ENTER.
+GP2.4 live run 1 (2026-10-12, docs/evidence/gp2-live.md): c3270's Wait(Output) blocks only after an AID; for an idle
+card ('.', no key) it returned at once (median 7 ms), so the driver ran ahead of the quanta (scenario A: 201 cards in
+100 quanta). Fix: an idle card sends PF1, an AID the game ignores in REALTIME (PACINPT RT-TSC: anything but PF7-PF11,
+PA2 and ENTER = IGN, dropped by PACMAIN RT-EVENT before PACRT: no input, no frame change; the replay maps PF1 to '.'),
+so every card is one AID and every Wait(Output) blocks for exactly one host write. The scenarios are unchanged.
 TURN (B): every card is typed in the command field + ENTER, then the next write is awaited.
 Usage: gp2_live.py A|B|C [--port 4001] [--prefix HERC01.PACMAN] [--pause 3] [--log FILE]"""
 import argparse
@@ -20,7 +25,8 @@ SCEN = {   # card file, CLIST keywords (defaults: COLOR/HILITE/GLYPHS/SCALE/CANV
     'B': ('LIVEB', 'RULES(ARCADE) AI(0) GHOSTS(1) LEVEL(13) PLAY(TURN) ANIM(NO)'),
     'C': ('LIVEC', 'RULES(ARCADE) AI(2) GHOSTS(1) LEVEL(13) PLAY(REALTIME)'),
 }
-KEY = {'U': 'PF(7)', 'D': 'PF(8)', 'L': 'PF(10)', 'R': 'PF(11)', 'P': 'PF(9)', '*': 'PA(2)', 'Q': 'String("Q") Enter()'}
+KEY = {'U': 'PF(7)', 'D': 'PF(8)', 'L': 'PF(10)', 'R': 'PF(11)', 'P': 'PF(9)', '*': 'PA(2)', 'Q': 'String("Q") Enter()',
+       '.': 'PF(1)'}
 
 ap = argparse.ArgumentParser()
 ap.add_argument('scenario', choices=sorted(SCEN))
@@ -78,8 +84,7 @@ for k, card in enumerate(cards):
         x(f'String("{card}") Enter() Wait(5,Output)')
         say(f'card {k} {card}')
         continue
-    keys = KEY.get(card, '')
-    x((keys + ' ' if keys else '') + 'Wait(5,Output)')
+    x(KEY[card] + ' Wait(5,Output)')
     say(f'card {k} {card}')
     if card == 'P':
         paused = not paused

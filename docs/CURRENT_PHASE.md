@@ -95,5 +95,7 @@ MVS-GP2 IN PROGRESS (started 2026-10-12 on the user's go): levels, progression a
   GP2.3 approved by the user (level-clear alarm kept, compact 80x24 HUD accepted); committed as a checkpoint.
   GP2.4 live c3270 acceptance: checklist APPROVED (docs/evidence/gp2-live-checklist.md); scenarios A/B/C
   (tests/gp2live, tools/gp2_live.py driver, tools/c3270_gp2_trace.py replay analyser) committed before the live run;
-  waiting for the user's live session. Scenarios frozen (change only for a documented driver defect). No mvs-gp2 tag.
+  Scenarios frozen. Live run 1: B PASS (78/78 writes = model, alarms [0, 76]); A and C every write = model but
+  the route desynchronised by a documented driver defect (Wait(Output) does not block without an AID), fixed (idle
+  card = PF1, ignored by the game); A and C to be rerun (docs/evidence/gp2-live.md). No mvs-gp2 tag.
 Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).

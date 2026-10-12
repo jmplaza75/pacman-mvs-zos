@@ -7,6 +7,9 @@ script port (keys only), and every scenario is then replayed from the c3270 trac
 `tests/gp2live/LIVE[ABC].txt` come from the Hercules-tested edge cases G2RCLR, G2XF and G2RXD
 (`tests/gp2live/make_live.py`; redundant direction keys dropped, game identical in the model).
 
+Run 1 (2026-10-12): B PASS; A and C desynchronised by a driver defect (idle cards did not wait for the quantum),
+fixed in tools/gp2_live.py (an idle card sends PF1, ignored by the game): rerun A and C (docs/evidence/gp2-live.md).
+
 ## 0. Setup (about 2 minutes)
 1. Hercules / TK4- running. macOS Terminal: window 120 x 30 or larger BEFORE connecting; Settings > Profiles >
    Advanced > "Audible bell" ON.
