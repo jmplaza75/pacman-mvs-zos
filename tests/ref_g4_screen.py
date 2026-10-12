@@ -34,8 +34,11 @@ def fright_colour(g):
 CP310 = {'•': 0xA3, '⊂': 0x9B, '⊃': 0x9A, '○': 0x9D, '∩': 0xAA, '⍝': 0xDF}
 
 
-def cells(g, cmd, res, msg, hi, prof, anim, vis, face):
+def cells(g, cmd, res, msg, hi, prof, anim, vis, face, rp=None):
+    """rp (MVS-RP, ref_rp.Tracker): death frame and READY! on the board, the popup on the message row (no invalid
+    command message), the high score on row 20."""
     img = [(0x40, 0, 0, 0)] * 1920
+    dth = rp['dth'] if rp else None
 
     def put(row, col, text, colour, high=0):
         for k, c in enumerate(text):
@@ -67,12 +70,21 @@ def cells(g, cmd, res, msg, hi, prof, anim, vis, face):
         fr = fruit_at(g)
         if fr and fr[1] == j + 1:
             row[fr[0] - 1] = [e('%')[0], FRUITC, 0, 'base']
-        for k, (gx, gy, _) in enumerate(g.gh):
+        for k, (gx, gy, _) in enumerate(g.gh if dth is None else []):
             if arc and g.mode[k] == 'E' and gy == j + 1:
                 row[gx - 1] = [e('"')[0], EYESC, 0, 'base']
-        if g.y == j + 1:
+        if dth is None and g.y == j + 1:
             row[g.x - 1] = [pl, PLAYER, REVERSE if hi else 0, 'glyph']
-        for k, (gx, gy, _) in enumerate(g.gh):
+        if dth is not None and dth[2] == j + 1:          # MVS-RP death frames: glyph, c o . *, nothing
+            from ref_rp import DEATH_GLYPHS
+            f = dth[0]
+            row[dth[1] - 1] = ([pl, PLAYER, REVERSE if hi else 0, 'glyph'] if f == 1 else [0x40, 0, 0, 'open']
+                               if f == 6 else [e(DEATH_GLYPHS[f - 2])[0], PLAYER, 0, 'base'])
+        if rp and rp['ready'] and j + 1 == 5:
+            from ref_rp import READY_X, READY_TEXT
+            for k, c in enumerate(READY_TEXT):
+                row[READY_X - 1 + k] = [e(c)[0], PLAYER, 0, 'base']
+        for k, (gx, gy, _) in enumerate(g.gh if dth is None else []):
             if gy == j + 1 and arc and g.mode[k] == 'F':
                 row[gx - 1] = [gh, fright_colour(g), 0, 'glyph']
             elif gy == j + 1 and not (arc and g.mode[k] == 'E'):
@@ -82,6 +94,10 @@ def cells(g, cmd, res, msg, hi, prof, anim, vis, face):
             img[(3 + j) * 80 + 30 + i] = (0x40, 0, 0, 0) if kind == 'open' else (b, col, h, ge)
     if msg is not None:
         put(16, 2, 'INVALID COMMAND ' + msg, ERROR, BLINK if hi else 0)
+    elif rp and rp['pu']:
+        put(16, 2, rp['pu']['msg'], rp['pu']['col'])
+    if rp and rp['hi'] is not None:
+        put(20, 2, 'HIGH SCORE %07d' % rp['hi'], HUD)
     put(18, 2, 'COMMAND ===>', HELP)
     put(23, 2, HELP_TEXT, HELP)
     return img
@@ -91,7 +107,7 @@ def cell_bytes(b, ge):
     return [GE, b] if ge else [b]
 
 
-def screen(img, g, msg, hi):
+def screen(img, g, msg, hi, rp=None):
     """Full screen: the G2 layout; board cells taken from the image (colour order only for visible colour changes)."""
     out = [0xC3] + sba(1, 1) + [0x1D, 0x60] + sba(1, 2) + sa(HUD) + [b for b, *_ in img[1:62]]
     if g.n > 1:
@@ -112,6 +128,10 @@ def screen(img, g, msg, hi):
             out += sh(0)
     if msg is not None:
         out += sba(16, 2) + sa(ERROR) + (sh(BLINK) if hi else []) + e('INVALID COMMAND ' + msg) + (sh(0) if hi else [])
+    elif rp and rp['pu']:
+        out += sba(16, 2) + sa(rp['pu']['col']) + e(rp['pu']['msg'])
+    if rp and rp['hi'] is not None:
+        out += sba(20, 2) + sa(HUD) + e('HIGH SCORE %07d' % rp['hi'])
     out += sba(18, 2) + sa(HELP) + e('COMMAND ===>') + [0x1D, 0x40] + (sh(UNDERSCORE) if hi else []) + [0x13, 0x40] \
         + (sh(0) if hi else []) + [0x1D, 0x60]
     out += sba(23, 2) + sa(HELP) + e(HELP_TEXT) + [0x28, 0x00, 0x00]
@@ -153,28 +173,39 @@ def partial(cur, prev, kind, hi):
     return bytes(out + [0x28, 0x00, 0x00])
 
 
-def frames(case, hi=False, anim=False, redraw='F', prof='C', faces=None, snap=None, mk=Game, d='cases'):
+def frames(case, hi=False, anim=False, redraw='F', prof='C', faces=None, snap=None, mk=Game, d='cases', hs=None,
+           plain_first=False):
     """faces: optional list that receives the Pac-Man facing used for every logical screen (for the tests).
     snap: optional ref_snap.Log that receives (lives, won) for every screen sent (MVS-S1).
     mk / d (MVS-GP1): the game class (ref_arcade.Arcade for RULES(ARCADE)) and the case directory under tests/."""
     ai, n, cards = parse_config((R / f'tests/{d}/{case}.txt').read_text().splitlines())
     g = mk(ai, n)
-    st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R'}
+    st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R', 'plain': plain_first}
     out = Rec(snap, lambda: g.snap() if hasattr(g, 'snap') else (g.lives, g.won))
+    from ref_rp import Tracker, drop
+    tr = Tracker(hs)
 
-    def image(cmd, res, msg):
-        return cells(g, cmd, res, msg, hi, prof, anim, st['vis'], st['face'])
+    def decor():
+        rp = tr.frame(g, 'T')
+        if st['plain']:                     # MVS-RP size guard: the first screen rebuilt without decorations
+            st['plain'] = False
+            rp = drop(rp)
+        return rp
+
+    def image(cmd, res, msg, rp=None):
+        return cells(g, cmd, res, msg, hi, prof, anim, st['vis'], st['face'], rp)
 
     def prompt(cmd, res, msg, rdr):
         if anim:
             st['vis'] ^= 1
-        cur = image(cmd, res, msg)
+        rp = decor()
+        cur = image(cmd, res, msg, rp)
         if faces is not None:
             faces.append(st['face'])
         if redraw == 'P' and st['prev'] is not None and not rdr:
             out.append(partial(cur, st['prev'], 'P', hi))
         else:
-            out.append(screen(cur, g, msg, hi))
+            out.append(screen(cur, g, msg, hi, rp))
         if redraw == 'P':
             st['prev'] = cur
         st['last'] = (cmd, res, msg)
@@ -184,7 +215,7 @@ def frames(case, hi=False, anim=False, redraw='F', prof='C', faces=None, snap=No
             return
         st['vis'] ^= 1
         cmd, res, msg = st['last']
-        cur = image(cmd, res, msg)
+        cur = image(cmd, res, msg, decor())
         s = partial(cur, st['prev'], 'T', hi)
         if s is not None:
             out.append(s)

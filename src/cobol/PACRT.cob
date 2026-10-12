@@ -27,6 +27,9 @@
       *      PATTERN). A DEATH OR A LEVEL CLEAR (PACGAME FLAGS D / C,
       *      NOT THE LIVES COUNT: AN EXTRA LIFE MAY COME IN THE SAME
       *      STEP) RESETS RT-ACC AND FREEZES 10 QUANTA.
+      * MVS-RP (D39): PUBLISH ALSO GIVES REQ-RTFRZ (FREEZE QUANTA LEFT);
+      *      EVERY GAME STEP SETS REQ-DTHX/REQ-DTHY = PAC-MAN'S CELL
+      *      AFTER HIS MOVE OF THE STEP (THE DEATH CELL; DISPLAY ONLY).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACRT.
        ENVIRONMENT DIVISION.
@@ -97,6 +100,8 @@
            MOVE SPACES TO WS-IN.
            MOVE SPACES TO REQ-RTIN.
            MOVE '-' TO REQ-STEP.
+           MOVE 0 TO REQ-DTHX.
+           MOVE 0 TO REQ-DTHY.
        DO-RIN.
            IF RT-NIN < 8
                ADD 1 TO RT-NIN
@@ -193,6 +198,18 @@
                MOVE SPACE TO RT-REQ.
            MOVE 0 TO WS-NOP.
        GAME-STEP.
+      * MVS-RP: THE CELL PAC-MAN STANDS ON AFTER HIS MOVE (WS-PMOVE = 1:
+      * THE CELL IN RT-CUR IS OPEN), BEFORE A DEATH MAY RESET HIM.
+           MOVE PLAYER-X TO REQ-DTHX.
+           MOVE PLAYER-Y TO REQ-DTHY.
+           IF WS-PMOVE = 1 AND RT-CUR = 'U'
+               SUBTRACT 1 FROM REQ-DTHY.
+           IF WS-PMOVE = 1 AND RT-CUR = 'D'
+               ADD 1 TO REQ-DTHY.
+           IF WS-PMOVE = 1 AND RT-CUR = 'L'
+               SUBTRACT 1 FROM REQ-DTHX.
+           IF WS-PMOVE = 1 AND RT-CUR = 'R'
+               ADD 1 TO REQ-DTHX.
            MOVE LIVES TO WS-LIVES.
            MOVE WS-KIND TO REQ-STEP.
            MOVE RT-CUR TO REQ-DIR.
@@ -257,6 +274,7 @@
            MOVE RT-REQ TO REQ-RTREQ.
            MOVE RT-TTL TO REQ-RTTTL.
            MOVE RT-VIS TO REQ-VIS.
+           MOVE RT-FRZ TO REQ-RTFRZ.
            MOVE 'RUN ' TO REQ-RTSTAT.
            IF RT-FRZ > 0
                MOVE 'FRZ ' TO REQ-RTSTAT.

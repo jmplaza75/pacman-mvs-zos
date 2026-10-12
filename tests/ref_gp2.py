@@ -296,6 +296,9 @@ class LevelRT(ref_rt.Controller):
         pmove = self.cur != ' ' and g.open(self.cur)
         self.kind = 'B' if pmove and gdue else 'P' if pmove else 'G' if gdue else '-'
         if self.kind != '-':
+            # MVS-RP (D39): Pac-Man's cell after his move of this step = the cell of every hit (the death cell)
+            dx, dy = ref_rt.D[self.cur] if pmove else (0, 0)
+            self.dth = (g.x + dx, g.y + dy)
             g.turn(self.kind, self.cur)
             if 'D' in g.evf or 'C' in g.evf:
                 self.acc = 0

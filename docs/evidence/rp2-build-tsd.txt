@@ -1,0 +1,19 @@
+# MVS-RP RP.2: build + TSD runs (2026-10-12)
+# Deck RP (load member PACRPD; the installed PACMAIN untouched): python3 tools/make_deck.py RP && python3 tools/run_deck.py build/RP.jcl
+# JOB 268: COB8 (PACSCR) RC 0004 IKF4072I-W (RP-ENDSET ended with a conditional) -> fixed.
+# JOB 269: all RC 0000; first high-score run differed from the model: the wide HUD HIGH line set WS-ROW
+#          before the lives icons (they use WS-ROW) -> the line moved after the icons. Model right, COBOL fixed.
+# JOB 270 (final): python3 tests/test_rp.py build/PACBLDRP-270.txt
+RP sources PASS (core frozen, append-only copies, ARCADE-only RP code)
+RP local checks PASS: 42 TURN and 18 REALTIME TSD runs, 6265 model streams, largest 1992 bytes; edges 23 + config 9
+MVS-RP RP.2 PASS: 95 steps RC 0000; 60 ARCADE TSD runs = 6265 model streams
+# Regression on the same sources, linked into PACRPD (--load PACRPD); listings checked with the load name
+# normalised PACRPD -> PACMAIN (sed; the step-summary program name is the only difference):
+# GP2 deck JOB 271: PACMAN_LATER_PHASE=RP python3 tests/test_gp2.py build/PACBLGP2-271n.txt
+MVS-GP2 GP2.2 PASS: 237 steps RC 0000; S1 regression: MVS-S1 PASS: 162 steps RC 0000; RT regression: MVS-RT RT2 PA ...; 71 ARCADE runs = model ( 52640 lines ); 2 columns 21-23 CLASSIC runs = oracle/model
+# HS deck JOB 272: PACMAN_LATER_PHASE=RP python3 tests/test_hs.py build/PACBLDHS-272n.txt build/PACBLG23-263.txt
+MVS-HS HS.2 PASS: 71 steps (HSFILL RC 0012, the rest RC 0000); 21 runs = model + HS lines ( 23869 text lines, 394 TSD streams = RP models) ; 9 member prints = model; CLIST block both paths
+# Local: test_core_frozen, test_gs, test_g4
+core frozen (authorised 2026-10-12 by project owner (D37 approval)): PASS
+local checks PASS: 44 runs, 931 streams; first 4x2 screen 1556 bytes, 3x2 1495 ; largest 1653
+local checks PASS: [15, 4, 19, 29, 21, 12, 15, 15, 6, 15, 29, 19, 15, 4, 19, 29, 12, 21, 30, 26, 15, 19, 12, 29, 15, 15] screens per run; first G screen 912 bytes

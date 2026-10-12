@@ -345,8 +345,10 @@ if not LATER:
                                    "      * NNNN', 'FRUITS EATEN NNN', 'LEVEL NNN'."]), gone
 old_pal, new_pal = code(git_show(GP22, 'src/copy/PACPAL.cpy')), code(src('src/copy/PACPAL.cpy'))
 assert new_pal[:len(old_pal)] == old_pal, 'PACPAL must grow append-only'
-assert [l.split()[1] for l in new_pal[len(old_pal):] if l.split()[1] != 'FILLER'] == [
-    'PAL-FRUIT', 'GLY-FRUIT', 'SPR-4Y', 'SPR-3Y', 'FRUIT-NAMES.', 'FRUIT-TAB', 'FRUIT-ENT', 'FRUIT-K', 'FRUIT-NAME']
+GP2_PAL = ['PAL-FRUIT', 'GLY-FRUIT', 'SPR-4Y', 'SPR-3Y', 'FRUIT-NAMES.', 'FRUIT-TAB', 'FRUIT-ENT', 'FRUIT-K',
+           'FRUIT-NAME']
+added = [l.split()[1] for l in new_pal[len(old_pal):] if l.split()[1] != 'FILLER']
+assert added[:len(GP2_PAL)] == GP2_PAL and (LATER or added == GP2_PAL), added    # later phases append after GP2
 pal = '\n'.join(new_pal)
 assert re.search(r'PAL-FRUIT\s+PIC 999 VALUE ' + str(g4.FRUITC) + r'\.', pal) and "GLY-FRUIT             PIC X VALUE '%'." in pal
 assert "SPR-4Y                PIC X(8) VALUE 'BFFB TT '." in pal and "SPR-3Y                PIC X(6) VALUE 'BFB T '." in pal

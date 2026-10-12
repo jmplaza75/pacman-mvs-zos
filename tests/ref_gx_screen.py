@@ -76,15 +76,15 @@ def put(img, geo, row, col, text, colour, high=0, keep=False):
         img[geo.a(row, col + k)] = (e(c)[0], colour, high, 0) if c != ' ' or keep else BLANK
 
 
-def image(geo, g, cmd, res, msg, anim, vis, face, banner=None):
+def image(geo, g, cmd, res, msg, anim, vis, face, banner=None, rp=None):
     if geo.fam == 'B':
-        base = gs.image(g, cmd, res, msg, geo.sc_w, anim, vis, face, banner)
+        base = gs.image(g, cmd, res, msg, geo.sc_w, anim, vis, face, banner, rp)
         img = blank_image(geo)
         r0, c0 = geo.org
         for q in range(1920):
             img[geo.a(r0 + q // 80, c0 + q % 80)] = base[q]
         return img
-    base = gs.image(g, cmd, res, None, 4, anim, vis, face)          # the maze tiles (rows 1-20 of layout B)
+    base = gs.image(g, cmd, res, None, 4, anim, vis, face, rp=rp)   # the maze tiles (rows 1-20 of layout B)
     img = blank_image(geo)
     b0, c0 = geo.b0, geo.c0
     for j in range(20):
@@ -97,6 +97,8 @@ def image(geo, g, cmd, res, msg, anim, vis, face, banner=None):
         left = c0 - 18
         lines = [('SCORE', '%07d' % g.ascore if arc else '%04d' % g.score), ('PELLETS', '%03d' % g.left), ('TURN', '%03d' % g.t),
                  ('LAST', f'{cmd} {res}'), ('STATE', g.state), ('LIVES', '')]
+        if rp and rp['hi'] is not None:                       # MVS-RP: the HUD high score
+            lines.append(('HIGH', '%07d' % rp['hi']))
         for k, (label, value) in enumerate(lines):
             put(img, geo, b0 + 1 + 2 * k, left, label.ljust(8) + value.ljust(9), HUD)
         for k in range(g.lives):
@@ -128,6 +130,8 @@ def image(geo, g, cmd, res, msg, anim, vis, face, banner=None):
         if geo.fam == 'T' and hasattr(g, 'level'):
             put(img, geo, b0 - 4, c0 + 60, 'LEVEL %02d' % g.level, HUD)
             put(img, geo, b0 - 2, c0 + 55, fruit_text(g), g4.FRUITC)
+        if geo.fam == 'T' and rp and rp['hi'] is not None:
+            put(img, geo, b0 - 4, c0 + 69, 'HI %07d' % rp['hi'], HUD)
         put(img, geo, b0 + 21, c0 + 1, status(g, cmd, res).ljust(61), HUD)
         if g.n > 1:
             put(img, geo, b0 + 21, c0 + 63, 'G2=%02d,%02d' % tuple(g.gh[1][:2])
@@ -139,6 +143,8 @@ def image(geo, g, cmd, res, msg, anim, vis, face, banner=None):
     if banner is not None:
         text, colour = gs.BANNERS[banner]
         put(img, geo, mrow, mcol, text, colour, REVERSE, keep=True)
+        if rp and rp['end']:
+            gs.end_line(lambda r, c, t, co, hi=0: put(img, geo, r, c, t, co, hi), mrow, mcol, g, rp)
     put(img, geo, crow, ccol, 'COMMAND ===>', HELP)
     return img
 
@@ -246,7 +252,8 @@ def relocate(geo, ds):
     return bytes(out)
 
 
-def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='D', snap=None, mk=Game, d='cases'):
+def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='D', snap=None, mk=Game, d='cases',
+           hs=None):
     """The whole TSD run. Resolution as PACPLAT in TSD: glyph AUTO = CLASSIC; scale A = 4; scaled only with
     highlight and GRAPHIC glyphs. snap: optional ref_snap.Log ((lives, won) per screen sent, MVS-S1)."""
     prof = {'G': 'G', 'B': 'B', 'C': 'C', 'A': 'C'}[glyphs]
@@ -256,22 +263,35 @@ def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='
     geo = Geo(canvas, s != 'N', 3 if s == '3' else 4)
     limit = 1000 if s == 'T' else 2048
     if s == 'N':
-        return [relocate(geo, f) for f in g4.frames(case, hi, anim, redraw, prof, snap=snap, mk=mk, d=d)]
-    # the size guard can only trip at the first screen in practice (scale T): find the family that fits it
+        return [relocate(geo, f) for f in g4.frames(case, hi, anim, redraw, prof, snap=snap, mk=mk, d=d, hs=hs)]
+    # the size guard can only trip at the first screen in practice (scale T): find the family that fits it; MVS-RP:
+    # a decorated first screen that does not fit is first tried without its decorations in the same family
+    from ref_rp import Tracker, drop
     ai, n, cards = parse_config((R / f'tests/{d}/{case}.txt').read_text().splitlines())
+    plain = False
     while geo.fam != 'G':
-        first = full(geo, image(geo, mk(ai, n), ' ', 'START  ', None, anim, 0 if anim else 1, 'R'))
-        if len(first) <= limit:
+        g0 = mk(ai, n)
+        rp0 = Tracker(hs).frame(g0, 'T')
+        if len(full(geo, image(geo, g0, ' ', 'START  ', None, anim, 0 if anim else 1, 'R', rp=rp0))) <= limit:
+            break
+        if rp0 is not None and len(full(geo, image(geo, g0, ' ', 'START  ', None, anim, 0 if anim else 1, 'R',
+                                                    rp=drop(rp0)))) <= limit:
+            plain = True
             break
         geo.down()
     if geo.fam == 'G':
-        return [relocate(geo, f) for f in g4.frames(case, True, anim, redraw, 'G', snap=snap, mk=mk, d=d)]
+        return [relocate(geo, f) for f in g4.frames(case, True, anim, redraw, 'G', snap=snap, mk=mk, d=d, hs=hs)]
     g = mk(ai, n)
-    st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R'}
+    st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R', 'plain': plain}
     out = Rec(snap, lambda: g.snap() if hasattr(g, 'snap') else (g.lives, g.won))
+    tr = Tracker(hs)
 
     def img(cmd, res, msg, banner=None):
-        return image(geo, g, cmd, res, msg, anim, st['vis'], st['face'], banner)
+        rp = tr.frame(g, 'T', ends=banner is not None)
+        if st['plain']:
+            st['plain'] = False
+            rp = drop(rp)
+        return image(geo, g, cmd, res, msg, anim, st['vis'], st['face'], banner, rp)
 
     def prompt(cmd, res, msg, rdr):
         if anim:

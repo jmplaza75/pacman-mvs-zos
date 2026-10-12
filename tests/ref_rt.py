@@ -145,7 +145,7 @@ def events(cards):
         yield evs
 
 
-def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None):
+def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None):
     """The PACMAIN RT-GAME driver. tsd = None (BAT) or a canvas letter (TSD); cfg = (ai, n) from the PARM (TSD).
     snap: optional ref_snap.Log ((lives, won) per screen sent, MVS-S1). mk_game / mk_ctl (MVS-GP1): the ARCADE game
     and controller of tests/ref_arcade.py (TSD screens only; its end lines come from the game)."""
@@ -168,6 +168,13 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None):
     g = (mk_game or RTGame)(ai, n)
     c = (mk_ctl or Controller)(g)
     st = {'prev': None, 'msg_on': None, 'msg_last': None, 'face': 'R', 'frame': ' ', 'over': False}
+    from ref_rp import Tracker
+    tr = Tracker(hs)
+
+    def decor(rtstat=None, rtfrz=None, ends=False):
+        """MVS-RP: the decorations of the screen composed now (PACRT published status, freeze count, death cell)."""
+        return tr.frame(g, 'R', rtstat or c.status(), c.frz if rtfrz is None else rtfrz, c.q,
+                        getattr(c, 'dth', None), ends)
     geo = None
     if tsd is not None:
         geo = gx.Geo(tsd, True, 4)
@@ -186,12 +193,12 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None):
         paused = c.status() == 'PAUS'
         show = st['msg_on']
         cur = gx.image(geo, g, g.cmd, g.res, None if paused else show, True, c.vis, face(),
-                       'PAUSE' if paused else None)
+                       'PAUSE' if paused else None, decor())
         frames.append(gx.full(geo, cur) if st['prev'] is None or rdr else gx.partial(geo, cur, st['prev'], 'P'))
         st['prev'], st['msg_last'], st['msg_on'] = cur, show, None
 
-    def rtqf():
-        cur = gx.image(geo, g, g.cmd, g.res, st['msg_last'], True, c.vis, face())
+    def rtqf(rtstat=None, rtfrz=None):
+        cur = gx.image(geo, g, g.cmd, g.res, st['msg_last'], True, c.vis, face(), None, decor(rtstat, rtfrz))
         p = gx.partial(geo, cur, st['prev'], 'T')
         frames.append(p if p is not None else bytes([0xC2, 0x28, 0x00, 0x00]))
         st['prev'] = cur
@@ -268,8 +275,12 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None):
         if g.won or g.lost:
             st['over'], st['end'] = True, 'LOST' if g.lost else 'WIN'
     end = 'LOST' if g.lost else 'WIN' if g.won else st.get('end', 'EOF')
+    if geo is not None and getattr(g, 'arc', False) and g.lost:
+        for k in range(10, 4, -1):            # MVS-RP: the final death frames (PACDISP, before the end screen)
+            rtqf('FRZ ', k)
     if geo is not None and geo.fam != 'G':
-        frames.append(gx.full(geo, gx.image(geo, g, g.cmd, g.res, None, True, c.vis, face(), end)))
+        frames.append(gx.full(geo, gx.image(geo, g, g.cmd, g.res, None, True, c.vis, face(), end,
+                                            decor(ends=True))))
     if hasattr(g, 'end_lines'):
         return out + g.end_lines(end, c.q), frames
     out += [end, f'TURNS {g.t:03d}', f'SCORE {g.score:04d}', f'LIVES {g.lives}', f'QUANTA {c.q:07d}']
@@ -297,10 +308,10 @@ def simulate(cards):
     return run(list(cards))[0]
 
 
-def tsd(cards, canvas, snap=None, mk_game=None, mk_ctl=None):
+def tsd(cards, canvas, snap=None, mk_game=None, mk_ctl=None, hs=None):
     """(parm config, cards) as the TSD deck runs them: the config card goes to the PARM."""
     ai, n, rest = parse_config(list(cards))
-    return run(rest, tsd=canvas, cfg=(ai, n), snap=snap, mk_game=mk_game, mk_ctl=mk_ctl)
+    return run(rest, tsd=canvas, cfg=(ai, n), snap=snap, mk_game=mk_game, mk_ctl=mk_ctl, hs=hs)
 
 
 if __name__ == '__main__':

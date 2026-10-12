@@ -124,3 +124,16 @@
                10  FRUIT-ENT         OCCURS 8 TIMES.
                    15  FRUIT-K       PIC X.
                    15  FRUIT-NAME    PIC X(10).
+      * MVS-RP (D39, DOCS/RP-POLISH.MD 2-5), RULES(ARCADE) ONLY: DEATH
+      * SPRITES 9-12 (FRAMES 2-5; CODES AS SPR-4), UNSCALED DEATH GLYPHS
+      * (FRAMES 2-5, BASE SET), READY! OVER THE CENTRAL WALL BAR (ROW
+      * RP-RDY-Y, CELLS RP-RDY-X ..+5), POPUP COLOUR OF AN EATEN GHOST.
+           05  SPR-4D                PIC X(32) VALUE
+               'BBBBTFFT    TFFT     TT      BB '.
+           05  SPR-3D                PIC X(24) VALUE
+               'BBBTFT   TFT    T     B '.
+           05  GLY-DEATH             PIC X(4) VALUE 'co.*'.
+           05  TXT-READY             PIC X(6) VALUE 'READY!'.
+           05  RP-RDY-Y              PIC 99 VALUE 5.
+           05  RP-RDY-X              PIC 99 VALUE 8.
+           05  PAL-POPUP             PIC 999 VALUE 245.

@@ -122,5 +122,10 @@ MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gamep
   (E1; E2 twice, each followed by a clean full-screen game; E3 control twice). RP.0 CLOSED. The startup `***` follows
   every E3 and no E2: it comes from line output written by an abended program, not from the exit -> D40 (open).
 - D40 startup hardening (inside RP as step RP.2b, before RP.4; design PROPOSED in docs/RP-POLISH.md section 11): TSO `***` before the full-screen switch makes the capability query read
-  the user's ENTER as the reply -> line-mode fallback (stray `A` / `X` commands). RP.2 proceeds locally; the installed
-  game build is unchanged.
+  the user's ENTER as the reply -> line-mode fallback (stray `A` / `X` commands). Design APPROVED (2026-10-12), step
+  RP.2b, after RP.2.
+- RP.2 COMPLETE (2026-10-12, NOT installed): PACRT (freeze count + death cell), PACREQ / PACPAL appended, PACSCR (READY!,
+  death frames, popups, HUD high score, end line, decoration-drop size rule), PACDISP (final death frames); models
+  tests/ref_rp.py (+ gs/gx/g4/rt hooks), cases tests/rpcases, tests/search_rp.py, tests/test_rp.py. Deck RP JOB 270
+  (load member PACRPD): 95 steps RC 0000, 60 ARCADE TSD runs = 6265 model streams; regression GP2 JOB 271, HS JOB 272
+  PASS (docs/evidence/rp2-build-tsd.txt). Installed PACMAIN unchanged until RP.2b is green.

@@ -24,6 +24,7 @@ R = Path(__file__).resolve().parent.parent
 ARGS, sys.argv = sys.argv[1:], sys.argv[:1]
 sys.path.insert(0, str(R / 'tests'))
 sys.path.insert(0, str(R / 'tools'))
+LATER = os.environ.get('PACMAN_LATER_PHASE', 'HS') != 'HS'
 os.environ.setdefault('PACMAN_LATER_PHASE', 'HS')
 import ref_gp2 as L  # noqa: E402
 import ref_hs as H  # noqa: E402
@@ -59,15 +60,21 @@ for f in ('src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob'
           'src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy', 'src/cobol/PACSCR.cob', 'src/cobol/PACRT.cob',
           'src/cobol/PACINPT.cob', 'src/cobol/PACQRY.cob', 'src/copy/PACPAL.cpy', 'src/copy/PACDS.cpy',
           'src/asm/PACFSIO.asm', 'src/asm/PACTSO.asm', 'maps/LEVEL1.txt', 'maps/ARCADE1.txt'):
+    if LATER:           # a later phase (RP) changes the screens: only the source-equality pins are skipped
+        continue
     assert git_show(BASE, f) == src(f), f
 old_req, new_req = git_show(BASE, 'src/copy/PACREQ.cpy'), src('src/copy/PACREQ.cpy')
 assert new_req[:len(old_req)] == old_req
-assert [l.split()[1] for l in code(new_req[len(old_req):])] == [
-    'REQ-HSST', 'REQ-HISCORE', 'REQ-HSLVL', 'REQ-HSSCORE', 'REQ-HSGLVL', 'REQ-HSELIG', 'REQ-HSNEW']
+HS_REQ = ['REQ-HSST', 'REQ-HISCORE', 'REQ-HSLVL', 'REQ-HSSCORE', 'REQ-HSGLVL', 'REQ-HSELIG', 'REQ-HSNEW']
+added = [l.split()[1] for l in code(new_req[len(old_req):])]
+assert added[:len(HS_REQ)] == HS_REQ and (LATER or added == HS_REQ), added
 callers = [p.name for p in (R / 'src/cobol').glob('*.cob') if "'PACHSIO'" in p.read_text()]
 assert callers == ['PACPLAT.cob'], callers
 for m in ('PACGAME', 'PACMAP', 'PACAI', 'PACRT', 'PACSCR'):
     t = (R / f'src/cobol/{m}.cob').read_text()
+    if m == 'PACSCR' and LATER:     # MVS-RP (D39): the HUD / end screen READ the high-score values, never the file
+        assert 'PACHS' not in t and 'PACHSIO' not in t, m
+        continue
     assert 'PACHS' not in t and 'HISCORE' not in t and 'REQ-HS' not in t, m
 plat = (R / 'src/cobol/PACPLAT.cob').read_text()
 assert 'PACSTATE' not in plat and 'PACARC' not in plat and 'F-WON' not in plat and 'F-LOST' not in plat
@@ -127,6 +134,26 @@ TSD_FINAL = {'T': H.final(L.simulate(cards(*HS_TSD_TURN[:2]), start=1)),
 RUNS, PDS = model_runs()
 
 
+def rp_streams(kind):
+    """MVS-RP: the TSD streams of HG2 (T) / HG3 (Q) from the models; their members are fresh (missing): Z."""
+    import ref_gx_screen as gx
+    import ref_rt
+    from ref_rp import bells
+    from ref_snap import Log
+    mem = [r[5][2:] for r in HS_RUNS if r[1] == kind][0]
+    assert all(r[5] != 'M:' + mem for r in HS_RUNS if r[1] != kind), mem      # nothing else touches it first
+    log = Log()
+    if kind == 'T':
+        d, c, h, a, r, gl, sc, cv, snd, st = HS_TSD_TURN
+        fs = gx.frames(c, h == 'Y', a == 'Y', r, gl, sc, cv, snap=log, mk=lambda ai, n: L.Level(ai, n, 'T', 1), d=d,
+                       hs=('Z', 0, 1))
+    else:
+        d, c, cv, snd, st = HS_TSD_RT
+        _, fs = ref_rt.tsd(cards(d, c), cv, snap=log, mk_game=lambda ai, n: L.Level(ai, n, 'R', 1),
+                           mk_ctl=L.LevelRT, hs=('Z', 0, 1))
+    return bells(fs, log, snd)[0]
+
+
 def tsd_run(t, j, nend):
     """One TSD dry run from line j: (streams, end lines, next j) - the parsing of tests/test_gp2.py tsd_check."""
     streams = []
@@ -170,7 +197,13 @@ j, nlines, nstreams = 0, 0, 0
 for step, kind, base, hs in RUNS:
     if kind in ('T', 'Q'):
         streams, ends, j = tsd_run(t, j, (7 if kind == 'T' else 8) + len(hs))
-        if gp23 is not None:
+        if gp23 is not None and os.environ['PACMAN_LATER_PHASE'] != 'HS':
+            # MVS-RP (D39) and later: the ARCADE screens carry the RP decorations and the HUD high score, so the
+            # streams come from the models with this run's high-score state (a fresh member: Z) instead of GP23
+            ws = rp_streams(kind)
+            we = gp23[HS_TSD_TURN if kind == 'T' else HS_TSD_RT][1]
+            assert streams == ws and ends == we + hs, (step, len(streams), len(ws), ends, we + hs)
+        elif gp23 is not None:
             ws, we = gp23[HS_TSD_TURN if kind == 'T' else HS_TSD_RT]
             assert streams == ws and ends == we + hs, (step, len(streams), len(ws), ends, we + hs)
         else:
@@ -206,7 +239,7 @@ assert cl[i1 + 1].split() == ['PACHS', 'KEEP'] and cl.count('HSCL END') == 2
 assert any(l.startswith('IDC0550I ENTRY (A) HERC01.PACMAN.HSCL.DATA DELETED') for l in cl)
 assert cl.index('NULLFILE  PACHS') > i1 and not any('IKJ56' in l for l in cl), cl
 print('MVS-HS HS.2 PASS:', len(rcs), 'steps (HSFILL RC 0012, the rest RC 0000);', len(RUNS), 'runs = model + HS lines (',
-      nlines, 'text lines,', nstreams, 'TSD streams', '= GP23)' if gp23 is not None else 'not compared)', ';',
+      nlines, 'text lines,', nstreams, 'TSD streams', ('= RP models)' if LATER else '= GP23)') if gp23 is not None else 'not compared)', ';',
       len(prints), 'member prints = model; CLIST block both paths')
 if len(ARGS) > 2:
     r = subprocess.run([sys.executable, str(R / 'tests/test_gp2.py'), ARGS[2], ARGS[1]], capture_output=True, text=True,

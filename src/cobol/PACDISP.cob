@@ -38,6 +38,10 @@
       * END LINE 'HIGH SCORE NNNNNNN LEVEL NNN' = MAX(PERSISTENT, THIS
       * GAME), THEN 'NEW HIGH SCORE' / 'HIGH SCORE NOT SAVED' / 'START
       * LEVEL NN: HIGH SCORE NOT RECORDED'; OR 'HIGH SCORE UNAVAILABLE'.
+      * MVS-RP (D39): AN ARCADE REALTIME GAME LOST ON SCREEN PLAYS
+      * THE 6 DEATH FRAMES (PACSCR RTQF, REQ-RTSTAT FRZ, REQ-RTFRZ
+      * 10..5; TSC: ONE PERIOD APART BY PACPLAT CLOK / WDLN) BEFORE
+      * THE END SCREEN.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -65,6 +69,8 @@
        01  SB-NDIE               PIC 99 VALUE 0.
        01  SB-XL                 PIC 9 VALUE 0.
        01  SB-LVL                PIC 999 VALUE 0.
+       01  FD-K                  PIC 99 VALUE 0.
+       01  FD-SAVE               PIC X(4).
        01  HEXW.
            05  HX-Z              PIC X VALUE LOW-VALUE.
            05  HX-B              PIC X.
@@ -276,6 +282,8 @@
        SCR-ENDS.
       * MVS-GS: SCALED ONLY - ONE FINAL SCREEN WITH THE END BANNER, THEN
       * A SHORT PAUSE (PACPLAT WAIT, NO INPUT IS READ) BEFORE LINE MODE.
+           IF ARC-ON = 1 AND F-LOST = 1 AND REQ-PLAY = 'R'
+               PERFORM FINAL-DEATH.
            MOVE 0 TO DS-LEN.
            IF REQ-SCALE NOT = 'N'
                MOVE 'ENDS' TO REQ-OP
@@ -309,6 +317,25 @@
                MOVE 'SEND' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ PAC-DS.
            MOVE 'N' TO REQ-BELL.
+       FINAL-DEATH.
+      * MVS-RP: THE LAST LIFE LOST (NO FREEZE IN THE GAME): THE DEATH
+      * FRAMES AS QUANTUM FRAMES, THE STATE UNCHANGED.
+           MOVE REQ-RTSTAT TO FD-SAVE.
+           MOVE 'FRZ ' TO REQ-RTSTAT.
+           MOVE SPACE TO REQ-RTFR.
+           IF REQ-MODE = 'TSC'
+               MOVE 'CLOK' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ.
+           PERFORM FD-FRAME VARYING FD-K FROM 10 BY -1 UNTIL FD-K < 5.
+           MOVE FD-SAVE TO REQ-RTSTAT.
+           MOVE 0 TO REQ-RTFRZ.
+       FD-FRAME.
+           IF REQ-MODE = 'TSC'
+               MOVE 'WDLN' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ.
+           MOVE FD-K TO REQ-RTFRZ.
+           MOVE 'RTQF' TO REQ-OP.
+           PERFORM SCR-RTQF THRU SCR-RTQF-EXIT.
        SET-BELL.
            MOVE 'N' TO REQ-BELL.
            IF SB-SENT = 0

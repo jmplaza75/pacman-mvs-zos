@@ -75,3 +75,11 @@
            05  REQ-HSGLVL            PIC 999.
            05  REQ-HSELIG            PIC X.
            05  REQ-HSNEW             PIC X.
+      * MVS-RP (D39, DOCS/RP-POLISH.MD 3): SET BY PACRT, READ BY THE
+      * DISPLAY ONLY. REQ-RTFRZ = FREEZE QUANTA LEFT (10 IN THE DEATH /
+      * CLEAR QUANTUM, THEN 9 .. 0). REQ-DTHX/REQ-DTHY = PAC-MAN'S CELL
+      * AFTER HIS MOVE OF THE LAST GAME STEP (EVERY HIT IS ON IT: THE
+      * DEATH CELL WHEN THE STEP RAISED THE ARCADE DEATH FLAG).
+           05  REQ-RTFRZ             PIC 99.
+           05  REQ-DTHX              PIC 99.
+           05  REQ-DTHY              PIC 99.

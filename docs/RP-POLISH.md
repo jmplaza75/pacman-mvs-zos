@@ -32,7 +32,7 @@ core change, tests/core_baseline.json unchanged. Batch and TSO line-mode SYSOUT 
 - When: REALTIME before the first direction (REQ-RTSTAT `WAIT`), and during the last 4 quanta of a death or
   level-clear freeze (after the animation / flash, with the reset positions already drawn). TURN: the first screen
   (no move yet) and the screen after a death or a level clear.
-- Where: `READY!` in the player colour (PAL-PLAYER) over the solid central wall bar of ARCADE1, row y = 4, cells
+- Where: `READY!` in the player colour (PAL-PLAYER) over the solid central wall bar of ARCADE1, row y = 5, cells
   x = 8..13 (`#.##.#.######.#.##.#`): the arcade place (the middle of the maze), and it covers walls only - never a
   pellet, the fruit or a corridor an actor can stand on. Unscaled: exactly the 6 wall cells. Scaled: the 6 characters
   centred in the 24 x 2 bar (upper tile row), written over the maze image; the normal diff restores the wall when it
@@ -64,18 +64,22 @@ core change, tests/core_baseline.json unchanged. Batch and TSO line-mode SYSOUT 
   display state such as VS-PREV). A new popup replaces the old one; a death, a level clear or the end removes it.
   TURN: shown on the screen of the eating turn only. No game freeze (the arcade pause after a ghost is not copied:
   game timing and the deterministic references stay as they are).
-- Drawing order: map -> fruit -> popup -> eyes -> Pac-Man -> ghosts (an actor on the cell hides the popup).
+- Drawing order (corrected in RP.2, 2026-10-12): map -> fruit -> eyes -> Pac-Man -> popup -> ghosts. The popup
+  starts on Pac-Man's own cell, so drawn under him it would never show in TURN (one screen); over him the eating
+  screen shows the points, as in the arcade, and he reappears when he moves on. A ghost on the cell hides it.
 
 ## 5. HUD high score and end screen
 - HUD high score = max(REQ-HISCORE, ARC-SCORE) - the value HS already defines (D38), no per-step state. Shown only
   when REQ-HSST is R or Z (loaded / zero); N (no DD) and E (unavailable) show nothing.
-  - Wide: left column `HI-SCORE` + 7 digits at W-B0 + 13 (free row).
-  - Tall: title row, after `LEVEL nn` (`HI nnnnnnn`).
-  - 80x24 (GS layout B and G family): `HI nnnnnnn` on the title row right of `P A C - M A N   A R C A D E` (the
-    61-column status line is full, D37 tradeoff unchanged).
-- End screen (scaled families, as today's GS end banner + 3 s WAIT): ARCADE adds under the banner `SCORE nnnnnnn`
-  and, when HS is active, `HIGH SCORE nnnnnnn` plus `NEW HIGH SCORE` (REQ-HSNEW Y, player colour, blinking with
-  highlighting). HS-END already runs before END, so the values are known. The line-mode end lines are unchanged.
+  - Wide: left column `HIGH    nnnnnnn` (HUD-LEFT format) at W-B0 + 13 (free row).
+  - Tall: title row, column W-C0 + 69, after `LEVEL nn`: `HI nnnnnnn`.
+  - 80x24 GS layout B: `HIGH SCORE nnnnnnn` on row 24, column 2; G family: row 20, column 2 (neither layout has a
+    title row and the 61-column status line is full, D37 tradeoff unchanged). (Corrected in RP.2: the first draft
+    named a title row that these layouts do not have.)
+- End screen (scaled families, as today's GS end banner + 3 s WAIT): ARCADE adds after the banner on the message row
+  `SCORE nnnnnnn` (message column + 15) and, when HS is active, `HIGH SCORE nnnnnnn` (+ 30) plus `NEW HIGH SCORE`
+  (+ 50; REQ-HSNEW Y, player colour, blinking). HS-END already runs before END, so the values are known. The
+  line-mode end lines are unchanged.
 - Level shown in the HUD: already done in GP2.3 (wide / tall / status line) - no change.
 
 ## 6. SPEED (RP.3, the roadmap's narrow scope)

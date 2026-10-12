@@ -113,8 +113,25 @@ def arc_tile(w, kind):
     return tile
 
 
-def image(g, cmd, res, msg, w, anim, vis, face, banner=None):
+def pix_sprite(w, px, colour):
+    """MVS-RP: a pixel-art tile (4 pixel rows) in the sprite cell codes, not a ghost."""
+    rows = []
+    for j in (0, 2):
+        row = []
+        for i in range(w):
+            a, b = px[j][i] == '#', px[j + 1][i] == '#'
+            row.append((0x40, colour, REVERSE, 0) if a and b else (UPPER, colour, 0, 1) if a
+                       else (LOWER, colour, 0, 1) if b else (0x40, 0, 0, 0))
+        rows.append(row)
+    return rows
+
+
+def image(g, cmd, res, msg, w, anim, vis, face, banner=None, rp=None):
+    """rp (MVS-RP, ref_rp.Tracker): READY!, death frame, popup tile; B only: HUD high score (row 24) and the end
+    line after the banner."""
     img = [(0x40, 0, 0, 0)] * 1920
+    dth = rp['dth'] if rp else None
+    pu = rp['pu'] if rp else None
 
     def put(row, col, text, colour, high=0, keep_blanks=False):
         for k, c in enumerate(text):
@@ -133,15 +150,24 @@ def image(g, cmd, res, msg, w, anim, vis, face, banner=None):
             c = g.grid[y][x]
             tile = None
             arc = getattr(g, 'arc', False)
-            for k, (gx, gy, _) in enumerate(g.gh):
+            if dth is not None:                 # MVS-RP: the death animation hides every actor
+                if (dth[1] - 1, dth[2] - 1) == (x, y):
+                    f = dth[0]
+                    tile = pac if f == 1 else [[(0x40, 0, 0, 0)] * w for _ in range(2)] if f == 6 \
+                        else pix_sprite(w, rp_death(w, f), PLAYER)
+            for k, (gx, gy, _) in enumerate(g.gh if dth is None else []):
                 if (gx - 1, gy - 1) == (x, y) and arc and g.mode[k] == 'F':
                     tile = sprite(w, 'GB' if second else 'GA', g4.fright_colour(g), True, True)
                 elif (gx - 1, gy - 1) == (x, y) and not (arc and g.mode[k] == 'E'):
                     tile = sprite(w, 'GB' if second else 'GA', GHOSTS[k], True)
-            if tile is None and (g.x - 1, g.y - 1) == (x, y):
+            if tile is None and pu is not None and (pu['x'] - 1, pu['y'] - 1) == (x, y):
+                text = pu['t4'] if w == 4 else pu['t3']       # MVS-RP popup: over Pac-Man / eyes, under ghosts
+                tile = [[(e(c)[0], pu['col'], 0, 0) if c != ' ' else (0x40, 0, 0, 0) for c in text],
+                        [(0x40, 0, 0, 0)] * w]
+            if tile is None and dth is None and (g.x - 1, g.y - 1) == (x, y):
                 tile = pac
-            if tile is None and arc and any(g.mode[k] == 'E' and (gx - 1, gy - 1) == (x, y)
-                                            for k, (gx, gy, _) in enumerate(g.gh)):
+            if tile is None and dth is None and arc and any(g.mode[k] == 'E' and (gx - 1, gy - 1) == (x, y)
+                                                            for k, (gx, gy, _) in enumerate(g.gh)):
                 tile = arc_tile(w, 'E')
             if tile is None and g4.fruit_at(g) == (x + 1, y + 1):
                 tile = arc_tile(w, '%')
@@ -157,14 +183,40 @@ def image(g, cmd, res, msg, w, anim, vis, face, banner=None):
             for j in range(2):
                 for i in range(w):
                     img[(2 * y + j) * 80 + col0 - 1 + w * x + i] = tile[j][i]
+    if rp and rp['ready']:
+        for k, c in enumerate(rp_ready()):
+            img[(2 * 4) * 80 + col0 - 1 + w * 7 + (9 if w == 4 else 6) + k] = (e(c)[0], PLAYER, 0, 0)
     if msg is not None:
         put(MSG_ROW, 2, 'INVALID COMMAND ' + msg, ERROR, BLINK)
     if banner is not None:
         text, colour = BANNERS[banner]
         put(MSG_ROW, 2, text, colour, REVERSE, keep_blanks=True)
+        if rp and rp['end']:
+            end_line(put, MSG_ROW, 2, g, rp)
+    if rp and rp['hi'] is not None:
+        put(24, 2, 'HIGH SCORE %07d' % rp['hi'], HUD)
     put(CMD_ROW, 2, 'COMMAND ===>', HELP)
     put(CMD_ROW, 20, HELP_S, HELP)
     return img
+
+
+def rp_death(w, f):
+    from ref_rp import DEATH_PIX
+    return DEATH_PIX[w][f - 2]
+
+
+def rp_ready():
+    from ref_rp import READY_TEXT
+    return READY_TEXT
+
+
+def end_line(put, row, col, g, rp):
+    """MVS-RP end screen: after the banner, SCORE, HIGH SCORE (R / Z) and NEW HIGH SCORE (blinking)."""
+    put(row, col + 15, 'SCORE %07d' % g.ascore, HUD)
+    if rp['hi'] is not None:
+        put(row, col + 30, 'HIGH SCORE %07d' % rp['hi'], HUD)
+        if rp['new']:
+            put(row, col + 50, 'NEW HIGH SCORE', PLAYER, BLINK)
 
 
 def addr(a):

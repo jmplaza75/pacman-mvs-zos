@@ -54,6 +54,17 @@
       * AND FRUIT KIND (PW DROPPED: THE BOARD SHOWS THE 'o'); WIDE HUD
       * LEVEL + FRUIT NAME AND POINTS; TALL: LEVEL IN THE TITLE ROW,
       * FRUIT ON THE SCORE LINE.
+      * MVS-RP (D39, DOCS/RP-POLISH.MD 2-5, ARC-ON = 1 ONLY): RP-STATE
+      * DECIDES PER SCREEN: READY! OVER THE CENTRAL WALL BAR (TURN: NO
+      * MOVE YET OR THE DEATH / CLEAR TURN; REALTIME: WAIT, FREEZE
+      * QUANTA 4..1), THE DEATH ANIMATION (REALTIME FREEZE QUANTA 10..5
+      * AFTER A DEATH: 6 FRAMES AT REQ-DTHX/REQ-DTHY, ACTORS HIDDEN),
+      * THE SCORE POPUP OF AN EATEN GHOST / FRUIT (FROM ARC-EATN4 /
+      * ARC-FRUITS; 6 QUANTA, TURN: ITS TURN; SCALED IN THE TILE,
+      * UNSCALED ON THE MESSAGE ROW), THE HUD HIGH SCORE (REQ-HSST R/Z:
+      * MAX(REQ-HISCORE, ARC-SCORE)) AND THE END LINE OF OP ENDS. A
+      * SCREEN TOO LONG WITH THEM IS FIRST REBUILT WITHOUT THEM (FULL,
+      * SAME LAYOUT); ONLY THEN THE SIZE GUARD STEPS DOWN.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACSCR.
        ENVIRONMENT DIVISION.
@@ -255,19 +266,21 @@
            05  SV-STATUS-COL     PIC 999.
        01  SPR-PAC               PIC 9 VALUE 1.
        01  SPR-GH                PIC 9 VALUE 4.
-       01  SPR-NO                PIC 9.
+       01  SPR-NO                PIC 99.
        01  SPR-4-T.
-           05  SPR-4-CH          PIC X OCCURS 64 TIMES.
+           05  SPR-4-CH          PIC X OCCURS 96 TIMES.
        01  SPR-4-R REDEFINES SPR-4-T.
            05  SPR-4-A           PIC X(40).
            05  SPR-4-B           PIC X(16).
            05  SPR-4-C           PIC X(8).
+           05  SPR-4-D           PIC X(32).
        01  SPR-3-T.
-           05  SPR-3-CH          PIC X OCCURS 48 TIMES.
+           05  SPR-3-CH          PIC X OCCURS 72 TIMES.
        01  SPR-3-R REDEFINES SPR-3-T.
            05  SPR-3-A           PIC X(30).
            05  SPR-3-B           PIC X(12).
            05  SPR-3-C           PIC X(6).
+           05  SPR-3-D           PIC X(24).
        01  SPR-FR                PIC 9 VALUE 0.
        01  WS-HPW                PIC 999 VALUE 0.
        01  HUD-NUM7              PIC 9(7).
@@ -362,6 +375,58 @@
            05  BAN-CH            PIC X OCCURS 14 TIMES.
        01  BAN-LEN               PIC 99.
        01  BAN-CO                PIC 999.
+      * MVS-RP (D39) DECORATIONS OF THE SCREEN BEING BUILT, POPUP STATE.
+       01  RP-READY              PIC 9 VALUE 0.
+       01  RP-DTH                PIC 9 VALUE 0.
+       01  RP-PU                 PIC 9 VALUE 0.
+       01  RP-HI                 PIC 9 VALUE 0.
+       01  RP-END                PIC 9 VALUE 0.
+       01  RP-DECO               PIC 9 VALUE 0.
+       01  RP-SUPP               PIC 9 VALUE 0.
+       01  RP-HIV                PIC 9(7) VALUE 0.
+       01  RP-NOW                PIC 9(7) VALUE 0.
+       01  RP-LIM                PIC 9(7) VALUE 0.
+       01  RP-POS                PIC 9(4) VALUE 0.
+       01  RP-K                  PIC 99 VALUE 0.
+       01  RP-C                  PIC 99 VALUE 0.
+       01  RP-DK                 PIC 9 VALUE 0.
+       01  RP-KX                 PIC X VALUE '0'.
+       01  RP-KN REDEFINES RP-KX PIC 9.
+       01  RP-TAB-OK             PIC 9 VALUE 0.
+       01  RP-GLY.
+           05  RP-GCH            PIC X OCCURS 4 TIMES.
+       01  RP-RDY.
+           05  RP-RCH            PIC X OCCURS 6 TIMES.
+       01  RP-KIND-T             PIC X(4) VALUE '1234'.
+       01  RP-KIND-R REDEFINES RP-KIND-T.
+           05  RP-KCH            PIC X OCCURS 4 TIMES.
+       01  PU-ON                 PIC 9 VALUE 0.
+       01  PU-X                  PIC 99 VALUE 0.
+       01  PU-Y                  PIC 99 VALUE 0.
+       01  PU-COL                PIC 999 VALUE 0.
+       01  PU-T0                 PIC 9(7) VALUE 0.
+       01  PU-EAT                PIC 9(4) VALUE 0.
+       01  PU-FRT                PIC 999 VALUE 0.
+       01  PU-PTS                PIC 9(4) VALUE 0.
+       01  PU-NUM                PIC 9(4) VALUE 0.
+       01  PU-NUMX REDEFINES PU-NUM.
+           05  PU-D              PIC X OCCURS 4 TIMES.
+       01  PU-T4.
+           05  PU-CH4            PIC X OCCURS 4 TIMES.
+       01  PU-T3.
+           05  PU-CH3            PIC X OCCURS 3 TIMES.
+       01  PU-MSG.
+           05  PM-KIND           PIC X(6).
+           05  PM-PTS            PIC 9(4).
+       01  HUD-HI-T.
+           05  FILLER            PIC X(3) VALUE 'HI '.
+           05  HH-V              PIC 9(7).
+       01  HUD-HI-B.
+           05  FILLER            PIC X(11) VALUE 'HIGH SCORE '.
+           05  HB-V              PIC 9(7).
+       01  END-SC.
+           05  FILLER            PIC X(6) VALUE 'SCORE '.
+           05  ES-V              PIC 9(7).
        LINKAGE SECTION.
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
@@ -391,6 +456,7 @@
        DO-PRMT.
            MOVE 0 TO DS-LEN.
            MOVE 'F' TO DS-KIND.
+           PERFORM RP-STATE THRU RP-STATE-EXIT.
            PERFORM INIT-HI.
            IF REQ-ANIM = 'Y' AND REQ-PLAY = 'R'
                MOVE REQ-VIS TO VIS
@@ -407,8 +473,12 @@
        DO-PRMT-EXIT.
            EXIT.
        PRMT-RETRY.
-           PERFORM LAYOUT-DOWN.
-           PERFORM SET-GLYPHS.
+           IF RP-DECO = 1 AND RP-SUPP = 0
+               PERFORM RP-DROP
+           ELSE
+               PERFORM RP-STATE THRU RP-STATE-EXIT
+               PERFORM LAYOUT-DOWN
+               PERFORM SET-GLYPHS.
            PERFORM PRMT-BODY.
        PRMT-BODY.
            IF REQ-REDRAW = 'P'
@@ -427,6 +497,7 @@
            PERFORM KEEP-VS.
        DO-FULL.
            MOVE 0 TO DS-LEN.
+           PERFORM RP-STATE THRU RP-STATE-EXIT.
            PERFORM INIT-HI.
            PERFORM SET-GLYPHS.
            MOVE MSG-LAST TO MSG-ON.
@@ -437,11 +508,16 @@
        DO-FULL-EXIT.
            EXIT.
        FULL-RETRY.
-           PERFORM LAYOUT-DOWN.
-           PERFORM SET-GLYPHS.
+           IF RP-DECO = 1 AND RP-SUPP = 0
+               PERFORM RP-DROP
+           ELSE
+               PERFORM RP-STATE THRU RP-STATE-EXIT
+               PERFORM LAYOUT-DOWN
+               PERFORM SET-GLYPHS.
            PERFORM COMPOSE.
        DO-TICK.
            MOVE 0 TO DS-LEN.
+           PERFORM RP-STATE THRU RP-STATE-EXIT.
            IF REQ-ANIM = 'Y' AND REQ-REDRAW = 'P' AND PREV-OK = 1
                              AND SC-ON = 1
                PERFORM TICK-BUILD-S
@@ -453,13 +529,18 @@
        DO-TICK-EXIT.
            EXIT.
        TICK-RETRY.
-           PERFORM LAYOUT-DOWN.
-           PERFORM SET-GLYPHS.
+           IF RP-DECO = 1 AND RP-SUPP = 0
+               PERFORM RP-DROP
+           ELSE
+               PERFORM RP-STATE THRU RP-STATE-EXIT
+               PERFORM LAYOUT-DOWN
+               PERFORM SET-GLYPHS.
            MOVE MSG-LAST TO MSG-ON.
            PERFORM PRMT-VS.
            MOVE 0 TO MSG-ON.
        DO-RTQF.
            MOVE 0 TO DS-LEN.
+           PERFORM RP-STATE THRU RP-STATE-EXIT.
            IF REQ-REDRAW NOT = 'P' OR PREV-OK = 0
                PERFORM DO-PRMT THRU DO-PRMT-EXIT
                GO TO DO-RTQF-EXIT.
@@ -487,6 +568,7 @@
            MOVE 0 TO DS-LEN.
            IF SC-ON = 0
                GO TO DO-ENDS-EXIT.
+           PERFORM RP-ENDSET.
            PERFORM INIT-HI.
            PERFORM SET-FACE.
            PERFORM SET-GLYPHS.
@@ -498,7 +580,11 @@
        DO-ENDS-EXIT.
            EXIT.
        ENDS-RETRY.
-           PERFORM LAYOUT-DOWN.
+           IF RP-DECO = 1 AND RP-SUPP = 0
+               PERFORM RP-DROP
+           ELSE
+               PERFORM RP-ENDSET
+               PERFORM LAYOUT-DOWN.
            IF SC-ON = 1
                PERFORM SET-GLYPHS
                MOVE 1 TO BAN-ON
@@ -513,9 +599,13 @@
            MOVE SPR-4 TO SPR-4-A.
            MOVE SPR-4X TO SPR-4-B.
            MOVE SPR-4Y TO SPR-4-C.
+           MOVE SPR-4D TO SPR-4-D.
            MOVE SPR-3 TO SPR-3-A.
            MOVE SPR-3X TO SPR-3-B.
            MOVE SPR-3Y TO SPR-3-C.
+           MOVE SPR-3D TO SPR-3-D.
+           MOVE GLY-DEATH TO RP-GLY.
+           MOVE TXT-READY TO RP-RDY.
            MOVE LAY-STATUS-ROW TO SV-STATUS-ROW.
            MOVE LAY-GHOSTS-ROW TO SV-GHOSTS-ROW.
            MOVE LAY-GHOSTS-COL TO SV-GHOSTS-COL.
@@ -933,12 +1023,20 @@
            ELSE
                PERFORM SHOW-BOARD-ROW VARYING WS-I FROM 1 BY 1
                    UNTIL WS-I > 10.
+           IF SC-ON = 1 AND RP-READY = 1
+               PERFORM S-READY.
            IF REQ-PLAY = 'R' AND REQ-RTSTAT = 'PAUS'
                PERFORM SHOW-BANNER
            ELSE IF MSG-ON = 1
-               PERFORM SHOW-MESSAGE.
+               PERFORM SHOW-MESSAGE
+           ELSE IF RP-PU = 1 AND SC-ON = 0
+               PERFORM SHOW-POPMSG.
            IF BAN-ON = 1
                PERFORM SHOW-BANNER.
+           IF BAN-ON = 1 AND RP-END = 1
+               PERFORM SHOW-ENDL.
+           IF RP-HI = 1 AND (FAM = 'B' OR FAM = 'G')
+               PERFORM SHOW-HIB.
            PERFORM SHOW-COMMAND.
            IF VS-MODE = 0
                PERFORM SHOW-FIELD.
@@ -990,21 +1088,21 @@
                VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
            IF ARC-ON = 1
                PERFORM OVERLAY-FRUIT.
-           IF ARC-ON = 1
-               PERFORM OVERLAY-EYES THRU OVERLAY-EYES-EXIT
-                   VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
-           IF WS-I = PLAYER-Y
-               MOVE 'P' TO LINE-CH (PLAYER-X)
-               MOVE PAL-PLAYER TO CELL-COL (PLAYER-X)
-               MOVE WS-HP TO CELL-HI (PLAYER-X).
-           PERFORM OVERLAY-GHOST THRU OVERLAY-GHOST-EXIT
-               VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
+           IF RP-DTH = 0
+               PERFORM U-ACTORS
+           ELSE IF WS-I = REQ-DTHY
+               PERFORM RP-DCELL.
            PERFORM GLYPH-CELL VARYING WS-COL FROM 1 BY 1
                UNTIL WS-COL > 20.
            MOVE ALL '0' TO CELL-GES.
            IF REQ-GLYPHS = 'G' OR REQ-GLYPHS = 'B'
                PERFORM PROF-CELL THRU PROF-CELL-EXIT
                    VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
+           IF RP-DTH > 1 AND RP-DTH < 6 AND WS-I = REQ-DTHY
+               PERFORM U-DCELL.
+           IF RP-READY = 1 AND WS-I = RP-RDY-Y
+               PERFORM U-RDY-CH VARYING RP-K FROM 1 BY 1
+                   UNTIL RP-K > 6.
            COMPUTE WS-ROW = LAY-BOARD-ROW + WS-I - 1.
            MOVE LAY-BOARD-COL TO WS-COL.
            PERFORM PUT-SBA.
@@ -1020,6 +1118,30 @@
                MOVE 0 TO WS-HV
                PERFORM PUT-HILITE.
            MOVE 0 TO WS-HCUR.
+       U-ACTORS.
+           IF ARC-ON = 1
+               PERFORM OVERLAY-EYES THRU OVERLAY-EYES-EXIT
+                   VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
+           IF WS-I = PLAYER-Y
+               MOVE 'P' TO LINE-CH (PLAYER-X)
+               MOVE PAL-PLAYER TO CELL-COL (PLAYER-X)
+               MOVE WS-HP TO CELL-HI (PLAYER-X).
+           PERFORM OVERLAY-GHOST THRU OVERLAY-GHOST-EXIT
+               VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
+       U-DCELL.
+      * MVS-RP UNSCALED DEATH FRAMES 2-5: BASE GLYPHS, PLAYER COLOUR.
+           MOVE REQ-DTHX TO WS-GX.
+           COMPUTE RP-DK = RP-DTH - 1.
+           MOVE RP-GCH (RP-DK) TO LINE-CH (WS-GX).
+           MOVE PAL-PLAYER TO CELL-COL (WS-GX).
+           MOVE 0 TO CELL-HI (WS-GX).
+           MOVE 0 TO CELL-GE (WS-GX).
+       U-RDY-CH.
+           COMPUTE RP-C = RP-RDY-X + RP-K - 1.
+           MOVE RP-RCH (RP-K) TO LINE-CH (RP-C).
+           MOVE PAL-PLAYER TO CELL-COL (RP-C).
+           MOVE 0 TO CELL-HI (RP-C).
+           MOVE 0 TO CELL-GE (RP-C).
        GLYPH-CELL.
            IF LINE-CH (WS-COL) = 'P'
                MOVE WS-GP TO LINE-CH (WS-COL).
@@ -1253,6 +1375,19 @@
                VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
            IF ARC-ON = 1
                PERFORM OVERLAY-FRUIT.
+           IF RP-DTH = 0
+               PERFORM S-ACTORS
+           ELSE IF CY = REQ-DTHY
+               PERFORM RP-DCELL.
+      * THE POPUP COVERS PAC-MAN AND EYES (THE EATING SCREEN SHOWS THE
+      * POINTS, AS IN THE ARCADE), NEVER A GHOST.
+           IF RP-PU = 1 AND CY = PU-Y
+                        AND LINE-CH (PU-X) NOT = 'G'
+                        AND LINE-CH (PU-X) NOT = 'F'
+               MOVE '$' TO LINE-CH (PU-X)
+               MOVE PU-COL TO CELL-COL (PU-X).
+           PERFORM S-TILE VARYING CX FROM 1 BY 1 UNTIL CX > 20.
+       S-ACTORS.
            IF ARC-ON = 1
                PERFORM OVERLAY-EYES THRU OVERLAY-EYES-EXIT
                    VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
@@ -1261,7 +1396,6 @@
                MOVE PAL-PLAYER TO CELL-COL (PLAYER-X).
            PERFORM OVERLAY-GHOST THRU OVERLAY-GHOST-EXIT
                VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
-           PERFORM S-TILE VARYING CX FROM 1 BY 1 UNTIL CX > 20.
        S-TILE.
            MOVE LINE-CH (CX) TO TL-KIND.
            MOVE CELL-COL (CX) TO TL-COL.
@@ -1293,6 +1427,13 @@
            ELSE IF TL-KIND = 'Y'
                MOVE 7 TO SPR-NO
                PERFORM S-SPRITE
+           ELSE IF TL-KIND = '$'
+               PERFORM S-POPUP
+           ELSE IF TL-KIND = '1' OR TL-KIND = '2' OR TL-KIND = '3'
+                             OR TL-KIND = '4'
+               MOVE TL-KIND TO RP-KX
+               COMPUTE SPR-NO = RP-KN + 8
+               PERFORM S-SPRITE
            ELSE IF TL-KIND = GLY-FRUIT
                MOVE 8 TO SPR-NO
                PERFORM S-SPRITE.
@@ -1302,6 +1443,15 @@
            MOVE TL-CO TO CU-CO (VS-POS).
            MOVE TL-HI TO CU-HI (VS-POS).
            MOVE TL-CS TO CU-CS (VS-POS).
+       S-POPUP.
+      * MVS-RP POPUP TILE: THE POINTS ON THE UPPER ROW, BASE SET.
+           IF SR = 1 AND SC-W = 4
+               MOVE PU-CH4 (SC) TO TL-CH.
+           IF SR = 1 AND SC-W = 3
+               MOVE PU-CH3 (SC) TO TL-CH.
+           IF TL-CH NOT = SPACE
+               MOVE TL-COL TO TL-CO.
+           MOVE 0 TO WS-NOP.
        S-WALL.
            COMPUTE CT-K = ((CY - 1) * 20 + CX - 1) * 8
                + (SR - 1) * 4 + SC.
@@ -1632,6 +1782,8 @@
                PERFORM SHOW-TALL-LINE.
            IF FAM = 'T' AND ARC-ON = 1
                PERFORM ARC-TALL.
+           IF FAM = 'T' AND RP-HI = 1
+               PERFORM RP-TALL-HI.
            MOVE 0 TO WS-NOP.
        SHOW-TALL-LINE.
            MOVE SCORE TO TL-SCORE.
@@ -1690,6 +1842,15 @@
            PERFORM HUD-LEFT.
            COMPUTE W-L = W-C0 - 10.
            PERFORM PUT-LIFE VARYING W-K FROM 1 BY 1 UNTIL W-K > LIVES.
+      * MVS-RP: THE HIGH SCORE BELOW THE LIVES (AFTER THEIR ICONS, WHICH
+      * USE WS-ROW).
+           COMPUTE W-L = W-C0 - 18.
+           IF RP-HI = 1
+               MOVE 'HIGH' TO HL-LABEL
+               MOVE RP-HIV TO HUD-NUM7
+               MOVE HUD-NUM7 TO HL-VALUE
+               COMPUTE WS-ROW = W-B0 + 13
+               PERFORM HUD-LEFT.
            MOVE AI-LEVEL TO HA-LEVEL.
            COMPUTE WS-ROW = W-B0 + 1.
            MOVE W-R TO WS-COL.
@@ -1858,3 +2019,209 @@
            MOVE HUD-FRT TO WS-TXT.
            MOVE 15 TO WS-TLEN.
            PERFORM PUT-TEXT.
+      * ------------- MVS-RP PRESENTATION (D39, ARC-ON = 1) -----------
+       RP-STATE.
+      * WHAT THIS SCREEN SHOWS; SAFE TO REPEAT FOR THE SAME SCREEN (THE
+      * POPUP STARTS ONLY WHEN A COUNTER MOVED SINCE THE LAST SCREEN).
+           MOVE 0 TO RP-READY RP-DTH RP-PU RP-HI RP-END RP-SUPP.
+           MOVE 0 TO RP-DECO.
+           IF ARC-ON = 0
+               GO TO RP-STATE-EXIT.
+           MOVE ARC-TURNS TO RP-NOW.
+           IF REQ-PLAY = 'R'
+               MOVE REQ-RTQ TO RP-NOW.
+           IF ARC-FRUITS NOT = PU-FRT
+               MOVE ARC-FRUITS TO PU-FRT
+               MOVE ARC-BV TO PU-PTS
+               MOVE PAL-FRUIT TO PU-COL
+               MOVE ARC-BX TO PU-X
+               MOVE ARC-BY TO PU-Y
+               MOVE 'FRUIT ' TO PM-KIND
+               PERFORM PU-START.
+           IF ARC-EATN4 NOT = PU-EAT
+               MOVE ARC-EATN4 TO PU-EAT
+               MOVE ARC-PTS TO PU-PTS
+               MOVE PAL-POPUP TO PU-COL
+               MOVE PLAYER-X TO PU-X
+               MOVE PLAYER-Y TO PU-Y
+               MOVE 'GHOST ' TO PM-KIND
+               PERFORM PU-START.
+           COMPUTE RP-LIM = PU-T0 + 5.
+           IF PU-ON = 1 AND REQ-PLAY = 'R' AND RP-NOW > RP-LIM
+               MOVE 0 TO PU-ON.
+           IF PU-ON = 1 AND REQ-PLAY NOT = 'R' AND RP-NOW NOT = PU-T0
+               MOVE 0 TO PU-ON.
+           IF ARC-ED = 'D' OR ARC-EC = 'C'
+               MOVE 0 TO PU-ON.
+           MOVE PU-ON TO RP-PU.
+           IF REQ-HSST = 'R' OR REQ-HSST = 'Z'
+               MOVE 1 TO RP-HI
+               MOVE REQ-HISCORE TO RP-HIV.
+           IF RP-HI = 1 AND ARC-SCORE > RP-HIV
+               MOVE ARC-SCORE TO RP-HIV.
+           IF REQ-PLAY = 'R'
+               PERFORM RP-RT
+           ELSE IF ARC-TURNS = 0 OR ARC-ED = 'D' OR ARC-EC = 'C'
+               MOVE 1 TO RP-READY.
+           IF F-LOST = 1 OR F-WON = 1
+               MOVE 0 TO RP-READY.
+           IF RP-READY = 1 OR RP-DTH > 0 OR RP-PU = 1 OR RP-HI = 1
+               MOVE 1 TO RP-DECO.
+       RP-STATE-EXIT.
+           EXIT.
+       RP-RT.
+      * REALTIME: READY! BEFORE THE START AND IN FREEZE QUANTA 4..1; THE
+      * DEATH FRAMES IN FREEZE QUANTA 10..5 OF A DEATH (FLAG D).
+           IF REQ-RTSTAT = 'WAIT'
+               MOVE 1 TO RP-READY.
+           IF REQ-RTSTAT = 'FRZ ' AND REQ-RTFRZ > 0 AND REQ-RTFRZ < 5
+               MOVE 1 TO RP-READY.
+           IF REQ-RTSTAT = 'FRZ ' AND REQ-RTFRZ > 4 AND ARC-ED = 'D'
+               COMPUTE RP-DTH = 11 - REQ-RTFRZ.
+           MOVE 0 TO WS-NOP.
+       PU-START.
+      * POPUP TEXT: 4 WIDE = 3 DIGITS + BLANK BELOW 1000, ELSE 4 DIGITS;
+      * 3 WIDE = 3 DIGITS, ELSE THOUSANDS + K + HUNDREDS (0 = BLANK).
+           MOVE 1 TO PU-ON.
+           MOVE RP-NOW TO PU-T0.
+           MOVE PU-PTS TO PU-NUM.
+           MOVE PU-PTS TO PM-PTS.
+           IF PU-PTS < 1000
+               MOVE PU-D (2) TO PU-CH4 (1)
+               MOVE PU-D (3) TO PU-CH4 (2)
+               MOVE PU-D (4) TO PU-CH4 (3)
+               MOVE SPACE TO PU-CH4 (4)
+               MOVE PU-D (2) TO PU-CH3 (1)
+               MOVE PU-D (3) TO PU-CH3 (2)
+               MOVE PU-D (4) TO PU-CH3 (3)
+           ELSE
+               MOVE PU-NUMX TO PU-T4
+               MOVE PU-D (1) TO PU-CH3 (1)
+               MOVE 'K' TO PU-CH3 (2)
+               MOVE PU-D (2) TO PU-CH3 (3).
+           IF PU-PTS NOT < 1000 AND PU-D (2) = '0'
+               MOVE SPACE TO PU-CH3 (3).
+           MOVE 0 TO WS-NOP.
+       RP-ENDSET.
+      * OP ENDS: NO READY!, DEATH FRAME OR POPUP; THE END LINE.
+           PERFORM RP-STATE THRU RP-STATE-EXIT.
+           MOVE 0 TO PU-ON RP-PU RP-READY RP-DTH.
+           MOVE 0 TO RP-DECO.
+           IF RP-HI = 1
+               MOVE 1 TO RP-DECO.
+           IF ARC-ON = 1
+               MOVE 1 TO RP-END
+               MOVE 1 TO RP-DECO.
+           MOVE 0 TO WS-NOP.
+       RP-DROP.
+      * TOO LONG WITH THE DECORATIONS: THE SAME LAYOUT WITHOUT THEM, AS
+      * A FULL SCREEN (NEVER THE G4 FALLBACK FOR A DECORATION).
+           MOVE 1 TO RP-SUPP.
+           MOVE 0 TO RP-READY RP-DTH RP-PU RP-HI RP-END.
+           MOVE 0 TO PREV-OK.
+           MOVE 0 TO DS-OVF.
+           MOVE 0 TO DS-LEN.
+           MOVE 'F' TO DS-KIND.
+       RP-DCELL.
+      * DEATH FRAME 1 = PAC-MAN AS DRAWN NORMALLY, 6 = NOTHING; SCALED
+      * FRAMES 2-5 = SPRITES 9-12 (TILE KINDS 1-4).
+           MOVE REQ-DTHX TO WS-GX.
+           IF RP-DTH = 1
+               MOVE 'P' TO LINE-CH (WS-GX)
+               MOVE PAL-PLAYER TO CELL-COL (WS-GX)
+               MOVE WS-HP TO CELL-HI (WS-GX).
+           IF RP-DTH > 1 AND RP-DTH < 6 AND SC-ON = 1
+               COMPUTE RP-DK = RP-DTH - 1
+               MOVE RP-KCH (RP-DK) TO LINE-CH (WS-GX)
+               MOVE PAL-PLAYER TO CELL-COL (WS-GX).
+           IF RP-DTH = 6
+               MOVE SPACE TO LINE-CH (WS-GX)
+               MOVE 0 TO CELL-COL (WS-GX)
+               MOVE 0 TO CELL-HI (WS-GX).
+           MOVE 0 TO WS-NOP.
+       S-READY.
+      * SCALED READY!: CENTRED ON THE UPPER ROW OF THE WALL BAR TILES.
+           COMPUTE RP-POS = (SC-BROW - 1 + (RP-RDY-Y - 1) * 2) * GW
+               + SC-BCOL + (RP-RDY-X - 1) * SC-W + 9.
+           IF SC-W = 3
+               SUBTRACT 3 FROM RP-POS.
+           PERFORM S-RDY-CH VARYING RP-K FROM 1 BY 1 UNTIL RP-K > 6.
+       S-RDY-CH.
+           COMPUTE VS-POS = RP-POS + RP-K - 1.
+           MOVE RP-RCH (RP-K) TO CU-CH (VS-POS).
+           MOVE PAL-PLAYER TO CU-CO (VS-POS).
+           MOVE 0 TO CU-HI (VS-POS).
+           MOVE 0 TO CU-CS (VS-POS).
+       SHOW-POPMSG.
+      * UNSCALED POPUP: 'GHOST NNNN' / 'FRUIT NNNN' ON THE MESSAGE ROW.
+           MOVE LAY-MSG-ROW TO WS-ROW.
+           MOVE LAY-MSG-COL TO WS-COL.
+           PERFORM PUT-SBA.
+           MOVE PU-COL TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE PU-MSG TO WS-TXT.
+           MOVE 10 TO WS-TLEN.
+           PERFORM PUT-TEXT.
+       SHOW-HIB.
+      * 80 X 24 LAYOUTS: HIGH SCORE ON ROW 24 (B) / ROW 20 (G).
+           MOVE 24 TO WS-ROW.
+           IF FAM = 'G'
+               MOVE 20 TO WS-ROW.
+           MOVE 2 TO WS-COL.
+           PERFORM PUT-SBA.
+           MOVE PAL-HUD TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE RP-HIV TO HB-V.
+           MOVE HUD-HI-B TO WS-TXT.
+           MOVE 18 TO WS-TLEN.
+           PERFORM PUT-TEXT.
+       RP-TALL-HI.
+           COMPUTE WS-ROW = W-B0 - 4.
+           COMPUTE WS-COL = W-C0 + 69.
+           PERFORM PUT-SBA.
+           MOVE PAL-HUD TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE RP-HIV TO HH-V.
+           MOVE HUD-HI-T TO WS-TXT.
+           MOVE 10 TO WS-TLEN.
+           PERFORM PUT-TEXT.
+       SHOW-ENDL.
+      * END SCREEN (SCALED): SCORE, HIGH SCORE, NEW HIGH SCORE AFTER THE
+      * BANNER ON THE MESSAGE ROW.
+           MOVE LAY-MSG-ROW TO WS-ROW.
+           COMPUTE WS-COL = LAY-MSG-COL + 15.
+           PERFORM PUT-SBA.
+           MOVE PAL-HUD TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE ARC-SCORE TO ES-V.
+           MOVE END-SC TO WS-TXT.
+           MOVE 13 TO WS-TLEN.
+           PERFORM PUT-TEXT.
+           IF RP-HI = 1
+               PERFORM ENDL-HI.
+           IF RP-HI = 1 AND REQ-HSNEW = 'Y'
+               PERFORM ENDL-NEW.
+           MOVE 0 TO WS-NOP.
+       ENDL-HI.
+           MOVE LAY-MSG-ROW TO WS-ROW.
+           COMPUTE WS-COL = LAY-MSG-COL + 30.
+           PERFORM PUT-SBA.
+           MOVE PAL-HUD TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE RP-HIV TO HB-V.
+           MOVE HUD-HI-B TO WS-TXT.
+           MOVE 18 TO WS-TLEN.
+           PERFORM PUT-TEXT.
+       ENDL-NEW.
+           MOVE LAY-MSG-ROW TO WS-ROW.
+           COMPUTE WS-COL = LAY-MSG-COL + 50.
+           PERFORM PUT-SBA.
+           MOVE PAL-PLAYER TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE WS-HE TO WS-HV.
+           PERFORM PUT-HILITE.
+           MOVE 'NEW HIGH SCORE' TO WS-TXT.
+           MOVE 14 TO WS-TLEN.
+           PERFORM PUT-TEXT.
+           MOVE 0 TO WS-HV.
+           PERFORM PUT-HILITE.

@@ -61,6 +61,10 @@ DECKS = {
     # GP23 decks, rerun with the same sources, are the regression)
     'HS': ('PACBLDHS', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACMAIN', []),
+    # MVS-RP (D39): the HS modules and copies (PACREQ +RP fields, PACPAL appended); development load member PACRPD
+    # (the installed PACMAIN is replaced only by the final RP build), then the RP TSD runs (rp_steps)
+    'RP': ('PACBLDRP', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACRPD', []),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -113,7 +117,7 @@ def run_step(step, pfx, load, sysin, parm=None, dd=None, cond='(0,NE)'):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO'], 'GP2': ['PACTSO', 'PACFSIO'], 'GP23': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO'], 'GP2': ['PACTSO', 'PACFSIO'], 'GP23': ['PACTSO', 'PACFSIO'], 'RP': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -503,6 +507,66 @@ def hs_steps(pfx, load):
     return out
 
 
+# MVS-RP (D39, docs/RP-POLISH.md section 9): after the build, a marker, a scratch PDS <prefix>.RPTEST (FB 80/80)
+# with seeded high-score members, then RULES(ARCADE) TSD dry runs: the GP2.3 runs (GP23_TURN / GP23_RT, their
+# streams now carry the RP decorations), the RP REALTIME cases (tests/rpcases) and the high-score runs.
+# RP_TURN: (directory, case, hilite, anim, redraw, glyphs, scale, canvas, sound, start, DD);
+# RP_RT: (directory, case, canvas, sound, start, DD). DD: '' none (REQ-HSST N), 'M:<member>' = RPTEST(<member>)
+# (seeded = R, not seeded = Z), 'DUMMY' (E). RP_SEED: member -> persistent score.
+RP_SEED = {'R1': 1000, 'R2': 9999999, 'R3': 500, 'R4': 2000, 'R5': 100, 'R6': 300, 'R7': 9999999, 'R8': 50}
+RP_TURN = [r + ('',) for r in GP23_TURN] + [
+    ('gp2cases', 'G2CLR', 'Y', 'Y', 'P', 'G', '4', 'W', 'N', '', 'M:R1'),      # wide HUD HIGH, end NEW HIGH SCORE
+    ('gp2cases', 'G2CLR', 'Y', 'Y', 'P', 'G', '4', 'T', 'N', '', 'M:R2'),      # tall HI, end not new
+    ('gp2cases', 'G2CLR', 'Y', 'Y', 'P', 'G', '4', 'D', 'N', '', 'M:Z1'),      # B row 24, missing member (Z): new
+    ('gp2cases', 'G2CLR', 'Y', 'Y', 'P', 'G', 'N', 'D', 'N', '', 'M:R3'),      # G row 20 (no end screen)
+    ('gp2cases', 'G2CLR', 'Y', 'Y', 'P', 'G', '3', 'D', 'N', '', 'M:R4'),      # B 3x2
+    ('gp2cases', 'G2XG', 'Y', 'Y', 'P', 'G', '4', 'W', 'N', '13', 'M:R5'),     # practice start: shown, never new
+    ('gp2cases', 'G2CLR', 'Y', 'Y', 'P', 'G', '4', 'W', 'N', '', 'DUMMY'),     # unavailable: no HUD high score
+    ('gpcases', 'GPTWOF', 'Y', 'Y', 'P', 'G', '4', 'W', 'N', '', ''),          # two ghosts in one turn, scaled
+    ('gpcases', 'GPTWOF', 'Y', 'Y', 'P', 'C', 'N', 'D', 'N', '', '')]          # the same unscaled (message row)
+RP_RT = [r + ('',) for r in GP23_RT] + [
+    ('rpcases', 'RPLOST', 'W', 'Y', '', 'M:R6'),        # deaths on the start cell, pause + PA2 in a freeze, final
+    ('rpcases', 'RPLOST', 'D', 'N', '', ''),            # the same in layout B
+    ('rpcases', 'RPPAUSE', 'W', 'N', '', ''),           # P before the start, pause while a popup is shown
+    ('rpcases', 'RPDCLR', 'W', 'Y', '', ''),            # death and level clear in one step (death wins)
+    ('rpcases', 'RPUNDER', 'W', 'N', '', ''),           # a ghost on the popup cell
+    ('rpcases', 'RPCLRPU', 'T', 'N', '', 'M:R7'),       # popup removed by a level clear, tall
+    ('gp2cases', 'G2RCLR', 'W', 'N', '', 'M:R8'),       # REALTIME high score, new
+    ('gp2cases', 'G2RXD', 'D', 'Y', '13', 'M:Z2')]      # B, practice start, missing member
+RP_MARK = 'PACMAN-RP-SCREEN-RUNS-FOLLOW'
+
+
+def rp_dd(pfx, dd):
+    if dd.startswith('M:'):
+        return f'DSN={pfx}.RPTEST({dd[2:]}),DISP=OLD'
+    return dd or None
+
+
+def rp_steps(pfx, load):
+    ds = f'{pfx}.RPTEST'
+    out = ('//RPMARK   EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+           f'//SYSUT1   DD *\n{RP_MARK}\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    out += (f'//RPDEL0   EXEC PGM=IEFBR14,COND=(0,NE)\n//D1       DD DSN={ds},DISP=(MOD,DELETE),\n'
+            '//            UNIT=SYSDA,SPACE=(TRK,(1))\n'
+            f'//RPALC    EXEC PGM=IEFBR14,COND=(0,NE)\n//D1       DD DSN={ds},DISP=(NEW,CATLG),\n'
+            '//            UNIT=SYSDA,SPACE=(TRK,(5,1,5)),\n'
+            f'//            DCB=(DSORG=PO,{DATA_DCB})\n')
+    out += ('//RPSEED   EXEC PGM=IEBUPDTE,PARM=NEW,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n'
+            f'//SYSUT2   DD DSN={ds},DISP=OLD\n//SYSIN    DD *\n'
+            + ''.join(f'./ ADD NAME={m}\n{v:07d} PACHS001 001\n' for m, v in RP_SEED.items()) + './ ENDUP\n/*\n')
+    cond = '(0,NE,LINK)'
+    for i, (d, c, h, a, r, g, sc, cv, snd, st, dd) in enumerate(RP_TURN, 1):
+        lines = text_of(ROOT / f'tests/{d}/{c}.txt').splitlines(keepends=True)
+        parm = ('TSD ' + lines[0].rstrip('\n')[:5]).ljust(11) + 'N' + h + a + r + g + sc + cv + 'T' + snd + 'A' + st
+        out += run_step(f'RPT{i}', pfx, load, ''.join(lines[1:]), parm=parm, dd=rp_dd(pfx, dd), cond=cond)
+    for i, (d, c, cv, snd, st, dd) in enumerate(RP_RT, 1):
+        lines = text_of(ROOT / f'tests/{d}/{c}.txt').splitlines(keepends=True)
+        parm = ('TSD ' + lines[0].rstrip('\n')[:5]).ljust(11) + 'NYYPG4' + cv + 'R' + snd + 'A' + st
+        out += run_step(f'RPR{i}', pfx, load, ''.join(lines[1:]), parm=parm, dd=rp_dd(pfx, dd), cond=cond)
+    out += f'//RPDEL9   EXEC PGM=IEFBR14,COND=EVEN\n//D1       DD DSN={ds},DISP=(OLD,DELETE)\n'
+    return out
+
+
 def tso_parm_and_cards(case):
     """Interactive mode takes the config from the PARM ('TSO AI3 2'), not from a first card."""
     lines = (ROOT / f'tests/cases/{case}.txt').read_text(encoding='ascii').splitlines(keepends=True)
@@ -511,8 +575,9 @@ def tso_parm_and_cards(case):
     return 'TSO', ''.join(lines)
 
 
-def build(name, pfx):
+def build(name, pfx, load_override=None):
     job, modules, copies, load, runs = DECKS[name]
+    load = load_override or load
     out = job_card(job, f'PACMAN {name}') + f'//* PREFIX {pfx}\n'
     for i, c in enumerate(copies, 1):
         out += upload(f'CPY{i}', pfx, 'COPY', c, text_of(ROOT / f'src/copy/{c}.cpy'))
@@ -555,6 +620,8 @@ def build(name, pfx):
         out += gp23_steps(pfx, load)
     if name == 'HS':
         out += hs_steps(pfx, load)
+    if name == 'RP':
+        out += rp_steps(pfx, load)
     if name == 'GP1':
         out += gp1_steps(pfx, load)
         out += gp13_steps(pfx, load)
@@ -949,6 +1016,8 @@ if __name__ == '__main__':
     ap.add_argument('--parm', help="RUN: PARM, e.g. 'BAT                 A' for RULES(ARCADE)")
     ap.add_argument('--hiscore', action='store_true', help='RUN: add the high-score DD (<prefix>.DATA(HISCORE))')
     ap.add_argument('--out', help='output file (default build/<DECK>.jcl)')
+    ap.add_argument('--load', help='MVS-RP: link into this LOAD member instead of the deck default (regression decks '
+                                   'rebuilt without replacing the installed PACMAIN)')
     a = ap.parse_args()
     pfx = a.prefix or f'{a.hlq}.PACMAN'
     if a.deck == 'ALLOC':
@@ -992,7 +1061,7 @@ if __name__ == '__main__':
     elif a.deck == 'RUN':
         text = run_deck(pfx, ROOT / a.cards, a.hiscore, a.parm)
     else:
-        text = build(a.deck, pfx)
+        text = build(a.deck, pfx, a.load)
     dest = Path(a.out) if a.out else ROOT / 'build' / f'{a.deck}.jcl'
     dest.write_text(text, encoding='ascii')
     print(dest)
