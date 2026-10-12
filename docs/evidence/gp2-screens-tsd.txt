@@ -1,0 +1,63 @@
+# MVS-GP2 GP2.3 screens - Hercules JOB 246 (deck GP23) + JOB 247 (deck GP2 rerun), 2026-10-12 (D37, section 11)
+Sources: the GP2.2 checkpoint 93a4811 + PACPAL (append-only), PACSCR, PACDISP (ARC-BELL). Core, PACMAIN, PACRT,
+PACREQ, input / platform unchanged. Libraries compressed first: JOB 245. Both decks are the first build of these
+sources; no attempt failed. CLIST installed afterwards: JOB 248 (defaults RULES(CLASSIC) LEVEL(1)).
+```
+$ python3 tests/test_gp2.py build/PACBLGP2-247.txt build/PACBLG23-246.txt
+local checks PASS (core frozen, oracle loaded)
+local checks PASS: 12 searched + constructed edge cases; 56 TURN, 12 REALTIME, 3 TSO ARCADE model runs
+GP2.3 local checks PASS: 33 TURN and 10 REALTIME ARCADE TSD runs, 3697 model streams, largest 1968 bytes
+MVS-GP2 GP2.3 PASS: 73 steps RC 0000; 43 ARCADE TSD runs = 3697 model streams
+MVS-GP2 GP2.2 PASS: 236 steps RC 0000; S1 regression: MVS-S1 PASS: 161 steps RC 0000; RT regression: MVS-RT RT2 PA ...; 71 ARCADE runs = model ( 52640 lines ); 2 columns 21-23 CLASSIC runs = oracle/model
+```
+The S1 regression inside the GP2 check runs test_s1 -> test_rt -> test_gx on the listing (CLASSIC TURN / GS / GX / RT
+TSD streams and the 1.0-MVS oracle byte-identical). Local regressions with PACMAN_LATER_PHASE=GP2 (source pins of
+earlier phases skipped, every structural / model check run): test_gp1 (structural guards + frozen GP1 model, GP1.3
+screen models 939 streams), test_s1, test_rt, test_gx, test_gs, test_g4, test_core_frozen: all PASS.
+Every TSD stream of every run below is byte-identical to the screen models (ref_g4/gs/gx_screen + ref_gp2; bells from
+the counters); every run ends with the model's end lines. G3T1-16 / G3R1-5 = the GP1.3 runs on the GP2 model.
+```
+G3T1  GPAI0   H=Y A=Y R=P GLY=C SC=N CV=D SND=N LV=--            52 streams max  665 B  bells  0  QUIT SCORE 0001310
+G3T2  GPAI0   H=Y A=N R=F GLY=B SC=N CV=D SND=N LV=--            52 streams max  851 B  bells  0  QUIT SCORE 0001310
+G3T3  GPHOME  H=Y A=Y R=P GLY=G SC=N CV=D SND=N LV=--            23 streams max  937 B  bells  0  QUIT SCORE 0000370
+G3T4  GPTWOF  H=N A=Y R=P GLY=G SC=N CV=D SND=N LV=--            50 streams max  709 B  bells  0  QUIT SCORE 0001520
+G3T5  GPTICK  H=Y A=Y R=P GLY=G SC=N CV=D SND=N LV=--            61 streams max  949 B  bells  0  QUIT SCORE 0001310
+G3T6  GPAI0   H=Y A=Y R=P GLY=G SC=4 CV=W SND=N LV=--            53 streams max 1952 B  bells  0  QUIT SCORE 0001310
+G3T7  GPHOME  H=Y A=Y R=P GLY=G SC=4 CV=D SND=Y LV=--            24 streams max 1670 B  bells  2  QUIT SCORE 0000370
+G3T8  GPFN    H=Y A=Y R=P GLY=G SC=3 CV=D SND=N LV=--            35 streams max 1595 B  bells  0  QUIT SCORE 0001260
+G3T9  GPDEYE  H=Y A=Y R=P GLY=G SC=4 CV=T SND=N LV=--            25 streams max 1842 B  bells  0  QUIT SCORE 0000450
+G3T10 GPREVB  H=Y A=Y R=P GLY=G SC=4 CV=X SND=N LV=--            51 streams max 1854 B  bells  0  QUIT SCORE 0000720
+G3T11 GPPOW2  H=Y A=N R=F GLY=G SC=4 CV=W SND=N LV=--             8 streams max 1854 B  bells  0  QUIT SCORE 0000140
+G3T12 GPLASTO H=Y A=Y R=P GLY=G SC=4 CV=W SND=Y LV=--           147 streams max 1876 B  bells  2  QUIT SCORE 0001260
+G3T13 GPTICK  H=Y A=Y R=P GLY=G SC=4 CV=W SND=N LV=--            62 streams max 1952 B  bells  0  QUIT SCORE 0001310
+G3T14 GPAI0   H=Y A=Y R=P GLY=G SC=T CV=W SND=N LV=--            52 streams max  949 B  bells  0  QUIT SCORE 0001310
+G3T15 GPWALKF H=Y A=Y R=P GLY=G SC=4 CV=M SND=N LV=--             8 streams max 1797 B  bells  0  QUIT SCORE 0000290
+G3T16 GPTSO   H=Y A=Y R=P GLY=G SC=4 CV=W SND=N LV=--            25 streams max 1900 B  bells  0  QUIT SCORE 0000370
+G3T17 G2CLR   H=Y A=Y R=P GLY=C SC=N CV=D SND=Y LV=--           191 streams max  624 B  bells  2  QUIT SCORE 0001370
+G3T18 G2CLR   H=Y A=N R=F GLY=B SC=N CV=D SND=N LV=--           191 streams max  822 B  bells  0  QUIT SCORE 0001370
+G3T19 G2CLR   H=Y A=Y R=P GLY=G SC=N CV=D SND=N LV=--           191 streams max  920 B  bells  0  QUIT SCORE 0001370
+G3T20 G2CLR   H=Y A=Y R=P GLY=G SC=4 CV=W SND=Y LV=--           192 streams max 1854 B  bells  2  QUIT SCORE 0001370
+G3T21 G2CLR   H=Y A=Y R=P GLY=G SC=3 CV=D SND=N LV=--           192 streams max 1519 B  bells  0  QUIT SCORE 0001370
+G3T22 G2CLR   H=Y A=Y R=P GLY=G SC=4 CV=T SND=N LV=--           192 streams max 1754 B  bells  0  QUIT SCORE 0001370
+G3T23 G2CLR   H=Y A=Y R=P GLY=G SC=T CV=W SND=N LV=--           191 streams max  920 B  bells  0  QUIT SCORE 0001370
+G3T24 G2CLR   H=Y A=Y R=P GLY=G SC=4 CV=W SND=N LV=99           184 streams max 1851 B  bells  0  WIN  SCORE 0006160
+G3T25 G2BGHX  H=Y A=Y R=P GLY=G SC=4 CV=W SND=N LV=--            36 streams max 1900 B  bells  0  QUIT SCORE 0000580
+G3T26 G2BGHX  H=Y A=Y R=P GLY=C SC=N CV=D SND=N LV=--            35 streams max  647 B  bells  0  QUIT SCORE 0000580
+G3T27 G2BDIE  H=Y A=Y R=P GLY=G SC=4 CV=M SND=Y LV=--            32 streams max 1754 B  bells  2  QUIT SCORE 0000340
+G3T28 G2BUND  H=Y A=Y R=P GLY=B SC=N CV=D SND=N LV=--            33 streams max  839 B  bells  0  QUIT SCORE 0000440
+G3T29 G2XD    H=Y A=Y R=P GLY=G SC=4 CV=W SND=Y LV=13           101 streams max 1851 B  bells  3  QUIT SCORE 0011010
+G3T30 G2XF    H=Y A=Y R=P GLY=G SC=4 CV=X SND=Y LV=13            78 streams max 1851 B  bells  2  QUIT SCORE 0010780
+G3T31 G2ROW   H=Y A=Y R=P GLY=G SC=4 CV=W SND=N LV=99            16 streams max 1851 B  bells  0  QUIT SCORE 0000180
+G3T32 G2ROW   H=Y A=Y R=P GLY=G SC=4 CV=T SND=N LV=10            16 streams max 1756 B  bells  0  QUIT SCORE 0000180
+G3T33 G2CLRD  H=Y A=Y R=P GLY=G SC=4 CV=W SND=Y LV=--           159 streams max 1968 B  bells  3  QUIT SCORE 0001540
+G3R1  RTGPA   REALTIME CV=W SND=Y LV=--                          49 streams max 1952 B  bells  2  QUIT SCORE 0000880
+G3R2  RTGPD   REALTIME CV=W SND=Y LV=--                          32 streams max 1952 B  bells  2  QUIT SCORE 0000430
+G3R3  RTGPP   REALTIME CV=W SND=N LV=--                          50 streams max 1952 B  bells  0  QUIT SCORE 0000880
+G3R4  RTGPA   REALTIME CV=D SND=N LV=--                          49 streams max 1715 B  bells  0  QUIT SCORE 0000880
+G3R5  RTGPD   REALTIME CV=T SND=N LV=--                          32 streams max 1842 B  bells  0  QUIT SCORE 0000430
+G3R6  G2RCLR  REALTIME CV=W SND=Y LV=--                         202 streams max 1854 B  bells  2  QUIT SCORE 0001350
+G3R7  G2RPAU  REALTIME CV=W SND=N LV=--                          88 streams max 1854 B  bells  0  QUIT SCORE 0000900
+G3R8  G2RXD   REALTIME CV=W SND=Y LV=13                         149 streams max 1851 B  bells  4  QUIT SCORE 0010850
+G3R9  G2RB2   REALTIME CV=D SND=N LV=--                          86 streams max 1627 B  bells  0  QUIT SCORE 0000900
+G3R10 G2RCLR  REALTIME CV=T SND=N LV=--                         202 streams max 1754 B  bells  0  QUIT SCORE 0001350
+```

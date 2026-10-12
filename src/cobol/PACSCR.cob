@@ -48,6 +48,12 @@
       * SPRITE 7) DRAWN UNDER PAC-MAN AND THE OTHER GHOSTS; THE ARCADE
       * STATUS LINE (7-DIGIT SCORE, PW, FR), TALL SCORE LINE, WIDE HUD
       * SCORE AND GHOST COLOURS, ARCADE TITLE. CALLED WITH PAC-ARC.
+      * MVS-GP2 (D37, DOCS/GP2-PROGRESSION.MD 11): FRUIT '%' AT ARC-BX/
+      * ARC-BY WHILE ARC-BT > 0 (SCALED: SPRITE 8), GREEN, UNDER THE
+      * EYES, PAC-MAN AND THE GHOSTS; THE STATUS LINE SHOWS FR, LEVEL
+      * AND FRUIT KIND (PW DROPPED: THE BOARD SHOWS THE 'o'); WIDE HUD
+      * LEVEL + FRUIT NAME AND POINTS; TALL: LEVEL IN THE TITLE ROW,
+      * FRUIT ON THE SCORE LINE.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACSCR.
        ENVIRONMENT DIVISION.
@@ -251,15 +257,17 @@
        01  SPR-GH                PIC 9 VALUE 4.
        01  SPR-NO                PIC 9.
        01  SPR-4-T.
-           05  SPR-4-CH          PIC X OCCURS 56 TIMES.
+           05  SPR-4-CH          PIC X OCCURS 64 TIMES.
        01  SPR-4-R REDEFINES SPR-4-T.
            05  SPR-4-A           PIC X(40).
            05  SPR-4-B           PIC X(16).
+           05  SPR-4-C           PIC X(8).
        01  SPR-3-T.
-           05  SPR-3-CH          PIC X OCCURS 42 TIMES.
+           05  SPR-3-CH          PIC X OCCURS 48 TIMES.
        01  SPR-3-R REDEFINES SPR-3-T.
            05  SPR-3-A           PIC X(30).
            05  SPR-3-B           PIC X(12).
+           05  SPR-3-C           PIC X(6).
        01  SPR-FR                PIC 9 VALUE 0.
        01  WS-HPW                PIC 999 VALUE 0.
        01  HUD-NUM7              PIC 9(7).
@@ -278,11 +286,24 @@
            05  AS-LIVES          PIC 9.
            05  FILLER            PIC X(4) VALUE ' ST='.
            05  AS-STATE          PIC X(7).
-           05  FILLER            PIC X(4) VALUE ' PW='.
-           05  AS-PW             PIC 9.
            05  FILLER            PIC X(4) VALUE ' FR='.
            05  AS-FR             PIC 999.
-           05  FILLER            PIC X(4) VALUE SPACES.
+           05  FILLER            PIC X(4) VALUE ' LV='.
+           05  AS-LV             PIC 99.
+           05  FILLER            PIC X VALUE ' '.
+           05  AS-BK             PIC X.
+           05  FILLER            PIC X VALUE SPACE.
+       01  HUD-LVL.
+           05  FILLER            PIC X(8) VALUE 'LEVEL   '.
+           05  HV-LV             PIC 99.
+       01  HUD-LVT.
+           05  FILLER            PIC X(6) VALUE 'LEVEL '.
+           05  HT-LV             PIC 99.
+       01  HUD-FRT.
+           05  HF-NAME           PIC X(10).
+           05  FILLER            PIC X VALUE ' '.
+           05  HF-BV             PIC 9(4).
+       01  WS-FK                 PIC 9.
        01  TALL-LINE-A.
            05  FILLER            PIC X(6) VALUE 'SCORE '.
            05  TA-SCORE          PIC 9(7).
@@ -491,8 +512,10 @@
            MOVE 1 TO SC-INIT.
            MOVE SPR-4 TO SPR-4-A.
            MOVE SPR-4X TO SPR-4-B.
+           MOVE SPR-4Y TO SPR-4-C.
            MOVE SPR-3 TO SPR-3-A.
            MOVE SPR-3X TO SPR-3-B.
+           MOVE SPR-3Y TO SPR-3-C.
            MOVE LAY-STATUS-ROW TO SV-STATUS-ROW.
            MOVE LAY-GHOSTS-ROW TO SV-GHOSTS-ROW.
            MOVE LAY-GHOSTS-COL TO SV-GHOSTS-COL.
@@ -966,6 +989,8 @@
            PERFORM BASE-COLOUR THRU BASE-COLOUR-EXIT
                VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
            IF ARC-ON = 1
+               PERFORM OVERLAY-FRUIT.
+           IF ARC-ON = 1
                PERFORM OVERLAY-EYES THRU OVERLAY-EYES-EXIT
                    VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
            IF WS-I = PLAYER-Y
@@ -1012,6 +1037,8 @@
            IF LINE-CH (WS-COL) = SPACE
                GO TO PROF-CELL-EXIT.
            IF LINE-CH (WS-COL) = 'o' OR LINE-CH (WS-COL) = GLY-EYES
+               GO TO PROF-CELL-EXIT.
+           IF LINE-CH (WS-COL) = GLY-FRUIT
                GO TO PROF-CELL-EXIT.
            IF LINE-CH (WS-COL) = '#'
                PERFORM WALL-CELL
@@ -1225,6 +1252,8 @@
            PERFORM BASE-COLOUR THRU BASE-COLOUR-EXIT
                VARYING WS-COL FROM 1 BY 1 UNTIL WS-COL > 20.
            IF ARC-ON = 1
+               PERFORM OVERLAY-FRUIT.
+           IF ARC-ON = 1
                PERFORM OVERLAY-EYES THRU OVERLAY-EYES-EXIT
                    VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
            IF CY = PLAYER-Y
@@ -1263,6 +1292,9 @@
                PERFORM S-SPRITE
            ELSE IF TL-KIND = 'Y'
                MOVE 7 TO SPR-NO
+               PERFORM S-SPRITE
+           ELSE IF TL-KIND = GLY-FRUIT
+               MOVE 8 TO SPR-NO
                PERFORM S-SPRITE.
            COMPUTE VS-POS = (SC-BROW - 1 + (CY - 1) * 2 + SR - 1) * GW
                + SC-BCOL + (CX - 1) * SC-W + SC - 1.
@@ -1598,6 +1630,8 @@
            PERFORM PUT-TEXT.
            IF FAM = 'T'
                PERFORM SHOW-TALL-LINE.
+           IF FAM = 'T' AND ARC-ON = 1
+               PERFORM ARC-TALL.
            MOVE 0 TO WS-NOP.
        SHOW-TALL-LINE.
            MOVE SCORE TO TL-SCORE.
@@ -1667,6 +1701,8 @@
            PERFORM PUT-TEXT.
            PERFORM HUD-GHOST VARYING WS-G FROM 1 BY 1
                UNTIL WS-G > GHOST-COUNT.
+           IF ARC-ON = 1
+               PERFORM ARC-HUD.
            COMPUTE WS-ROW = W-B0 + 13.
            MOVE W-R TO WS-COL.
            PERFORM PUT-SBA.
@@ -1736,8 +1772,9 @@
            MOVE PELLETS-LEFT TO AS-LEFT.
            MOVE LIVES TO AS-LIVES.
            MOVE GAME-STATE TO AS-STATE.
-           MOVE ARC-POWER TO AS-PW.
            MOVE ARC-FR TO AS-FR.
+           MOVE ARC-LEVEL TO AS-LV.
+           MOVE ARC-BK TO AS-BK.
            MOVE WS-ARC-ST TO WS-TXT.
        ARC-TITLE.
            MOVE 'P A C - M A N   A R C A D E' TO WS-TXT.
@@ -1762,3 +1799,62 @@
            MOVE 0 TO CELL-HI (WS-GX).
        OVERLAY-EYES-EXIT.
            EXIT.
+      * ------------- MVS-GP2 ARCADE SCREENS (D37, ARC-ON = 1) ------
+       OVERLAY-FRUIT.
+      * THE FRUIT FIRST: EYES, PAC-MAN AND THE GHOSTS ARE DRAWN OVER IT
+      * (IT SHOWS AGAIN WHEN THEY LEAVE ITS CELL WHILE ARC-BT > 0).
+           IF ARC-BT > 0 AND WS-I = ARC-BY
+               MOVE GLY-FRUIT TO LINE-CH (ARC-BX)
+               MOVE PAL-FRUIT TO CELL-COL (ARC-BX)
+               MOVE 0 TO CELL-HI (ARC-BX).
+           MOVE 0 TO WS-NOP.
+       FRUIT-TEXT.
+      * HUD-FRT = THE NAME AND THE POINTS OF THE LEVEL'S FRUIT.
+           MOVE SPACES TO HF-NAME.
+           PERFORM FRUIT-FIND VARYING WS-FK FROM 1 BY 1
+               UNTIL WS-FK > 8.
+           MOVE ARC-BV TO HF-BV.
+       FRUIT-FIND.
+           IF FRUIT-K (WS-FK) = ARC-BK
+               MOVE FRUIT-NAME (WS-FK) TO HF-NAME.
+           MOVE 0 TO WS-NOP.
+       ARC-HUD.
+      * WIDE: LEVEL AND THE LEVEL'S FRUIT BELOW THE GHOST LINES.
+           MOVE ARC-LEVEL TO HV-LV.
+           COMPUTE WS-ROW = W-B0 + 7.
+           MOVE W-R TO WS-COL.
+           PERFORM PUT-SBA.
+           MOVE PAL-HUD TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE HUD-LVL TO WS-TXT.
+           MOVE 10 TO WS-TLEN.
+           PERFORM PUT-TEXT.
+           PERFORM FRUIT-TEXT.
+           COMPUTE WS-ROW = W-B0 + 9.
+           MOVE W-R TO WS-COL.
+           PERFORM PUT-SBA.
+           MOVE PAL-FRUIT TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE HUD-FRT TO WS-TXT.
+           MOVE 15 TO WS-TLEN.
+           PERFORM PUT-TEXT.
+       ARC-TALL.
+      * TALL: LEVEL IN THE TITLE ROW, THE FRUIT AFTER THE LIVES.
+           MOVE ARC-LEVEL TO HT-LV.
+           COMPUTE WS-ROW = W-B0 - 4.
+           COMPUTE WS-COL = W-C0 + 60.
+           PERFORM PUT-SBA.
+           MOVE PAL-HUD TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE HUD-LVT TO WS-TXT.
+           MOVE 8 TO WS-TLEN.
+           PERFORM PUT-TEXT.
+           PERFORM FRUIT-TEXT.
+           COMPUTE WS-ROW = W-B0 - 2.
+           COMPUTE WS-COL = W-C0 + 55.
+           PERFORM PUT-SBA.
+           MOVE PAL-FRUIT TO WS-BV.
+           PERFORM PUT-COLOUR.
+           MOVE HUD-FRT TO WS-TXT.
+           MOVE 15 TO WS-TLEN.
+           PERFORM PUT-TEXT.

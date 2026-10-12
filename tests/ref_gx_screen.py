@@ -59,6 +59,14 @@ class Geo:
         return 0, self.a(self.b0 + 24, self.c0 + 13)
 
 
+FRUIT_NAMES = {'C': 'CHERRY', 'S': 'STRAWBERRY', 'O': 'ORANGE', 'A': 'APPLE', 'M': 'MELON', 'G': 'GALAXIAN',
+               'B': 'BELL', 'K': 'KEY'}
+
+
+def fruit_text(g):
+    return '%-10s %04d' % (FRUIT_NAMES[g.bk], g.bv)
+
+
 def blank_image(geo):
     return [BLANK] * geo.n
 
@@ -103,6 +111,9 @@ def image(geo, g, cmd, res, msg, anim, vis, face, banner=None):
                 colour = g4.EYESC
             img[geo.a(b0 + 3 + k, right)] = (GHOST_ICON, colour, 0, 1)
             put(img, geo, b0 + 3 + k, right + 2, '%02d,%02d' % (gx, gy), colour)
+        if hasattr(g, 'level'):          # MVS-GP2: level and the level's fruit (name, points)
+            put(img, geo, b0 + 7, right, 'LEVEL   %02d' % g.level, HUD)
+            put(img, geo, b0 + 9, right, fruit_text(g), g4.FRUITC)
         put(img, geo, b0 + 13, right, 'U D L R ENTER', HELP)
         put(img, geo, b0 + 14, right, 'Q QUIT  PA2', HELP)
         mrow, mcol, crow, ccol = b0 + 21, c0, b0 + 22, c0
@@ -114,6 +125,9 @@ def image(geo, g, cmd, res, msg, anim, vis, face, banner=None):
         put(img, geo, b0 - 2, c0 + 1, line, HUD)
         for k in range(g.lives):
             img[geo.a(b0 - 2, c0 + 45 + 2 * k)] = (LIFE, PLAYER, 0, 1)
+        if geo.fam == 'T' and hasattr(g, 'level'):
+            put(img, geo, b0 - 4, c0 + 60, 'LEVEL %02d' % g.level, HUD)
+            put(img, geo, b0 - 2, c0 + 55, fruit_text(g), g4.FRUITC)
         put(img, geo, b0 + 21, c0 + 1, status(g, cmd, res).ljust(61), HUD)
         if g.n > 1:
             put(img, geo, b0 + 21, c0 + 63, 'G2=%02d,%02d' % tuple(g.gh[1][:2])
@@ -254,7 +268,7 @@ def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='
         return [relocate(geo, f) for f in g4.frames(case, True, anim, redraw, 'G', snap=snap, mk=mk, d=d)]
     g = mk(ai, n)
     st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R'}
-    out = Rec(snap, lambda: (g.lives, g.won))
+    out = Rec(snap, lambda: g.snap() if hasattr(g, 'snap') else (g.lives, g.won))
 
     def img(cmd, res, msg, banner=None):
         return image(geo, g, cmd, res, msg, anim, st['vis'], st['face'], banner)

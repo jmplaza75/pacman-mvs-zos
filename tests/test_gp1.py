@@ -81,8 +81,9 @@ for f in ('src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob'
     assert LATER or git_show(GP12, f) == (R / f).read_text().splitlines(), f
 old, new = git_show(GP12, 'src/copy/PACPAL.cpy'), (R / 'src/copy/PACPAL.cpy').read_text().splitlines()
 assert new[:len(old)] == old, 'PACPAL must grow append-only'
-assert [l.split()[1] for l in new[len(old):] if l[6:7] != '*'] == ['PAL-POWER', 'HI-POWER', 'PAL-FRIGHT', 'PAL-WARN',
-                                                                  'PAL-EYES', 'GLY-EYES', 'SPR-4X', 'SPR-3X']
+added = [l.split()[1] for l in new[len(old):] if l[6:7] != '*']
+assert added[:8] == ['PAL-POWER', 'HI-POWER', 'PAL-FRIGHT', 'PAL-WARN', 'PAL-EYES', 'GLY-EYES', 'SPR-4X', 'SPR-3X'] \
+    and (LATER or len(added) == 8), added
 pal = '\n'.join(new)
 for name, v in (('PAL-POWER', g4.POWER), ('HI-POWER', 0xF1), ('PAL-FRIGHT', g4.FRIGHT), ('PAL-WARN', g4.WARN),
                 ('PAL-EYES', g4.EYESC)):

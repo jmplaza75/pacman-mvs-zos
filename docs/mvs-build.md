@@ -219,3 +219,8 @@ level clear / refill, fruit, extra life; PACARC appended), PACRT/PACMAIN/PACDISP
 `python3 tests/test_gp2.py build/PACBLGP2-<n>.txt`. COMPRESS JOB 242; JOB 243 236 steps RC 0000 (first build, no
 warnings); JOB 244 (G2RPAU cards rebuilt) 236 steps RC 0000, S1/CLASSIC regression PASS, 71 ARCADE runs = model, 2
 columns 21-23 CLASSIC runs = oracle. Evidence: docs/evidence/gp2-build-text.txt. GP2.3 (screens) next.
+GP2.3 screens: PACPAL (append-only), PACSCR, PACDISP; deck GP23 (job PACBLG23, build + 43 ARCADE TSD runs; the GP2
+deck is at 236 of the 255 JES steps): `python3 tools/make_deck.py GP23 && python3 tools/run_deck.py build/GP23.jcl`,
+plus the GP2 deck rerun, then `python3 tests/test_gp2.py build/PACBLGP2-<n>.txt build/PACBLG23-<n>.txt`. COMPRESS
+JOB 245; GP23 JOB 246: 73 steps RC 0000, 3697 streams = models; GP2 JOB 247 PASS. CLIST JOB 248. Evidence:
+docs/evidence/gp2-screens-tsd.txt.

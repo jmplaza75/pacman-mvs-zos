@@ -181,7 +181,7 @@ if __name__ == '__main__':
 # fruits (one eaten, one expiring); the same route as REALTIME cards (one direction per quantum); a short row probe
 # (eat the power pellet at 2,4 on turn 2: the fright length of the row) used with every start level; a pause while
 # a fruit is shown (G2RB2 with an idle quantum after the first spawn replaced by P . L . P: only the input column
-# may differ; L is ignored while paused).
+# may differ; L is ignored while paused); G2BGHX = G2BGH + one turn (the ghost leaves the shown fruit's cell).
 def constructed():
     win0 = (R / 'tests/cases/WIN0.txt').read_text().splitlines()
     route = win0[1:-1]
@@ -199,6 +199,9 @@ def constructed():
             break
     j = next(i for i in range(k + 2, len(rb2)) if rb2[i] == '.')       # an idle quantum while the fruit is shown
     out['G2RPAU'] = rb2[:j] + ['P', '.', 'L', '.', 'P'] + rb2[j + 1:]
+    # G2BGH + one turn: the ghost leaves the fruit cell while the fruit is still shown (it must be drawn again)
+    bgh = [c for c in (R / 'tests/gp2cases/G2BGH.txt').read_text().splitlines() if c != 'Q']
+    out['G2BGHX'] = bgh + ['U', 'Q']
     return out
 
 

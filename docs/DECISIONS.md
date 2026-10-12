@@ -207,3 +207,10 @@
   default 1, a fresh game at that level (no simulated earlier levels). Text: `LEVEL nnn` header, one `L` line per
   frame (level, AI, items, fruit, extra life, events), `%` fruit on the board, end lines TURNS 7 digits, GHOSTS EATEN 4
   digits, FRUITS EATEN, LEVEL. GP1 ARCADE reference output evolves (GP1 invariants rerun on the extended model).
+  GP2.3 screens (JOB 246 + GP2 rerun JOB 247, GP2-PROGRESSION section 11): fruit `%` green (base set, every profile;
+  scaled sprite 8) drawn under eyes, Pac-Man and ghosts and redrawn when they leave; status line variant with FR,
+  level and fruit kind (PW dropped); wide / tall HUD level + fruit name and points; level transition = the refilled
+  maze + CLEARED + new level (no new sequence; RP owns READY / intermission); ARCADE alarm from the counters (death,
+  extra life, level clear, final win), one alarm per screen (events of one write coalesced), CLASSIC S1 rule unchanged.
+  User (2026-10-12): GP2.3 approved; the level-clear alarm is kept (D37 section 8, one ordinary alarm, coalesced); the
+  80x24 status line (LEVEL + fruit kind letter, no PW=, no fruit points) is an intentional compact-layout tradeoff.

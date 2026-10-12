@@ -54,6 +54,9 @@ DECKS = {
     # MVS-GP2 (D37): the same modules and copies as GP1 (PACARC grew, PACREQ +REQ-START), then the GP2 runs
     'GP2': ('PACBLGP2', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
             ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    # MVS-GP2 GP2.3 (screens): build only (the GP2 deck stays the text / CLASSIC regression), then the TSD runs
+    'GP23': ('PACBLG23', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
+             ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACMAIN', []),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -103,7 +106,7 @@ def run_step(step, pfx, load, sysin, parm=None):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO'], 'GP2': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO'], 'GP2': ['PACTSO', 'PACFSIO'], 'GP23': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -343,6 +346,41 @@ def gp2_steps(pfx, load):
     return out
 
 
+# MVS-GP2 GP2.3 (screens, deck GP23): after the build, a marker, then RULES(ARCADE) TSD dry runs with the start level
+# in PARM columns 22-23. TURN: (directory, case, hilite, anim, redraw, glyphs, scale, canvas, sound, start) = the GP1.3
+# runs (GP13_TURN, start absent) and the GP2 cases on every glyph profile unscaled, 4x2 / 3x2 scaled, the W / X / T /
+# M / B families, the size guard (scale T), full redraw, SOUND (level clear, extra life, extra life + death, clear +
+# death). REALTIME: (directory, case, canvas, sound, start), COLOR N, HILITE Y, ANIM Y, REDRAW P, GLYPHS G, SCALE 4.
+GP23_TURN = [('gpcases',) + r + ('',) for r in GP13_TURN] + [('gp2cases',) + r for r in (
+    ('G2CLR', 'Y', 'Y', 'P', 'C', 'N', 'D', 'Y', ''), ('G2CLR', 'Y', 'N', 'F', 'B', 'N', 'D', 'N', ''),
+    ('G2CLR', 'Y', 'Y', 'P', 'G', 'N', 'D', 'N', ''), ('G2CLR', 'Y', 'Y', 'P', 'G', '4', 'W', 'Y', ''),
+    ('G2CLR', 'Y', 'Y', 'P', 'G', '3', 'D', 'N', ''), ('G2CLR', 'Y', 'Y', 'P', 'G', '4', 'T', 'N', ''),
+    ('G2CLR', 'Y', 'Y', 'P', 'G', 'T', 'W', 'N', ''), ('G2CLR', 'Y', 'Y', 'P', 'G', '4', 'W', 'N', '99'),
+    ('G2BGHX', 'Y', 'Y', 'P', 'G', '4', 'W', 'N', ''), ('G2BGHX', 'Y', 'Y', 'P', 'C', 'N', 'D', 'N', ''),
+    ('G2BDIE', 'Y', 'Y', 'P', 'G', '4', 'M', 'Y', ''), ('G2BUND', 'Y', 'Y', 'P', 'B', 'N', 'D', 'N', ''),
+    ('G2XD', 'Y', 'Y', 'P', 'G', '4', 'W', 'Y', '13'), ('G2XF', 'Y', 'Y', 'P', 'G', '4', 'X', 'Y', '13'),
+    ('G2ROW', 'Y', 'Y', 'P', 'G', '4', 'W', 'N', '99'), ('G2ROW', 'Y', 'Y', 'P', 'G', '4', 'T', 'N', '10'),
+    ('G2CLRD', 'Y', 'Y', 'P', 'G', '4', 'W', 'Y', ''))]
+GP23_RT = [('gpcases',) + r + ('',) for r in GP13_RT] + [('gp2cases',) + r for r in (
+    ('G2RCLR', 'W', 'Y', ''), ('G2RPAU', 'W', 'N', ''), ('G2RXD', 'W', 'Y', '13'), ('G2RB2', 'D', 'N', ''),
+    ('G2RCLR', 'T', 'N', ''))]
+GP23_MARK = 'PACMAN-GP2-SCREEN-RUNS-FOLLOW'
+
+
+def gp23_steps(pfx, load):
+    out = ('//GP23MARK EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+           f'//SYSUT1   DD *\n{GP23_MARK}\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    for i, (d, c, h, a, r, g, sc, cv, snd, st) in enumerate(GP23_TURN, 1):
+        lines = text_of(ROOT / f'tests/{d}/{c}.txt').splitlines(keepends=True)
+        parm = ('TSD ' + lines[0].rstrip('\n')[:5]).ljust(11) + 'N' + h + a + r + g + sc + cv + 'T' + snd + 'A' + st
+        out += run_step(f'G3T{i}', pfx, load, ''.join(lines[1:]), parm=parm)
+    for i, (d, c, cv, snd, st) in enumerate(GP23_RT, 1):
+        lines = text_of(ROOT / f'tests/{d}/{c}.txt').splitlines(keepends=True)
+        parm = ('TSD ' + lines[0].rstrip('\n')[:5]).ljust(11) + 'NYYPG4' + cv + 'R' + snd + 'A' + st
+        out += run_step(f'G3R{i}', pfx, load, ''.join(lines[1:]), parm=parm)
+    return out
+
+
 def tso_parm_and_cards(case):
     """Interactive mode takes the config from the PARM ('TSO AI3 2'), not from a first card."""
     lines = (ROOT / f'tests/cases/{case}.txt').read_text(encoding='ascii').splitlines(keepends=True)
@@ -388,6 +426,8 @@ def build(name, pfx):
         out += s1_steps(pfx, load)
     if name == 'GP2':
         out += gp2_steps(pfx, load)
+    if name == 'GP23':
+        out += gp23_steps(pfx, load)
     if name == 'GP1':
         out += gp1_steps(pfx, load)
         out += gp13_steps(pfx, load)

@@ -159,7 +159,7 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None):
         e = stream[min(pos[0], len(stream) - 1)]
         pos[0] += 1
         return e
-    out, frames = [], Rec(snap, lambda: (g.lives, g.won))
+    out, frames = [], Rec(snap, lambda: g.snap() if hasattr(g, 'snap') else (g.lives, g.won))
     first = read() if tsd is None else None
     ai, n = cfg or (1, 1)
     if tsd is None and first[0] == 'CFG':

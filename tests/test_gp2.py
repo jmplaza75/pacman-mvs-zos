@@ -7,7 +7,7 @@ Local:    the authorised core change only (docs/CORE_CHANGES.md, GP2.2); against
           table and equals the design; structural guards (PAC-ARC on every call, own 01, PACSCR a pure composer, the
           core architecture rules, CLIST columns); the model reaches every documented edge case and shows the designed
           rules (GP1 invariants rerun on the extended model).
-Hercules: test_gp2.py GP2-LISTING (deck GP2 = the whole S1 deck, a marker step, then the ARCADE runs)
+Hercules: test_gp2.py GP2-LISTING|- [GP23-LISTING] (deck GP2 = the whole S1 deck, a marker step, then the ARCADE runs)
   - every step RC 0000, no compiler warnings;
   - everything before the marker passes tests/test_s1.py (CLASSIC: S1/RT/GX/... regression and the 1.0-MVS oracle);
   - every ARCADE run (BAT TURN, BAT REALTIME, TSO line mode; start level in PARM columns 22-23) = the model;
@@ -24,6 +24,7 @@ import tempfile
 from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
+ARGS, sys.argv = sys.argv[1:], sys.argv[:1]          # imported tests (test_g0) read sys.argv at import time
 sys.path.insert(0, str(R / 'tests'))
 sys.path.insert(0, str(R / 'tools'))
 LATER = os.environ.get('PACMAN_LATER_PHASE')
@@ -65,7 +66,7 @@ assert 'MVS-GP2 GP2.2 (D37' in (R / 'docs/CORE_CHANGES.md').read_text()
 assert 'D37 (MVS-GP2)' in (R / 'docs/DECISIONS.md').read_text()
 if not LATER:
     for f in ('src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy', 'maps/LEVEL1.txt', 'maps/ARCADE1.txt',
-              'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob', 'src/cobol/PACSCR.cob', 'src/copy/PACPAL.cpy',
+              'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob',
               'src/copy/PACDS.cpy', 'src/cobol/PACINPT.cob', 'src/cobol/PACPLAT.cob', 'src/cobol/PACQRY.cob',
               'src/asm/PACFSIO.asm', 'src/asm/PACTSO.asm'):
         assert git_show(BASE, f) == src(f), f
@@ -88,7 +89,8 @@ if not LATER:
         'src/cobol/PACMAIN.cob': [],
         'src/cobol/PACDISP.cob': ["           DISPLAY 'TURNS ' TICK-COUNT.", "               DISPLAY 'GHOSTS EATEN ' ARC-EATEN",
                                   '               ADD 1 TO M-LINES', '               ADD 16 TO M-CHARS.',
-                                  '           ADD 1 TO M-LINES.', '           ADD 12 TO M-CHARS.'],
+                                  '           ADD 1 TO M-LINES.', '           ADD 12 TO M-CHARS.',
+                                  '           IF SB-SENT = 1 AND LIVES < SB-LIVES'],
     }
     for f, want in REMOVED.items():
         assert sorted(removed(f)) == sorted(want), (f, removed(f))
@@ -317,9 +319,155 @@ for c, st in GP2_TSO:
 print('local checks PASS:', len(S.PRED), 'searched + constructed edge cases;', len(GP2_BAT), 'TURN,', len(GP2_RT),
       'REALTIME,', len(GP2_TSO), 'TSO ARCADE model runs')
 
+# GP2.3 screens: sources against the GP2.2 checkpoint ---------------------------------------------------------------
+GP22 = '93a4811'
+from make_deck import GP23_MARK, GP23_RT, GP23_TURN  # noqa: E402
+import ref_g4_screen as g4  # noqa: E402
+import ref_gs_screen as gs  # noqa: E402
+import ref_gx_screen as gx  # noqa: E402
+from ref_snap import Log  # noqa: E402
+if not LATER:
+    for f in ('src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob', 'src/copy/PACARC.cpy',
+              'src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy', 'src/copy/PACREQ.cpy', 'src/cobol/PACMAIN.cob',
+              'src/cobol/PACRT.cob', 'src/cobol/PACINPT.cob', 'src/cobol/PACPLAT.cob', 'src/cobol/PACQRY.cob',
+              'src/copy/PACDS.cpy', 'src/asm/PACFSIO.asm', 'src/asm/PACTSO.asm', 'src/clist/PACMAN.clist',
+              'maps/LEVEL1.txt', 'maps/ARCADE1.txt'):
+        assert git_show(GP22, f) == src(f), f
+    gone = sorted(d[2:] for d in difflib.ndiff(git_show(GP22, 'src/cobol/PACSCR.cob'), src('src/cobol/PACSCR.cob'))
+                  if d[:2] == '- ')
+    assert gone == sorted([
+        '           05  SPR-4-CH          PIC X OCCURS 56 TIMES.', '           05  SPR-3-CH          PIC X OCCURS 42 TIMES.',
+        "           05  FILLER            PIC X(4) VALUE ' PW='.", '           05  AS-PW             PIC 9.',
+        '           05  FILLER            PIC X(4) VALUE SPACES.', '           MOVE ARC-POWER TO AS-PW.']), gone
+    gone = [d[2:] for d in difflib.ndiff(git_show(GP22, 'src/cobol/PACDISP.cob'), src('src/cobol/PACDISP.cob'))
+            if d[:2] == '- ']
+    assert sorted(gone) == sorted(['           IF SB-SENT = 1 AND LIVES < SB-LIVES',
+                                   "      * NNNN', 'FRUITS EATEN NNN', 'LEVEL NNN'."]), gone
+old_pal, new_pal = code(git_show(GP22, 'src/copy/PACPAL.cpy')), code(src('src/copy/PACPAL.cpy'))
+assert new_pal[:len(old_pal)] == old_pal, 'PACPAL must grow append-only'
+assert [l.split()[1] for l in new_pal[len(old_pal):] if l.split()[1] != 'FILLER'] == [
+    'PAL-FRUIT', 'GLY-FRUIT', 'SPR-4Y', 'SPR-3Y', 'FRUIT-NAMES.', 'FRUIT-TAB', 'FRUIT-ENT', 'FRUIT-K', 'FRUIT-NAME']
+pal = '\n'.join(new_pal)
+assert re.search(r'PAL-FRUIT\s+PIC 999 VALUE ' + str(g4.FRUITC) + r'\.', pal) and "GLY-FRUIT             PIC X VALUE '%'." in pal
+assert "SPR-4Y                PIC X(8) VALUE 'BFFB TT '." in pal and "SPR-3Y                PIC X(6) VALUE 'BFB T '." in pal
+assert [(k, n.strip()) for k, n in re.findall(r"PIC X\(11\) VALUE '(.)(.{10})'", pal)] == list(gx.FRUIT_NAMES.items())
+# the ARCADE bell changes only REQ-BELL and its own SB- copies; the CLASSIC LIVES rule is kept for ARC-ON = 0 only
+disp = (R / 'src/cobol/PACDISP.cob').read_text()
+ab = disp[disp.index('       ARC-BELL.'):]
+assert set(re.findall(r'TO (\S+?)\.?\s', ab)) == {'REQ-BELL', 'SB-NDIE', 'SB-XL', 'SB-LVL'}, ab
+assert '           IF SB-SENT = 1 AND LIVES < SB-LIVES AND ARC-ON = 0' in disp and 'PERFORM ARC-BELL.' in disp
+
+
+# GP2.3 screen models: bells from the counters, one per screen
+def bells(frames, log, sound):
+    if sound != 'Y':
+        return list(frames), []
+    st = {'last': None, 'won': False}
+
+    def ring(snap):
+        b = st['last'] is None or (snap[2] > st['last'][2] or snap[3] > st['last'][3] or snap[4] > st['last'][4]) \
+            or (snap[1] and not st['won'])
+        st['won'], st['last'] = st['won'] or snap[1], snap
+        return b
+    out, rung = [], []
+    for k, (f, snap) in enumerate(zip(frames, log)):
+        b = ring(snap)
+        out.append(bytes([f[0] | 0x04]) + f[1:] if b else f)
+        if b:
+            rung.append(k)
+    if ring(log.state()):
+        out.append(bytes([0xC6, 0x28, 0x00, 0x00]))
+        rung.append(len(frames))
+    return out, rung
+
+
+def mk_turn(st):
+    return lambda ai, n: L.Level(ai, n, 'T', start_of(st))
+
+
+def mk_rt(st):
+    return lambda ai, n: L.Level(ai, n, 'R', start_of(st))
+
+
+scr_turn, scr_rt = [], []
+for run in GP23_TURN:
+    d, c, h, a, r, gl, sc, cv, snd, st = run
+    log = Log()
+    fs = gx.frames(c, h == 'Y', a == 'Y', r, gl, sc, cv, snap=log, mk=mk_turn(st), d=d)
+    scr_turn.append((run, bells(fs, log, snd), L.simulate(cards(d, c), start=start_of(st))[-7:]))
+for run in GP23_RT:
+    d, c, cv, snd, st = run
+    log = Log()
+    end, fs = ref_rt.tsd(cards(d, c), cv, snap=log, mk_game=mk_rt(st), mk_ctl=L.LevelRT)
+    scr_rt.append((run, bells(fs, log, snd), end[-8:]))
+allf = [f for _, (fs, _), _ in scr_turn + scr_rt for f in fs]
+assert max(len(f) for f in allf) <= 2048
+blob = b''.join(allf)
+assert bytes([0x28, 0x42, g4.FRUITC]) in blob and bytes([gs.LOWER]) in blob
+# every SOUND(YES) GP2 run rings at the start and at least once more (level clear / extra life / death)
+for r, (_, rg), _ in scr_turn + scr_rt:
+    if r[0] == 'gp2cases' and r[-2] == 'Y':
+        assert len(rg) >= 2 and rg[0] == 0, (r, rg)
+# the fruit cell in the images: '%' green when free, the ghost glyph when a ghost stands on it
+ai, n, rest = L.parse_config(cards('gp2cases', 'G2BGHX'))
+g = L.Level(ai, n, 'T', 1)
+states = []
+for u in rest:
+    if u == 'Q':
+        break
+    g.step(u)
+    img = gs.image(g, u, g.res, None, 4, True, 0, 'R')
+    tile = [img[(2 * 7 + j) * 80 + 4 * 9 + i] for j in range(2) for i in range(4)]
+    ghost_on = [k for k, q in enumerate(g.gh) if tuple(q[:2]) == (10, 8)]
+    if g.bt > 0 and ghost_on and g.mode[ghost_on[0]] != 'E':
+        assert all(c[1] != g4.FRUITC for c in tile), 'a ghost on the fruit cell is drawn, not the fruit'
+        states.append('ghost')
+    elif g.bt > 0 and (g.x, g.y) != (10, 8):
+        assert tile == [c for row in gs.arc_tile(4, '%') for c in row]
+        states.append('fruit')
+assert 'ghost' in states and states[states.index('ghost'):].count('fruit'), states
+print('GP2.3 local checks PASS:', len(GP23_TURN), 'TURN and', len(GP23_RT), 'REALTIME ARCADE TSD runs,', len(allf),
+      'model streams, largest', max(len(f) for f in allf), 'bytes')
+
+
+def tsd_check(path):
+    lines = Path(path).read_text().splitlines()
+    nsteps = len(re.findall(r'^//\w+\s+EXEC PGM=', build('GP23', 'HERC01.PACMAN'), re.M))
+    rcs = re.findall(r'PACBLG23\s+(\w+)\s+(?:IEBGENER|IKFCBL00|IFOX00|IEWL|PACMAIN)\s+RC= (\d{4})', '\n'.join(lines))
+    assert len(rcs) == nsteps and all(r == '0000' for _, r in rcs), (nsteps, len(rcs), [x for x in rcs if x[1] != '0000'])
+    assert not [l for l in lines if re.search(r'IKF\d{4}I-[WCE]', l)], 'compiler warnings'
+    t2, ns = lines[lines.index(GP23_MARK) + 1:], 0
+    j = 0
+    for run, (wstreams, _), wend in scr_turn + scr_rt:
+        streams = []
+        while t2[j].rstrip() not in ('WIN', 'LOST', 'QUIT', 'EOF'):
+            m = re.match(r'TSD FRAME LEN(\d{4})$', t2[j])
+            j += 1
+            if not m:
+                continue
+            hexs = ''
+            while t2[j].startswith('TSD ') and not t2[j].startswith('TSD FRAME'):
+                hexs += t2[j][4:].strip()
+                j += 1
+            data = bytes.fromhex(hexs)
+            assert len(data) == int(m.group(1))
+            streams.append(data)
+        ends = [l.rstrip() for l in t2[j:j + len(wend)]]
+        j += len(wend)
+        assert len(streams) == len(wstreams), (run, len(streams), len(wstreams))
+        for x, (p, q) in enumerate(zip(streams, wstreams)):
+            assert p == q, (run, x, next((y for y in range(min(len(p), len(q))) if p[y] != q[y]), min(len(p), len(q))))
+        assert ends == wend, (run, ends, wend)
+        ns += len(streams)
+    print('MVS-GP2 GP2.3 PASS:', len(rcs), 'steps RC 0000;', len(GP23_TURN) + len(GP23_RT), 'ARCADE TSD runs =', ns,
+          'model streams')
+
+
 # 3. the Hercules listing ------------------------------------------------------------------------------------------
-if len(sys.argv) == 2:
-    lines = Path(sys.argv[1]).read_text().splitlines()
+if len(ARGS) > 1:
+    tsd_check(ARGS[1])
+if ARGS and ARGS[0] != '-':
+    lines = Path(ARGS[0]).read_text().splitlines()
     nsteps = len(re.findall(r'^//\w+\s+EXEC PGM=', build('GP2', 'HERC01.PACMAN'), re.M))
     rcs = re.findall(r'PACBLGP2\s+(\w+)\s+(?:IEBGENER|IKFCBL00|IFOX00|IEWL|PACMAIN|PACQRYT|PACTSOT)\s+RC= (\d{4})',
                      '\n'.join(lines))

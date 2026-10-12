@@ -248,3 +248,36 @@ checks are never disabled by `PACMAN_LATER_PHASE` (it skips only source-equality
   oracle / RT model. Evidence: docs/evidence/gp2-build-text.txt.
 - tests/test_gp1.py now honours PACMAN_LATER_PHASE (skips only its source pins and the GP1 constants-row parse) and
   runs inside test_gp2.py as a regression of its structural guards and the frozen GP1 model.
+
+## 11. GP2.3 screens (2026-10-12): display rules as built (display only; the game state is never changed)
+- Fruit: `%` at (10,8) while ARC-BT > 0, green (X'F4', the one colour no board actor uses), no blink, base set in
+  every glyph profile (CLASSIC, BASE, GRAPHIC: never GE); scaled 4x2 / 3x2: sprite 8 (`BFFB`/` TT ` and `BFB`/` T `:
+  lower halves, full reversed cells, upper halves). Drawing order: map -> fruit -> eyes -> Pac-Man -> ghosts, so an
+  actor or EYES on the cell hides the fruit, never the reverse, and the fruit is drawn again when the actor leaves while
+  the timer runs (G2BGHX). Its appearance / disappearance (timer end, eaten, death, level clear) is an ordinary image
+  change: partial redraw sends only the changed cells; pause and the freeze send nothing new for it (the timer stops).
+- Level: the ARCADE status line (80x24 G1-G4, GS layout B, tall) becomes
+  `T001 R CLEARED S=0001234 L=099 V=3 ST=RUNNING FR=017 LV=01 C` (61 columns: PW dropped - the board shows the `o` -
+  then the level and the fruit kind letter). Wide HUD (right column): `LEVEL   nn` and the level's fruit name + points
+  (`STRAWBERRY 0300`, fruit colour). Tall: `LEVEL nn` in the title row (column +60), the fruit name + points on the
+  score line after the lives (column +55).
+- Level transition: no new sequence (READY / intermission belong to RP). The screen of the clearing step shows the
+  refilled maze, Pac-Man and the ghosts at their start cells, `CLEARED` (status / wide LAST) and the new level; in
+  REALTIME it stays on screen through the existing 10-quantum freeze (normal scheduling, no catch-up).
+- Score / lives: 7-digit ARC-SCORE as in GP1.3; lives icons follow LIVES (at most 4, the extra life adds an icon).
+- Alarm (S1, one ordinary WCC alarm, no S2 pattern): in ARCADE the screen rings at the start, after a death
+  (ARC-NDIE rose), the extra life (ARC-XL 0 -> 1), a level clear (ARC-LEVEL rose, the approved D37 section 8 event) and
+  the final WIN. Events on one screen are coalesced into the one alarm of that write (e.g. extra life + death in one
+  step, G2XD / G2RXD; clear + death, G2CLRD): no extra host write is made for a second bell. CLASSIC keeps the S1
+  LIVES rule byte for byte (it is now guarded by ARC-ON = 0; ARCADE never infers a death from LIVES).
+- Changed: PACPAL (append-only: PAL-FRUIT, GLY-FRUIT, SPR-4Y, SPR-3Y, fruit names), PACSCR (fruit overlay, sprite 8,
+  status variant, wide / tall HUD), PACDISP (ARC-BELL). Core, PACMAIN, PACRT, PACREQ, input and platform unchanged
+  since GP2.2 (93a4811). Models: ref_g2/g4/gs/gx_screen GP2 branches (they key on the game's `level` / `bt`), the
+  ref_snap hook takes a game's own snapshot (GP2: lives, won, deaths, extra life, level).
+- Deck `GP23` (build + 43 TSD runs: the 21 GP1.3 runs on the GP2 model and 22 GP2 runs; the GP2 deck is at 236 of the
+  255 JES steps, so the screens are a separate job on the same sources and the GP2 deck is rerun for the text /
+  CLASSIC / S1 regression): `python3 tests/test_gp2.py build/PACBLGP2-<n>.txt build/PACBLG23-<n>.txt`.
+- User decisions (2026-10-12, GP2.3 approved as implemented): (1) the level-clear alarm stays (D37 section 8): one
+  ordinary S1 alarm, coalesced with any other alarm event of the same write; (2) the 80x24 compact HUD is an
+  intentional compact-layout tradeoff: the 61-column status line keeps LEVEL and the fruit kind letter, PW= is dropped
+  and the fruit points do not fit; the larger layouts (wide, tall) keep the full fruit name and points.

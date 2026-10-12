@@ -92,7 +92,18 @@ def arc_tile(w, kind):
     blinking) and eyes (the ghost's eye cells only, white, not reversed)."""
     tile = [[(0x40, 0, 0, 0)] * w for _ in range(2)]
     mid = (1, 2) if w == 4 else (1,)
-    if kind == 'o':
+    if kind == '%':                 # MVS-GP2 fruit: 4 wide .##. / #### / .##. / ...., 3 wide .#. / ### / .#. / ...
+        top = 'BFFB' if w == 4 else 'BFB'
+        bot = ' TT ' if w == 4 else ' T '
+        for r, codes in enumerate((top, bot)):
+            for i, ch in enumerate(codes):
+                if ch == 'F':
+                    tile[r][i] = (0x40, g4.FRUITC, REVERSE, 0)
+                elif ch == 'B':
+                    tile[r][i] = (LOWER, g4.FRUITC, 0, 1)
+                elif ch == 'T':
+                    tile[r][i] = (UPPER, g4.FRUITC, 0, 1)
+    elif kind == 'o':
         for i in mid:
             tile[0][i] = (LOWER, g4.POWER, BLINK, 1)
             tile[1][i] = (UPPER, g4.POWER, BLINK, 1)
@@ -132,6 +143,8 @@ def image(g, cmd, res, msg, w, anim, vis, face, banner=None):
             if tile is None and arc and any(g.mode[k] == 'E' and (gx - 1, gy - 1) == (x, y)
                                             for k, (gx, gy, _) in enumerate(g.gh)):
                 tile = arc_tile(w, 'E')
+            if tile is None and g4.fruit_at(g) == (x + 1, y + 1):
+                tile = arc_tile(w, '%')
             if tile is None and c == 'o':
                 tile = arc_tile(w, 'o')
             if tile is None and c == '#':

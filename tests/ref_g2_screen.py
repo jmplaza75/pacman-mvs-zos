@@ -39,6 +39,9 @@ def sh(v):
 
 
 def status(g, cmd, res):
+    if hasattr(g, 'level'):               # MVS-GP2 (docs/GP2-PROGRESSION.md 11): FR, level and fruit kind, no PW
+        return (f'T{g.t:03d} {cmd} {res} S={g.ascore:07d} L={g.left:03d} V={g.lives} ST={g.state} '
+                f'FR={g.fr:03d} LV={g.level:02d} {g.bk}')
     if getattr(g, 'arc', False):          # MVS-GP1 ARCADE status line (docs/GP1-POWER.md 6): 7-digit score, PW, FR
         return (f'T{g.t:03d} {cmd} {res} S={g.ascore:07d} L={g.left:03d} V={g.lives} ST={g.state} '
                 f'PW={g.power} FR={g.fr:03d}')

@@ -85,5 +85,13 @@ MVS-GP2 IN PROGRESS (started 2026-10-12 on the user's go): levels, progression a
   PACDISP / PACREQ / CLIST source; model tests/ref_gp2.py, cases tests/gp2cases (tests/search_gp2.py); deck GP2 JOB
   244: 236 steps RC 0000, S1/CLASSIC regression PASS, 71 ARCADE runs = model; evidence docs/evidence/gp2-build-text.txt.
   Test: `python3 tests/test_gp2.py build/PACBLGP2-244.txt` (runs test_gp1.py as a regression with
-  PACMAN_LATER_PHASE). NEXT: GP2.3 screens (fruit, level, bells) - wait for the user's go.
+  PACMAN_LATER_PHASE). Committed as checkpoint 93a4811 (no tag).
+- GP2.3 COMPLETE (2026-10-12, build green; live not started): PACPAL (append-only), PACSCR (fruit, sprite 8, status
+  variant, wide / tall HUD level + fruit), PACDISP (ARC-BELL: alarm from death / extra life / level clear counters,
+  coalesced); deck GP23 JOB 246: 73 steps RC 0000, 43 ARCADE TSD runs = 3697 model streams (largest 1968 bytes); GP2
+  deck rerun JOB 247 PASS (text, S1/CLASSIC, 1.0-MVS oracle); CLIST installed JOB 248 (RULES(CLASSIC) LEVEL(1)
+  defaults). Evidence docs/evidence/gp2-screens-tsd.txt; design section 11. Test:
+  `python3 tests/test_gp2.py build/PACBLGP2-247.txt build/PACBLG23-246.txt`.
+  GP2.3 approved by the user (level-clear alarm kept, compact 80x24 HUD accepted); committed as a checkpoint.
+  GP2.4 live c3270 acceptance IN PREPARATION (checklist docs/evidence/gp2-live-checklist.md). No mvs-gp2 tag yet.
 Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).

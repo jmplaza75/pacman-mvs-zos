@@ -180,6 +180,14 @@ class Level(A.Arcade):
         self.t = self.turns % 1000
         self.score = self.ascore % 10000
 
+    def snap(self):
+        """Screen snapshot for the bell rule (MVS-GP2 / S1): lives, won, deaths, extra life, level."""
+        return (self.lives, self.won, self.ndie, self.xl, self.level)
+
+    def step(self, u):
+        self.turn('T', u)
+        return self.res
+
     # ---- text
     def lvl_line(self):
         return (f'L LV={self.level:03d} AI={self.ai} IT={self.items:03d} BN={self.bn} BT={self.bt:03d} BK={self.bk} '

@@ -29,7 +29,11 @@
       * MVS-GP2 (D37, ARC-ON = 1): 'LEVEL NNN' AFTER 'RULES ARCADE', A
       * LEVEL LINE AFTER THE ARCADE LINE, FRUIT % ON THE BOARD (UNDER
       * PAC-MAN AND THE GHOSTS), END 'TURNS NNNNNNN', 'GHOSTS EATEN
-      * NNNN', 'FRUITS EATEN NNN', 'LEVEL NNN'.
+      * NNNN', 'FRUITS EATEN NNN', 'LEVEL NNN'. ALARM (S1) IN ARCADE
+      * FROM THE GAME COUNTERS, NEVER FROM A DROP IN LIVES: A DEATH
+      * (ARC-NDIE ROSE), THE EXTRA LIFE (ARC-XL 0 -> 1), A LEVEL CLEAR
+      * (ARC-LEVEL ROSE), PLUS START AND THE FINAL WIN AS IN S1. ONE
+      * ALARM PER SCREEN: EVENTS OF ONE SCREEN ARE COALESCED.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -54,6 +58,9 @@
        01  SB-SENT               PIC 9 VALUE 0.
        01  SB-LIVES              PIC 9 VALUE 0.
        01  SB-WON                PIC 9 VALUE 0.
+       01  SB-NDIE               PIC 99 VALUE 0.
+       01  SB-XL                 PIC 9 VALUE 0.
+       01  SB-LVL                PIC 999 VALUE 0.
        01  HEXW.
            05  HX-Z              PIC X VALUE LOW-VALUE.
            05  HX-B              PIC X.
@@ -292,11 +299,13 @@
            MOVE 'N' TO REQ-BELL.
            IF SB-SENT = 0
                MOVE 'Y' TO REQ-BELL.
-           IF SB-SENT = 1 AND LIVES < SB-LIVES
+           IF SB-SENT = 1 AND LIVES < SB-LIVES AND ARC-ON = 0
                MOVE 'Y' TO REQ-BELL.
            IF F-WON = 1 AND SB-WON = 0
                MOVE 'Y' TO REQ-BELL
                MOVE 1 TO SB-WON.
+           IF ARC-ON = 1
+               PERFORM ARC-BELL.
            MOVE 1 TO SB-SENT.
            MOVE LIVES TO SB-LIVES.
        SCR-TICK.
@@ -548,3 +557,14 @@
            DISPLAY WS-LVL-LINE.
            ADD 1 TO M-LINES.
            ADD 63 TO M-CHARS.
+       ARC-BELL.
+      * MVS-GP2 (D37): ONLY REQ-BELL AND THE SB- COPIES CHANGE HERE.
+           IF SB-SENT = 1 AND ARC-NDIE > SB-NDIE
+               MOVE 'Y' TO REQ-BELL.
+           IF SB-SENT = 1 AND ARC-XL > SB-XL
+               MOVE 'Y' TO REQ-BELL.
+           IF SB-SENT = 1 AND ARC-LEVEL > SB-LVL
+               MOVE 'Y' TO REQ-BELL.
+           MOVE ARC-NDIE TO SB-NDIE.
+           MOVE ARC-XL TO SB-XL.
+           MOVE ARC-LEVEL TO SB-LVL.

@@ -103,3 +103,24 @@
       * e = EYE NOT IN REVERSE, ALSO USED FOR A FRIGHTENED GHOST'S E).
            05  SPR-4X                PIC X(16) VALUE ' BB  TT  ee     '.
            05  SPR-3X                PIC X(12) VALUE ' B  T  e    '.
+      * MVS-GP2 RULES(ARCADE) (D37, DOCS/GP2-PROGRESSION.MD 11): FRUIT
+      * '%' GREEN (THE ONE COLOUR NO BOARD ACTOR USES), NO BLINK, BASE
+      * SET IN EVERY PROFILE; SCALED: SPRITE 8 (CODES AS SPR-4). FRUIT
+      * NAMES BY KIND (WIDE / TALL HUD): KIND LETTER + 10 CHARACTERS.
+           05  PAL-FRUIT             PIC 999 VALUE 244.
+           05  GLY-FRUIT             PIC X VALUE '%'.
+           05  SPR-4Y                PIC X(8) VALUE 'BFFB TT '.
+           05  SPR-3Y                PIC X(6) VALUE 'BFB T '.
+           05  FRUIT-NAMES.
+               10  FILLER        PIC X(11) VALUE 'CCHERRY    '.
+               10  FILLER        PIC X(11) VALUE 'SSTRAWBERRY'.
+               10  FILLER        PIC X(11) VALUE 'OORANGE    '.
+               10  FILLER        PIC X(11) VALUE 'AAPPLE     '.
+               10  FILLER        PIC X(11) VALUE 'MMELON     '.
+               10  FILLER        PIC X(11) VALUE 'GGALAXIAN  '.
+               10  FILLER        PIC X(11) VALUE 'BBELL      '.
+               10  FILLER        PIC X(11) VALUE 'KKEY       '.
+           05  FRUIT-TAB REDEFINES FRUIT-NAMES.
+               10  FRUIT-ENT         OCCURS 8 TIMES.
+                   15  FRUIT-K       PIC X.
+                   15  FRUIT-NAME    PIC X(10).

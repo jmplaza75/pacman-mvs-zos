@@ -19,6 +19,13 @@ GE = 0x08
 # MVS-GP1 ARCADE (docs/GP1-POWER.md 6): power pellet 'o' white (blink with highlighting), frightened ghosts blue / white
 # in the warning window without reverse, eyes '"' white without reverse, drawn under Pac-Man and the other ghosts
 POWER, FRIGHT, WARN, EYESC = 0xF7, 0xF1, 0xF7, 0xF7
+# MVS-GP2 (docs/GP2-PROGRESSION.md 11): the fruit '%' green, no blink, base set (never GE), under eyes / actors
+FRUITC = 0xF4
+
+
+def fruit_at(g):
+    """(x, y) of a shown fruit, else None."""
+    return (10, 8) if getattr(g, 'bt', 0) > 0 else None
 
 
 def fright_colour(g):
@@ -57,6 +64,9 @@ def cells(g, cmd, res, msg, hi, prof, anim, vis, face):
             else:
                 row.append([0x40, 0, 0, 'open'])
         arc = getattr(g, 'arc', False)
+        fr = fruit_at(g)
+        if fr and fr[1] == j + 1:
+            row[fr[0] - 1] = [e('%')[0], FRUITC, 0, 'base']
         for k, (gx, gy, _) in enumerate(g.gh):
             if arc and g.mode[k] == 'E' and gy == j + 1:
                 row[gx - 1] = [e('"')[0], EYESC, 0, 'base']
@@ -150,7 +160,7 @@ def frames(case, hi=False, anim=False, redraw='F', prof='C', faces=None, snap=No
     ai, n, cards = parse_config((R / f'tests/{d}/{case}.txt').read_text().splitlines())
     g = mk(ai, n)
     st = {'vis': 1, 'prev': None, 'last': None, 'face': 'R'}
-    out = Rec(snap, lambda: (g.lives, g.won))
+    out = Rec(snap, lambda: g.snap() if hasattr(g, 'snap') else (g.lives, g.won))
 
     def image(cmd, res, msg):
         return cells(g, cmd, res, msg, hi, prof, anim, st['vis'], st['face'])
