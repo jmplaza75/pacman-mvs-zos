@@ -78,24 +78,16 @@ MVS-GP1 IN PROGRESS (started 2026-10-11 on the user's go): power pellets under R
   replayed by tools/c3270_gp1_trace.py = model byte for byte; pause / PA2 during a fright covered by RTGPP / GQR3.
 MVS-GP1 COMPLETE (tag mvs-gp1, 2026-10-12). Regression to keep: tests/test_gp1.py (+ test_s1, test_rt, test_gx,
 test_gs, test_g4, test_core_frozen).
-MVS-GP2 IN PROGRESS (started 2026-10-12 on the user's go): levels, progression and bonus fruit under RULES(ARCADE).
-- GP2.1 design docs/GP2-PROGRESSION.md: D37 APPROVED and frozen (2026-10-12, user decisions in its section 9;
-  fruit cell (10,8) verified before coding).
-- GP2.2 COMPLETE (2026-10-12): core change authorised (docs/CORE_CHANGES.md), PACARC appended, PACRT / PACMAIN /
-  PACDISP / PACREQ / CLIST source; model tests/ref_gp2.py, cases tests/gp2cases (tests/search_gp2.py); deck GP2 JOB
-  244: 236 steps RC 0000, S1/CLASSIC regression PASS, 71 ARCADE runs = model; evidence docs/evidence/gp2-build-text.txt.
-  Test: `python3 tests/test_gp2.py build/PACBLGP2-244.txt` (runs test_gp1.py as a regression with
-  PACMAN_LATER_PHASE). Committed as checkpoint 93a4811 (no tag).
-- GP2.3 COMPLETE (2026-10-12, build green; live not started): PACPAL (append-only), PACSCR (fruit, sprite 8, status
-  variant, wide / tall HUD level + fruit), PACDISP (ARC-BELL: alarm from death / extra life / level clear counters,
-  coalesced); deck GP23 JOB 246: 73 steps RC 0000, 43 ARCADE TSD runs = 3697 model streams (largest 1968 bytes); GP2
-  deck rerun JOB 247 PASS (text, S1/CLASSIC, 1.0-MVS oracle); CLIST installed JOB 248 (RULES(CLASSIC) LEVEL(1)
-  defaults). Evidence docs/evidence/gp2-screens-tsd.txt; design section 11. Test:
-  `python3 tests/test_gp2.py build/PACBLGP2-247.txt build/PACBLG23-246.txt`.
-  GP2.3 approved by the user (level-clear alarm kept, compact 80x24 HUD accepted); committed as a checkpoint.
-  GP2.4 live c3270 acceptance: checklist APPROVED (docs/evidence/gp2-live-checklist.md); scenarios A/B/C
-  (tests/gp2live, tools/gp2_live.py driver, tools/c3270_gp2_trace.py replay analyser) committed before the live run;
-  Scenarios frozen. Live run 1: B PASS (78/78 writes = model, alarms [0, 76]); A and C every write = model but
-  the route desynchronised by a documented driver defect (Wait(Output) does not block without an AID), fixed (idle
-  card = PF1, ignored by the game); A and C to be rerun (docs/evidence/gp2-live.md). No mvs-gp2 tag.
-Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).
+MVS-GP2 COMPLETE (tag mvs-gp2, 2026-10-12): levels, progression and bonus fruit under RULES(ARCADE) (D37,
+docs/GP2-PROGRESSION.md).
+- GP2.2 core + text + model (JOB 244, checkpoint 93a4811): levels 1-99 (level 99 cleared = WON, intentional MVS
+  limit), refill on a full clear, 13-row level table (AI bump, REALTIME step, fright), fruit at (10,8) after 30 / 70
+  items, one extra life at 10000, death flag, wide counters, LEVEL(n) = PARM columns 22-23.
+- GP2.3 screens (JOB 246 deck GP23 + JOB 247 deck GP2, checkpoint 3c7cf59): fruit in every profile / scale, level and
+  fruit in the HUD (compact 80x24 status line: LEVEL + kind letter), alarm on death / extra life / level clear (one
+  per write). CLIST JOB 248: defaults RULES(CLASSIC) LEVEL(1).
+- GP2.4 live PASS (docs/evidence/gp2-live.md): scripted scenarios (tools/gp2_live.py, tests/gp2live) replayed by
+  tools/c3270_gp2_trace.py = model byte for byte; B run 1, A and C run 2 after a driver sync fix (idle card = PF1).
+- Regression to keep: tests/test_gp2.py (`build/PACBLGP2-247.txt build/PACBLG23-246.txt`; runs test_gp1 with
+  PACMAN_LATER_PHASE, test_s1 -> test_rt -> test_gx on the listing) + test_gs, test_g4, test_core_frozen.
+NEXT (roadmap): MVS-HS persistent high score - NOT STARTED, wait for the user's go. RP, S2 not started.

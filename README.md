@@ -145,13 +145,14 @@ mode; probe E15 `docs/evidence/s1-e15-alarm.md`, D35): complete (tag `mvs-s1`; H
 The bell is sent by MVS in the 3270 data stream; only hearing it depends on the client (the terminal's bell setting).
 MVS-GP1 (power pellets under `RULES(ARCADE)`, D36; CLASSIC byte-identical): complete (tag `mvs-gp1`; Hercules JOB 240
 (`tests/test_gp1.py`), live in c3270 with both games byte-identical to the model, `docs/evidence/gp1-live.md`).
-MVS-GP2 (levels, progression, fruit and one extra life under `RULES(ARCADE)`, D37, `docs/GP2-PROGRESSION.md`): in
-progress. GP2.2 (core, text output, model) complete: Hercules JOB 244 (`tests/test_gp2.py`, 71 ARCADE runs = model,
+MVS-GP2 (levels, progression, fruit and one extra life under `RULES(ARCADE)`, D37, `docs/GP2-PROGRESSION.md`):
+complete (tag `mvs-gp2`; live in c3270 with three scripted scenarios byte-identical to the model,
+`docs/evidence/gp2-live.md`). GP2.2 (core, text output, model): Hercules JOB 244 (`tests/test_gp2.py`, 71 ARCADE runs = model,
 CLASSIC byte-identical). Levels 1-99 (clearing level 99 = WON, an intentional MVS limit), the maze refills on a full
 clear, a per-level table (AI, ghost cadence, fright), a fruit at (10,8) after 30 / 70 items (cherry 100 ... key 5000),
 one extra life at 10000, start level `LEVEL(n)` (PARM columns 22-23; default 1). GP2.3 (colour screens: fruit `%`
 in every glyph profile and scale, level and fruit in the HUD / status line, alarm on the extra life and a level clear)
-complete: Hercules JOB 246 (43 TSD runs = model) and JOB 247 (regression). Try it (live acceptance pending):
+complete: Hercules JOB 246 (43 TSD runs = model) and JOB 247 (regression). Try it:
 `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE) LEVEL(9)'`.
 Roadmap to the final MVS release 2.0-MVS-MAX: `docs/ROADMAP-POST-RT.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration

@@ -281,3 +281,11 @@ checks are never disabled by `PACMAN_LATER_PHASE` (it skips only source-equality
   ordinary S1 alarm, coalesced with any other alarm event of the same write; (2) the 80x24 compact HUD is an
   intentional compact-layout tradeoff: the 61-column status line keeps LEVEL and the fruit kind letter, PW= is dropped
   and the fruit points do not fit; the larger layouts (wide, tall) keep the full fruit name and points.
+
+## 12. GP2.4 result (2026-10-12): live PASS - MVS-GP2 COMPLETE (tag mvs-gp2)
+Three scripted scenarios (tests/gp2live LIVEA/B/C from G2RCLR, G2XF, G2RXD; tools/gp2_live.py; checklist
+docs/evidence/gp2-live-checklist.md) played in c3270 at 120x27 and replayed from the trace by tools/c3270_gp2_trace.py:
+A 203/203, B 78/78, C 149/149 host writes = the model; alarms A [0, 184], B [0, 76], C [0, 44, 113, 145]; freezes
+1.49-1.51 s; pause and PA2 with the fruit shown change nothing; QUIT -> READY. Run 1 found a test-driver defect only
+(c3270 Wait(Output) does not block without an AID; fixed by sending the ignored PF1 on idle quanta); B was accepted
+from run 1, A and C from run 2. Evidence: docs/evidence/gp2-live.md.
