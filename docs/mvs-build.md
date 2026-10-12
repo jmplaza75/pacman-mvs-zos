@@ -224,3 +224,11 @@ deck is at 236 of the 255 JES steps): `python3 tools/make_deck.py GP23 && python
 plus the GP2 deck rerun, then `python3 tests/test_gp2.py build/PACBLGP2-<n>.txt build/PACBLG23-<n>.txt`. COMPRESS
 JOB 245; GP23 JOB 246: 73 steps RC 0000, 3697 streams = models; GP2 JOB 247 PASS. CLIST JOB 248. Evidence:
 docs/evidence/gp2-screens-tsd.txt.
+
+## MVS-HS: persistent high score (in progress, 2026-10-12)
+Probe E16 first (isolated: src/probe/PACHSA.asm + src/probe/PACHSP.cob, scratch PDS HERC01.PACMAN.HSPROBE FB 80/80
+created and deleted by the deck): `python3 tools/make_deck.py HSP && python3 tools/run_deck.py build/HSP.jcl` (job
+PACHSP01). JOB 249: 013-18 (BPAM OPEN searches the DD member) -> OPEN TYPE=J without the member; JOB 250 JCL error
+(PARM past column 71); JOB 251 JFCB written back -> JFCNWRIT; JOB 252 S800 on the BPAM update write -> QSAM UPDAT;
+JOB 253 PASS; JOB 254 PASS incl. the CLIST check (&SYSDSN works; a failed ALLOC ends the CLIST, TSO2 RC 12 expected).
+Evidence: docs/evidence/hs-e16-probe.md. Design docs/HS-HISCORE.md (D38 approved 2026-10-12, D4 amended).

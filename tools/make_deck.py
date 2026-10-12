@@ -700,9 +700,73 @@ def rtl_deck(pfx):
     return out + '//\n'
 
 
+def hsp_run(step, pfx, parm, dd=None):
+    t = (f"//{step:<8} EXEC PGM=PACHSP,COND=(0,NE,LINK),\n//         PARM='{parm}'\n"
+         f'//STEPLIB  DD DSN={pfx}.LOAD,DISP=SHR\n')
+    if dd:
+        t += f'//PACHS    DD {dd}\n'
+    return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
+
+
+def hsp_deck(pfx):
+    """MVS-HS probe E16 (persistent record in a PDS member, isolated from PACMAN): PACHSP + PACHSA -> LOAD(PACHSP).
+    Scratch PDS {pfx}.HSPROBE (FB 80/80), deleted at the start and at the end. Batch: no DD, missing member (read 12,
+    write creates 2), update in place (same TTR), DISP=SHR, no member name (8), garbage and empty members. TSO: the
+    same through IKJEFT01 (ALLOC SHR of an existing / missing member, ALLOC of a missing dataset fails = no DD)."""
+    ds = f'{pfx}.HSPROBE'
+    rd, wr = 'R0000000', lambda v: 'W' + v
+    out = job_card('PACHSP01', 'PACMAN PROBE E16') + f'//* PREFIX {pfx}\n'
+    out += (f'//DEL0     EXEC PGM=IEFBR14\n//D1       DD DSN={ds},DISP=(MOD,DELETE),\n'
+            '//            UNIT=SYSDA,SPACE=(TRK,(1))\n'
+            f'//ALC      EXEC PGM=IEFBR14\n//D1       DD DSN={ds},DISP=(NEW,CATLG),\n'
+            '//            UNIT=SYSDA,SPACE=(TRK,(1,1,2)),\n'
+            '//            DCB=(DSORG=PO,RECFM=FB,LRECL=80,BLKSIZE=80)\n')
+    out += upload('SRC1', pfx, 'COBOL', 'PACHSP', text_of(ROOT / 'src/probe/PACHSP.cob'))
+    out += compile_step('COB1', pfx, 'PACHSP', 'OBJ1')
+    out += asm_step('ASM1', 'OBJA1', text_of(ROOT / 'src/probe/PACHSA.asm'))
+    out += link_step(pfx, ['OBJ1', 'OBJA1'], 'PACHSP', 'PACHSP')
+    out += hsp_run('B1NODD', pfx, ','.join([rd, wr('0000111')]))
+    out += hsp_run('B2NEW', pfx, ','.join([rd, wr('0001230'), rd]), f'DSN={ds}(HISCORE),DISP=OLD')
+    out += hsp_run('B3UPD', pfx, ','.join([rd, wr('0004560'), rd]), f'DSN={ds}(HISCORE),DISP=OLD')
+    out += hsp_run('B4SHR', pfx, ','.join([rd, wr('0004561'), rd]), f'DSN={ds}(HISCORE),DISP=SHR')
+    out += hsp_run('B5NOMEM', pfx, ','.join([rd, wr('0000222')]), f'DSN={ds},DISP=SHR')
+    out += (f'//GENBAD   EXEC PGM=IEBGENER\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT2   DD DSN={ds}(BAD),DISP=OLD\n//SYSUT1   DD *\nXYZZY NOT A SCORE\n/*\n'
+            f'//GENEMP   EXEC PGM=IEBGENER\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT2   DD DSN={ds}(EMPTY),DISP=OLD\n'
+            '//SYSUT1   DD DUMMY,DCB=(RECFM=FB,LRECL=80,BLKSIZE=80)\n')
+    out += hsp_run('B6BAD', pfx, rd, f'DSN={ds}(BAD),DISP=SHR')
+    out += hsp_run('B7EMPTY', pfx, ','.join([rd, wr('0000333'), rd]), f'DSN={ds}(EMPTY),DISP=OLD')
+    call = f"CALL '{pfx}.LOAD(PACHSP)'"
+    out += ('//TSO1     EXEC PGM=IKJEFT01,COND=(0,NE,LINK)\n//SYSTSPRT DD SYSOUT=A\n//SYSOUT   DD SYSOUT=A\n'
+            '//SYSTSIN  DD *\n'
+            f"  ALLOC FI(PACHS) DA('{ds}(HISCORE)') SHR\n"
+            f"  {call} '{','.join([rd, wr('0007890'), rd])}'\n"
+            '  FREE FI(PACHS)\n'
+            f"  ALLOC FI(PACHS) DA('{ds}(TSONEW)') SHR\n"
+            f"  {call} '{','.join([rd, wr('0000042'), rd])}'\n"
+            '  FREE FI(PACHS)\n'
+            f"  ALLOC FI(PACHS) DA('{pfx}.NOSUCH(HISCORE)') SHR\n"
+            f"  {call} '{rd}'\n"
+            '/*\n')
+    clist = (f"PROC 0\nWRITE E16C SYSDSN1=&SYSDSN('{ds}')\nWRITE E16C SYSDSN2=&SYSDSN('{pfx}.NOSUCH')\n"
+             f"ALLOC F(PACHS) DA('{pfx}.NOSUCH(HISCORE)') SHR REUSE\nWRITE E16C LASTCC1=&LASTCC\n"
+             f"ALLOC F(PACHS) DA('{ds}(HISCORE)') SHR REUSE\nWRITE E16C LASTCC2=&LASTCC\n"
+             f"{call} '{rd}'\nFREE F(PACHS)\nWRITE E16C END\n")
+    out += (f'//GENCL    EXEC PGM=IEBGENER,COND=(0,NE,LINK)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT2   DD DSN={ds}(HSCLIST),DISP=OLD\n//SYSUT1   DD DATA,DLM=ZZ\n' + clist + 'ZZ\n'
+            '//TSO2     EXEC PGM=IKJEFT01,COND=(0,NE,LINK)\n//SYSTSPRT DD SYSOUT=A\n//SYSOUT   DD SYSOUT=A\n'
+            f"//SYSTSIN  DD *\n  EXEC '{ds}(HSCLIST)'\n/*\n")
+    for i, m in enumerate(('HISCORE', 'TSONEW', 'BAD'), 1):
+        out += (f'//LIST{i}    EXEC PGM=IEBGENER,COND=EVEN\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+                f'//SYSUT1   DD DSN={ds}({m}),DISP=SHR\n//SYSUT2   DD SYSOUT=A\n')
+    out += f'//DEL9     EXEC PGM=IEFBR14,COND=EVEN\n//D1       DD DSN={ds},DISP=(OLD,DELETE)\n'
+    return out + '//\n'
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'COMPRESS'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'HSP', 'COMPRESS'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -717,6 +781,8 @@ if __name__ == '__main__':
         text = compress_deck(pfx)
     elif a.deck == 'S1P':
         text = s1p_deck(pfx)
+    elif a.deck == 'HSP':
+        text = hsp_deck(pfx)
     elif a.deck == 'RTP':
         text = rtp_deck(pfx)
     elif a.deck == 'RTL':

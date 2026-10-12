@@ -214,3 +214,17 @@
   extra life, level clear, final win), one alarm per screen (events of one write coalesced), CLASSIC S1 rule unchanged.
   User (2026-10-12): GP2.3 approved; the level-clear alarm is kept (D37 section 8, one ordinary alarm, coalesced); the
   80x24 status line (LEVEL + fruit kind letter, no PW=, no fruit points) is an intentional compact-layout tradeoff.
+- D38 (MVS-HS) Persistent ARCADE high score, design docs/HS-HISCORE.md (approved by the user 2026-10-12 with the D4
+  amendment), probe E16 (docs/evidence/hs-e16-probe.md, JOB 254). One global ARCADE high score in
+  `<prefix>.DATA(HISCORE)` (PDS FB 80/80, outside the build libraries; ALLOC deck + one-time DATA deck), record = 7-digit
+  score, tag `PACHS001`, level reached by the run that set it. Only PACPLAT touches it, through the new assembler
+  service PACHSIO (BLDL lookup with the PDS opened without the member, OPEN TYPE=J + JFCNWRIT; update in place by QSAM
+  UPDAT; REPL = QSAM OUTPUT of one record; fresh-RDJFCB safety check before every QSAM OPEN; ESTAE retry turns any abend
+  of its I/O into RC 16). GAME / MAP / AI / PACARC unchanged. CLASSIC: nothing. Eligible = ARCADE started at level 1,
+  any end (LOST, WIN, QUIT, EOF); `LEVEL(n>1)` shows, never saves. Written only when strictly beaten (equal = no
+  write, never decreases). Missing / empty / malformed = 0, healed by the next eligible save. In-memory high score =
+  max(persistent, current). End lines `HIGH SCORE nnnnnnn LEVEL nnn` + `NEW HIGH SCORE` / `HIGH SCORE NOT SAVED`
+  (write attempted and failed) / `START LEVEL nn: HIGH SCORE NOT RECORDED`, or `HIGH SCORE UNAVAILABLE` (DD present
+  but unusable); no DD = not configured, silent (every earlier reference unchanged). CLIST: no keyword; ARCADE only;
+  `&SYSDSN` pre-check, DATA missing = `ALLOC ... DUMMY` (unavailable). Never abends, never changes the game result, no
+  new alarm, no screen change (HUD = RP).

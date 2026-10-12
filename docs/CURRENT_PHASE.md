@@ -90,4 +90,13 @@ docs/GP2-PROGRESSION.md).
   tools/c3270_gp2_trace.py = model byte for byte; B run 1, A and C run 2 after a driver sync fix (idle card = PF1).
 - Regression to keep: tests/test_gp2.py (`build/PACBLGP2-247.txt build/PACBLG23-246.txt`; runs test_gp1 with
   PACMAN_LATER_PHASE, test_s1 -> test_rt -> test_gx on the listing) + test_gs, test_g4, test_core_frozen.
-NEXT (roadmap): MVS-HS persistent high score - NOT STARTED, wait for the user's go. RP, S2 not started.
+MVS-HS IN PROGRESS (started 2026-10-12 on the user's go): persistent ARCADE high score in HERC01.PACMAN.DATA(HISCORE).
+- HS.0 probe E16 PASS (JOB 254, docs/evidence/hs-e16-probe.md): isolated src/probe/PACHSA.asm + PACHSP.cob, deck `HSP`.
+  No abend for no DD / missing dataset / DD without member / missing, empty or garbage member; rewrite in place (same
+  TTR, no space used); first write creates the member; batch = TSO (IKJEFT01). Fixed on the way: BPAM OPEN 013-18 on a
+  missing member (OPEN TYPE=J without the member, JFCNWRIT), S800 on the BPAM update write (QSAM UPDAT instead). A
+  failed ALLOC ends a CLIST: the CLIST must guard it with &SYSDSN (works on MVS 3.8).
+- HS.1 design docs/HS-HISCORE.md: D38 APPROVED and frozen (2026-10-12; D1-D3, D5, D6 as proposed, D4 amended: empty /
+  malformed data self-heals on the next eligible save, NOT SAVED only for a failed attempted write, tested by a full
+  PDS directory). HS.2 (implementation) next.
+RP, S2 not started.
