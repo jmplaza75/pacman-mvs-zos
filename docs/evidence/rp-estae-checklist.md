@@ -27,3 +27,5 @@ One fresh session, trace `tools/c3270_rt.sh ~/rp-estae-live2.txt`, log on, then 
 | R4 | `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE)'`, Q | as R2 |
 If a `***` appears anywhere: note where, press ENTER, go on (the trace shows the rest). E1 is not repeated: live 1
 already showed it clean (TIME and the next commands normal).
+
+Result: live 1 + live 2 -> RP.0 PASS (docs/evidence/rp-estae-live2.md); startup `***` = D40 (open).
