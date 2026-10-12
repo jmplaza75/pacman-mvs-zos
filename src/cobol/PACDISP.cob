@@ -34,6 +34,10 @@
       * (ARC-NDIE ROSE), THE EXTRA LIFE (ARC-XL 0 -> 1), A LEVEL CLEAR
       * (ARC-LEVEL ROSE), PLUS START AND THE FINAL WIN AS IN S1. ONE
       * ALARM PER SCREEN: EVENTS OF ONE SCREEN ARE COALESCED.
+      * MVS-HS (D38, ARC-ON = 1, REQ-HSST NOT N): AFTER 'LEVEL NNN' THE
+      * END LINE 'HIGH SCORE NNNNNNN LEVEL NNN' = MAX(PERSISTENT, THIS
+      * GAME), THEN 'NEW HIGH SCORE' / 'HIGH SCORE NOT SAVED' / 'START
+      * LEVEL NN: HIGH SCORE NOT RECORDED'; OR 'HIGH SCORE UNAVAILABLE'.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -200,6 +204,16 @@
        01  WS-QUANTA.
            05  FILLER            PIC X(7) VALUE 'QUANTA '.
            05  QU-N              PIC 9(7).
+       01  HS-LINE.
+           05  FILLER            PIC X(11) VALUE 'HIGH SCORE '.
+           05  HL-S              PIC 9(7).
+           05  FILLER            PIC X(7) VALUE ' LEVEL '.
+           05  HL-L              PIC 999.
+       01  HS-PLINE.
+           05  FILLER            PIC X(12) VALUE 'START LEVEL '.
+           05  HP-L              PIC 99.
+           05  FILLER            PIC X(25)
+                   VALUE ': HIGH SCORE NOT RECORDED'.
        LINKAGE SECTION.
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
@@ -438,11 +452,42 @@
                DISPLAY 'LEVEL ' ARC-LEVEL
                ADD 3 TO M-LINES
                ADD 42 TO M-CHARS.
+           IF ARC-ON = 1 AND REQ-HSST NOT = 'N'
+               PERFORM SHOW-HS THRU SHOW-HS-EXIT.
            ADD 4 TO M-LINES.
            ADD 26 TO M-CHARS.
            IF REQ-METRIC = 'M'
                PERFORM SHOW-METRICS.
        SHOW-END-EXIT.
+           EXIT.
+       SHOW-HS.
+           IF REQ-HSST = 'E'
+               DISPLAY 'HIGH SCORE UNAVAILABLE'
+               ADD 1 TO M-LINES
+               ADD 22 TO M-CHARS
+               GO TO SHOW-HS-EXIT.
+           MOVE REQ-HISCORE TO HL-S.
+           MOVE REQ-HSLVL TO HL-L.
+           IF REQ-HSSCORE > REQ-HISCORE
+               MOVE REQ-HSSCORE TO HL-S
+               MOVE REQ-HSGLVL TO HL-L.
+           DISPLAY HS-LINE.
+           ADD 1 TO M-LINES.
+           ADD 28 TO M-CHARS.
+           IF REQ-HSNEW = 'Y'
+               DISPLAY 'NEW HIGH SCORE'
+               ADD 1 TO M-LINES
+               ADD 14 TO M-CHARS.
+           IF REQ-HSNEW = 'F'
+               DISPLAY 'HIGH SCORE NOT SAVED'
+               ADD 1 TO M-LINES
+               ADD 20 TO M-CHARS.
+           IF REQ-HSNEW = 'P'
+               MOVE REQ-START TO HP-L
+               DISPLAY HS-PLINE
+               ADD 1 TO M-LINES
+               ADD 39 TO M-CHARS.
+       SHOW-HS-EXIT.
            EXIT.
        SHOW-METRICS.
            MOVE M-FRAMES TO MT-FRAMES.

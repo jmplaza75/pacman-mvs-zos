@@ -232,3 +232,9 @@ PACHSP01). JOB 249: 013-18 (BPAM OPEN searches the DD member) -> OPEN TYPE=J wit
 (PARM past column 71); JOB 251 JFCB written back -> JFCNWRIT; JOB 252 S800 on the BPAM update write -> QSAM UPDAT;
 JOB 253 PASS; JOB 254 PASS incl. the CLIST check (&SYSDSN works; a failed ALLOC ends the CLIST, TSO2 RC 12 expected).
 Evidence: docs/evidence/hs-e16-probe.md. Design docs/HS-HISCORE.md (D38 approved 2026-10-12, D4 amended).
+E16b (JOB 258): REPL heal, DUMMY, ESTAE guard (full directory B14 -> RC 16). Implementation (D38): src/asm/PACHSIO.asm,
+PACREQ/PACPLAT/PACMAIN/PACDISP, CLIST, decks `DATA` (one-time), `HS` (job PACBLDHS), `RUN --hiscore`. Build + tests:
+`python3 tools/make_deck.py HS && python3 tools/run_deck.py build/HS.jcl`, then rerun the GP2 and GP23 decks and
+`python3 tests/test_hs.py build/PACBLDHS-<n>.txt build/PACBLG23-<n>.txt build/PACBLGP2-<n>.txt`. JOB 259 JCL error (PARM
+past column 71 with COND=(0,NE,LINK)); JOB 260 PASS (71 steps, HSFILL RC 12 expected); COMPRESS 261, GP2 262, GP23 263
+PASS. DATA JOB 264, CLIST JOB 265. Evidence: docs/evidence/hs-build-tsd.txt. HS.3 live next.

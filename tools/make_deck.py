@@ -57,6 +57,10 @@ DECKS = {
     # MVS-GP2 GP2.3 (screens): build only (the GP2 deck stays the text / CLASSIC regression), then the TSD runs
     'GP23': ('PACBLG23', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACMAIN', []),
+    # MVS-HS (D38): the GP2 modules and copies (PACREQ +HS fields) + PACHSIO; build, then only the HS runs (the GP2 /
+    # GP23 decks, rerun with the same sources, are the regression)
+    'HS': ('PACBLDHS', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACMAIN', []),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -98,9 +102,12 @@ def link_step(pfx, objs, load, entry, step='LINK'):
     return t
 
 
-def run_step(step, pfx, load, sysin, parm=None):
-    t = (f'//{step:<8} EXEC PGM={load},COND=(0,NE)' + (f",PARM='{parm}'" if parm else '') + '\n'
+def run_step(step, pfx, load, sysin, parm=None, dd=None, cond='(0,NE)'):
+    sep = ',' if cond == '(0,NE)' else ',\n//         '     # MVS-HS: a longer COND moves the PARM to its own card
+    t = (f'//{step:<8} EXEC PGM={load},COND={cond}' + (f"{sep}PARM='{parm}'" if parm else '') + '\n'
          f'//STEPLIB  DD DSN={pfx}.LOAD,DISP=SHR\n')
+    if dd:                       # MVS-HS: the high-score DD
+        t += f'//PACHS    DD {dd}\n'
     if sysin is not None:
         t += '//SYSIN    DD *\n' + sysin + '/*\n'
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
@@ -381,6 +388,121 @@ def gp23_steps(pfx, load):
     return out
 
 
+# MVS-HS (D38, docs/HS-HISCORE.md section 8): after the build, scratch PDSs <prefix>.HSTEST (FB 80/80) and
+# <prefix>.HSFULL (one directory block, filled by IEBUPDTE), seeded members, then RULES(ARCADE) runs with the high-score
+# DD PACHS. HS_RUNS: (step, kind, directory, case, start, DD) in order (the member state carries from step to step):
+# kind B = BAT TURN, R = BAT REALTIME, C = CLASSIC BAT (column 21 C), T = TSD TURN (GP23 run), Q = TSD REALTIME (GP23
+# run); DD 'M:<member>' = <prefix>.HSTEST(<member>) DISP=OLD, 'F:<member>' = HSFULL, 'NOMEM' = HSTEST without a
+# member, 'DUMMY'. TSO line mode through IKJEFT01 (ALLOC ... SHR) follows (HS_TSO), then the CLIST block check
+# (HS_CLIST), a member list (LISTDS) and IEBGENER prints of the written members (HS_PRINT).
+HS_TSD_TURN = ('gp2cases', 'G2CLR', 'Y', 'Y', 'P', 'G', '4', 'W', 'Y', '')
+HS_TSD_RT = ('gp2cases', 'G2RCLR', 'W', 'Y', '')
+HS_RUNS = [
+    ('HA1', 'B', 'gpcases', 'GPAI0', '', 'M:HS1'),        # missing member: NEW, created (REPL)
+    ('HA2', 'B', 'gpcases', 'GPREVB', '', 'M:HS1'),       # lower: unchanged
+    ('HA3', 'B', 'gpcases', 'GPAI0', '', 'M:HS1'),        # equal: unchanged
+    ('HA4', 'B', 'gp2cases', 'G2CLRL', '', 'M:HS1'),      # LOST, higher: NEW in place (WRIT)
+    ('HA5', 'B', 'gp2cases', 'G2X20K', '', 'M:HS1'),      # QUIT, level 2: NEW
+    ('HA6', 'B', 'gp2cases', 'G2XG', '13', 'M:HS1'),      # LEVEL(13) start beats it: not recorded
+    ('HA7', 'B', 'gp2cases', 'G2CLR', '99', 'M:HS1'),     # LEVEL(99) start, WIN: not recorded
+    ('HA8', 'C', 'cases', 'LOST0', '', 'M:HS1'),          # CLASSIC with the DD: oracle, nothing
+    ('HB1', 'B', 'cases', 'EDGE2', '', 'M:HS2'),          # EOF end: NEW
+    ('HC1', 'B', 'cases', 'C3N2', '', 'M:HS8'),           # score 0, missing member: nothing created
+    ('HD1', 'B', 'gpcases', 'GPAI0', '', 'M:HS9'),        # 9999999 on disk: not new
+    ('HE1', 'B', 'gpcases', 'GPREVB', '', 'M:BAD'),       # malformed (2 records): healed
+    ('HE2', 'B', 'gpcases', 'GPREVB', '', 'M:EMPTY'),     # empty: healed
+    ('HF1', 'B', 'gpcases', 'GPAI0', '', 'NOMEM'),        # DD without a member: unavailable
+    ('HF2', 'B', 'gpcases', 'GPAI0', '', 'DUMMY'),        # DD DUMMY (the CLIST fallback): unavailable
+    ('HG1', 'R', 'gp2cases', 'G2RCLR', '', 'M:HS13'),     # REALTIME batch: NEW
+    ('HG2', 'T', 'gp2cases', 'G2CLR', '', 'M:HS14'),      # TSD TURN dry run: streams = GP23, NEW
+    ('HG3', 'Q', 'gp2cases', 'G2RCLR', '', 'M:HS15'),     # TSD REALTIME dry run: streams = GP23, NEW
+    ('HH1', 'B', 'gpcases', 'GPAI0', '', 'F:HISCORE'),    # full directory: STOW fails, NOT SAVED, RC 0
+]
+HS_TSO = [('GPTSO', '', 'HS16'), ('GPTSO', '', 'HS16')]    # TSO line mode: NEW, then equal
+HS_PRINT = ['HS1', 'HS2', 'HS9', 'BAD', 'EMPTY', 'HS13', 'HS14', 'HS15', 'HS16']
+HS_MARK = 'PACMAN-HS-RUNS-FOLLOW'
+
+
+def hs_clist_block(prefix):
+    """The high-score block of src/clist/PACMAN.clist (from 'IF &W = A THEN DO' to its END), for the batch check."""
+    lines = clist_text(prefix).splitlines()
+    i = lines.index('IF &W = A THEN DO')
+    return lines[i:lines.index('END', i) + 1]
+
+
+def hs_steps(pfx, load):
+    ds, full, cl = f'{pfx}.HSTEST', f'{pfx}.HSFULL', f'{pfx}.HSCL'
+    out = ('//HSMARK   EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+           f'//SYSUT1   DD *\n{HS_MARK}\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    out += '//HSDEL0   EXEC PGM=IEFBR14,COND=(0,NE)\n'
+    for i, d in enumerate((ds, full, cl + '.DATA'), 1):
+        out += f'//D{i}       DD DSN={d},DISP=(MOD,DELETE),\n//            UNIT=SYSDA,SPACE=(TRK,(1))\n'
+    out += '//HSALC    EXEC PGM=IEFBR14,COND=(0,NE)\n'
+    for i, (d, sp) in enumerate(((ds, '(TRK,(5,1,5))'), (full, '(TRK,(5,1,1))'), (cl + '.DATA', DATA_SPACE)), 1):
+        out += (f'//D{i}       DD DSN={d},DISP=(NEW,CATLG),\n//            UNIT=SYSDA,SPACE={sp},\n'
+                f'//            DCB=(DSORG=PO,{DATA_DCB})\n')
+    for step, m, text in (('HSSEED1', 'HS9', '9999999 PACHS001 099\n'),
+                          ('HSSEED2', 'BAD', 'XYZZY NOT A SCORE\nSECOND JUNK RECORD\n')):
+        out += (f'//{step:<8} EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+                f'//SYSUT2   DD DSN={ds}({m}),DISP=OLD\n//SYSUT1   DD *\n{text}/*\n')
+    out += ('//HSSEED3  EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT2   DD DSN={ds}(EMPTY),DISP=OLD\n'
+            '//SYSUT1   DD DUMMY,DCB=(RECFM=FB,LRECL=80,BLKSIZE=80)\n')
+    # the full directory: IEBUPDTE stops with IEB813I (RC 12, probe E16b); the runs after it do not depend on its RC
+    out += ('//HSFILL   EXEC PGM=IEBUPDTE,PARM=NEW,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n'
+            f'//SYSUT2   DD DSN={full},DISP=OLD\n//SYSIN    DD *\n'
+            + ''.join(f'./ ADD NAME=M{i:02}\nFILLER {i:02}\n' for i in range(1, 31)) + './ ENDUP\n/*\n')
+    cond = '(0,NE,LINK)'
+    for step, kind, d, c, st, ddk in HS_RUNS:
+        if ddk.startswith('M:'):
+            dd = f'DSN={ds}({ddk[2:]}),DISP=OLD'
+        elif ddk.startswith('F:'):
+            dd = f'DSN={full}({ddk[2:]}),DISP=OLD'
+        elif ddk == 'NOMEM':
+            dd = f'DSN={ds},DISP=SHR'
+        else:
+            dd = 'DUMMY'
+        lines = text_of(ROOT / f'tests/{d}/{c}.txt').splitlines(keepends=True)
+        if kind == 'B':
+            parm, cards = 'BAT'.ljust(20) + 'A' + st, ''.join(lines)
+        elif kind == 'R':
+            parm, cards = 'BAT'.ljust(18) + 'R A' + st, ''.join(lines)
+        elif kind == 'C':
+            parm, cards = 'BAT'.ljust(20) + 'C' + st, ''.join(lines)
+        elif kind == 'T':
+            _, _, h, a, r, g, sc, cv, snd, _ = HS_TSD_TURN
+            parm = ('TSD ' + lines[0].rstrip('\n')[:5]).ljust(11) + 'N' + h + a + r + g + sc + cv + 'T' + snd + 'A' + st
+            cards = ''.join(lines[1:])
+        else:
+            _, _, cv, snd, _ = HS_TSD_RT
+            parm = ('TSD ' + lines[0].rstrip('\n')[:5]).ljust(11) + 'NYYPG4' + cv + 'R' + snd + 'A' + st
+            cards = ''.join(lines[1:])
+        out += run_step(step, pfx, load, cards, parm=parm, dd=dd, cond=cond)
+    # TSO line mode through the TMP: ALLOC SHR as the CLIST does, the program's cards on its own SYSIN DD
+    for i, (c, st, m) in enumerate(HS_TSO, 1):
+        lines = text_of(ROOT / f'tests/gpcases/{c}.txt').splitlines(keepends=True)
+        parm = ('TSO ' + lines[0].rstrip('\n')[:5]).ljust(20) + 'A' + st
+        out += (f'//HTSO{i}    EXEC PGM=IKJEFT01,COND={cond}\n//SYSTSPRT DD SYSOUT=A\n//SYSOUT   DD SYSOUT=A\n'
+                '//SYSIN    DD *\n' + ''.join(lines[1:]) + '/*\n//SYSTSIN  DD *\n'
+                f"  ALLOC F(PACHS) DA('{ds}({m})') SHR REUSE\n"
+                f"  CALL '{pfx}.LOAD({load})' '{parm}'\n  FREE F(PACHS)\n/*\n")
+    # the CLIST block itself (the same lines as PACMAN), with the prefix of a scratch DATA: present, then missing
+    block = '\n'.join(hs_clist_block(cl)) + '\n'
+    for i, m in enumerate(('HSCLY', 'HSCLN'), 1):
+        clist = 'PROC 0\nSET &W = A\n' + block + 'LISTALC STATUS\nIF &W = A THEN FREE F(PACHS)\nWRITE HSCL END\n'
+        out += (f'//HSCLS{i}   EXEC PGM=IEBGENER,COND=EVEN\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+                f'//SYSUT2   DD DSN={ds}({m}),DISP=OLD\n//SYSUT1   DD DATA,DLM=ZZ\n' + clist + 'ZZ\n')
+    out += ('//HSCLT    EXEC PGM=IKJEFT01,COND=EVEN\n//SYSTSPRT DD SYSOUT=A\n//SYSTSIN  DD *\n'
+            f"  EXEC '{ds}(HSCLY)'\n  DELETE '{cl}.DATA'\n  EXEC '{ds}(HSCLN)'\n"
+            f"  LISTDS '{ds}' MEMBERS\n/*\n")
+    for i, m in enumerate(HS_PRINT, 1):
+        out += (f'//HSP{i:<5} EXEC PGM=IEBGENER,COND=EVEN\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+                f'//SYSUT1   DD DSN={ds}({m}),DISP=SHR\n//SYSUT2   DD SYSOUT=A\n')
+    out += (f'//HSDEL9   EXEC PGM=IEFBR14,COND=EVEN\n//D1       DD DSN={ds},DISP=(OLD,DELETE)\n'
+            f'//D2       DD DSN={full},DISP=(OLD,DELETE)\n')
+    return out
+
+
 def tso_parm_and_cards(case):
     """Interactive mode takes the config from the PARM ('TSO AI3 2'), not from a first card."""
     lines = (ROOT / f'tests/cases/{case}.txt').read_text(encoding='ascii').splitlines(keepends=True)
@@ -398,7 +520,10 @@ def build(name, pfx):
         out += upload(f'SRC{i}', pfx, 'COBOL', m, text_of(ROOT / f'src/cobol/{m}.cob'))
         out += compile_step(f'COB{i}', pfx, m, f'OBJ{i}')
     objs = [f'OBJ{i}' for i in range(1, len(modules) + 1)]
-    for i, a in enumerate(ASM.get(name, []), 1):
+    asms = ASM.get(name, ['PACTSO', 'PACFSIO'] if name == 'HS' else [])
+    if 'PACFSIO' in asms:
+        asms = asms + ['PACHSIO']    # MVS-HS: PACPLAT calls PACHSIO (D38)
+    for i, a in enumerate(asms, 1):
         out += asm_step(f'ASM{i}', f'OBJA{i}', text_of(ROOT / f'src/asm/{a}.asm'))
         objs.append(f'OBJA{i}')
     out += link_step(pfx, objs, load, modules[0])
@@ -428,6 +553,8 @@ def build(name, pfx):
         out += gp2_steps(pfx, load)
     if name == 'GP23':
         out += gp23_steps(pfx, load)
+    if name == 'HS':
+        out += hs_steps(pfx, load)
     if name == 'GP1':
         out += gp1_steps(pfx, load)
         out += gp13_steps(pfx, load)
@@ -462,11 +589,25 @@ def alloc_deck(pfx):
     for dd, lib, space, dcb in (('COBOL', 'COBOL', '(TRK,(15,5,10))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
                                 ('COPY', 'COPY', '(TRK,(5,2,5))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
                                 ('LOAD', 'LOAD', '(TRK,(15,5,10))', 'RECFM=U,BLKSIZE=6144'),
-                                ('CLIST', 'CLIST', '(TRK,(2,1,5))', 'RECFM=FB,LRECL=80,BLKSIZE=3120')):
+                                ('CLIST', 'CLIST', '(TRK,(2,1,5))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
+                                ('DATA', 'DATA', DATA_SPACE, DATA_DCB)):
         out += (f'//{dd:<8} DD DSN={pfx}.{lib},DISP=(NEW,CATLG,DELETE),\n'
                 f'//            UNIT=SYSDA,SPACE={space},\n'
                 f'//            DCB=(DSORG=PO,{dcb})\n')
     return out + '//\n'
+
+
+DATA_SPACE, DATA_DCB = '(TRK,(1,1,5))', 'RECFM=FB,LRECL=80,BLKSIZE=80'   # MVS-HS (D38): one record per block
+
+
+def data_deck(pfx):
+    """MVS-HS (D38): one-time creation of the high-score dataset <prefix>.DATA on an existing install (the ALLOC deck
+    creates it on a fresh one). Not a build library: no build or COMPRESS deck touches it. The member HISCORE is not
+    seeded (missing = 0; the first new high score creates it). Fails harmlessly (NOT CATLGD 2) if it exists."""
+    return (job_card('PACDAT10', 'PACMAN DATA') + '//ALLOC    EXEC PGM=IEFBR14\n'
+            f'//DATA     DD DSN={pfx}.DATA,DISP=(NEW,CATLG,DELETE),\n'
+            f'//            UNIT=SYSDA,SPACE={DATA_SPACE},\n'
+            f'//            DCB=(DSORG=PO,{DATA_DCB})\n//\n')
 
 
 def compress_deck(pfx):
@@ -491,10 +632,11 @@ def clist_deck(pfx):
             '//SYSUT1   DD DATA,DLM=ZZ\n' + clist_text(pfx) + 'ZZ\n//\n')
 
 
-def run_deck(pfx, cards):
+def run_deck(pfx, cards, hiscore=False, parm=None):
     return (job_card('PACRUN10', 'PACMAN RUN') + '//* PLAYS THE INSTALLED GAME IN BATCH: ONE COMMAND PER CARD BELOW\n'
             '//* (OPTIONAL FIRST CARD AI<L> <N>, THEN U/D/L/R, Q TO QUIT).\n'
-            + run_step('PLAY', pfx, 'PACMAIN', text_of(cards)) + '//\n')
+            + run_step('PLAY', pfx, 'PACMAIN', text_of(cards), parm=parm,
+                       dd=f'DSN={pfx}.DATA(HISCORE),DISP=SHR' if hiscore else None) + '//\n')
 
 
 # MVS-G0 extra checks on the installed load module: optional metrics, and the display replaced without recompiling
@@ -700,8 +842,8 @@ def rtl_deck(pfx):
     return out + '//\n'
 
 
-def hsp_run(step, pfx, parm, dd=None):
-    t = (f"//{step:<8} EXEC PGM=PACHSP,COND=(0,NE,LINK),\n//         PARM='{parm}'\n"
+def hsp_run(step, pfx, parm, dd=None, cond='(0,NE,LINK)'):
+    t = (f"//{step:<8} EXEC PGM=PACHSP,COND={cond},\n//         PARM='{parm}'\n"
          f'//STEPLIB  DD DSN={pfx}.LOAD,DISP=SHR\n')
     if dd:
         t += f'//PACHS    DD {dd}\n'
@@ -730,15 +872,32 @@ def hsp_deck(pfx):
     out += hsp_run('B3UPD', pfx, ','.join([rd, wr('0004560'), rd]), f'DSN={ds}(HISCORE),DISP=OLD')
     out += hsp_run('B4SHR', pfx, ','.join([rd, wr('0004561'), rd]), f'DSN={ds}(HISCORE),DISP=SHR')
     out += hsp_run('B5NOMEM', pfx, ','.join([rd, wr('0000222')]), f'DSN={ds},DISP=SHR')
+    out += hsp_run('B5DUMMY', pfx, ','.join([rd, wr('0000444')]), 'DUMMY')
     out += (f'//GENBAD   EXEC PGM=IEBGENER\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
-            f'//SYSUT2   DD DSN={ds}(BAD),DISP=OLD\n//SYSUT1   DD *\nXYZZY NOT A SCORE\n/*\n'
+            f'//SYSUT2   DD DSN={ds}(BAD),DISP=OLD\n//SYSUT1   DD *\nXYZZY NOT A SCORE\nSECOND JUNK RECORD\n/*\n'
             f'//GENEMP   EXEC PGM=IEBGENER\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
             f'//SYSUT2   DD DSN={ds}(EMPTY),DISP=OLD\n'
             '//SYSUT1   DD DUMMY,DCB=(RECFM=FB,LRECL=80,BLKSIZE=80)\n')
-    out += hsp_run('B6BAD', pfx, rd, f'DSN={ds}(BAD),DISP=SHR')
+    out += hsp_run('B6BAD', pfx, ','.join([rd, 'P0000555', rd]), f'DSN={ds}(BAD),DISP=SHR')
     out += hsp_run('B7EMPTY', pfx, ','.join([rd, wr('0000333'), rd]), f'DSN={ds}(EMPTY),DISP=OLD')
+    out += hsp_run('B8SENT', pfx, ','.join(['S0000000', rd, wr('0004562'), 'X0000000', 'X0000000']),
+                   f'DSN={ds}(HISCORE),DISP=OLD')
+    # E16B: a PDS with one directory block, filled by IEBUPDTE: the STOW of a new member fails (B14) = a genuine write
+    # failure that the ESTAE guard must turn into RC 16; the sentinel shows whether the guard is still established.
+    full = f'{pfx}.HSFULL'
+    out += (f'//DELF     EXEC PGM=IEFBR14\n//D1       DD DSN={full},DISP=(MOD,DELETE),\n'
+            '//            UNIT=SYSDA,SPACE=(TRK,(1))\n'
+            f'//ALCF     EXEC PGM=IEFBR14\n//D1       DD DSN={full},DISP=(NEW,CATLG),\n'
+            '//            UNIT=SYSDA,SPACE=(TRK,(5,1,1)),\n'
+            '//            DCB=(DSORG=PO,RECFM=FB,LRECL=80,BLKSIZE=80)\n'
+            '//FILL     EXEC PGM=IEBUPDTE,PARM=NEW\n//SYSPRINT DD SYSOUT=A\n'
+            f'//SYSUT2   DD DSN={full},DISP=OLD\n//SYSIN    DD *\n'
+            + ''.join(f'./ ADD NAME=M{i:02}\nFILLER {i:02}\n' for i in range(1, 31)) + './ ENDUP\n/*\n')
+    out += hsp_run('B9FULL', pfx, ','.join(['S0000000', wr('0000500'), 'X0000000', 'X0000000', rd]),
+                   f'DSN={full}(HISCORE),DISP=OLD', cond='EVEN')
+    out += hsp_run('B9FULLP', pfx, ','.join(['P0000501', rd]), f'DSN={full}(HISCORE),DISP=OLD', cond='EVEN')
     call = f"CALL '{pfx}.LOAD(PACHSP)'"
-    out += ('//TSO1     EXEC PGM=IKJEFT01,COND=(0,NE,LINK)\n//SYSTSPRT DD SYSOUT=A\n//SYSOUT   DD SYSOUT=A\n'
+    out += ('//TSO1     EXEC PGM=IKJEFT01,COND=EVEN\n//SYSTSPRT DD SYSOUT=A\n//SYSOUT   DD SYSOUT=A\n'
             '//SYSTSIN  DD *\n'
             f"  ALLOC FI(PACHS) DA('{ds}(HISCORE)') SHR\n"
             f"  {call} '{','.join([rd, wr('0007890'), rd])}'\n"
@@ -753,23 +912,26 @@ def hsp_deck(pfx):
              f"ALLOC F(PACHS) DA('{pfx}.NOSUCH(HISCORE)') SHR REUSE\nWRITE E16C LASTCC1=&LASTCC\n"
              f"ALLOC F(PACHS) DA('{ds}(HISCORE)') SHR REUSE\nWRITE E16C LASTCC2=&LASTCC\n"
              f"{call} '{rd}'\nFREE F(PACHS)\nWRITE E16C END\n")
-    out += (f'//GENCL    EXEC PGM=IEBGENER,COND=(0,NE,LINK)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+    out += (f'//GENCL    EXEC PGM=IEBGENER,COND=EVEN\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
             f'//SYSUT2   DD DSN={ds}(HSCLIST),DISP=OLD\n//SYSUT1   DD DATA,DLM=ZZ\n' + clist + 'ZZ\n'
-            '//TSO2     EXEC PGM=IKJEFT01,COND=(0,NE,LINK)\n//SYSTSPRT DD SYSOUT=A\n//SYSOUT   DD SYSOUT=A\n'
+            '//TSO2     EXEC PGM=IKJEFT01,COND=EVEN\n//SYSTSPRT DD SYSOUT=A\n//SYSOUT   DD SYSOUT=A\n'
             f"//SYSTSIN  DD *\n  EXEC '{ds}(HSCLIST)'\n/*\n")
-    for i, m in enumerate(('HISCORE', 'TSONEW', 'BAD'), 1):
+    for i, m in enumerate(('HISCORE', 'TSONEW', 'BAD', 'EMPTY'), 1):
         out += (f'//LIST{i}    EXEC PGM=IEBGENER,COND=EVEN\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
                 f'//SYSUT1   DD DSN={ds}({m}),DISP=SHR\n//SYSUT2   DD SYSOUT=A\n')
-    out += f'//DEL9     EXEC PGM=IEFBR14,COND=EVEN\n//D1       DD DSN={ds},DISP=(OLD,DELETE)\n'
+    out += (f'//DEL9     EXEC PGM=IEFBR14,COND=EVEN\n//D1       DD DSN={ds},DISP=(OLD,DELETE)\n'
+            f'//D2       DD DSN={pfx}.HSFULL,DISP=(OLD,DELETE)\n')
     return out + '//\n'
 
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'HSP', 'COMPRESS'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'HSP', 'DATA', 'COMPRESS'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
+    ap.add_argument('--parm', help="RUN: PARM, e.g. 'BAT                 A' for RULES(ARCADE)")
+    ap.add_argument('--hiscore', action='store_true', help='RUN: add the high-score DD (<prefix>.DATA(HISCORE))')
     ap.add_argument('--out', help='output file (default build/<DECK>.jcl)')
     a = ap.parse_args()
     pfx = a.prefix or f'{a.hlq}.PACMAN'
@@ -783,6 +945,8 @@ if __name__ == '__main__':
         text = s1p_deck(pfx)
     elif a.deck == 'HSP':
         text = hsp_deck(pfx)
+    elif a.deck == 'DATA':
+        text = data_deck(pfx)
     elif a.deck == 'RTP':
         text = rtp_deck(pfx)
     elif a.deck == 'RTL':
@@ -808,7 +972,7 @@ if __name__ == '__main__':
     elif a.deck == 'G0X':
         text = g0x_deck(pfx)
     elif a.deck == 'RUN':
-        text = run_deck(pfx, ROOT / a.cards)
+        text = run_deck(pfx, ROOT / a.cards, a.hiscore, a.parm)
     else:
         text = build(a.deck, pfx)
     dest = Path(a.out) if a.out else ROOT / 'build' / f'{a.deck}.jcl'

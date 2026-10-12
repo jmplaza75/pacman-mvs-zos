@@ -1,6 +1,7 @@
       * PACHSP : MVS-HS PROBE E16 DRIVER (SEE PACHSA). ISOLATED FROM
       * PACMAN. DD PACHS. PARM = UP TO 8 SLOTS SEPARATED BY ',': R
-      * (READ) OR W + 7-DIGIT VALUE (WRIT), E.G. 'R,W0001230,R'. ONE
+      * (READ) OR W / P + 7-DIGIT VALUE (WRIT / REPL), E.G.
+      * 'R0000000,W0001230'; E16B: S SENTINEL ESTAE, X ESTAE 0. ONE
       * LINE PER SLOT: OP, DD, RC, MEMBER TTR, RECORD.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACHSP.
@@ -65,9 +66,15 @@
            MOVE 'READ' TO H-OP.
            IF PS-OP (WS-I) = 'W'
                MOVE 'WRIT' TO H-OP.
+           IF PS-OP (WS-I) = 'P'
+               MOVE 'REPL' TO H-OP.
+           IF PS-OP (WS-I) = 'S'
+               MOVE 'SENT' TO H-OP.
+           IF PS-OP (WS-I) = 'X'
+               MOVE 'SCHK' TO H-OP.
            MOVE 'PACHS' TO H-DDN.
            MOVE ALL '?' TO H-REC.
-           IF H-OP = 'WRIT'
+           IF H-OP = 'WRIT' OR H-OP = 'REPL'
                MOVE PS-VAL (WS-I) TO H-VAL
                MOVE ' E16 PROBE RECORD' TO H-TXT.
            MOVE 99 TO H-RC.

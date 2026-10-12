@@ -35,6 +35,14 @@
       * IS BASE 3270: NOTHING TO DETECT, A = Y). SEND WITH REQ-BELL Y
       * AND SOUND Y SETS THE ALARM BIT X'04' IN THE WCC (DS-BYTE 1):
       * C3 -> C7, C2 -> C6, ON THE STREAM ALREADY BEING SENT (E15).
+      * MVS-HS (D38): HSRD / HSWR = THE ARCADE HIGH SCORE IN THE PDS
+      * MEMBER ON DD PACHS (PACHSIO; GAME NEVER SEES IT). HSRD SETS
+      * REQ-HSST N (NO DD), R (VALID RECORD), Z (MISSING / EMPTY /
+      * MALFORMED = 0), E (DD UNUSABLE OR I/O ERROR). HSWR WRITES ONLY
+      * WHEN THE GAME SCORE IS STRICTLY GREATER AND THE GAME STARTED AT
+      * LEVEL 1: R = UPDATE IN PLACE (WRIT), Z = ONE NEW RECORD (REPL,
+      * HEALS THE MEMBER). REQ-HSNEW Y SAVED, F WRITE FAILED, P BEATEN
+      * BY A LATER-LEVEL START (NOT RECORDED), N NOTHING.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACPLAT.
        ENVIRONMENT DIVISION.
@@ -104,6 +112,21 @@
        01  TSX-FULL.
            05  FILLER            PIC X(9) VALUE 'TSX FULL '.
            05  TF-CMD            PIC X(5).
+       01  HS-OP                 PIC X(4).
+       01  HS-RC                 PIC S9(4) COMP.
+       01  HS-DDN                PIC X(8) VALUE 'PACHS'.
+       01  HS-REC.
+           05  HR-SCORE          PIC X(7).
+           05  HR-B1             PIC X.
+           05  HR-TAG            PIC X(8).
+           05  HR-B2             PIC X.
+           05  HR-LVL            PIC X(3).
+           05  FILLER            PIC X(60).
+       01  HS-NUM REDEFINES HS-REC.
+           05  HN-SCORE          PIC 9(7).
+           05  FILLER            PIC X(10).
+           05  HN-LVL            PIC 999.
+           05  FILLER            PIC X(60).
        LINKAGE SECTION.
        01  PAC-REQ COPY PACREQ.
        01  PAC-DS COPY PACDS.
@@ -129,7 +152,11 @@
            ELSE IF REQ-OP = 'CLOK'
                CALL 'PACTSO' USING TSO-TIME TSO-RC REQ-TIME
            ELSE IF REQ-OP = 'WDLN'
-               PERFORM DO-WDLN.
+               PERFORM DO-WDLN
+           ELSE IF REQ-OP = 'HSRD'
+               PERFORM DO-HSRD THRU DO-HSRD-EXIT
+           ELSE IF REQ-OP = 'HSWR'
+               PERFORM DO-HSWR THRU DO-HSWR-EXIT.
            GOBACK.
        DO-INIT.
            IF REQ-MODE NOT = 'TSO' AND REQ-MODE NOT = 'TSD'
@@ -419,6 +446,54 @@
            IF WS-K NOT > FS-LEN
                MOVE IN-CH (WS-K) TO REQ-INTEXT-CH (WS-I).
        COPY-TEXT-EXIT.
+           EXIT.
+       DO-HSRD.
+           MOVE 'N' TO REQ-HSST.
+           MOVE 'N' TO REQ-HSNEW.
+           MOVE 0 TO REQ-HISCORE.
+           MOVE 0 TO REQ-HSLVL.
+           MOVE 'READ' TO HS-OP.
+           MOVE SPACES TO HS-REC.
+           CALL 'PACHSIO' USING HS-OP HS-RC HS-DDN HS-REC.
+           IF HS-RC = 4
+               GO TO DO-HSRD-EXIT.
+           MOVE 'E' TO REQ-HSST.
+           IF HS-RC NOT = 0 AND HS-RC NOT = 12
+               GO TO DO-HSRD-EXIT.
+           MOVE 'Z' TO REQ-HSST.
+           IF HS-RC = 12
+               GO TO DO-HSRD-EXIT.
+           IF HR-SCORE NUMERIC AND HR-TAG = 'PACHS001'
+                   AND HR-LVL NUMERIC
+               MOVE 'R' TO REQ-HSST
+               MOVE HN-SCORE TO REQ-HISCORE
+               MOVE HN-LVL TO REQ-HSLVL.
+       DO-HSRD-EXIT.
+           EXIT.
+       DO-HSWR.
+           MOVE 'N' TO REQ-HSNEW.
+           IF REQ-HSST NOT = 'R' AND REQ-HSST NOT = 'Z'
+               GO TO DO-HSWR-EXIT.
+           IF REQ-HSSCORE NOT > REQ-HISCORE
+               GO TO DO-HSWR-EXIT.
+           MOVE 'P' TO REQ-HSNEW.
+           IF REQ-HSELIG NOT = 'Y'
+               GO TO DO-HSWR-EXIT.
+           MOVE SPACES TO HS-REC.
+           MOVE REQ-HSSCORE TO HN-SCORE.
+           MOVE 'PACHS001' TO HR-TAG.
+           MOVE REQ-HSGLVL TO HN-LVL.
+           MOVE 'REPL' TO HS-OP.
+           IF REQ-HSST = 'R'
+               MOVE 'WRIT' TO HS-OP.
+           CALL 'PACHSIO' USING HS-OP HS-RC HS-DDN HS-REC.
+           MOVE 'F' TO REQ-HSNEW.
+           IF HS-RC NOT = 0 AND HS-RC NOT = 2
+               GO TO DO-HSWR-EXIT.
+           MOVE 'Y' TO REQ-HSNEW.
+           MOVE REQ-HSSCORE TO REQ-HISCORE.
+           MOVE REQ-HSGLVL TO REQ-HSLVL.
+       DO-HSWR-EXIT.
            EXIT.
        DO-FSOF.
            IF FS-ACTIVE = 1

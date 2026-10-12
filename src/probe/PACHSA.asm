@@ -10,7 +10,14 @@
 *                    CLOSE). THE MEMBER IS LOOKED UP FIRST BY BPAM
 *                    (BLDL) WITH THE PDS OPENED WITHOUT IT (TYPE=J),
 *                    SO NO OPEN EVER MEETS A MISSING MEMBER (013-18).
-*          RC  S9(4) COMP  0 DONE, 2 MEMBER CREATED, 4 NO SUCH DD,
+*                    'REPL' = THE MEMBER BECOMES THE ONE RECORD REC
+*                    (QSAM OUTPUT: ADDED OR REPLACED AT CLOSE). A WRIT
+*                    THAT FINDS AN EMPTY MEMBER DOES THE SAME (E16B).
+*                    E16B TEST OPS: 'SENT' ESTABLISHES A PERCOLATING
+*                    SENTINEL ESTAE, 'SCHK' ISSUES ESTAE 0 (RC = R15).
+*                    THE I/O RUNS UNDER AN ESTAE: ANY ABEND (X37, B14,
+*                    013 ...) RETRIES INTO THE RETURN PATH WITH RC 16.
+*          RC  S9(4) COMP  0 DONE, 2 MEMBER WRITTEN NEW, 4 NO SUCH DD,
 *                    8 NO MEMBER NAME ON THE DD / OPEN FAILED / NOT
 *                    RECFM F(B) LRECL 80 BLKSIZE 80, 12 MEMBER NOT
 *                    FOUND OR EMPTY (READ), 16 I/O ERROR, 20 BAD OP.
@@ -20,7 +27,8 @@
 PACHSA   CSECT
          STM   14,12,12(13)
          BALR  12,0
-         USING *,12
+BASE     DS    0H
+         USING BASE,12
          ST    13,SAVE+4
          LA    14,SAVE
          ST    14,8(13)
@@ -33,13 +41,27 @@ PACHSA   CSECT
          XC    0(3,6),0(6)
          LA    4,0(4)
          MVC   DDN,0(4)
+         MVI   ESTON,0
+         MVI   RETRIED,0
+         MVC   OP,0(2)
+         CLC   OP,=C'SENT'
+         BE    DOSENT
+         CLC   OP,=C'SCHK'
+         BE    DOSCHK
          LA    9,20
-         CLC   0(4,2),=C'READ'
+         CLC   OP,=C'READ'
          BE    OPOK
-         CLC   0(4,2),=C'WRIT'
+         CLC   OP,=C'REPL'
+         BE    OPOK
+         CLC   OP,=C'WRIT'
          BNE   RETURN
 OPOK     DS    0H
-         MVC   OP,0(2)
+         ST    12,MYBASE
+         ESTAE ESTEXIT,CT
+         LTR   15,15
+         BNZ   NOGUARD
+         MVI   ESTON,1
+NOGUARD  DS    0H
          LA    9,4
          DEVTYPE DDN,DVAREA
          LTR   15,15
@@ -83,6 +105,8 @@ OPOK     DS    0H
          MVC   0(3,6),BLDLTTR
          CLC   OP,=C'WRIT'
          BE    UPDATE
+         CLC   OP,=C'REPL'
+         BE    REPLC
          MVI   BLDLK,0             CONCATENATION 0
          FIND  PODCB,BLDLTTR,C
          READ  DECB1,SF,PODCB,BUF,'S'
@@ -119,16 +143,19 @@ UPDATE   DS    0H
          BE    CLOSEQ
          LA    9,16
          B     CLOSEQ
-QEOM     DS    0H                  EODAD: EMPTY MEMBER, NOT REWRITTEN
-         LA    9,8
+QEOM     DS    0H                  EODAD: EMPTY MEMBER -> REPLACE
+         CLOSE (QUDCB)
+         B     REPLACE
 CLOSEQ   DS    0H
          CLOSE (QUDCB)
          B     RETURN
 NOMEM    DS    0H
          LA    9,12
-         CLC   OP,=C'WRIT'
-         BNE   CLOSEP
+         CLC   OP,=C'READ'
+         BE    CLOSEP
+REPLC    DS    0H
          CLOSE (PODCB)
+REPLACE  DS    0H
          LA    7,PSDCB
          BAL   14,SAMEMEM
          LTR   9,9
@@ -145,6 +172,12 @@ NOMEM    DS    0H
 CLOSEP   DS    0H
          CLOSE (PODCB)
 RETURN   DS    0H
+*        E16B JOB 257: AFTER A RETRY THE EXIT IS STILL ON THE CHAIN
+*        (TWO LATER ESTAE 0 BOTH RC 0): DELETED IN BOTH CASES.
+         CLI   ESTON,1
+         BNE   NOESTAE
+         ESTAE 0
+NOESTAE  DS    0H
          L     3,ARC
          STH   9,0(3)
          L     13,SAVE+4
@@ -178,6 +211,50 @@ DCBRESET DS    0H
          XC    62(2,7),62(7)       DCBBLKSI
          XC    82(2,7),82(7)       DCBLRECL
          BR    14
+DOSENT   DS    0H
+         ESTAE SENEXIT,CT
+         LR    9,15
+         B     RETURN
+DOSCHK   DS    0H
+         ESTAE 0
+         LR    9,15
+         B     RETURN
+*        RETRY ROUTINE (FROM ESTEXIT): REBUILD THE BASE, OWN SAVE AREA,
+*        RC 16. NO DCB IS TOUCHED AGAIN.
+         DROP  12
+RETRY    DS    0H
+         BALR  11,0
+         USING *,11
+         L     12,MYBASE
+         DROP  11
+         USING BASE,12
+         LA    13,SAVE
+         MVI   RETRIED,1
+         LA    9,16
+         B     RETURN
+         DROP  12
+*        ESTAE EXIT: R15 = ENTRY. NO SDWA (R0 = 12): R0 = RETRY,
+*        R15 = 4.
+*        WITH SDWA: SETRP RETRY, NO DUMP.
+ESTEXIT  DS    0H
+         USING ESTEXIT,15
+         C     0,=F'12'
+         BE    NOSDWA
+         USING SDWA,1
+         L     2,=A(RETRY)
+         SETRP RC=4,RETADDR=(2),FRESDWA=YES,DUMP=NO
+         DROP  1
+         BR    14
+NOSDWA   DS    0H
+         L     0,=A(RETRY)
+         LA    15,4
+         BR    14
+         DROP  15
+*        SENTINEL EXIT (E16B TEST ONLY): PERCOLATE.
+SENEXIT  DS    0H
+         SR    15,15
+         BR    14
+         USING BASE,12
 IOX      DS    0H                  SYNAD: FLAG, BACK TO CHECK
          MVI   IOERR,1
          BR    14
@@ -190,6 +267,9 @@ DVAREA   DC    2F'0'
 DDN      DC    CL8' '
 OP       DC    CL4' '
 IOERR    DC    X'00'
+ESTON    DC    X'00'
+RETRIED  DC    X'00'
+MYBASE   DC    A(0)
          DS    0F
 JX       DC    X'87',AL3(JFCB)
 JFCB     DS    CL176
@@ -203,4 +283,5 @@ PODCB    DCB   DSORG=PO,MACRF=R,EXLST=JX,SYNAD=IOX,EODAD=EOM
 PSDCB    DCB   DSORG=PS,MACRF=PM,EXLST=JX
 QUDCB    DCB   DSORG=PS,MACRF=(GL,PM),EXLST=JX,SYNAD=IOX,EODAD=QEOM
          LTORG
+         IHASDWA
          END

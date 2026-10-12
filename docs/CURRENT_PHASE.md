@@ -98,5 +98,12 @@ MVS-HS IN PROGRESS (started 2026-10-12 on the user's go): persistent ARCADE high
   failed ALLOC ends a CLIST: the CLIST must guard it with &SYSDSN (works on MVS 3.8).
 - HS.1 design docs/HS-HISCORE.md: D38 APPROVED and frozen (2026-10-12; D1-D3, D5, D6 as proposed, D4 amended: empty /
   malformed data self-heals on the next eligible save, NOT SAVED only for a failed attempted write, tested by a full
-  PDS directory). HS.2 (implementation) next.
+  PDS directory). HS.0/HS.1 checkpoint ef2e591.
+- HS.2 COMPLETE (2026-10-12): probe E16b PASS (JOB 258: REPL heal, DUMMY, ESTAE guard on a genuine full directory,
+  the exit deleted after a retry too). src/asm/PACHSIO.asm, PACREQ (+7), PACPLAT HSRD/HSWR, PACMAIN, PACDISP end
+  lines, CLIST (&SYSDSN, DUMMY fallback, ARCADE only), decks DATA / HS / `RUN --hiscore`, PACHSIO linked into every
+  current deck. Deck HS JOB 260 PASS (tests/test_hs.py: 21 runs = model, H1-H15, prints, CLIST block); regression
+  COMPRESS 261, GP2 262 (237 steps), GP23 263 PASS. Installed: DATA JOB 264, CLIST JOB 265. Core untouched.
+  Test: `python3 tests/test_hs.py build/PACBLDHS-260.txt build/PACBLG23-263.txt build/PACBLGP2-262.txt`.
+- HS.3 (live c3270 checklist, docs/HS-HISCORE.md section 11) next: needs the user at the terminal.
 RP, S2 not started.

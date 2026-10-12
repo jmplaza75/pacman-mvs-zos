@@ -59,7 +59,7 @@ made explicit. Frozen as D38 in docs/DECISIONS.md.
 | 18-20 | level reached by the run that set it, 3 digits |
 | 21-80 | blank |
 
-  Valid = columns 1-7 numeric and columns 9-16 = `PACHS001`. No date, no initials.
+  Valid = columns 1-7 numeric, columns 9-16 = `PACHS001` and columns 18-20 numeric. No date, no initials.
 
 ## 3. PACHSIO (src/asm/PACHSIO.asm, production form of the E16 PACHSA)
 `CALL 'PACHSIO' USING OP RC DDN REC` - RC `S9(4) COMP`, DDN `X(8)` (PACPLAT passes `PACHS`), REC `X(80)`.
@@ -153,11 +153,16 @@ the existing tests/ref_gp2.py. Every edge case of this design is a case (D12):
 | H8 | score 0 (immediate Q), member missing | `HIGH SCORE 0000000 LEVEL 000`, nothing created |
 | H9 | member `9999999` | not new (no overflow), member unchanged |
 | H10 | `LEVEL(5)` start beating the record | in-memory value shown, `START LEVEL 05: HIGH SCORE NOT RECORDED`, member unchanged |
-| H11 | eligible QUIT / EOF / LOST / WIN ends | each saves when beaten |
+| H11 | eligible QUIT / EOF / LOST ends; WIN | each saves when beaten (WIN: see below) |
 | H12 | CLASSIC with the DD | identical to the oracle, member untouched |
 | H13 | REALTIME batch and TSD dry run with the DD | lines as H1-H4; TSD screen streams = the GP2 streams |
 | H14 | TSO line mode through IKJEFT01, `ALLOC ... SHR` | same as batch |
 | H15 | eligible new score, missing member in the full-directory PDS | STOW fails (B14) inside PACHSIO, caught: `HIGH SCORE NOT SAVED`, game result and end lines otherwise unchanged, step RC 0 |
+
+Eligible WIN: a WIN from `LEVEL(1)` needs 99 level clears (about 18 000 moves, ~240 000 listing lines): not run. The
+end type is not an input of the save decision - PACPLAT never receives the game state (PAC-STATE / PAC-ARC), only
+score, level and eligibility, which test_hs.py asserts - so WIN is covered by that structure, the LOST / QUIT / EOF
+saves and the practice WIN of H10 (`LEVEL(99)`, same code path up to the eligibility test).
 
 Write failure: H15 is a genuine write failure (directory full), with no test hook. A physical device / I/O error
 (SYNAD) cannot be induced in the normal Hercules environment; that path shares the same RC 16 handling and is
@@ -178,3 +183,31 @@ unchanged against the new load module.
   `&SYSDSN` pre-check approved; CLASSIC unaffected. Approved.
 - D6 Install: ALLOC deck + one-time DATA deck; the data stays outside the build libraries. Approved.
 - Additional: semantics of section 1; no new alarm.
+
+## 10. HS.2 result (2026-10-12)
+- Probe E16b first (JOB 258, docs/evidence/hs-e16-probe.md): REPL heal, DUMMY, the ESTAE guard against a genuine full
+  directory (B14 -> RC 16, step RC 0) and the finding that the exit must be deleted after a retry too.
+- Production: src/asm/PACHSIO.asm (from PACHSA, 4 parameters, no test ops), PACREQ (+7 fields), PACPLAT (HSRD, HSWR),
+  PACMAIN (HSRD after INIT, HS-END before the END display), PACDISP (SHOW-HS), CLIST (guarded block), tools/make_deck.py
+  (PACHSIO linked into every current deck, DATA in ALLOC, deck `DATA`, `RUN --hiscore [--parm]`, deck `HS`).
+- Deck HS, JOB 260 (first build after a JCL error in JOB 259: PARM past column 71 with the longer COND): 71 steps, RC
+  0000 except HSFILL (IEB813I, RC 0012, expected); no compiler warnings, 3 assemblies severity 0.
+  `python3 tests/test_hs.py build/PACBLDHS-260.txt build/PACBLG23-<n>.txt build/PACBLGP2-<n>.txt`: 21 runs = model +
+  HS lines (H1-H15), 9 member prints = model (malformed member healed to one record, no member created by a 0
+  score), CLIST block: DATA present = the member allocated SHR, missing = DUMMY (NULLFILE), the CLIST goes on.
+- Regression: COMPRESS JOB 261; GP2 JOB 262 (237 steps RC 0000, test_gp2 with PACMAN_LATER_PHASE=HS: S1 / RT / GX /
+  ... / 1.0-MVS oracle and 71 ARCADE runs unchanged); GP23 JOB 263 (3697 streams = model; the two HS TSD runs = these
+  GP23 runs stream for stream). Evidence: docs/evidence/hs-build-tsd.txt.
+- Install for HS.3: deck DATA JOB 264 (`HERC01.PACMAN.DATA` cataloged, empty), CLIST JOB 265.
+
+## 11. HS.3 live checklist (c3270, `TYPEAHEAD=false tools/c3270_rt.sh`, then `EXEC 'HERC01.PACMAN.CLIST(PACMAN)'`)
+| # | Action | Expected |
+|---|---|---|
+| L1 | `'RULES(ARCADE)'`, play until a score > 0, Q (member HISCORE does not exist yet) | end lines `HIGH SCORE <score> LEVEL 001` + `NEW HIGH SCORE`; READY |
+| L2 | `'RULES(ARCADE)'`, Q at once (score 0) | `HIGH SCORE <L1 score> LEVEL 001`, no NEW line |
+| L3 | `'RULES(ARCADE)'`, beat L1, lose all lives (LOST) | NEW HIGH SCORE with the new value |
+| L4 | `'RULES(ARCADE) LEVEL(5)'`, beat the record if possible, Q | `START LEVEL 05: HIGH SCORE NOT RECORDED` (or only the persistent value); next L2 still shows L3's value |
+| L5 | `'RULES(CLASSIC)'` | no high-score line |
+| L6 | `RENAME 'HERC01.PACMAN.DATA' 'HERC01.PACMAN.DATAX'`, `'RULES(ARCADE)'`, then rename back | the game starts and plays; `HIGH SCORE UNAVAILABLE`; READY |
+| L7 | `LIST 'HERC01.PACMAN.DATA(HISCORE)'` | one record `nnnnnnn PACHS001 nnn` = the last NEW HIGH SCORE |
+

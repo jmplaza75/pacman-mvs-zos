@@ -61,3 +61,26 @@ Nothing after the failed ALLOC ran (no `LASTCC1=` line): a failed ALLOC ends the
 - The PDS must be RECFM FB, LRECL 80, BLKSIZE 80 (one record per block); anything else is refused (RC 8).
 - The PACMAN CLIST must not ALLOC the high-score member unless `&SYSDSN('...DATA') = OK`: an unguarded failing ALLOC
   would end the CLIST before the game starts.
+
+## E16b (2026-10-12, after D38 approval with the D4 amendment): heal, DUMMY, abend guard - PASS (JOB 258)
+Same probe, extended for the approved semantics: op `REPL` (QSAM OUTPUT of one record: the member is added or
+replaced at CLOSE), `WRIT` on an empty member falls through to REPL, an ESTAE around every call's I/O whose exit
+retries into the return path with RC 16, test-only ops `SENT` (establish a percolating sentinel ESTAE) and `SCHK`
+(`ESTAE 0`, RC = R15) to see whether the guard is left on the chain.
+| Job | Finding | Fix |
+|---|---|---|
+| 255, 256 | IFOX00 RC 8: SETRP needs the IHASDWA mapping and a USING on the SDWA; RETRY before the exit is not addressable from R15 | IHASDWA + `USING SDWA,1`; `RETADDR=(2)` loaded from a literal (the old load module ran in 255/256: B9FULL abended SB14 without a guard) |
+| 257 | full directory: WRIT RC 16, step RC 0; but after the retry `SCHK`, `SCHK` = 0, 0: the exit is still on the chain after a retry | `ESTAE 0` on the return path also after a retry |
+| 258 | all PASS | - |
+
+| Case (JOB 258) | Ops | Result | Verdict |
+|---|---|---|---|
+| B5DUMMY: `//PACHS DD DUMMY` | R, W0000444 | 08, 08 | DUMMY = unusable, never written (the CLIST fallback) |
+| B6BAD: member of 2 junk records | R, P0000555, R | 00 `XYZZY...`; 02; 00 `0000555`, new TTR 00000A | healed; IEBGENER print = one record `0000555` |
+| B7EMPTY: empty member | R, W0000333, R | 12; 02; 00 `0000333`, new TTR 00000C | WRIT heals an empty member |
+| B8SENT: sentinel, normal path | S, R, W0004562, X, X | 00; 00; 00; 00; 12 | the guard is removed on the normal path (only the sentinel was left) |
+| FILL: IEBUPDTE, 30 adds into `HSFULL` (1 directory block) | - | 20 members, `IEB813I OUTPUT DIRECTORY FULL`, RC 12 | genuine full directory |
+| B9FULL: `HSFULL(HISCORE)` missing | S, W0000500, X, X, R | 00; **16**; 00; 12; 12 | STOW failure (SB14 in JOBs 255/256) caught: RC 16, step RC 0, guard removed after the retry, module usable afterwards |
+| B9FULLP | P0000501, R | 16; 12 | same through REPL |
+All other cases as JOB 254 (B1-B5, TSO1, TSO2). This is the genuine write failure used by test H15 (D38); a physical
+I/O error (SYNAD) cannot be induced on Hercules.
