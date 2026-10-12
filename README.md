@@ -27,6 +27,7 @@ emulated mainframe: there is no client-side extension and no sound (requirements
 ```sh
 python3 tools/make_deck.py ALLOC   && python3 tools/run_deck.py build/ALLOC.jcl     # first use only
 python3 tools/make_deck.py CLIST   && python3 tools/run_deck.py build/CLIST.jcl     # TSO launcher
+python3 tools/make_deck.py DATA    && python3 tools/run_deck.py build/DATA.jcl      # high-score dataset (existing install)
 ./tools/release_check.sh                                                         # build + full regression
 ```
 Use `--prefix HLQ.NAME` with `make_deck.py`, and pass the prefix as the argument of `release_check.sh`, to install
@@ -154,6 +155,16 @@ one extra life at 10000, start level `LEVEL(n)` (PARM columns 22-23; default 1).
 in every glyph profile and scale, level and fruit in the HUD / status line, alarm on the extra life and a level clear)
 complete: Hercules JOB 246 (43 TSD runs = model) and JOB 247 (regression). Try it:
 `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE) LEVEL(9)'`.
+MVS-HS (persistent ARCADE high score, D38, `docs/HS-HISCORE.md`): complete (tag `mvs-hs`; Hercules JOB 260
+(`tests/test_hs.py`, 21 runs = model), live in c3270, `docs/evidence/hs-live.md`). One global high score in
+`HERC01.PACMAN.DATA(HISCORE)` (one record: score, `PACHS001`, level reached), read at the start of a `RULES(ARCADE)`
+game and rewritten only when beaten by a game started at level 1 (`LEVEL(n>1)` shows it, never saves it). The end lines
+show `HIGH SCORE nnnnnnn LEVEL nnn` and `NEW HIGH SCORE` / `HIGH SCORE NOT SAVED` / `START LEVEL nn: HIGH SCORE NOT
+RECORDED`, or `HIGH SCORE UNAVAILABLE` when the dataset is missing (the game still plays). A missing, empty or
+malformed member counts as 0 and is healed by the next save; disk problems never abend the game. Create the dataset
+once on an existing install: `python3 tools/make_deck.py DATA && python3 tools/run_deck.py build/DATA.jcl` (the ALLOC
+deck creates it on a fresh install; COMPRESS and rebuilds never touch it). Batch play with the high score:
+`make_deck.py RUN --cards FILE --parm 'BAT                 A' --hiscore`.
 Roadmap to the final MVS release 2.0-MVS-MAX: `docs/ROADMAP-POST-RT.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

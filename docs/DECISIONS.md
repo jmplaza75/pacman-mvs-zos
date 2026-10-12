@@ -228,3 +228,6 @@
   but unusable); no DD = not configured, silent (every earlier reference unchanged). CLIST: no keyword; ARCADE only;
   `&SYSDSN` pre-check, DATA missing = `ALLOC ... DUMMY` (unavailable). Never abends, never changes the game result, no
   new alarm, no screen change (HUD = RP).
+  HS.2 (JOB 260, tests/test_hs.py): H1-H15 = the independent model tests/ref_hs.py; the ESTAE exit is deleted after
+  a retry too (E16b). HS.3 live PASS (docs/evidence/hs-live.md); the live higher-score case ended with QUIT, LOST and
+  the other end paths are covered by HS.2.

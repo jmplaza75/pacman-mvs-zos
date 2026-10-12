@@ -1,4 +1,4 @@
-# MVS-HS: persistent high score under RULES(ARCADE) - design (D38, APPROVED 2026-10-12 with the D4 amendment)
+# MVS-HS: persistent high score under RULES(ARCADE) - design (D38, APPROVED 2026-10-12 with the D4 amendment) - COMPLETE
 Source: docs/ROADMAP-POST-RT.md row 4 ("Top ARCADE score kept in `HERC01.PACMAN.DATA(HISCORE)` through PACPLAT (read at
 start, rewritten when beaten). GAME never sees the file. A missing or bad member means 0, never a failure. Batch tests
 use a test member.") and probe E16 (docs/evidence/hs-e16-probe.md, JOB 254, PASS), which proved the disk access this
@@ -211,3 +211,8 @@ unchanged against the new load module.
 | L6 | `RENAME 'HERC01.PACMAN.DATA' 'HERC01.PACMAN.DATAX'`, `'RULES(ARCADE)'`, then rename back | the game starts and plays; `HIGH SCORE UNAVAILABLE`; READY |
 | L7 | `LIST 'HERC01.PACMAN.DATA(HISCORE)'` | one record `nnnnnnn PACHS001 nnn` = the last NEW HIGH SCORE |
 
+## 12. HS.3 result (2026-10-12): live PASS - MVS-HS COMPLETE (tag mvs-hs)
+L1-L7 PASS in c3270 (docs/evidence/hs-live.md, trace ~/hs-live.txt read independently): created, read back, updated,
+practice start not recorded, CLASSIC silent, dataset renamed = UNAVAILABLE with a clean game and READY, member =
+`0001430 PACHS001 001`. The live higher-score case ended with QUIT, not LOST; LOST, EOF, the practice WIN and every
+failure path are covered by the deterministic HS.2 evidence (JOB 260).
