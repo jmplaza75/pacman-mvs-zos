@@ -51,6 +51,9 @@ DECKS = {
     # MVS-GP1 (D36): the S1 deck + the core copybook PACARC (CPY6, after the S1 copies), then the ARCADE runs
     'GP1': ('PACBLGP1', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
             ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
+    # MVS-GP2 (D37): the same modules and copies as GP1 (PACARC grew, PACREQ +REQ-START), then the GP2 runs
+    'GP2': ('PACBLGP2', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
+            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -100,7 +103,7 @@ def run_step(step, pfx, load, sysin, parm=None):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO'], 'GP2': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -125,7 +128,8 @@ TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'GX': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'RT': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'S1': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
-       'GP1': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
+       'GP1': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'GP2': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR']}
 TSD = {'G1': ['MOVES', 'TSORDR', 'MULTI', 'C3N2', 'DIE1'],
        # G2: (case, highlight flag in PARM column 13): 5 with highlights, 2 without (= G1 screens)
        'G2': [('MOVES', 'Y'), ('TSORDR', 'Y'), ('MULTI', 'Y'), ('C3N2', 'Y'), ('DIE1', 'Y'), ('MOVES', 'N'), ('DIE1', 'N')],
@@ -165,6 +169,7 @@ TSD['GX'] = TSD['GS'] + GX_RUNS
 TSD['RT'] = TSD['GX']
 TSD['S1'] = TSD['RT']
 TSD['GP1'] = TSD['S1']
+TSD['GP2'] = TSD['S1']
 # MVS-RT (D33): REALTIME runs after the whole GX regression. Batch (PARM column 19 R): one card = one quantum
 # (tests/rtcases); TSD: (case, canvas) with COLOR N, HILITE Y, ANIM Y, REDRAW P, GLYPHS G, SCALE 4, PLAY R.
 RT_BAT = ['RTLINE', 'RTCORNER', 'RTTTL', 'RTREV', 'RTMULTI', 'RTPRE', 'RTSTILL', 'RTPAUSE', 'RTLONG', 'RTWIN', 'RTEDGE',
@@ -296,6 +301,48 @@ def gp13_steps(pfx, load):
     return out
 
 
+# MVS-GP2 (D37): after the whole S1 deck (the CLASSIC regression: no PARM column 21), a marker step, then
+# RULES(ARCADE) runs with the start level in PARM columns 22-23 ('' = absent; any text is passed as is, so the
+# validation of PACMAIN is exercised: blank, 00, ab, one digit, three digits). (directory, case, start):
+# the GP1 cases (gp1 BAT / RT / TSO, start absent) rerun against the GP2 model; the GP2 edge cases (tests/gp2cases,
+# tests/search_gp2.py); the row probe G2ROW at every start level 1-13; AI0 / AI2 / AI3 bumps; REALTIME (one card = one
+# quantum); TSO line mode; then column 21 not A with columns 22-23 present (= CLASSIC: 1.0-MVS oracle / RT model).
+GP2_BAT = [(d, c, '') for d, c in GP1_BAT] + \
+          [('gp2cases', c, st) for c, st in (
+              ('G2CLR', ''), ('G2CLR', '99'), ('G2BDIE', ''), ('G2BGH', ''), ('G2BUND', ''), ('G2CLRD', ''),
+              ('G2CLRF', ''), ('G2CLRL', ''), ('G2CLRO', ''), ('G2XP', '13'), ('G2XG', '13'), ('G2XF', '13'),
+              ('G2XD', '13'), ('G2X20K', '13'))] + \
+          [('gp2cases', 'G2ROW', '%02d' % k) for k in range(1, 14)] + \
+          [('gp2cases', 'G2ROW', st) for st in ('', '  ', '00', 'ab', '5', '123', '99', '7 ')] + \
+          [('gpcases', 'GPAI0', '09'), ('cases', 'MULTI', '05'), ('cases', 'P2', '05')]
+GP2_RT = [(d, c, '') for d, c in GP1_RT] + \
+         [('gp2cases', 'G2RCLR', ''), ('gp2cases', 'G2RB2', ''), ('gp2cases', 'G2RPAU', ''), ('gp2cases', 'G2RXD', '13'),
+          ('rtcases', 'RTMULTI', '04'), ('rtcases', 'RTSTILL', '05')]
+GP2_TSO = [('GPTSO', ''), ('GPAI0', ''), ('GPTSO', '03')]
+GP2_CLASSIC = [('BAT', 'LOST0', 'C', '05'), ('RTB', 'RTSTILL', ' ', '07')]
+GP2_MARK = 'PACMAN-GP2-ARCADE-RUNS-FOLLOW'
+
+
+def gp2_steps(pfx, load):
+    out = ('//GP2MARK  EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+           f'//SYSUT1   DD *\n{GP2_MARK}\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    for i, (d, c, st) in enumerate(GP2_BAT, 1):
+        out += run_step(f'G2B{i}', pfx, load, text_of(ROOT / f'tests/{d}/{c}.txt'), parm='BAT'.ljust(20) + 'A' + st)
+    for i, (d, c, st) in enumerate(GP2_RT, 1):
+        out += run_step(f'G2R{i}', pfx, load, text_of(ROOT / f'tests/{d}/{c}.txt'), parm='BAT'.ljust(18) + 'R A' + st)
+    for i, (c, st) in enumerate(GP2_TSO, 1):
+        lines = text_of(ROOT / f'tests/gpcases/{c}.txt').splitlines(keepends=True)
+        out += run_step(f'G2T{i}', pfx, load, ''.join(lines[1:]),
+                        parm=('TSO ' + lines[0].rstrip('\n')[:5]).ljust(20) + 'A' + st)
+    for i, (kind, c, col, st) in enumerate(GP2_CLASSIC, 1):
+        if kind == 'BAT':
+            out += run_step(f'G2C{i}', pfx, load, text_of(ROOT / f'tests/cases/{c}.txt'), parm='BAT'.ljust(20) + col + st)
+        else:
+            out += run_step(f'G2C{i}', pfx, load, text_of(ROOT / f'tests/rtcases/{c}.txt'),
+                            parm='BAT'.ljust(18) + 'R ' + col + st)
+    return out
+
+
 def tso_parm_and_cards(case):
     """Interactive mode takes the config from the PARM ('TSO AI3 2'), not from a first card."""
     lines = (ROOT / f'tests/cases/{case}.txt').read_text(encoding='ascii').splitlines(keepends=True)
@@ -333,12 +380,14 @@ def build(name, pfx):
         if hilite:
             parm = (parm + ' AI1 1' if parm == 'TSD' else parm).ljust(11) + 'N' + hilite
         out += run_step(f'TSD{i}', pfx, load, cards, parm=parm)
-    if name in ('G4', 'GS', 'GX', 'RT', 'S1', 'GP1'):
+    if name in ('G4', 'GS', 'GX', 'RT', 'S1', 'GP1', 'GP2'):
         out += qry_test_steps(pfx)
-    if name in ('RT', 'S1', 'GP1'):
+    if name in ('RT', 'S1', 'GP1', 'GP2'):
         out += rt_steps(pfx, load)
-    if name in ('S1', 'GP1'):
+    if name in ('S1', 'GP1', 'GP2'):
         out += s1_steps(pfx, load)
+    if name == 'GP2':
+        out += gp2_steps(pfx, load)
     if name == 'GP1':
         out += gp1_steps(pfx, load)
         out += gp13_steps(pfx, load)

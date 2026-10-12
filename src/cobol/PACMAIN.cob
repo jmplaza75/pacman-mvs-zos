@@ -30,6 +30,9 @@
       * ALARM ON START, DEATH AND WIN; COLOUR FULL-SCREEN ONLY).
       * COLUMN 21 = RULES (MVS-GP1, D36): A ARCADE (POWER PELLETS, STATE
       * PAC-ARC), ANYTHING ELSE CLASSIC (1.0-MVS).
+      * COLUMNS 22-23 = START LEVEL (MVS-GP2, D37, ARCADE ONLY): 1 OR 2
+      * DIGITS FROM COLUMN 22 TO THE PARM END, 1-99; ABSENT OR ANY
+      * OTHER VALUE = 1 (THE USUAL START).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -46,6 +49,12 @@
        01  WS-K                  PIC 99.
        01  RT-OVER               PIC 9 VALUE 0.
        01  RT-FRAME              PIC X VALUE SPACE.
+       01  WS-LV.
+           05  WS-LV1            PIC X.
+           05  WS-LV2            PIC X.
+       01  WS-LVN REDEFINES WS-LV PIC 99.
+       01  WS-LVK                PIC 99.
+       01  WS-NOP                PIC 9.
        LINKAGE SECTION.
        01  PARM-AREA.
            05  PARM-LEN          PIC S9(4) COMP.
@@ -64,6 +73,8 @@
            05  PARM-PLAY         PIC X.
            05  PARM-SOUND        PIC X.
            05  PARM-RULES        PIC X.
+           05  PARM-LV1          PIC X.
+           05  PARM-LV2          PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
@@ -107,6 +118,15 @@
            MOVE 'C' TO REQ-RULES.
            IF PARM-LEN > 20
                MOVE PARM-RULES TO REQ-RULES.
+           MOVE 1 TO REQ-START.
+           IF PARM-LEN = 22
+               MOVE '0' TO WS-LV1
+               MOVE PARM-LV1 TO WS-LV2
+               PERFORM SET-START.
+           IF PARM-LEN = 23
+               MOVE PARM-LV1 TO WS-LV1
+               MOVE PARM-LV2 TO WS-LV2
+               PERFORM SET-START.
            MOVE 'B' TO REQ-STEP.
            MOVE SPACE TO REQ-SENDST.
            MOVE 'INIT' TO REQ-OP.
@@ -324,6 +344,13 @@
            PERFORM READ-INPUT THRU READ-INPUT-EXIT.
        TSO-START-EXIT.
            EXIT.
+       SET-START.
+           MOVE 0 TO WS-LVK.
+           IF WS-LV NUMERIC
+               MOVE WS-LVN TO WS-LVK.
+           IF WS-LVK > 0
+               MOVE WS-LVK TO REQ-START.
+           MOVE 0 TO WS-NOP.
        COPY-PARM-CFG.
       * ONLY PARM-LEN BYTES ARE VALID: BLANK WHAT LIES BEYOND THEM.
            MOVE PARM-CFG TO WS-CFG.

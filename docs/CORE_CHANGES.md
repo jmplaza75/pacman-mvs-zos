@@ -19,3 +19,8 @@ Reason: MVS-GP1 GP1.2 (D36, approved by the user 2026-10-11): RULES(ARCADE) powe
 - src/cobol/PACAI.cob: d7c3e1fcfa90ccfb -> 66d916d8503831e6
 - src/copy/PACARC.cpy: - -> 2f1d2ea50382fc9d
 - maps/ARCADE1.txt: - -> f15db8bdb722db8e
+
+## 2026-10-12 - authorised by project owner (D37 approval)
+Reason: MVS-GP2 GP2.2 (D37, approved by the user 2026-10-12): RULES(ARCADE) levels 1-99, maze refill on a full clear, per-level table K-LVL in PACGAME (AI bump, REALTIME step, fright/warning, fruit), fruit at (10,8) after 30/70 items, one extra life at 10000 (ARC-XL), event flags incl. death D, wide counters, start level REQ-START. PACARC grew append-only; PACMAP, PACAI, PACSTATE, PACMREQ, LEVEL1, ARCADE1 unchanged; CLASSIC behaviour unchanged. Build JOB 243 RC 0000.
+- src/cobol/PACGAME.cob: ac803883d397adb7 -> a0aab0509d50aae9
+- src/copy/PACARC.cpy: 2f1d2ea50382fc9d -> dd5c83db32ae3d3f

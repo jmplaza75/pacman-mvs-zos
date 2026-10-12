@@ -25,7 +25,12 @@ from pathlib import Path
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / 'tests'))
 sys.path.insert(0, str(R / 'tools'))
-os.environ['PACMAN_LATER_PHASE'] = 'GP1'
+# MVS-GP2: PACMAN_LATER_PHASE (set by a later phase's test, or by hand to run this file as a regression on later
+# sources) skips ONLY the source-equality / diff-set pins against mvs-s1 and the GP1.2 checkpoint and the parse of
+# the GP1 constants row (moved into the GP2 level table, authorised D37); every structural guard and every GP1 model
+# check always runs. The listing part checks GP1 listings (PACBLGP1) only.
+LATER = os.environ.get('PACMAN_LATER_PHASE')
+os.environ['PACMAN_LATER_PHASE'] = LATER or 'GP1'
 import ref_arcade as A  # noqa: E402
 import ref_rt  # noqa: E402
 import search_gp1 as S  # noqa: E402
@@ -51,10 +56,11 @@ assert 'MVS-GP1 GP1.2 (D36' in (R / 'docs/CORE_CHANGES.md').read_text()
 for f in ('src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy', 'maps/LEVEL1.txt',
           'src/copy/PACDS.cpy', 'src/cobol/PACINPT.cob', 'src/cobol/PACPLAT.cob', 'src/cobol/PACQRY.cob',
           'src/asm/PACFSIO.asm', 'src/asm/PACTSO.asm'):
-    assert git_show('mvs-s1', f) == (R / f).read_text().splitlines(), f
+    assert LATER or git_show('mvs-s1', f) == (R / f).read_text().splitlines(), f
 old_req, new_req = git_show('mvs-s1', 'src/copy/PACREQ.cpy'), (R / 'src/copy/PACREQ.cpy').read_text().splitlines()
 assert new_req[:len(old_req)] == old_req, 'PACREQ must grow append-only'
-assert [l.split()[1] for l in new_req[len(old_req):] if l[6:7] != '*'] == ['REQ-RULES']
+added = [l.split()[1] for l in new_req[len(old_req):] if l[6:7] != '*']
+assert added[:1] == ['REQ-RULES'] and (LATER or len(added) == 1), added
 REMOVED = {   # the only mvs-s1 lines that changed (USING lists / CALL signatures, three ARCADE display points)
     'PACGAME': ["      * RULES : SEE DOCS/DECISIONS.MD D7, D9, D11, D14.", "       PROCEDURE DIVISION USING PAC-STATE PAC-REQ.",
                 "               CALL 'PACAI' USING PAC-STATE"],
@@ -72,7 +78,7 @@ REMOVED = {   # the only mvs-s1 lines that changed (USING lists / CALL signature
 GP12 = 'bc419f7'
 for f in ('src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob', 'src/copy/PACARC.cpy', 'maps/ARCADE1.txt',
           'src/cobol/PACMAIN.cob', 'src/cobol/PACRT.cob', 'src/copy/PACREQ.cpy', 'src/clist/PACMAN.clist'):
-    assert git_show(GP12, f) == (R / f).read_text().splitlines(), f
+    assert LATER or git_show(GP12, f) == (R / f).read_text().splitlines(), f
 old, new = git_show(GP12, 'src/copy/PACPAL.cpy'), (R / 'src/copy/PACPAL.cpy').read_text().splitlines()
 assert new[:len(old)] == old, 'PACPAL must grow append-only'
 assert [l.split()[1] for l in new[len(old):] if l[6:7] != '*'] == ['PAL-POWER', 'HI-POWER', 'PAL-FRIGHT', 'PAL-WARN',
@@ -84,19 +90,20 @@ for name, v in (('PAL-POWER', g4.POWER), ('HI-POWER', 0xF1), ('PAL-FRIGHT', g4.F
 assert "GLY-EYES              PIC X VALUE '\"'." in pal
 assert "' BB  TT  ee     '" in pal and "' B  T  e    '" in pal        # power / eyes tiles of ref_gs_screen.arc_tile
 old, new = git_show(GP12, 'src/cobol/PACSCR.cob'), (R / 'src/cobol/PACSCR.cob').read_text().splitlines()
-assert [d[2:] for d in difflib.ndiff(old, new) if d[:2] == '- '] == [
+assert LATER or [d[2:] for d in difflib.ndiff(old, new) if d[:2] == '- '] == [
     '           05  SPR-4-CH          PIC X OCCURS 40 TIMES.', '           05  SPR-3-CH          PIC X OCCURS 30 TIMES.',
     '       PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-DS.', '           MOVE SPR-4 TO SPR-4-T.',
     '           MOVE SPR-3 TO SPR-3-T.', '           MOVE 0 TO WS-HP WS-HG WS-HE WS-HN WS-HW.',
     "           IF SPR-C = 'E'", "           IF SPR-C = 'T' OR SPR-C = 'B' OR SPR-C = 'E'"]
 old, new = git_show(GP12, 'src/cobol/PACDISP.cob'), (R / 'src/cobol/PACDISP.cob').read_text().splitlines()
-assert all(d[2:].strip() == "CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS." for d in difflib.ndiff(old, new) if d[:2] == '- ')
+assert LATER or all(d[2:].strip() == "CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS." for d in difflib.ndiff(old, new)
+                    if d[:2] == '- ')
 scr = (R / 'src/cobol/PACSCR.cob').read_text()
 calls = re.findall(r"CALL 'PACSCR' USING ([^\n]*)\n([^\n]*)", (R / 'src/cobol/PACDISP.cob').read_text())
 assert len(calls) == 6 and all(v.strip() in ('PAC-ARC', 'PAC-ARC.') for _, v in calls), calls
 assert not re.search(r'\b(DISPLAY|ACCEPT|READ|OPEN|WRITE)\b',
                      '\n'.join(l for l in scr.splitlines() if l[6:7] != '*')), 'PACSCR stays a pure composer'
-for name in ('PACGAME', 'PACMAP', 'PACAI', 'PACRT', 'PACDISP', 'PACMAIN'):
+for name in ('PACGAME', 'PACMAP', 'PACAI', 'PACRT', 'PACDISP', 'PACMAIN') if not LATER else ():
     old, new = git_show('mvs-s1', f'src/cobol/{name}.cob'), (R / f'src/cobol/{name}.cob').read_text().splitlines()
     removed = [d[2:] for d in difflib.ndiff(old, new) if d[:2] == '- ']
     if name == 'PACMAIN':    # every removed line is a PACGAME / PACRT / PACDISP call that now also passes PAC-ARC
@@ -112,8 +119,9 @@ for name in ('PACMAIN', 'PACRT', 'PACDISP', 'PACGAME'):   # nobody calls the ARC
 arc = [l for l in (R / 'src/copy/PACARC.cpy').read_text().splitlines() if l[6:7] != '*']
 assert arc[0] == '       01  PAC-ARC.' and not any('VALUE' in l for l in arc)               # D16, linkage-safe
 game, mapsrc = (R / 'src/cobol/PACGAME.cob').read_text(), (R / 'src/cobol/PACMAP.cob').read_text()
-k = re.search(r"K-ARC-DATA\s+PIC X\(22\) VALUE\s+'([^']*)'", game).group(1)
-assert {k[i]: (int(k[i + 1:i + 4]), int(k[i + 4:i + 7]), int(k[i + 7:i + 10]), int(k[i + 10])) for i in (0, 11)} == A.K
+if not LATER:
+    k = re.search(r"K-ARC-DATA\s+PIC X\(22\) VALUE\s+'([^']*)'", game).group(1)
+    assert {k[i]: (int(k[i + 1:i + 4]), int(k[i + 4:i + 7]), int(k[i + 7:i + 10]), int(k[i + 10])) for i in (0, 11)} == A.K
 assert A.K == {'T': (20, 5, 10, 2), 'R': (40, 10, 20, 2)}                                     # design 3a (approved)
 ch = re.search(r"CHAIN-DATA\s+PIC X\(16\) VALUE '(\d{16})'", game).group(1)
 assert [int(ch[i:i + 4]) for i in range(0, 16, 4)] == A.CHAIN == [200, 400, 800, 1600]
@@ -129,7 +137,7 @@ for name in ('PACMAIN', 'PACRT', 'PACDISP', 'PACAI', 'PACMAP'):   # constants on
 rt = (R / 'src/cobol/PACRT.cob').read_text()
 assert 'ADD ARC-KFINC TO ARC-FACC' in rt and 'MOVE 0 TO RT-ACC' in rt
 clist = (R / 'src/clist/PACMAN.clist').read_text()
-assert 'RULES(CLASSIC)' in clist and '&V&Y&U&W)' in clist and 'SET &W = &SUBSTR(1:1,&RULES)' in clist
+assert 'RULES(CLASSIC)' in clist and ('&V&Y&U&W)' in clist or (LATER and '&V&Y&U&W' in clist)) and 'SET &W = &SUBSTR(1:1,&RULES)' in clist
 for n, line in enumerate(clist.replace('@@PREFIX@@', 'HERC01.PACMAN').splitlines(), 1):
     assert len(line) <= 72, ('PACMAN.clist', n)
 for t in ('test_mvs7', 'test_mvs8'):          # architecture rules (core has no terminal / host verbs) and the map

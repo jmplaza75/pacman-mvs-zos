@@ -22,6 +22,11 @@
       *      ACCUMULATOR ARC-FACC + ARC-KFINC (DUE AT >= 5, 2/5 OF THE
       *      QUANTA) BESIDE THE NORMAL ONE (4/5); ARC-MOVEN/ARC-MOVEF
       *      TELL PACAI WHICH GHOSTS MOVE. A DEATH RESETS RT-ACC.
+      * MVS-GP2 (D37, ARC-ON = 1): THE NORMAL GHOSTS' ACCUMULATOR TAKES
+      *      THE LEVEL'S STEP ARC-KNUM (DUE AT >= 10; 8 = THE GP1 4/5
+      *      PATTERN). A DEATH OR A LEVEL CLEAR (PACGAME FLAGS D / C,
+      *      NOT THE LIVES COUNT: AN EXTRA LIFE MAY COME IN THE SAME
+      *      STEP) RESETS RT-ACC AND FREEZES 10 QUANTA.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACRT.
        ENVIRONMENT DIVISION.
@@ -36,7 +41,7 @@
        01  RT-CUR                PIC X VALUE SPACE.
        01  RT-REQ                PIC X VALUE SPACE.
        01  RT-TTL                PIC 9 VALUE 0.
-       01  RT-ACC                PIC 9 VALUE 0.
+       01  RT-ACC                PIC 99 VALUE 0.
        01  RT-FRZ                PIC 99 VALUE 0.
        01  RT-PAUSE              PIC 9 VALUE 0.
        01  RT-START              PIC 9 VALUE 0.
@@ -48,6 +53,10 @@
        01  FRZ-INIT              PIC 99 VALUE 10.
        01  GH-NUM                PIC 9 VALUE 4.
        01  GH-DEN                PIC 9 VALUE 5.
+       01  GH-DEN10              PIC 99 VALUE 10.
+       01  RT-NUM                PIC 99.
+       01  RT-DEN                PIC 99.
+       01  WS-FRZE               PIC 9.
        01  ANIM-Q                PIC 9 VALUE 3.
        01  WS-DIR                PIC X.
        01  WS-LEGAL              PIC 9.
@@ -138,9 +147,14 @@
            IF ARC-ON = 1
                PERFORM ARC-QUANTUM THRU ARC-QUANTUM-EXIT.
            MOVE 0 TO WS-GDUE.
-           ADD GH-NUM TO RT-ACC.
-           IF RT-ACC NOT < GH-DEN
-               SUBTRACT GH-DEN FROM RT-ACC
+           MOVE GH-NUM TO RT-NUM.
+           MOVE GH-DEN TO RT-DEN.
+           IF ARC-ON = 1
+               MOVE ARC-KNUM TO RT-NUM
+               MOVE GH-DEN10 TO RT-DEN.
+           ADD RT-NUM TO RT-ACC.
+           IF RT-ACC NOT < RT-DEN
+               SUBTRACT RT-DEN FROM RT-ACC
                MOVE 1 TO WS-GDUE.
            IF ARC-ON = 1
                MOVE WS-GDUE TO ARC-MOVEN
@@ -186,11 +200,18 @@
            MOVE 'MOVE' TO REQ-OP.
            CALL 'PACGAME' USING PAC-STATE PAC-REQ PAC-ARC.
            MOVE 'RQ  ' TO REQ-OP.
-           IF LIVES < WS-LIVES AND ARC-ON = 1
+           MOVE 0 TO WS-FRZE.
+           IF ARC-ON = 0 AND LIVES < WS-LIVES
+               MOVE 1 TO WS-FRZE.
+           IF ARC-ON = 1 AND ARC-ED = 'D'
+               MOVE 1 TO WS-FRZE.
+           IF ARC-ON = 1 AND ARC-EC = 'C'
+               MOVE 1 TO WS-FRZE.
+           IF ARC-ON = 1 AND WS-FRZE = 1
                MOVE 0 TO RT-ACC.
            IF WS-KIND NOT = 'G'
                ADD 1 TO RT-STEPS.
-           IF LIVES < WS-LIVES AND F-LOST = 0
+           IF WS-FRZE = 1 AND F-LOST = 0
                MOVE FRZ-INIT TO RT-FRZ
                MOVE SPACE TO RT-CUR
                MOVE SPACE TO RT-REQ

@@ -11,7 +11,11 @@
       *       EACH MOVE, PACRT AT EACH RUNNING QUANTUM); POWER PELLET
       *       'o' 50, FRIGHT, EATEN GHOSTS 200/400/800/1600 -> EYES AT
       *       HOME. STATE IN PAC-ARC; CLASSIC PARAGRAPHS UNCHANGED.
-      * RULES : SEE DOCS/DECISIONS.MD D7, D9, D11, D14, D36.
+      *       MVS-GP2 (D37, ARC-ON = 1 ONLY): LEVELS 1-99 (START LEVEL
+      *       REQ-START); A CLEARED MAZE IS REFILLED AND THE NEXT LEVEL
+      *       STARTS (LEVEL 99 CLEARED = WON); PER-LEVEL TABLE K-LVL;
+      *       FRUIT AT 30 / 70 ITEMS; ONE EXTRA LIFE AT 10000.
+      * RULES : SEE DOCS/DECISIONS.MD D7, D9, D11, D14, D36, D37.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACGAME.
        ENVIRONMENT DIVISION.
@@ -28,18 +32,57 @@
                10  GS-Y          PIC 99.
                10  GS-DIR        PIC 9.
        01  WS-G                  PIC 9.
-      * MVS-GP1 CONSTANTS (THE ONLY PLACE; GP2 MAKES THEM PER LEVEL).
-      * ROW 1 TURN (TURNS), ROW 2 REALTIME (QUANTA): FRIGHT LENGTH,
-      * WARNING WINDOW, EYES WAIT, REALTIME FRIGHT ACCUMULATOR STEP.
-       01  K-ARC-DATA            PIC X(22) VALUE
-           'T0200050102R0400100202'.
+      * ARCADE CONSTANTS (THE ONLY PLACE). PER MODE, ROW 1 TURN
+      * (TURNS), ROW 2 REALTIME (QUANTA): EYES WAIT, REALTIME FRIGHT
+      * ACCUMULATOR STEP (MVS-GP1), FRUIT TIME (MVS-GP2).
+       01  K-ARC-DATA            PIC X(16) VALUE
+           'T0102030R0202060'.
        01  K-ARC REDEFINES K-ARC-DATA.
            05  K-ROW             OCCURS 2 TIMES.
                10  K-PLAY        PIC X.
-               10  K-FR          PIC 999.
-               10  K-WARN        PIC 999.
                10  K-EYES        PIC 999.
                10  K-FINC        PIC 9.
+               10  K-BT          PIC 999.
+      * MVS-GP2 (D37) PER LEVEL, ROW = LEVEL (LEVELS 13-99 USE ROW 13):
+      * AI BUMP, REALTIME NORMAL-GHOST STEP (OF 10), FRIGHT TURNS,
+      * WARNING TURNS, FRIGHT QUANTA, WARNING QUANTA, FRUIT KIND AND
+      * POINTS. EVERY LEVEL-DEPENDENT VALUE LIVES HERE.
+       01  K-LVL-DATA.
+           05  FILLER  PIC X(20) VALUE '008020005040010C0100'.
+           05  FILLER  PIC X(20) VALUE '008017005034010S0300'.
+           05  FILLER  PIC X(20) VALUE '108014005027010O0500'.
+           05  FILLER  PIC X(20) VALUE '109010004020007O0500'.
+           05  FILLER  PIC X(20) VALUE '209007003013007A0700'.
+           05  FILLER  PIC X(20) VALUE '209017005034010A0700'.
+           05  FILLER  PIC X(20) VALUE '209007003013007M1000'.
+           05  FILLER  PIC X(20) VALUE '209007003013007M1000'.
+           05  FILLER  PIC X(20) VALUE '209004002007003G2000'.
+           05  FILLER  PIC X(20) VALUE '209017005034010G2000'.
+           05  FILLER  PIC X(20) VALUE '209007003013007B3000'.
+           05  FILLER  PIC X(20) VALUE '209004002007003B3000'.
+           05  FILLER  PIC X(20) VALUE '209004002007003K5000'.
+       01  K-LVL REDEFINES K-LVL-DATA.
+           05  KL-ROW            OCCURS 13 TIMES.
+               10  KL-AIB        PIC 9.
+               10  KL-NUM        PIC 99.
+               10  KL-FRT        PIC 999.
+               10  KL-WRT        PIC 999.
+               10  KL-FRR        PIC 999.
+               10  KL-WRR        PIC 999.
+               10  KL-BK         PIC X.
+               10  KL-BV         PIC 9(4).
+      * MVS-GP2 FIXED VALUES: FRUIT CELL, FRUIT THRESHOLDS (ITEMS EATEN
+      * IN THE LEVEL), EXTRA LIFE SCORE, FINAL LEVEL, ROWS OF K-LVL.
+       01  K-BX                  PIC 99 VALUE 10.
+       01  K-BY                  PIC 99 VALUE 8.
+       01  K-B1                  PIC 999 VALUE 30.
+       01  K-B2                  PIC 999 VALUE 70.
+       01  K-XLIFE               PIC 9(7) VALUE 10000.
+       01  K-LAST                PIC 999 VALUE 99.
+       01  K-NROW                PIC 99 VALUE 13.
+       01  WS-LR                 PIC 99.
+       01  WS-Q7                 PIC 9(7).
+       01  WS-NOP                PIC 9.
        01  CHAIN-DATA            PIC X(16) VALUE '0200040008001600'.
        01  CHAIN-TABLE REDEFINES CHAIN-DATA.
            05  CHAIN-PTS         PIC 9(4) OCCURS 4 TIMES.
@@ -92,8 +135,11 @@
            PERFORM ARC-RESET THRU ARC-RESET-EXIT.
        DO-CONFIG.
            MOVE REQ-LEVEL TO AI-LEVEL.
+           MOVE REQ-LEVEL TO ARC-AIB.
            MOVE REQ-COUNT TO GHOST-COUNT.
        DO-INIT.
+           IF ARC-ON = 1
+               PERFORM LEVEL-START THRU LEVEL-START-EXIT.
            MOVE 'LOAD' TO M-OP.
            IF ARC-ON = 1
                MOVE 'LDA ' TO M-OP
@@ -131,6 +177,8 @@
            MOVE 'MOVED  ' TO LAST-RESULT.
            PERFORM AIM-MOVE THRU AIM-MOVE-EXIT.
            ADD 1 TO TICK-COUNT.
+           IF ARC-ON = 1
+               PERFORM ARC-TICKS.
            MOVE NEW-X TO M-X.
            MOVE NEW-Y TO M-Y.
            MOVE 'WALL' TO M-OP.
@@ -142,9 +190,13 @@
                MOVE NEW-Y TO PLAYER-Y
                PERFORM EAT-PELLET THRU EAT-PELLET-EXIT.
            PERFORM ROUND-END THRU ROUND-END-EXIT.
+           IF ARC-ON = 1 AND F-WON = 1
+               PERFORM LEVEL-CLEAR THRU LEVEL-CLEAR-EXIT.
            PERFORM SET-STATE THRU SET-STATE-EXIT.
        DO-GHOSTS.
            PERFORM ROUND-END THRU ROUND-END-EXIT.
+           IF ARC-ON = 1 AND F-WON = 1
+               PERFORM LEVEL-CLEAR THRU LEVEL-CLEAR-EXIT.
            PERFORM SET-STATE THRU SET-STATE-EXIT.
        AIM-MOVE.
            IF REQ-DIR = 'U'
@@ -199,7 +251,7 @@
            MOVE 0 TO F-WON.
            SUBTRACT 1 FROM LIVES.
            IF ARC-ON = 1
-               PERFORM ARC-DEATH THRU ARC-DEATH-EXIT.
+               PERFORM ARC-LOSE THRU ARC-LOSE-EXIT.
            IF LIVES = 0
                MOVE 1 TO F-LOST
                MOVE 'LOST   ' TO LAST-RESULT
@@ -234,8 +286,26 @@
            MOVE SPACES TO ARC-EVT.
            MOVE 0 TO ARC-PTS.
            PERFORM PICK-ROW.
-           MOVE K-WARN (WS-KR) TO ARC-KWARN.
            MOVE K-FINC (WS-KR) TO ARC-KFINC.
+           MOVE 1 TO ARC-LEVEL.
+           IF ARC-ON = 1 AND REQ-START > 0
+               MOVE REQ-START TO ARC-LEVEL.
+           MOVE 1 TO ARC-AIB.
+           MOVE K-BX TO ARC-BX.
+           MOVE K-BY TO ARC-BY.
+           MOVE 0 TO ARC-XL.
+           MOVE 0 TO ARC-TURNS.
+           MOVE 0 TO ARC-EATN4.
+           MOVE 0 TO ARC-FRUITS.
+           MOVE 0 TO ARC-NDIE.
+           MOVE '-----' TO ARC-EVF.
+           MOVE 0 TO ARC-KWARN.
+           MOVE 0 TO ARC-KNUM.
+           MOVE 0 TO ARC-BV.
+           MOVE SPACE TO ARC-BK.
+           PERFORM LEVEL-RESET.
+           IF ARC-ON = 1
+               PERFORM LEVEL-ROW THRU LEVEL-ROW-EXIT.
            PERFORM ARC-DEATH THRU ARC-DEATH-EXIT.
        ARC-RESET-EXIT.
            EXIT.
@@ -275,6 +345,7 @@
        DO-ATIK.
            MOVE SPACES TO ARC-EVT.
            MOVE 0 TO ARC-PTS.
+           MOVE '-----' TO ARC-EVF.
            IF ARC-FR > 0
                SUBTRACT 1 FROM ARC-FR
                IF ARC-FR = 0
@@ -283,6 +354,8 @@
                    ADD 1 TO ARC-FTURN.
            PERFORM EYES-TICK THRU EYES-TICK-EXIT
                VARYING WS-G FROM 1 BY 1 UNTIL WS-G > GHOST-COUNT.
+           IF ARC-BT > 0
+               SUBTRACT 1 FROM ARC-BT.
        DO-ATIK-EXIT.
            EXIT.
        FRIGHT-END.
@@ -326,6 +399,11 @@
                SUBTRACT 1 FROM ARC-POWER
                PERFORM FRIGHT-START THRU FRIGHT-START-EXIT.
            MOVE ARC-SCORE TO SCORE.
+           PERFORM XLIFE THRU XLIFE-EXIT.
+           IF M-FLAG > 0
+               ADD 1 TO ARC-ITEMS
+               PERFORM FRUIT-SPAWN THRU FRUIT-SPAWN-EXIT.
+           PERFORM FRUIT-EAT THRU FRUIT-EAT-EXIT.
        ARC-EAT-EXIT.
            EXIT.
        FRIGHT-START.
@@ -333,8 +411,12 @@
       * ADDED) AND THE CHAIN; EYES ARE NOT AFFECTED. NO FRIGHTENED
       * GHOST MOVES IN THE STEP WHERE THE FRIGHT STARTS.
            PERFORM PICK-ROW.
-           MOVE K-FR (WS-KR) TO ARC-FR.
-           MOVE K-WARN (WS-KR) TO ARC-KWARN.
+           PERFORM PICK-LR.
+           MOVE KL-FRR (WS-LR) TO ARC-FR.
+           MOVE KL-WRR (WS-LR) TO ARC-KWARN.
+           IF WS-KR = 1
+               MOVE KL-FRT (WS-LR) TO ARC-FR
+               MOVE KL-WRT (WS-LR) TO ARC-KWARN.
            MOVE 0 TO ARC-FTURN.
            MOVE 0 TO ARC-FACC.
            MOVE 0 TO ARC-CHAIN.
@@ -368,10 +450,114 @@
            MOVE CHAIN-PTS (ARC-CHAIN) TO ARC-PTS.
            ADD ARC-PTS TO ARC-SCORE.
            MOVE ARC-SCORE TO SCORE.
-           ADD 1 TO ARC-EATEN.
+           ADD 1 TO ARC-EATN4.
+           DIVIDE ARC-EATN4 BY 1000 GIVING WS-Q7 REMAINDER ARC-EATEN.
            MOVE 'GHST' TO ARC-EVT.
+           PERFORM XLIFE THRU XLIFE-EXIT.
            PERFORM PICK-ROW.
            MOVE 'E' TO ARC-GM (WS-G).
            MOVE K-EYES (WS-KR) TO ARC-GW (WS-G).
            MOVE 0 TO ARC-GR (WS-G).
            PERFORM RESET-GHOST.
+      * ------------- MVS-GP2 ARCADE (D37, ARC-ON = 1) -------------
+       PICK-LR.
+           MOVE ARC-LEVEL TO WS-LR.
+           IF ARC-LEVEL > K-NROW
+               MOVE K-NROW TO WS-LR.
+           MOVE 0 TO WS-NOP.
+       LEVEL-ROW.
+      * THE ROW OF THE CURRENT LEVEL: AI = CONFIGURED + BUMP (AT MOST
+      * 3; AI0 STAYS 0), REALTIME CADENCE, WARNING WINDOW, FRUIT.
+           PERFORM PICK-LR.
+           PERFORM PICK-ROW.
+           MOVE ARC-AIB TO AI-LEVEL.
+           IF ARC-AIB > 0
+               ADD KL-AIB (WS-LR) TO AI-LEVEL.
+           IF AI-LEVEL > 3
+               MOVE 3 TO AI-LEVEL.
+           MOVE KL-NUM (WS-LR) TO ARC-KNUM.
+           MOVE KL-WRR (WS-LR) TO ARC-KWARN.
+           IF WS-KR = 1
+               MOVE KL-WRT (WS-LR) TO ARC-KWARN.
+           MOVE KL-BK (WS-LR) TO ARC-BK.
+           MOVE KL-BV (WS-LR) TO ARC-BV.
+       LEVEL-ROW-EXIT.
+           EXIT.
+       LEVEL-RESET.
+      * PER-LEVEL STATE: ITEMS EATEN, FRUIT SPAWNS AND FRUIT TIMER.
+           MOVE 0 TO ARC-ITEMS.
+           MOVE 0 TO ARC-BN.
+           MOVE 0 TO ARC-BT.
+       LEVEL-START.
+      * A NEW LEVEL (THE FIRST ONE TOO): NO FRIGHT, CHAIN OR EYES, NO
+      * FRUIT, 4 POWER PELLETS (DO-INIT LOADS THE MAP), ITS ROW.
+           PERFORM ARC-DEATH THRU ARC-DEATH-EXIT.
+           PERFORM LEVEL-RESET.
+           PERFORM LEVEL-ROW THRU LEVEL-ROW-EXIT.
+       LEVEL-START-EXIT.
+           EXIT.
+       LEVEL-CLEAR.
+      * THE MAZE IS EMPTY AT THE END OF THE STEP (AFTER THE LIFE LOSS):
+      * LEVEL 99 = THE GAME IS WON; ELSE THE NEXT LEVEL, MAZE REFILLED,
+      * PAC-MAN AND THE GHOSTS AT THEIR START CELLS. SCORE, LIVES, THE
+      * EXTRA-LIFE FLAG, THE SEED AND THE GAME TOTALS ARE KEPT.
+           MOVE 'C' TO ARC-EC.
+           IF ARC-LEVEL NOT < K-LAST
+               GO TO LEVEL-CLEAR-EXIT.
+           ADD 1 TO ARC-LEVEL.
+           MOVE 0 TO F-WON.
+           MOVE 'CLEARED' TO LAST-RESULT.
+           MOVE 2 TO PLAYER-X.
+           MOVE 2 TO PLAYER-Y.
+           PERFORM DO-INIT.
+       LEVEL-CLEAR-EXIT.
+           EXIT.
+       ARC-LOSE.
+      * A LIFE LOST: THE GP1 DEATH RESET, THE FRUIT IS REMOVED (ITS
+      * THRESHOLDS STAY USED), FLAG D.
+           PERFORM ARC-DEATH THRU ARC-DEATH-EXIT.
+           MOVE 0 TO ARC-BT.
+           MOVE 'D' TO ARC-ED.
+           ADD 1 TO ARC-NDIE.
+       ARC-LOSE-EXIT.
+           EXIT.
+       ARC-TICKS.
+      * WIDE TURN COUNTER; TICK-COUNT MIRRORS ITS LOW 3 DIGITS.
+           ADD 1 TO ARC-TURNS.
+           DIVIDE ARC-TURNS BY 1000 GIVING WS-Q7 REMAINDER TICK-COUNT.
+       XLIFE.
+      * ONE EXTRA LIFE WHEN THE SCORE FIRST REACHES 10000 (ARC-XL IS
+      * NEVER CLEARED DURING THE GAME), AT ONCE (BEFORE ANY HIT).
+           IF ARC-XL = 1 OR ARC-SCORE < K-XLIFE
+               GO TO XLIFE-EXIT.
+           MOVE 1 TO ARC-XL.
+           ADD 1 TO LIVES.
+           MOVE 'X' TO ARC-EX.
+       XLIFE-EXIT.
+           EXIT.
+       FRUIT-SPAWN.
+      * AN ITEM WAS EATEN: THE 30TH AND THE 70TH OF THE LEVEL SHOW THE
+      * FRUIT (A SHOWN ONE GETS ITS FULL TIME AGAIN).
+           IF ARC-ITEMS NOT = K-B1 AND ARC-ITEMS NOT = K-B2
+               GO TO FRUIT-SPAWN-EXIT.
+           ADD 1 TO ARC-BN.
+           PERFORM PICK-ROW.
+           MOVE K-BT (WS-KR) TO ARC-BT.
+           MOVE 'A' TO ARC-EA.
+       FRUIT-SPAWN-EXIT.
+           EXIT.
+       FRUIT-EAT.
+      * PAC-MAN ON THE FRUIT CELL WITH A FRUIT SHOWN (ENTERED, OR THE
+      * FRUIT APPEARED UNDER HIM): ITS POINTS.
+           IF ARC-BT = 0
+               GO TO FRUIT-EAT-EXIT.
+           IF PLAYER-X NOT = K-BX OR PLAYER-Y NOT = K-BY
+               GO TO FRUIT-EAT-EXIT.
+           MOVE 0 TO ARC-BT.
+           ADD 1 TO ARC-FRUITS.
+           ADD ARC-BV TO ARC-SCORE.
+           MOVE ARC-SCORE TO SCORE.
+           MOVE 'F' TO ARC-EF.
+           PERFORM XLIFE THRU XLIFE-EXIT.
+       FRUIT-EAT-EXIT.
+           EXIT.

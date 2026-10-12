@@ -186,3 +186,24 @@
   GP1.3 screens (JOB 240, GP1-POWER section 10): ARCADE status line variant (61 columns, S= 7 digits, PW, FR),
   power pellet blinking, frightened ghosts blue / white (warning) not reversed outside the scaled sprites, eyes `"`
   drawn under Pac-Man and the other ghosts; CLASSIC streams byte-identical.
+- D37 (MVS-GP2) Levels, progression and bonus fruit under `RULES(ARCADE)`, design docs/GP2-PROGRESSION.md (approved by
+  the user 2026-10-12). CLASSIC = 1.0-MVS byte for byte. Levels 1-99: a level ends only when the maze is completely
+  cleared (after the step's hits and life loss); the next level refills every item (96 + 4 power pellets with 1
+  ghost), returns Pac-Man and the ghosts to their start cells, resets fright, warning, eyes, chain, accumulators,
+  the fruit and both fruit thresholds, and applies its row; score, lives, the EXTRA-LIFE-AWARDED flag, the seed and
+  the game totals persist. Clearing level 99 ends the game WON - an intentional MVS implementation limit, not the
+  endless arcade progression. Per-level table (the one place of every level-dependent value, PACGAME K-LVL, 13 rows,
+  levels 13-99 = row 13): AI = configured + bump (max AI3; AI0 stays AI0), REALTIME normal ghosts + 8 or 9 of 10
+  (8/10 = the GP1 4/5 pattern), fright 20/17/14/10/7/17/7/7/4/17/7/4/4 turns (40 ... 7 quanta) with its warning
+  window, fruit cherry 100, strawberry 300, orange 500, apple 700, melon 1000, galaxian 2000, bell 3000, key 5000.
+  Fruit at (10,8) (verified corridor cell, no spawn / power overlap) after 30 and 70 items of the level, 30 turns /
+  60 quanta; eaten when Pac-Man is on the cell at the end of his step (also when it appears under him); removed by
+  a death and a level clear; pause stops its timer. Exactly one extra life when a scoring event takes the score to
+  10000 or more, before any hit of the same check (ARC-XL, never twice). Deaths are signalled by the event flag D
+  (never inferred from LIVES, which an extra life in the same step leaves unchanged); a death or a level clear in
+  REALTIME freezes 10 quanta on the existing freeze. LIVES stays PIC 9 (max 4): "lives widened" closed as not needed.
+  Wide ARCADE counters ARC-TURNS 9(7), ARC-EATN4 9(4), ARC-FRUITS 999 (TICK-COUNT / ARC-EATEN mirror their low
+  digits). Start level: PARM columns 22-23 (1-2 digits to the PARM end, 1-99, anything else = 1), CLIST `LEVEL(n)`
+  default 1, a fresh game at that level (no simulated earlier levels). Text: `LEVEL nnn` header, one `L` line per
+  frame (level, AI, items, fruit, extra life, events), `%` fruit on the board, end lines TURNS 7 digits, GHOSTS EATEN 4
+  digits, FRUITS EATEN, LEVEL. GP1 ARCADE reference output evolves (GP1 invariants rerun on the extended model).

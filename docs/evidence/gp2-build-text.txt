@@ -1,0 +1,117 @@
+# MVS-GP2 GP2.2 build - Hercules JOB 244 (2026-10-12): levels, progression, fruit, extra life (D37, docs/GP2-PROGRESSION.md)
+Deck GP2 = the whole S1 deck (CLASSIC regression) + PACARC (CPY6) + marker step + 71 ARCADE runs + 2 CLASSIC runs with
+PARM columns 21-23. Libraries compressed first: JOB 242. JOB 243 (same sources) was already 236 steps RC 0000, no
+warnings, 70/71 runs = model; only G2RPAU differed, because its card file was rebuilt after that run (the pause block
+now replaces an idle quantum, so only the input column may differ from G2RB2). JOB 244 is the run of record.
+Core change authorised after JOB 243 compiled clean (docs/CORE_CHANGES.md 2026-10-12, tests/core_baseline.json).
+```
+$ python3 tests/test_gp2.py build/PACBLGP2-244.txt
+local checks PASS (core frozen, oracle loaded)
+local checks PASS: 12 searched + constructed edge cases; 56 TURN, 12 REALTIME, 3 TSO ARCADE model runs
+MVS-GP2 GP2.2 PASS: 236 steps RC 0000; S1 regression: MVS-S1 PASS: 161 steps RC 0000; RT regression: MVS-RT RT2 PA ...; 71 ARCADE runs = model ( 52640 lines ); 2 columns 21-23 CLASSIC runs = oracle/model
+```
+Local regression: tests/test_gp1.py with PACMAN_LATER_PHASE=GP2 (structural guards + frozen GP1 model) PASS, run by
+test_gp2.py.
+Runs after the marker - every ARCADE block equal to tests/ref_gp2.py line for line (S score, V lives, LV level, T turns,
+GH ghosts eaten, FR fruits eaten):
+```
+G2B1 GPAI0                           QUIT  S=0001310 V=3 LV=001 T=0000051 GH=0003 FR=000
+G2B2 GPHOME                          QUIT  S=0000370 V=2 LV=001 T=0000022 GH=0001 FR=000
+G2B3 GPDEYE                          QUIT  S=0000450 V=2 LV=001 T=0000023 GH=0001 FR=000
+G2B4 GPDFR                           QUIT  S=0000350 V=2 LV=001 T=0000016 GH=0001 FR=000
+G2B5 GPFN                            QUIT  S=0001260 V=2 LV=001 T=0000033 GH=0003 FR=000
+G2B6 GPFWALK                         QUIT  S=0000350 V=3 LV=001 T=0000008 GH=0001 FR=000
+G2B7 GPLASTH                         LOST  S=0001440 V=0 LV=001 T=0000129 GH=0001 FR=001
+G2B8 GPLASTO                         QUIT  S=0001260 V=3 LV=002 T=0000145 GH=0000 FR=001
+G2B9 GPPOW2                          QUIT  S=0000140 V=3 LV=001 T=0000006 GH=0000 FR=000
+G2B10 GPPOWE                         QUIT  S=0000350 V=3 LV=001 T=0000008 GH=0001 FR=000
+G2B11 GPREVB                         QUIT  S=0000720 V=3 LV=001 T=0000049 GH=0001 FR=000
+G2B12 GPTIE                          QUIT  S=0000120 V=3 LV=001 T=0000008 GH=0000 FR=000
+G2B13 GPTWOF                         QUIT  S=0001520 V=3 LV=001 T=0000049 GH=0004 FR=000
+G2B14 GPWALKF                        QUIT  S=0000290 V=3 LV=001 T=0000006 GH=0001 FR=000
+G2B15 MULTI                          EOF   S=0000070 V=2 LV=001 T=0000018 GH=0000 FR=000
+G2B16 C3N2                           LOST  S=0000000 V=0 LV=001 T=0000021 GH=0000 FR=000
+G2B17 RAND                           EOF   S=0000140 V=3 LV=001 T=0000057 GH=0000 FR=000
+G2B18 LOST1                          EOF   S=0000390 V=2 LV=001 T=0000071 GH=0000 FR=000
+G2B19 G2CLR                          QUIT  S=0001370 V=3 LV=002 T=0000190 GH=0000 FR=001
+G2B20 G2CLR start='99'               WIN   S=0006160 V=3 LV=099 T=0000183 GH=0000 FR=001
+G2B21 G2BDIE                         QUIT  S=0000340 V=2 LV=001 T=0000030 GH=0000 FR=000
+G2B22 G2BGH                          QUIT  S=0000580 V=3 LV=001 T=0000033 GH=0001 FR=000
+G2B23 G2BUND                         QUIT  S=0000440 V=3 LV=001 T=0000032 GH=0000 FR=001
+G2B24 G2CLRD                         QUIT  S=0001540 V=1 LV=002 T=0000157 GH=0001 FR=002
+G2B25 G2CLRF                         QUIT  S=0001640 V=3 LV=002 T=0000133 GH=0002 FR=001
+G2B26 G2CLRL                         LOST  S=0001840 V=0 LV=001 T=0000159 GH=0003 FR=001
+G2B27 G2CLRO                         QUIT  S=0001260 V=2 LV=002 T=0000143 GH=0000 FR=001
+G2B28 G2XP start='13'                QUIT  S=0010000 V=4 LV=016 T=0000413 GH=0007 FR=001
+G2B29 G2XG start='13'                QUIT  S=0010090 V=4 LV=015 T=0000374 GH=0009 FR=001
+G2B30 G2XF start='13'                QUIT  S=0010780 V=4 LV=013 T=0000076 GH=0000 FR=002
+G2B31 G2XD start='13'                QUIT  S=0011010 V=2 LV=013 T=0000099 GH=0001 FR=002
+G2B32 G2X20K start='13'              QUIT  S=0021960 V=4 LV=014 T=0000215 GH=0000 FR=004
+G2B33 G2ROW start='01'               QUIT  S=0000180 V=3 LV=001 T=0000014 GH=0000 FR=000
+G2B34 G2ROW start='02'               QUIT  S=0000180 V=3 LV=002 T=0000014 GH=0000 FR=000
+G2B35 G2ROW start='03'               QUIT  S=0000180 V=3 LV=003 T=0000014 GH=0000 FR=000
+G2B36 G2ROW start='04'               QUIT  S=0000180 V=3 LV=004 T=0000014 GH=0000 FR=000
+G2B37 G2ROW start='05'               QUIT  S=0000180 V=3 LV=005 T=0000014 GH=0000 FR=000
+G2B38 G2ROW start='06'               QUIT  S=0000180 V=3 LV=006 T=0000014 GH=0000 FR=000
+G2B39 G2ROW start='07'               QUIT  S=0000180 V=3 LV=007 T=0000014 GH=0000 FR=000
+G2B40 G2ROW start='08'               QUIT  S=0000180 V=3 LV=008 T=0000014 GH=0000 FR=000
+G2B41 G2ROW start='09'               QUIT  S=0000180 V=3 LV=009 T=0000014 GH=0000 FR=000
+G2B42 G2ROW start='10'               QUIT  S=0000180 V=3 LV=010 T=0000014 GH=0000 FR=000
+G2B43 G2ROW start='11'               QUIT  S=0000180 V=3 LV=011 T=0000014 GH=0000 FR=000
+G2B44 G2ROW start='12'               QUIT  S=0000180 V=3 LV=012 T=0000014 GH=0000 FR=000
+G2B45 G2ROW start='13'               QUIT  S=0000180 V=3 LV=013 T=0000014 GH=0000 FR=000
+G2B46 G2ROW                          QUIT  S=0000180 V=3 LV=001 T=0000014 GH=0000 FR=000
+G2B47 G2ROW start='  '               QUIT  S=0000180 V=3 LV=001 T=0000014 GH=0000 FR=000
+G2B48 G2ROW start='00'               QUIT  S=0000180 V=3 LV=001 T=0000014 GH=0000 FR=000
+G2B49 G2ROW start='ab'               QUIT  S=0000180 V=3 LV=001 T=0000014 GH=0000 FR=000
+G2B50 G2ROW start='5'                QUIT  S=0000180 V=3 LV=005 T=0000014 GH=0000 FR=000
+G2B51 G2ROW start='123'              QUIT  S=0000180 V=3 LV=001 T=0000014 GH=0000 FR=000
+G2B52 G2ROW start='99'               QUIT  S=0000180 V=3 LV=099 T=0000014 GH=0000 FR=000
+G2B53 G2ROW start='7 '               QUIT  S=0000180 V=3 LV=001 T=0000014 GH=0000 FR=000
+G2B54 GPAI0 start='09'               QUIT  S=0000500 V=2 LV=009 T=0000051 GH=0001 FR=000
+G2B55 MULTI start='05'               EOF   S=0000070 V=2 LV=005 T=0000018 GH=0000 FR=000
+G2B56 P2 start='05'                  EOF   S=0000270 V=1 LV=005 T=0000079 GH=0000 FR=000
+G2R1 RTGPA                           QUIT  S=0000880 V=2 LV=001 T=0000026 GH=0002 FR=000
+G2R2 RTGPD                           QUIT  S=0000430 V=2 LV=001 T=0000022 GH=0001 FR=000
+G2R3 RTGPP                           QUIT  S=0000880 V=2 LV=001 T=0000026 GH=0002 FR=000
+G2R4 RTSTILL                         LOST  S=0000070 V=0 LV=001 T=0000007 GH=0000 FR=000
+G2R5 RTMULTI                         QUIT  S=0000040 V=3 LV=001 T=0000006 GH=0000 FR=000
+G2R6 RTPAUSE                         QUIT  S=0000090 V=3 LV=001 T=0000009 GH=0000 FR=000
+G2R7 G2RCLR                          QUIT  S=0001350 V=3 LV=002 T=0000188 GH=0000 FR=001
+G2R8 G2RB2                           QUIT  S=0000900 V=3 LV=001 T=0000084 GH=0000 FR=001
+G2R9 G2RPAU                          QUIT  S=0000900 V=3 LV=001 T=0000084 GH=0000 FR=001
+G2R10 G2RXD start='13'               QUIT  S=0010850 V=1 LV=013 T=0000110 GH=0000 FR=002
+G2R11 RTMULTI start='04'             QUIT  S=0000040 V=3 LV=004 T=0000006 GH=0000 FR=000
+G2R12 RTSTILL start='05'             LOST  S=0000070 V=0 LV=005 T=0000007 GH=0000 FR=000
+G2T1 TSO GPTSO                       QUIT  S=0000370 V=2 LV=001 T=0000022 GH=0001 FR=000
+G2T2 TSO GPAI0                       QUIT  S=0001310 V=3 LV=001 T=0000051 GH=0003 FR=000
+G2T3 TSO GPTSO start='03'            QUIT  S=0000370 V=2 LV=003 T=0000022 GH=0001 FR=000
+G2C1 BAT LOST0 col21-23='C05'        LOST  SCORE 0230  (CLASSIC: no ARCADE lines)
+G2C2 RTB RTSTILL col21-23=' 07'      LOST  SCORE 0070  (CLASSIC: no ARCADE lines)
+```
+G2B19 G2CLR (1.0-MVS full-clear route WIN0, AI0): turn 183 clears level 1 -> level 2, maze refilled (L=100), flag C:
+```
+T183 L CLEARED X=02 Y=02 S=1260 L=100 G=19,09 V=3 ST=RUNNING
+A S=0001260 PW=4 FR=000 FT=000 FA=0 CH=0 EV=     P=0000 N=000 M=N000
+L LV=002 AI=0 IT=000 BN=0 BT=000 BK=S BV=0300 XL=0 EV=---C-
+####################
+```
+G2B20 G2CLR start 99: the same clear at level 99 ends the game WON (intentional limit; key fruit 5000):
+```
+T183 L MOVED   X=03 Y=06 S=6160 L=000 G=19,09 V=3 ST=WON
+A S=0006160 PW=0 FR=000 FT=000 FA=0 CH=0 EV=     P=0000 N=000 M=N000
+L LV=099 AI=0 IT=100 BN=2 BT=000 BK=K BV=5000 XL=0 EV=---C-
+...
+SCORE 0006160
+LIVES 3
+GHOSTS EATEN 0000
+FRUITS EATEN 001
+LEVEL 099
+```
+G2B31 G2XD start 13: extra life and death in one step (flags X and D; lives unchanged by that step):
+```
+####################
+T099 R DIED    X=02 Y=02 S=1010 L=027 G=19,09 V=2 ST=RUNNING
+A S=0011010 PW=2 FR=000 FT=000 FA=0 CH=0 EV=     P=0000 N=001 M=N000
+L LV=013 AI=3 IT=073 BN=2 BT=000 BK=K BV=5000 XL=1 EV=-FX-D
+```

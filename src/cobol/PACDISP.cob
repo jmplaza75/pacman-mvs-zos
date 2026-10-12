@@ -26,6 +26,10 @@
       * ARCADE LINE (7-DIGIT SCORE, FRIGHT, CHAIN, EVENT, GHOST MODES)
       * AFTER EACH STATUS / RT GHOSTS LINE, GHOSTS F (FRIGHTENED) AND E
       * (EYES) ON THE BOARD, END 'SCORE NNNNNNN' + 'GHOSTS EATEN NNN'.
+      * MVS-GP2 (D37, ARC-ON = 1): 'LEVEL NNN' AFTER 'RULES ARCADE', A
+      * LEVEL LINE AFTER THE ARCADE LINE, FRUIT % ON THE BOARD (UNDER
+      * PAC-MAN AND THE GHOSTS), END 'TURNS NNNNNNN', 'GHOSTS EATEN
+      * NNNN', 'FRUITS EATEN NNN', 'LEVEL NNN'.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -166,6 +170,26 @@
            05  FILLER            PIC X VALUE ' '.
            05  AL-M3             PIC X.
            05  AL-W3             PIC 999.
+      * MVS-GP2 (D37) LEVEL LINE, AFTER THE ARCADE LINE.
+       01  WS-LVL-LINE.
+           05  FILLER            PIC X(5) VALUE 'L LV='.
+           05  LL-LV             PIC 999.
+           05  FILLER            PIC X(4) VALUE ' AI='.
+           05  LL-AI             PIC 9.
+           05  FILLER            PIC X(4) VALUE ' IT='.
+           05  LL-IT             PIC 999.
+           05  FILLER            PIC X(4) VALUE ' BN='.
+           05  LL-BN             PIC 9.
+           05  FILLER            PIC X(4) VALUE ' BT='.
+           05  LL-BT             PIC 999.
+           05  FILLER            PIC X(4) VALUE ' BK='.
+           05  LL-BK             PIC X.
+           05  FILLER            PIC X(4) VALUE ' BV='.
+           05  LL-BV             PIC 9(4).
+           05  FILLER            PIC X(4) VALUE ' XL='.
+           05  LL-XL             PIC 9.
+           05  FILLER            PIC X(4) VALUE ' EV='.
+           05  LL-EV             PIC X(5).
        01  WS-QUANTA.
            05  FILLER            PIC X(7) VALUE 'QUANTA '.
            05  QU-N              PIC 9(7).
@@ -385,7 +409,11 @@
            ELSE
                DISPLAY 'EOF'
                ADD 3 TO M-CHARS.
-           DISPLAY 'TURNS ' TICK-COUNT.
+           IF ARC-ON = 1
+               DISPLAY 'TURNS ' ARC-TURNS
+               ADD 4 TO M-CHARS
+           ELSE
+               DISPLAY 'TURNS ' TICK-COUNT.
            IF ARC-ON = 1
                DISPLAY 'SCORE ' ARC-SCORE
                ADD 3 TO M-CHARS
@@ -396,9 +424,11 @@
                MOVE REQ-RTQ TO QU-N
                DISPLAY WS-QUANTA.
            IF ARC-ON = 1
-               DISPLAY 'GHOSTS EATEN ' ARC-EATEN
-               ADD 1 TO M-LINES
-               ADD 16 TO M-CHARS.
+               DISPLAY 'GHOSTS EATEN ' ARC-EATN4
+               DISPLAY 'FRUITS EATEN ' ARC-FRUITS
+               DISPLAY 'LEVEL ' ARC-LEVEL
+               ADD 3 TO M-LINES
+               ADD 42 TO M-CHARS.
            ADD 4 TO M-LINES.
            ADD 26 TO M-CHARS.
            IF REQ-METRIC = 'M'
@@ -439,6 +469,8 @@
            EXIT.
        SHOW-ROW.
            MOVE MAP-ROW (WS-ROW) TO WS-LINE.
+           IF ARC-ON = 1 AND ARC-BT > 0 AND WS-ROW = ARC-BY
+               MOVE '%' TO WS-LINE-CELL (ARC-BX).
            IF WS-ROW = PLAYER-Y
                MOVE 'P' TO WS-LINE-CELL (PLAYER-X).
            PERFORM OVERLAY-GHOST THRU OVERLAY-GHOST-EXIT
@@ -473,8 +505,9 @@
            IF ARC-ON = 0
                GO TO ARC-HEAD-EXIT.
            DISPLAY 'RULES ARCADE'.
-           ADD 1 TO M-LINES.
-           ADD 12 TO M-CHARS.
+           DISPLAY 'LEVEL ' ARC-LEVEL.
+           ADD 2 TO M-LINES.
+           ADD 21 TO M-CHARS.
        ARC-HEAD-EXIT.
            EXIT.
        SHOW-ARC.
@@ -501,3 +534,17 @@
                DISPLAY WS-ARC-LINE WS-ARC-G2 WS-ARC-G3.
            ADD 1 TO M-LINES.
            ADD 80 TO M-CHARS.
+           PERFORM SHOW-LVL.
+       SHOW-LVL.
+           MOVE ARC-LEVEL TO LL-LV.
+           MOVE AI-LEVEL TO LL-AI.
+           MOVE ARC-ITEMS TO LL-IT.
+           MOVE ARC-BN TO LL-BN.
+           MOVE ARC-BT TO LL-BT.
+           MOVE ARC-BK TO LL-BK.
+           MOVE ARC-BV TO LL-BV.
+           MOVE ARC-XL TO LL-XL.
+           MOVE ARC-EVF TO LL-EV.
+           DISPLAY WS-LVL-LINE.
+           ADD 1 TO M-LINES.
+           ADD 63 TO M-CHARS.

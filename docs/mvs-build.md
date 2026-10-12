@@ -210,3 +210,12 @@ JOB 238: 192 steps RC 0000, no warnings, S1 regression (CLASSIC) PASS, 26 ARCADE
 runs = oracle. Evidence: docs/evidence/gp1-build-text.txt. GP1.3 (screens) next.
 GP1.3 screens: PACPAL (append-only), PACSCR, PACDISP; same deck and test (second marker, 21 ARCADE TSD runs vs the
 screen models). COMPRESS JOB 239; JOB 240: 214 steps RC 0000, all checks PASS. Evidence: docs/evidence/gp1-screens-tsd.txt.
+
+## MVS-GP2: levels, progression, fruit, RULES(ARCADE) (in progress, 2026-10-12)
+Design docs/GP2-PROGRESSION.md (D37, approved). GP2.2 core + text: authorised core change (PACGAME level table K-LVL,
+level clear / refill, fruit, extra life; PACARC appended), PACRT/PACMAIN/PACDISP, PACREQ +REQ-START (PARM columns
+22-23), CLIST LEVEL source. Model tests/ref_gp2.py, cases tests/gp2cases (tests/search_gp2.py). Build + tests:
+`python3 tools/make_deck.py GP2 && python3 tools/run_deck.py build/GP2.jcl`, then
+`python3 tests/test_gp2.py build/PACBLGP2-<n>.txt`. COMPRESS JOB 242; JOB 243 236 steps RC 0000 (first build, no
+warnings); JOB 244 (G2RPAU cards rebuilt) 236 steps RC 0000, S1/CLASSIC regression PASS, 71 ARCADE runs = model, 2
+columns 21-23 CLASSIC runs = oracle. Evidence: docs/evidence/gp2-build-text.txt. GP2.3 (screens) next.

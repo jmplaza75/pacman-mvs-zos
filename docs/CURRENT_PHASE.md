@@ -77,6 +77,13 @@ MVS-GP1 IN PROGRESS (started 2026-10-11 on the user's go): power pellets under R
 - GP1.4 live PASS (2026-10-11/12, docs/evidence/gp1-live.md): CLIST JOB 241 (default RULES(CLASSIC)); 2 games
   replayed by tools/c3270_gp1_trace.py = model byte for byte; pause / PA2 during a fright covered by RTGPP / GQR3.
 MVS-GP1 COMPLETE (tag mvs-gp1, 2026-10-12). Regression to keep: tests/test_gp1.py (+ test_s1, test_rt, test_gx,
-test_gs, test_g4, test_core_frozen). NEXT: MVS-GP2 (progression) per docs/ROADMAP-POST-RT.md - NOT STARTED, wait for
-the user's go.
+test_gs, test_g4, test_core_frozen).
+MVS-GP2 IN PROGRESS (started 2026-10-12 on the user's go): levels, progression and bonus fruit under RULES(ARCADE).
+- GP2.1 design docs/GP2-PROGRESSION.md: D37 APPROVED and frozen (2026-10-12, user decisions in its section 9;
+  fruit cell (10,8) verified before coding).
+- GP2.2 COMPLETE (2026-10-12): core change authorised (docs/CORE_CHANGES.md), PACARC appended, PACRT / PACMAIN /
+  PACDISP / PACREQ / CLIST source; model tests/ref_gp2.py, cases tests/gp2cases (tests/search_gp2.py); deck GP2 JOB
+  244: 236 steps RC 0000, S1/CLASSIC regression PASS, 71 ARCADE runs = model; evidence docs/evidence/gp2-build-text.txt.
+  Test: `python3 tests/test_gp2.py build/PACBLGP2-244.txt` (runs test_gp1.py as a regression with
+  PACMAN_LATER_PHASE). NEXT: GP2.3 screens (fruit, level, bells) - wait for the user's go.
 Maintenance: `make_deck.py COMPRESS` now also compresses LOAD (JOB 231 SE37 in LINK).
