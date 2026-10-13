@@ -164,4 +164,10 @@ MVS-S2 IN PROGRESS (started 2026-10-13 on the user's go): alarm patterns and sou
   steps RC 0000 at the first submission, 25 TSD runs = 2986 model streams (108 alarm writes), 21 D41 edges reached, 4
   line-mode runs = oracle / models. SINGLE regression into PACS2D: RP JOB 291, GP2 JOB 293 (after COMPRESS 292), HS
   JOB 294 PASS. Evidence docs/evidence/s2-build-tsd.txt. Test: `python3 tests/test_s2.py build/PACBLDS2-290.txt`.
-- Next: S2.3 install (PACMAIN + CLIST) on the user's approval, then the S2.4 live checklist.
+- S2.2 committed as checkpoint baea879.
+- S2.3 INSTALLED (2026-10-13, user approval): PACMAIN = deck S2 into PACMAIN JOB 297 (all S2 checks re-passed) and deck
+  RP into PACMAIN JOB 298 (SINGLE path, all RP checks; last link, same sources); CLIST JOB 299 (default ALARM(PATTERN)).
+  JOB 296 = JCL error, not run (EXEC cards at column 72 with the longer load name; make_deck run_step fixed, other decks
+  byte-identical). COMPRESS JOB 295. Evidence appended to docs/evidence/s2-build-tsd.txt.
+- S2.4 prepared, NOT run: docs/evidence/s2-live-checklist.md, five deterministic scenarios tests/s2live (driver
+  tools/gp2_live.py S2A-S2E), analyser tools/c3270_s2_trace.py (tested on synthetic traces). Waiting for the user's run.

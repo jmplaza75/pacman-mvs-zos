@@ -82,3 +82,18 @@ MVS-GP2 GP2.2 PASS: 237 steps RC 0000; S1 regression: MVS-S1 PASS: 162 steps RC 
 # HS JOB 294 (GP23 end lines from build/PACBLG23-263.txt):
 MVS-HS HS.2 PASS: 71 steps (HSFILL RC 0012, the rest RC 0000); 21 runs = model + HS lines ( 23869 text lines, 394 TSD streams = RP models) ; 9 member prints = model; CLIST block both paths
 core frozen (authorised 2026-10-13 by project owner (RP.3 approval)): PASS
+
+# ---- S2.3 INSTALL (2026-10-13, user approval) ----
+# COMPRESS JOB 295 (3 x IEBCOPY RC 0000). JOB 296 (deck S2 --load PACMAIN): IEF452I JCL ERROR, NOT RUN (nothing
+#   executed): the 7-character load name put 25 EXEC cards at column 72 (IEF629I PARM). Fix: tools/make_deck.py
+#   run_step moves the PARM to its own card when the EXEC card would pass column 71 (decks RP / GP2 / HS / S2
+#   generate byte-identical; the install deck has no card past 71).
+# JOB 297 = deck S2 linked into PACMAIN (same sources as JOB 290, commit baea879), listing normalised PACMAIN -> PACS2D:
+MVS-S2 PASS: 60 steps RC 0000; 25 TSD runs = 2986 model streams ( 108 with the alarm bit ); 4 BAT / TSO line-mode runs = oracle / models
+# JOB 298 = deck RP linked into PACMAIN (the SINGLE path on the installed name; the installed module of record),
+#   normalised PACMAIN -> PACRPD, PACMAN_LATER_PHASE=S2 tests/test_rp.py:
+MVS-RP RP.2 PASS: 127 steps RC 0000; 60 ARCADE TSD runs = 6265 model streams
+MVS-RP RP.2b D40 PASS: 29 startup sequences = model (valid first, ENTER / junk / AIDs / malformed then valid, empty reads, fallback by records and by time, single-record validity)
+MVS-RP RP.3 PASS: 12 TSD runs = 1495 model streams (FAST ARCADE / CLASSIC, NORMAL, invalid, TURN); 9 BAT runs = 6268 model lines; CLIST PARM 7 keyword sets (TMP)
+# CLIST JOB 299 (make_deck.py CLIST: default ALARM(PATTERN), &K in PARM column 25):
+PACCLS10   STORE               IEBGENER  RC= 0000

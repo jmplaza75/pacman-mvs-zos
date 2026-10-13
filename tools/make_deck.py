@@ -111,6 +111,8 @@ def link_step(pfx, objs, load, entry, step='LINK'):
 
 def run_step(step, pfx, load, sysin, parm=None, dd=None, cond='(0,NE)'):
     sep = ',' if cond == '(0,NE)' else ',\n//         '     # MVS-HS: a longer COND moves the PARM to its own card
+    if parm and len(f"//{step:<8} EXEC PGM={load},COND={cond},PARM='{parm}'") > 71:
+        sep = ',\n//         '        # MVS-S2: a longer load name (PACMAIN install) must not pass column 71 either
     t = (f'//{step:<8} EXEC PGM={load},COND={cond}' + (f"{sep}PARM='{parm}'" if parm else '') + '\n'
          f'//STEPLIB  DD DSN={pfx}.LOAD,DISP=SHR\n')
     if dd:                       # MVS-HS: the high-score DD

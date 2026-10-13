@@ -13,7 +13,8 @@ card ('.', no key) it returned at once (median 7 ms), so the driver ran ahead of
 PA2 and ENTER = IGN, dropped by PACMAIN RT-EVENT before PACRT: no input, no frame change; the replay maps PF1 to '.'),
 so every card is one AID and every Wait(Output) blocks for exactly one host write. The scenarios are unchanged.
 TURN (B): every card is typed in the command field + ENTER, then the next write is awaited.
-Usage: gp2_live.py A|B|C [--port 4001] [--prefix HERC01.PACMAN] [--pause 3] [--log FILE]"""
+MVS-S2 S2.4: scenarios S2A-S2E (tests/s2live, REALTIME; ended by the game or by Q).
+Usage: gp2_live.py A|B|C|S2A..S2E [--port 4001] [--prefix HERC01.PACMAN] [--pause 3] [--log FILE]"""
 import argparse
 import subprocess
 import time
@@ -24,6 +25,12 @@ SCEN = {   # card file, CLIST keywords (defaults: COLOR/HILITE/GLYPHS/SCALE/CANV
     'A': ('LIVEA', 'RULES(ARCADE) AI(0) GHOSTS(1) PLAY(REALTIME)'),
     'B': ('LIVEB', 'RULES(ARCADE) AI(0) GHOSTS(1) LEVEL(13) PLAY(TURN) ANIM(NO)'),
     'C': ('LIVEC', 'RULES(ARCADE) AI(2) GHOSTS(1) LEVEL(13) PLAY(REALTIME)'),
+    # MVS-S2 S2.4 (docs/evidence/s2-live-checklist.md): tests/s2live/LIVE<X>.txt (tests/s2live/make_live.py)
+    'S2A': ('../s2live/LIVEA', 'RULES(ARCADE) AI(3) GHOSTS(1)'),
+    'S2B': ('../s2live/LIVEB', 'RULES(ARCADE) AI(0) GHOSTS(1) SPEED(FAST)'),
+    'S2C': ('../s2live/LIVEC', 'RULES(CLASSIC) AI(0) GHOSTS(1)'),
+    'S2D': ('../s2live/LIVED', 'RULES(ARCADE) AI(3) GHOSTS(1) ALARM(SINGLE)'),
+    'S2E': ('../s2live/LIVEE', 'RULES(CLASSIC) AI(0) GHOSTS(1) SOUND(NO)'),
 }
 KEY = {'U': 'PF(7)', 'D': 'PF(8)', 'L': 'PF(10)', 'R': 'PF(11)', 'P': 'PF(9)', '*': 'PA(2)', 'Q': 'String("Q") Enter()',
        '.': 'PF(1)'}

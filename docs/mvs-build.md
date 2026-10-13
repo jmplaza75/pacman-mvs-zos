@@ -264,3 +264,6 @@ kinds Q / P / E / N), cases tests/s2cases (tests/search_s2.py). Build + tests (l
 listings normalised (`sed 's/PACS2D/PACRPD/g'` for RP, `PACMAIN` for GP2 / HS), then `PACMAN_LATER_PHASE=S2` test_rp /
 test_gp2 / test_hs. COMPRESS JOB 289; S2 JOB 290 PASS; RP 291, COMPRESS 292, GP2 293, HS 294 PASS. Evidence:
 docs/evidence/s2-build-tsd.txt.
+Install (S2.3): `make_deck.py S2 --load PACMAIN --out build/S2INST.jcl` (JOB 297; JOB 296 JCL error fixed in run_step),
+`make_deck.py RP --load PACMAIN --out build/RPS2INST.jcl` (JOB 298), `make_deck.py CLIST` (JOB 299). Live (S2.4):
+docs/evidence/s2-live-checklist.md (`tools/gp2_live.py S2A..S2E`, analysis `tools/c3270_s2_trace.py`).

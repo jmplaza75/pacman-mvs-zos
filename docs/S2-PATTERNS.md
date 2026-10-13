@@ -14,8 +14,8 @@ confirmed by the live checklist (S2.4).
 |---|---|---|
 | S2.1 | this design | user approval, D41 frozen (done 2026-10-13) |
 | S2.2 (BUILD GREEN 2026-10-13, JOB 290; docs/evidence/s2-build-tsd.txt) | PACREQ (appended), PACMAIN (PARM column 25), PACDISP (pattern player), PACPLAT (op DLWT for the end pause), CLIST `ALARM`, model + cases | deck `S2` (TSD runs = model), regression decks rerun, every earlier reference unchanged |
-| S2.3 | install (PACMAIN + CLIST) on the user's approval | install jobs |
-| S2.4 | live c3270 checklist: the user counts the bells per event; the trace shows the alarm WCC on the modelled writes | docs/evidence/s2-live.md, README, CURRENT_PHASE, tag `mvs-s2` |
+| S2.3 (INSTALLED 2026-10-13: PACMAIN JOB 297 / 298, CLIST JOB 299) | install (PACMAIN + CLIST) on the user's approval | install jobs |
+| S2.4 (checklist docs/evidence/s2-live-checklist.md; scope narrowed by the user 2026-10-13: audible behaviour, deterministic scenarios) | live c3270 checklist: the user counts the bells per event; the trace shows the alarm WCC on the modelled writes | docs/evidence/s2-live.md, README, CURRENT_PHASE, tag `mvs-s2` |
 
 ## 2. Scope rule (D41.1)
 - **Display and platform only.** GAME, MAP, AI, PACARC and PACRT are not modified; tests/core_baseline.json unchanged.
