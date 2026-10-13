@@ -5,7 +5,11 @@ records are shown only by their AID. Reports: output cadence while running (gap 
 outside pauses), every AID (PF7/8/10/11 arrows, PF9 pause, PA2, ENTER, CLEAR), pause intervals (PAUSED banner on the
 screen, frames stopped, first frame after the resume), keyboard lock per AID, restore-only writes (F1 C2 28 00 00),
 full screens (PA2 redraws), the end banner.
-Usage: c3270_rt_game.py TRACE [--from HHMMSS] [--events]"""
+MVS-RP RP.3: --period MS (150 NORMAL, 125 SPEED(FAST)) sets the thresholds (late = gap > 1.5 periods) and adds the
+absolute-schedule check per running stretch (between pauses): every write placed on the grid t0 + n x period
+(n = nearest period), lateness against the earliest write of the stretch, skipped periods, the drift (lateness trend
+per 100 quanta, first / last third) and the recovery of every late write; keyboard locks never released.
+Usage: c3270_rt_game.py TRACE [--from HHMMSS] [--events] [--period 125]"""
 import argparse
 import re
 import sys
@@ -32,7 +36,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument('trace')
 ap.add_argument('--from', dest='frm', default='000000')
 ap.add_argument('--events', action='store_true')
+ap.add_argument('--period', type=int, default=150)
 a = ap.parse_args()
+P = a.period
 ev = [e for e in load(a.trace) if e[1] and ms(e[1]) >= ms(a.frm + '.000')]
 starts = [i for i, e in enumerate(ev) if e[0] == '<' and TITLE in e[2]]
 if not starts:
@@ -52,7 +58,7 @@ def banner_of(b):
 end = next((i for i, e in enumerate(ev) if i > 0 and e[0] == '<' and banner_of(e[2])), len(ev) - 1)
 banner = banner_of(ev[end][2]) if end < len(ev) - 1 else None
 ev = ev[:end + 1]
-rows, outs, aids, locks, lock_t = [], [], [], [], None
+rows, outs, aids, locks, lock_t, unlocked = [], [], [], [], None, []
 paused, pauses, first_aid = None, [], None
 for k, t, x in ev:
     if k == '<':
@@ -77,6 +83,7 @@ for k, t, x in ev:
         if 'lock(key_AID)' in x:
             lock_t = ms(t)
         elif '-OIA_LOCKED' in x and lock_t is not None:
+            unlocked.append(ms(t))
             locks.append(ms(t) - lock_t)
             lock_t = None
 if a.events:
@@ -87,11 +94,46 @@ gaps = [y[0] - x[0] for x, y in zip(run, run[1:]) if not in_pause(x[0]) and not 
 print('game start', ev[0][1], '| first AID', ev[[e[0] for e in ev].index('>')][1] if aids else '-', '| end', ev[-1][1],
       '| banner', banner)
 print('outputs', len(outs), {k: sum(1 for o in outs if o[1] == k) for k in ('FULL', 'PART', 'RESTORE')})
-print('running output gaps ms', stats(gaps), '| < 20 ms:', sum(g < 20 for g in gaps), '| > 225 ms:',
-      sum(g > 225 for g in gaps))
+print(f'period {P} ms | running output gaps ms', stats(gaps), '| < 20 ms:', sum(g < 20 for g in gaps),
+      f'| > {P * 3 // 2} ms:', sum(g > P * 3 // 2 for g in gaps))
 print('before the first AID: outputs delivered', sum(1 for o in outs if first_aid and o[0] < first_aid))
 print('AIDs', len(aids), {n: sum(1 for _, x in aids if x == n) for n in sorted({x for _, x in aids})})
 print('keyboard lock per AID ms', stats(locks))
 for p0, p1 in pauses:
     after = [o for o in outs if o[0] > p1][:4]
     print(f'pause {p1 - p0} ms; after resume: first frames at +' + ', +'.join(str(o[0] - p1) for o in after) + ' ms')
+print('keyboard lock open at the end banner:', 'yes (the last AID, released by line mode)' if lock_t is not None else 'no',
+      '| longest released lock ms', max(locks) if locks else '-')
+# MVS-RP RP.3: the absolute schedule, per running stretch (a pause re-anchors the clock)
+cuts = [p1 for _, p1 in pauses]
+stretches, cur = [], []
+for o in run:
+    if in_pause(o[0]):
+        continue
+    if cur and any(cur[-1][0] < c <= o[0] for c in cuts):
+        stretches.append(cur)
+        cur = []
+    cur.append(o)
+if cur:
+    stretches.append(cur)
+for k, st_ in enumerate(stretches, 1):
+    if len(st_) < 10:
+        continue
+    t0 = st_[0][0]
+    grid = [(round((o[0] - t0) / P), o[0]) for o in st_]
+    late = [t - (t0 + n * P) for n, t in grid]
+    base = min(late)
+    late = [x - base for x in late]
+    skips = sum(max(0, b[0] - a_[0] - 1) for a_, b in zip(grid, grid[1:]))
+    dup = sum(1 for a_, b in zip(grid, grid[1:]) if b[0] == a_[0])
+    m = len(late) // 3
+    third = lambda v: sorted(v)[len(v) // 2] if v else '-'  # noqa: E731
+    xs = [n for n, _ in grid]
+    mx, my = sum(xs) / len(xs), sum(late) / len(late)
+    slope = sum((x - mx) * (y - my) for x, y in zip(xs, late)) / (sum((x - mx) ** 2 for x in xs) or 1)
+    lw = [i for i, x in enumerate(late) if x > P // 2]
+    rec = [late[i + 1] if i + 1 < len(late) else None for i in lw]
+    print(f'stretch {k}: {len(st_)} writes over {grid[-1][0] + 1} periods ({(st_[-1][0] - t0) / 1000:.1f} s); '
+          f'lateness ms {stats(late)}; skipped periods {skips}, two writes in one period {dup}; '
+          f'drift {slope * 100:+.1f} ms / 100 quanta (median first / last third {third(late[:m])} / {third(late[-m:])}); '
+          f'late writes (> {P // 2} ms) {len(lw)}, lateness of the write after each: {rec[:12]}')

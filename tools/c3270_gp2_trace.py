@@ -12,7 +12,11 @@ logon); inbound records are used only by their AID (and, for ENTER, the one type
 3. On a match, the model state of every quantum / turn is what the terminal showed: the report lists the GP2 events
    (level, fruit shown / eaten / expired, power pellets with the fright length, extra life, deaths, level clear and
    the freeze, pause intervals with the fruit timer before / after, PA2 redraws, alarm writes) and the end lines.
-Usage: c3270_gp2_trace.py TRACE --cfg 'AI0 1' [--start N] [--play R|T] [--from HHMMSS] [--sound Y|N]
+MVS-RP (RP.3): the models carry the RP decorations; --speed F replays with the 125 ms quantum (converted timers);
+the HUD high score is read from the first game write (none = unavailable). For REALTIME the report adds the
+wall-clock length of every fright, fruit, eyes wait and freeze: the live write times of its first and last quantum
+(pause time removed), against quanta x period and the NORMAL design length.
+Usage: c3270_gp2_trace.py TRACE --cfg 'AI0 1' [--start N] [--play R|T] [--from HHMMSS] [--sound Y|N] [--speed F]
        (the scenario of tools/gp2_live.py: --scenario A|B|C sets cfg / start / play)"""
 import argparse
 import itertools
@@ -51,17 +55,29 @@ def bells(frames, log, sound):
     return out
 
 
-def model(cfg, start, play, cards, sound):
+def model(cfg, start, play, cards, sound, per=150, hs=None, qlog=None):
     log = Log()
     if play == 'R':
-        end, fs = ref_rt.tsd([cfg] + cards, 'W', snap=log, mk_game=lambda a, n: L.Level(a, n, 'R', start),
-                             mk_ctl=L.LevelRT)
+        import ref_rp
+        orig = ref_rp.Tracker
+
+        class Rec(orig):                    # one tracker call per composed screen: the quantum of every write
+            def frame(self, g, play='T', rtstat=None, rtfrz=0, rtq=0, *x, **kw):
+                if qlog is not None:
+                    qlog.append((rtq, rtstat))
+                return super().frame(g, play, rtstat, rtfrz, rtq, *x, **kw)
+        ref_rp.Tracker = Rec
+        try:
+            end, fs = ref_rt.tsd([cfg] + cards, 'W', snap=log, mk_game=lambda a, n: L.Level(a, n, 'R', start),
+                                 mk_ctl=L.LevelRT, hs=hs, per=per)
+        finally:
+            ref_rp.Tracker = orig
         return end, bells(fs, log, sound)
     tmp = Path(tempfile.mkdtemp(dir=R / 'build'))
     (tmp / 'LIVE.txt').write_text('\n'.join([cfg] + cards) + '\n')
     try:
         fs = gx.frames('LIVE', True, False, 'P', 'G', '4', 'W', snap=log, mk=lambda a, n: L.Level(a, n, 'T', start),
-                       d=f'../build/{tmp.name}')
+                       d=f'../build/{tmp.name}', hs=hs)
     finally:
         shutil.rmtree(tmp)
     return L.simulate([cfg] + cards, start=start), bells(fs, log, sound)
@@ -80,7 +96,9 @@ def main():
     ap.add_argument('--play', default='R')
     ap.add_argument('--from', dest='frm', default='000000')
     ap.add_argument('--sound', default='Y')
+    ap.add_argument('--speed', default='N')
     a = ap.parse_args()
+    per = ref_rt.period(a.speed)
     if a.scenario:
         a.cfg, a.start, a.play = SCEN[a.scenario]
     ev = [e for e in load(a.trace) if e[1] and ms(e[1]) >= ms(a.frm + '.000')]
@@ -108,9 +126,15 @@ def main():
             if cmd:
                 aids.append((ms(t), cmd))
     live = [b[1:] for _, b in gw]
+    import re
+    first = live[0].decode('cp037', 'replace') if live else ''
+    m = re.search(r'HIGH +(\d{7})', first) or re.search(r'HI (\d{7})', first)
+    hs = ('R', int(m.group(1)), a.start) if m else None
+    print('speed', 'FAST' if per != 150 else 'NORMAL', f'({per} ms) | HUD high score at the start:',
+          m.group(1) if m else 'none (unavailable)')
     if a.play == 'T':
         cards = [c for _, c in aids if c not in ('*', '.')]
-        end, fs = model(a.cfg, a.start, 'T', cards, a.sound)
+        end, fs = model(a.cfg, a.start, 'T', cards, a.sound, hs=hs)
         n_same = sum(1 for k, (p, q) in enumerate(zip(live, fs)) if same(p, q, k))
     else:
         best = None
@@ -122,13 +146,14 @@ def main():
             cs = cards_for(gw, aids, shift)
             while cs and cs[-1] == '.':
                 cs.pop()
-            e, f = model(a.cfg, a.start, 'R', cs, a.sound)
+            ql = []
+            e, f = model(a.cfg, a.start, 'R', cs, a.sound, per, hs, ql)
             k_same = sum(1 for k, (p, q) in enumerate(zip(live, f)) if same(p, q, k))
             if best is None or k_same > best[0]:
-                best = (k_same, cs, e, f)
+                best = (k_same, cs, e, f, ql)
             if k_same == len(live) == len(f):
                 break
-        n_same, cards, end, fs = best
+        n_same, cards, end, fs, qlog = best
     ok = n_same == len(live) == len(fs)
     print(f'game writes: live {len(live)}, model {len(fs)}, identical {n_same}' + (' | ALL IDENTICAL' if ok else ''))
     bad = [k for k, (p, q) in enumerate(zip(live, fs)) if not same(p, q, k)]
@@ -138,11 +163,11 @@ def main():
     print('end lines (model):', ' / '.join(end[-8:]))
     print('line-mode text after the game:', ' / '.join(l for l in lines if l)[:400])
     print("writes with the alarm bit (WCC X'04'):", [k for k, b in enumerate(live) if b[:1] and b[0] & 0x04])
-    report(a, cards)
+    report(a, cards, per, [t for t, _ in gw] if a.play == 'R' else None, qlog if a.play == 'R' else None, aids)
     return 0 if ok else 1
 
 
-def report(a, cards):
+def report(a, cards, per=150, wtimes=None, qlog=None, aids=()):
     """The GP2 events of the replayed game (model state = what was on the screen)."""
     ai, n, _ = L.parse_config([a.cfg])
     g = L.Level(ai, n, a.play, a.start)
@@ -163,8 +188,8 @@ def report(a, cards):
             g.step(u.upper())
             show(f'T{k:03d}')
         return
-    c = L.LevelRT(g)
-    frz = 0
+    c = L.LevelRT(g, per)
+    frz, spans, open_ = 0, [], {}
     for card in cards:
         for kind, d, ch in next(ref_rt.events([card])):
             if kind in ('MOV', 'PAU', 'RDR', 'INV'):
@@ -180,7 +205,27 @@ def report(a, cards):
         if c.status() in ('PAUS', 'WAIT'):
             continue
         g.log = []
+        fr0, bt0, md0, frz0 = g.fr, g.bt, list(g.mode), c.frz
         c.rq()
+        q = c.q
+        dc = 'D' in g.evf or 'C' in g.evf
+        if any(e[0] == 'power' for e in g.log):
+            open_['fright'] = q
+        if fr0 > 0 and g.fr == 0 and 'fright' in open_ and not dc:
+            spans.append(('fright', open_.pop('fright'), q, g.level))
+        if 'A' in g.evf:
+            open_['fruit'] = q
+        if bt0 == 1 and g.bt == 0 and 'F' not in g.evf and 'fruit' in open_:
+            spans.append(('fruit', open_.pop('fruit'), q, g.level))
+        for i in range(g.n):
+            if md0[i] != 'E' and g.mode[i] == 'E':
+                open_[f'eyes{i}'] = q
+            if md0[i] == 'E' and g.mode[i] == 'N' and not dc and f'eyes{i}' in open_:
+                spans.append(('eyes', open_.pop(f'eyes{i}'), q, g.level))
+        if dc and c.frz:
+            open_['freeze'] = q
+        if frz0 == 1 and c.frz == 0 and 'freeze' in open_:
+            spans.append(('freeze', open_.pop('freeze'), q, g.level))
         if c.kind == 'F':
             frz += 1
             continue
@@ -188,7 +233,33 @@ def report(a, cards):
             print(f'   freeze: {frz} quanta (Q{c.q - frz:04d}-Q{c.q - 1:04d})')
             frz = 0
         show(f'Q{c.q:04d} K={c.kind}')
+    if wtimes is not None and qlog is not None and len(qlog) >= len(wtimes) - 1:
+        timing(spans, per, wtimes, qlog, aids)
 
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
+DESIGN = {'freeze': lambda lv: ref_rt.FREEZE, 'eyes': lambda lv: L.EYES['R'], 'fruit': lambda lv: L.FRUIT_TIME['R'],
+          'fright': lambda lv: L.ROWS[min(lv, 13)][4]}
+
+
+def timing(spans, per, wtimes, qlog, aids):
+    """Wall clock of each converted timer: from the write of its first quantum to the write of the quantum where it
+    has run out (freeze: the death / clear quantum to its last frozen quantum), minus the pause time between."""
+    at = {}
+    for (q, st), t in zip(qlog, wtimes):
+        if st not in ('WAIT', 'PAUS'):
+            at.setdefault(q, t)
+    ps = [t for t, c in aids if c == 'P']
+    pauses = list(zip(ps[0::2], ps[1::2]))
+    print(f'timers (quantum {per} ms): kind level quanta | live wall-clock ms (pause removed) | quanta x {per} | '
+          'NORMAL design ms')
+    for kind, q0, q1, lv in spans:
+        if q0 not in at or q1 not in at:
+            continue
+        t0, t1 = at[q0], at[q1]
+        paused = sum(max(0, min(t1, b) - max(t0, a_)) for a_, b in pauses)
+        print(f'  {kind:6} L{lv:02d} {q1 - q0:3d} q | {t1 - t0 - paused:6d} ms' + (f' ({paused} ms paused)' if paused
+              else '') + f' | {(q1 - q0) * per:6d} | {DESIGN[kind](lv) * 150:6d}')

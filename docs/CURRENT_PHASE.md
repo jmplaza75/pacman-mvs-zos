@@ -137,5 +137,7 @@ MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gamep
   PACDISP timers from the converted quanta, CLIST SPEED + LEVEL padding. Deck RP JOB 285: 127 steps RC 0000, RP.2
   6265 streams unchanged, D40 29 sequences, RP3 12 TSD runs = 1495 streams + 9 BAT runs = model, CLIST PARM lines
   under the TMP; regression GP2 JOB 283 (after COMPRESS JOB 282), HS JOB 284 PASS (docs/evidence/rp3-speed-build.txt).
-  Next (on user approval): install PACMAIN + CLIST, live FAST capture, then RP.4. Test:
-  `python3 tests/test_rp.py build/PACBLDRP-285.txt`.
+  Test: `python3 tests/test_rp.py build/PACBLDRP-285.txt`.
+- RP.3 INSTALLED (2026-10-13, user approval): PACMAIN = deck RP JOB 286 (load PACMAIN, same sources as JOB 285; all
+  RP / D40 / RP3 checks re-passed on the installed module), CLIST JOB 287 (only new default SPEED(NORMAL)). Next: ONE
+  directed FAST live capture (docs/evidence/rp3-fast-live-checklist.md), analysed before the rest of RP.4.

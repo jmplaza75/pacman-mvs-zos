@@ -63,3 +63,12 @@ PACBLDRP   R3ALC               IEFBR14   RC= 0000
 PACBLDRP   R3CLS               IEBGENER  RC= 0000
 PACBLDRP   R3CLT               IKJEFT01  RC= 0000
 PACBLDRP   R3DEL9              IEFBR14   RC= 0000
+
+# INSTALL (user approval 2026-10-13): deck RP with --load PACMAIN, JOB 286 (listing normalised PACMAIN -> PACRPD):
+MVS-RP RP.2 PASS: 127 steps RC 0000; 60 ARCADE TSD runs = 6265 model streams
+MVS-RP RP.2b D40 PASS: 29 startup sequences = model (valid first, ENTER / junk / AIDs / malformed then valid, empty reads, fallback by records and by time, single-record validity)
+MVS-RP RP.3 PASS: 12 TSD runs = 1495 model streams (FAST ARCADE / CLASSIC, NORMAL, invalid, TURN); 9 BAT runs = 6268 model lines; CLIST PARM 7 keyword sets (TMP)
+PACBLDRP   LINK                IEWL      RC= 0000
+PACBLDRP LINK - STEP WAS EXECUTED - COND CODE 0000
+# CLIST JOB 287:
+PACCLS10   STORE               IEBGENER  RC= 0000
