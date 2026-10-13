@@ -11,7 +11,10 @@ before the game start is read (no logon); inbound records are used only by their
 3. Report: every alarm write with its event and time, the gaps between the bells of each pattern (ms; in play they
    are G quanta of the period), the end pause (end screen -> each bell-only write -> the first line-mode record, about
    3 s), and the cadence of the running writes (median / p95 gap, late writes > 1.5 periods).
-Usage: c3270_s2_trace.py TRACE --scenario S2A|S2B|S2C|S2D|S2E [--from HHMMSS]"""
+--aids: replay the cards rebuilt from the AIDs that actually reached the host (one card per write after the first; an
+AID just before a write may belong to the next quantum, decided greedily as tools/c3270_gp2_trace.py), for a run whose
+inputs differ from the scenario (a key pressed by hand, a dropped idle PF1).
+Usage: c3270_s2_trace.py TRACE --scenario S2A|S2B|S2C|S2D|S2E [--from HHMMSS] [--aids]"""
 import argparse
 import re
 import sys
@@ -22,7 +25,7 @@ sys.path.insert(0, str(R / 'tools'))
 sys.path.insert(0, str(R / 'tests'))
 sys.path.insert(0, str(R / 'tests/s2live'))
 from c3270_rt_trace import load, ms  # noqa: E402
-from c3270_gp1_trace import host, command  # noqa: E402
+from c3270_gp1_trace import host, command, cards_for  # noqa: E402
 import make_live as M  # noqa: E402
 import ref_rt  # noqa: E402
 import ref_s2 as S  # noqa: E402
@@ -52,6 +55,7 @@ def main():
     ap.add_argument('trace')
     ap.add_argument('--scenario', required=True, choices=['S2' + k for k in M.SCEN])
     ap.add_argument('--from', dest='frm', default='000000')
+    ap.add_argument('--aids', action='store_true')
     a = ap.parse_args()
     name = a.scenario[2:]
     src, cfg, rules, sp, snd, al, words = M.SCEN[name]
@@ -62,7 +66,7 @@ def main():
     if not starts:
         raise SystemExit('no game screen in the trace after --from')
     ev = ev[starts[0]:]
-    writes, aids, after, over, end_k, tail = [], [], [], False, None, None
+    writes, aids, after, over, end_k, tail, aid_t = [], [], [], False, None, None, []
     for kind, t, x in ev:
         if kind == '<':
             b = host(x)
@@ -80,20 +84,43 @@ def main():
         elif kind == '>' and not over and writes:
             cmd = command(x)
             aids.append(cmd if cmd else ('.' if x[:1] == b'\xf1' else '?'))
+            aid_t.append((ms(t), aids[-1]))
     live = [w for _, w in writes]
     # the models, with the HUD high score of the first write (ARCADE: the CLIST allocates the high-score member)
     first = live[0].decode('cp037', 'replace') if live else ''
     m = re.search(r'HIGH[^0-9]{0,8}(\d{7})', first) or re.search(r'HI (\d{7})', first)
     hs = ('R', int(m.group(1)), 1) if (m and rules == 'A') else None
-    end, fs, log = M.run(rules, cards, per, hs)
-    if snd != 'Y':
-        want, trace = list(fs), []
-    elif al == 'P':
-        want, trace = S.patterns(fs, log, 'Y', 'R', per)
-    else:
-        want = M.single(rules, fs, log)
-        trace = [(k, 'BELL', 1) for k, f in enumerate(want) if f[0] & 0x04]
-    n_same = sum(1 for k, (p, q) in enumerate(zip(live, want)) if same(p, q, k))
+
+    def replay(cs):
+        end, fs, log = M.run(rules, cs, per, hs)
+        if snd != 'Y':
+            want, trace = list(fs), []
+        elif al == 'P':
+            want, trace = S.patterns(fs, log, 'Y', 'R', per)
+        else:
+            want = M.single(rules, fs, log)
+            trace = [(k, 'BELL', 1) for k, f in enumerate(want) if f[0] & 0x04]
+        pre = next((k for k, (p, q) in enumerate(zip(live, want)) if not same(p, q, k)), min(len(live), len(want)))
+        return (pre, sum(1 for k, (p, q) in enumerate(zip(live, want)) if same(p, q, k))), (end, want, trace, cs)
+    score, (end, want, trace, used) = replay(cards)
+    if a.aids:
+        game = writes[:end_k + 1] if end_k is not None else writes
+        shift = [0] * len(aid_t)
+        score, best = replay([cfg] + cards_for(game, aid_t, shift))
+        for i in [i for i, (t, _) in enumerate(aid_t) if any(0 <= tw - t < 60 for tw, _ in game)]:
+            for sh in (1, 2):
+                if score[1] == len(live) == len(best[1]):
+                    break
+                trial = list(shift)
+                trial[i] = sh
+                sc, res = replay([cfg] + cards_for(game, aid_t, trial))
+                if sc > score:
+                    shift, score, best = trial, sc, res
+        end, want, trace, used = best
+        print('cards rebuilt from the AIDs:', ' '.join(used[1:]))
+        print('first card differing from the scenario:',
+              next((i + 1 for i, (x, y) in enumerate(zip(used[1:], cards[1:])) if x != y), '-'))
+    n_same = score[1]
     ok = n_same == len(live) == len(want)
     print(f'scenario {a.scenario}: {words} | speed {"FAST" if per != 150 else "NORMAL"} ({per} ms) | HUD high score',
           m.group(1) if m else 'none')

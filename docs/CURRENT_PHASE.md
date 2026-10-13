@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-RP cerrada; siguiente fase: pendiente de decision del usuario).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-S2 cerrada; siguiente fase: MVS-G7, pendiente de decision del usuario).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -116,7 +116,7 @@ MVS-RP COMPLETE (tag mvs-rp, 2026-10-13): presentation and gameplay polish (docs
 record deck RP JOB 285, installed JOB 286 (PACMAIN) + JOB 287 (CLIST); live docs/evidence/rp3-fast-live.md and
 docs/evidence/rp-live.md (two accepted coverage exceptions recorded there). Regression to keep: tests/test_rp.py
 (`build/PACBLDRP-285.txt`), test_gp2 / test_hs with PACMAN_LATER_PHASE=RP, tests/test_core_frozen.py.
-Next phase: MVS-S2 (started 2026-10-13 on the user's go, see the MVS-S2 entry at the end).
+Next phase after RP: MVS-S2 (started 2026-10-13 on the user's go, see the MVS-S2 entry at the end).
 - RP.1 design D39 APPROVED and frozen (2026-10-12): ARCADE-only visuals, fruit popup in, no level-clear flash, SPEED
   for any REALTIME game, ESTAE via the test driver PACRPE. S2 not started.
 - RP.0 build PASS (deck RPE JOB 266: src/probe/PACRPE.cob + RPESTAE.clist, production PACFSIO/PACHSIO unchanged,
@@ -153,7 +153,7 @@ Next phase: MVS-S2 (started 2026-10-13 on the user's go, see the MVS-S2 entry at
   262/262 and Part B 5357/5357 writes = models; 603 s pause soak, no catch-up; no host skip in 10.75 min of FAST play.
   Accepted exceptions: no 10-minute pre-start hold live (25.7 s); pause / PA2 inside a death freeze only on Hercules
   (RPLOST). MVS-RP CLOSED.
-MVS-S2 IN PROGRESS (started 2026-10-13 on the user's go): alarm patterns and sound polish.
+MVS-S2 (started 2026-10-13 on the user's go): alarm patterns and sound polish.
 - Go on the S1 evidence (E15 screens 5/6: separate bells not merged); no probe step.
 - S2.1 design docs/S2-PATTERNS.md: D41 APPROVED and frozen (2026-10-13, user decisions in its section 8): ALARM(PATTERN|SINGLE)
   column 25, exact spacing G = 2 / 3 quanta (NORMAL / FAST), no new sound event (all six already rang), 3-s end pause kept.
@@ -170,4 +170,14 @@ MVS-S2 IN PROGRESS (started 2026-10-13 on the user's go): alarm patterns and sou
   JOB 296 = JCL error, not run (EXEC cards at column 72 with the longer load name; make_deck run_step fixed, other decks
   byte-identical). COMPRESS JOB 295. Evidence appended to docs/evidence/s2-build-tsd.txt.
 - S2.4 prepared, NOT run: docs/evidence/s2-live-checklist.md, five deterministic scenarios tests/s2live (driver
-  tools/gp2_live.py S2A-S2E), analyser tools/c3270_s2_trace.py (tested on synthetic traces). Waiting for the user's run.
+  tools/gp2_live.py S2A-S2E), analyser tools/c3270_s2_trace.py (tested on synthetic traces).
+- S2.4 session 1 (2026-10-13, docs/evidence/s2-live.md): S2A (twice), S2B, S2D, S2E = models byte for byte (run 2 of S2A
+  with a stray DOWN arrow: exact with --aids); bell gaps 295-302 ms (NORMAL) / 371-374 ms (FAST), end pause 3.0 s,
+  cadence at the period. S2C run after it: 188 / 188 writes = model, 4 bells (1 + 3 bell-only writes at +302 / +611
+  / +911 ms), end pause 3011 ms; user: "4 distinct bells", no audible anomaly in S2A/S2B/S2D/S2E. S2.4 PASS.
+MVS-S2 COMPLETE (tag mvs-s2, 2026-10-13): D41, docs/S2-PATTERNS.md; build deck S2 JOB 290, SINGLE regression RP 291 /
+GP2 293 / HS 294 (docs/evidence/s2-build-tsd.txt); installed baseline PACMAIN = JOB 298 link (JOB 297 S2 checks, JOB 298
+RP checks, same sources), CLIST JOB 299 (defaults ... SPEED(NORMAL) ALARM(PATTERN)); live docs/evidence/s2-live.md.
+Regression to keep: tests/test_s2.py (`build/PACBLDS2-290.txt`), test_rp / test_gp2 / test_hs with
+PACMAN_LATER_PHASE=S2, tests/test_core_frozen.py.
+Next phase: MVS-G7 (host graphics, paper phase, docs/ROADMAP-POST-RT.md row 7) - NOT started; on the user's go.

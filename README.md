@@ -70,7 +70,14 @@ his speed). An arrow pressed before an opening is remembered for 3 steps and tak
 arrow reverses at once. P (PF9) pauses and resumes (`PAUSED` banner), PA2 redraws, Q + ENTER quits; U/D/L/R/P + ENTER
 also work. Do not use CLEAR (TSO swallows it). Without colour full-screen mode the game plays TURN.
 Sound (MVS-S1): the terminal bell rings when the game starts, when Pac-Man dies and when he wins (`SOUND(AUTO)`, the
-default; `SOUND(NO)` = silent). Turn on macOS Terminal > Settings > Profiles > Advanced > "Audible bell". Design and
+default; `SOUND(NO)` = silent). Turn on macOS Terminal > Settings > Profiles > Advanced > "Audible bell".
+**Alarm patterns (MVS-S2):** `ALARM(PATTERN)` (the CLIST default) gives each event its own number of bells: start 1,
+death 2, extra life 2, level clear 3, game over 3, win 4, two quanta apart (300 ms; three quanta = 375 ms with
+`SPEED(FAST)`). The bells ride on frames the game sends anyway: no extra wait or write during play. After a win or a
+game over, the remaining bells ring inside the usual 3-second end pause, which never gets longer. TURN games ring the
+first bell of each event during play and the full win / game-over pattern at the end. `ALARM(SINGLE)` keeps one bell
+per event (the MVS-S1 / GP2 behaviour); `SOUND(NO)` silences every alarm, PATTERN and SINGLE alike. Example:
+`EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE) ALARM(SINGLE)'`. Design: `docs/S2-PATTERNS.md` (D41). Design and
 measurements: `docs/RT-REALTIME.md` (D33, D34), `docs/evidence/rt-e14-timing.md`, `docs/evidence/rt3-live.md`.
 **Arcade rules (MVS-GP1):** `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE)'` adds 4 blinking power pellets `o`
 (50 points), blue frightened ghosts (white just before the end; 40 quanta = 6 s, 20 turns in TURN) that flee more slowly,
@@ -178,6 +185,12 @@ animation, ghost / fruit popups, HUD and end-screen high score; `SPEED(NORMAL|FA
 so they keep their wall-clock length; an authorised core change, `docs/CORE_CHANGES.md`); the PACFSIO abend exit
 validated live with a test driver; startup hardened against a pending TSO `***` (D40: only a valid Query Reply is
 accepted); a 10-minute pause soak. CLASSIC screens and every earlier reference unchanged.
+MVS-S2 (alarm patterns, D41, `docs/S2-PATTERNS.md`): complete (tag `mvs-s2`). `ALARM(PATTERN|SINGLE)` (PARM column 25;
+absent or any other value = SINGLE, byte for byte the S1 / GP2 behaviour; CLIST default PATTERN); display and platform
+only (GAME / MAP / AI / PACARC / PACRT unchanged). Hercules deck S2 JOB 290 (`tests/test_s2.py`: 25 TSD runs = 2986
+model streams of the independent pattern model `tests/ref_s2.py`, 21 documented edge cases), SINGLE regression RP 291 /
+GP2 293 / HS 294; installed JOB 297 / 298 (PACMAIN) and 299 (CLIST); live in c3270 with six scripted runs byte-identical
+to the models and the bells heard as separate (`docs/evidence/s2-live.md`).
 Roadmap to the final MVS release 2.0-MVS-MAX: `docs/ROADMAP-POST-RT.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

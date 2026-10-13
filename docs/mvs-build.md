@@ -253,7 +253,7 @@ docs/CORE_CHANGES.md 2026-10-13). Install: `make_deck.py RP --load PACMAIN --out
 (analysers tools/c3270_rt_game.py --period, tools/c3270_gp2_trace.py --speed / --cards). Evidence of the builds:
 docs/evidence/rp2-build-tsd.txt, rp2b-d40-build.txt, rp3-speed-build.txt.
 
-## MVS-S2: alarm patterns (in progress, 2026-10-13)
+## MVS-S2: alarm patterns (complete, tag mvs-s2, 2026-10-13)
 Design docs/S2-PATTERNS.md (D41, frozen). No probe (E15 evidence). Implementation: PACREQ +REQ-ALARM, PACMAIN PARM column 25
 (`P` = ALARM(PATTERN)), PACDISP (BELL-SET wraps the unchanged SET-BELL: PAT-CLASS / PAT-PLAY on the REALTIME quantum
 writes; END-PAUSE rings the WIN / GAME OVER steps left as bell-only writes inside the 3-s end pause, CLOK + WDLN, then
@@ -266,4 +266,5 @@ test_gp2 / test_hs. COMPRESS JOB 289; S2 JOB 290 PASS; RP 291, COMPRESS 292, GP2
 docs/evidence/s2-build-tsd.txt.
 Install (S2.3): `make_deck.py S2 --load PACMAIN --out build/S2INST.jcl` (JOB 297; JOB 296 JCL error fixed in run_step),
 `make_deck.py RP --load PACMAIN --out build/RPS2INST.jcl` (JOB 298), `make_deck.py CLIST` (JOB 299). Live (S2.4):
-docs/evidence/s2-live-checklist.md (`tools/gp2_live.py S2A..S2E`, analysis `tools/c3270_s2_trace.py`).
+docs/evidence/s2-live-checklist.md (`tools/gp2_live.py S2A..S2E`, analysis `tools/c3270_s2_trace.py`); PASS,
+docs/evidence/s2-live.md.
