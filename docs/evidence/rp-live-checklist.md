@@ -10,8 +10,7 @@ One read-only job authorised by the user (IEBGENER, `SYS1.PARMLIB(SMFPRM00)` DIS
 modified): `JWT=60,  MAXIMUM WAIT TIME IS 60 MINS` (with `EXT=YES`: SMF user exits are taken). Effective limit: a job /
 TSO session may stay in a wait for up to 60 minutes before S522. The longest planned inactivity in Part B is 10 minutes
 (the pre-start wait and the pause are separate stretches with play in between, and the game reads in a blocking TGET),
-i.e. 1/6 of the limit: Part B can run as designed, no soak adjustment needed. RP.0 / RT sessions already sat idle at
-READY for longer stretches without termination.
+i.e. 1/6 of the limit: Part B can run as designed, no soak adjustment needed.
 
 ## Setup (user)
 Window 120x30; `tools/c3270_rt.sh ~/rp4-live.txt` (trace outside the repository); log on; READY.
