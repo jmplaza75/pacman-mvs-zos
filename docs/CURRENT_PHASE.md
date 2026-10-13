@@ -116,7 +116,7 @@ MVS-RP COMPLETE (tag mvs-rp, 2026-10-13): presentation and gameplay polish (docs
 record deck RP JOB 285, installed JOB 286 (PACMAIN) + JOB 287 (CLIST); live docs/evidence/rp3-fast-live.md and
 docs/evidence/rp-live.md (two accepted coverage exceptions recorded there). Regression to keep: tests/test_rp.py
 (`build/PACBLDRP-285.txt`), test_gp2 / test_hs with PACMAN_LATER_PHASE=RP, tests/test_core_frozen.py.
-Next phase: not started; pending the user's decision (roadmap next: MVS-S2, docs/ROADMAP-POST-RT.md).
+Next phase: MVS-S2 (started 2026-10-13 on the user's go, see the MVS-S2 entry at the end).
 - RP.1 design D39 APPROVED and frozen (2026-10-12): ARCADE-only visuals, fruit popup in, no level-clear flash, SPEED
   for any REALTIME game, ESTAE via the test driver PACRPE. S2 not started.
 - RP.0 build PASS (deck RPE JOB 266: src/probe/PACRPE.cob + RPESTAE.clist, production PACFSIO/PACHSIO unchanged,
@@ -153,3 +153,8 @@ Next phase: not started; pending the user's decision (roadmap next: MVS-S2, docs
   262/262 and Part B 5357/5357 writes = models; 603 s pause soak, no catch-up; no host skip in 10.75 min of FAST play.
   Accepted exceptions: no 10-minute pre-start hold live (25.7 s); pause / PA2 inside a death freeze only on Hercules
   (RPLOST). MVS-RP CLOSED.
+MVS-S2 IN PROGRESS (started 2026-10-13 on the user's go): alarm patterns and sound polish.
+- Go on the S1 evidence (E15 screens 5/6: separate bells not merged); no probe step.
+- S2.1 design docs/S2-PATTERNS.md: D41 APPROVED and frozen (2026-10-13, user decisions in its section 8): ALARM(PATTERN|SINGLE)
+  column 25, exact spacing G = 2 / 3 quanta (NORMAL / FAST), no new sound event (all six already rang), 3-s end pause kept.
+- S2.2 next: PACREQ/PACMAIN/PACDISP/PACPLAT/CLIST + model; GAME/MAP/AI/PACARC/PACRT untouched.

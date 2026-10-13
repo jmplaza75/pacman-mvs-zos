@@ -254,3 +254,14 @@
   (docs/RP-POLISH.md 11): PACQRY accepts only a structurally valid Query Reply (AID X'88', exact chain of X'81'
   fields, Summary first); PACPLAT reads past anything else with PACFSIO RECT, at most 8 records / 6 empty reads,
   then the line-mode fallback after a drain; a valid first reply = no extra read (start unchanged); no re-query.
+- D41 (MVS-S2, APPROVED and frozen 2026-10-13, docs/S2-PATTERNS.md) Alarm patterns. No probe: E15 showed separate
+  bells are not merged. `ALARM(PATTERN|SINGLE)` = PARM column 25 (`P`; absent/else SINGLE = S1/GP2 bytes and waits;
+  CLIST default PATTERN); SOUND(NO) suppresses every alarm. No new sound event: start, death, extra life, level clear,
+  game over (the last death, which already rang as a death) and win all rang before S2; under PATTERN they give 1 / 2
+  / 2 / 3 / 3 / 4 bells at offsets 0, G, 2G ... quanta, G = 2 at 150 ms (NORMAL), 3 at 125 ms (FAST), exact, no clock
+  reads in play. Steps ride on REALTIME quantum writes (plain or prompt-form frames); pre-start / pause screens and
+  ticks neither ring nor advance; pause holds a pattern; TURN rings offset 0 only during play. Priority game over > win
+  > level clear > death > extra life > start; higher or equal replaces, lower is absorbed (unreachable in play).
+  Game end drops in-play steps; game-over / win steps left go as bell-only writes inside the existing 3-s end pause
+  (CLOK at the end screen, WDLN pacing, new PACPLAT op DLWT to t0 + 3000 ms), never lengthening it; not scaled = S1.
+  Display/platform only: GAME, MAP, AI, PACARC, PACRT unchanged.
