@@ -42,8 +42,19 @@ with `--cards`.
 - tools/c3270_gp2_trace.py: no trimming of trailing idle cards (a LOST game needs them), `timing()` defined before the
   entry point, `--cards`.
 
-## Open (needs the user's decision)
-1. B1: the 10-minute pre-start hold was not done (25.7 s).
-2. A4: pause during a death freeze and PA2 during a freeze not done live.
-Smallest retest: one SPEED(FAST) ARCADE game: hold READY! 10 minutes, then play; during a death freeze P, ~3 s, P;
-during another freeze PA2; Q + ENTER (~12 minutes).
+## Coverage exceptions (accepted by the user, 2026-10-13; no retest)
+1. **10-minute pre-start hold (B1): not performed live.** The live start hold was 25.7 s (game screen 20:10:56.181,
+   first arrow 20:11:21.889). The same session then showed 10.75 minutes (5164 quanta) of stable unattended REALTIME
+   execution at SPEED(FAST) with no skipped period, and a separate 603 s live pause soak (B3/B4) with no abend and no
+   catch-up. The pre-start WAIT itself was not held for 10 minutes live; this document does not claim it was.
+2. **Pause during a death freeze and PA2 during a death freeze (A4): not observed in the human live route.** Part A had
+   no PF9, and its one PA2 (Q173) fell outside both freezes. Both combinations are covered deterministically on
+   Hercules: case `tests/rpcases/RPLOST` (pause + PA2 inside the first death freeze; RP edges `pause-freeze` and
+   `redraw-freeze`) in deck RP JOB 285 / JOB 286, TSD streams = the independent models byte for byte. This document
+   does not claim those two exact combinations were seen live.
+The user accepted this mixed live + deterministic coverage as sufficient for the RP closure (same practice as GP1).
+
+## Verdict
+RP.4 PASS with the two documented coverage exceptions. Live: D40 case (a) (rp3-fast-live.md) and case (b), Part A
+262/262 and Part B 5357/5357 writes = the models, FAST timing (no skip, no drift), the 10-minute pause soak, timers and
+decorations measured. MVS-RP closed (tag `mvs-rp`).

@@ -238,3 +238,17 @@ PACREQ/PACPLAT/PACMAIN/PACDISP, CLIST, decks `DATA` (one-time), `HS` (job PACBLD
 `python3 tests/test_hs.py build/PACBLDHS-<n>.txt build/PACBLG23-<n>.txt build/PACBLGP2-<n>.txt`. JOB 259 JCL error (PARM
 past column 71 with COND=(0,NE,LINK)); JOB 260 PASS (71 steps, HSFILL RC 12 expected); COMPRESS 261, GP2 262, GP23 263
 PASS. DATA JOB 264, CLIST JOB 265. Evidence: docs/evidence/hs-build-tsd.txt. HS.3 live next.
+
+## MVS-RP: presentation and gameplay polish (complete, tag mvs-rp, 2026-10-13)
+Design docs/RP-POLISH.md (D39, D40). RP.0 ESTAE test driver: deck `RPE` (src/probe/PACRPE.cob, RPESTAE.clist), JOB 266/267,
+live PASS (docs/evidence/rp-estae-live1.md, rp-estae-live2.md). RP.2 ARCADE presentation and RP.2b D40 startup
+hardening and RP.3 SPEED: deck `RP` (job PACBLDRP, development load member PACRPD):
+`python3 tools/make_deck.py RP && python3 tools/run_deck.py build/RP.jcl`, then
+`PACMAN_LATER_PHASE=RP python3 tests/test_rp.py build/PACBLDRP-<n>.txt`. Regressions into PACRPD:
+`make_deck.py GP2 --load PACRPD` / `HS --load PACRPD`, listings normalised `sed 's/PACRPD/PACMAIN/g'`, then test_gp2 /
+test_hs (HS with a GP23 listing for the end lines). JOBs: 270 (RP.2), 275 (RP.2b, after COMPRESS 274), 278-279, 285
+(RP.3 build of record; GP2 283 after COMPRESS 282, HS 284). RP.3 needed an authorised core change (PACGAME RT-CONV,
+docs/CORE_CHANGES.md 2026-10-13). Install: `make_deck.py RP --load PACMAIN --out build/RPINST.jcl` (JOB 286) and
+`make_deck.py CLIST` (JOB 287). JWT read-only check JOB 288. Live: docs/evidence/rp3-fast-live.md, rp-live.md
+(analysers tools/c3270_rt_game.py --period, tools/c3270_gp2_trace.py --speed / --cards). Evidence of the builds:
+docs/evidence/rp2-build-tsd.txt, rp2b-d40-build.txt, rp3-speed-build.txt.

@@ -76,6 +76,12 @@ measurements: `docs/RT-REALTIME.md` (D33, D34), `docs/evidence/rt-e14-timing.md`
 (50 points), blue frightened ghosts (white just before the end; 40 quanta = 6 s, 20 turns in TURN) that flee more slowly,
 eaten ghosts 200/400/800/1600 that go home as eyes and revive, and a 7-digit score. `RULES(CLASSIC)` (the default) is
 the 1.0-MVS game. Design: `docs/GP1-POWER.md` (D36).
+**Speed and presentation (MVS-RP):** `SPEED(NORMAL|FAST)` sets the REALTIME quantum to 150 ms (default) or 125 ms:
+with FAST, Pac-Man and the ghosts move faster, while frightened time, the fruit, the death / level-clear freeze, READY!,
+the death animation and the score popups keep their length in seconds. `RULES(ARCADE)` games show READY! before the
+start and after a death, a 6-frame death animation (also before GAME OVER), a popup with the points of an eaten ghost
+or fruit, and the high score in the HUD and on the end screen. Try it:
+`EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE) SPEED(FAST)'`. TURN games ignore SPEED. Design: `docs/RP-POLISH.md`.
 **Turn by turn (compatibility):** `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'PLAY(TURN)'` plays one move per command, as
 below. Log on to TSO (`c3270 localhost:3270`) and run from `READY` (add `PLAY(TURN)` for the turn-by-turn game):
 ```
@@ -113,7 +119,7 @@ row can still fill the screen once. Validated live in c3270.
 ## Architecture and documentation
 - `PACMAIN` is the driver; the layers are `PACGAME`, `PACMAP` and `PACAI` (portable core), `PACINPT` and `PACDISP`
   (adapters), and `PACPLAT` with `PACTSO` (platform). See `docs/ARCHITECTURE.md`.
-- `docs/DECISIONS.md` records the compiler dialect rules and the game rules (D1–D30).
+- `docs/DECISIONS.md` records the compiler dialect rules and the game rules (D1–D40).
 - `docs/mvs-build.md` holds the per-phase build history and evidence, and `docs/CURRENT_PHASE.md` the status.
 
 ## Phases
@@ -165,6 +171,13 @@ malformed member counts as 0 and is healed by the next save; disk problems never
 once on an existing install: `python3 tools/make_deck.py DATA && python3 tools/run_deck.py build/DATA.jcl` (the ALLOC
 deck creates it on a fresh install; COMPRESS and rebuilds never touch it). Batch play with the high score:
 `make_deck.py RUN --cards FILE --parm 'BAT                 A' --hiscore`.
+MVS-RP (presentation and gameplay polish, D39 / D40, `docs/RP-POLISH.md`): complete (tag `mvs-rp`; Hercules deck RP
+JOB 285 (`tests/test_rp.py`: 60 ARCADE TSD runs = 6265 model streams, the SPEED runs, the startup sequences), installed
+JOB 286/287, live in c3270: `docs/evidence/rp3-fast-live.md`, `docs/evidence/rp-live.md`). ARCADE READY!, death
+animation, ghost / fruit popups, HUD and end-screen high score; `SPEED(NORMAL|FAST)` (150 / 125 ms, timers converted
+so they keep their wall-clock length; an authorised core change, `docs/CORE_CHANGES.md`); the PACFSIO abend exit
+validated live with a test driver; startup hardened against a pending TSO `***` (D40: only a valid Query Reply is
+accepted); a 10-minute pause soak. CLASSIC screens and every earlier reference unchanged.
 Roadmap to the final MVS release 2.0-MVS-MAX: `docs/ROADMAP-POST-RT.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.

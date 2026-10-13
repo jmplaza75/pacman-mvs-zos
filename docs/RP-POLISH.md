@@ -14,7 +14,7 @@ core change, tests/core_baseline.json unchanged. Batch and TSO line-mode SYSOUT 
 | RP.2 | PACRT (publish freeze count + death cell), PACREQ (appended), PACSCR/PACPAL/PACDISP (sections 2-5), models | deck `RP` (TSD runs = model), regression decks GP2/GP23/HS rerun |
 | RP.2b | D40 startup hardening (section 11): PACQRY validity + bounded selection, PACPLAT TRY-COLOUR loop | PACQRYT sequence cases = model; every earlier reference unchanged |
 | RP.3 | `SPEED(NORMAL\|FAST)` (section 6): PARM column 24, PACPLAT period, one conversion (PACRT, PACGAME core), CLIST | deck `RP` + CLIST job; live capture analysed |
-| RP.4 | live c3270 checklist + the 10-minute pause soak (section 8) | docs/evidence/rp-live.md, README, CURRENT_PHASE, tag `mvs-rp` |
+| RP.4 (PASS 2026-10-13, docs/evidence/rp-live.md) | live c3270 checklist + the 10-minute pause soak (section 8) | docs/evidence/rp-live.md, README, CURRENT_PHASE, tag `mvs-rp` |
 
 ## 1. Scope rule (proposed D39.1)
 - READY!, death animation, level-clear flash, score popups, end screen and HUD high score are **RULES(ARCADE) only**.

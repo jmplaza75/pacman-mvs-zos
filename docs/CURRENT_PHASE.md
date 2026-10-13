@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-GS cerrada; siguiente fase: pendiente de decision del usuario).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-RP cerrada; siguiente fase: pendiente de decision del usuario).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -112,7 +112,11 @@ MVS-HS COMPLETE (tag mvs-hs, 2026-10-12). Regression to keep: tests/test_hs.py (
 build/PACBLG23-263.txt build/PACBLGP2-262.txt`; runs test_gp2 with PACMAN_LATER_PHASE=HS) + test_gs, test_g4,
 test_core_frozen. Install note: the high-score dataset <prefix>.DATA (deck DATA once, or ALLOC on a fresh install) is
 outside the build libraries; COMPRESS and rebuilds never touch it.
-MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gameplay polish (docs/RP-POLISH.md).
+MVS-RP COMPLETE (tag mvs-rp, 2026-10-13): presentation and gameplay polish (docs/RP-POLISH.md, D39, D40). Build of
+record deck RP JOB 285, installed JOB 286 (PACMAIN) + JOB 287 (CLIST); live docs/evidence/rp3-fast-live.md and
+docs/evidence/rp-live.md (two accepted coverage exceptions recorded there). Regression to keep: tests/test_rp.py
+(`build/PACBLDRP-285.txt`), test_gp2 / test_hs with PACMAN_LATER_PHASE=RP, tests/test_core_frozen.py.
+Next phase: not started; pending the user's decision (roadmap next: MVS-S2, docs/ROADMAP-POST-RT.md).
 - RP.1 design D39 APPROVED and frozen (2026-10-12): ARCADE-only visuals, fruit popup in, no level-clear flash, SPEED
   for any REALTIME game, ESTAE via the test driver PACRPE. S2 not started.
 - RP.0 build PASS (deck RPE JOB 266: src/probe/PACRPE.cob + RPESTAE.clist, production PACFSIO/PACHSIO unchanged,
@@ -145,5 +149,7 @@ MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gamep
   periods, gap median 125 / p95 133 ms, lateness median 7 / p95 13 ms, 2 isolated late writes (160 ms) recovered at
   once, drift +0.5 ms / 100 quanta; fright 5999 / 5997 ms, eyes 2998, freeze 1501 (NORMAL design 6000 / 3000 / 1500);
   D40 case (a) clean startup. SPEED(FAST) kept. Pause at FAST not taken: folded into the RP.4 soak.
-- RP.4 NEXT: docs/evidence/rp-live-checklist.md (D40 case (b), NORMAL game to GAME OVER, 10-minute pre-start + pause
-  soak at FAST; JWT limits read first). Do not close / tag RP before its analysis.
+- RP.4 PASS (2026-10-13, docs/evidence/rp-live.md): JWT=60 min (JOB 288, read-only); D40 case (b) live PASS; Part A
+  262/262 and Part B 5357/5357 writes = models; 603 s pause soak, no catch-up; no host skip in 10.75 min of FAST play.
+  Accepted exceptions: no 10-minute pre-start hold live (25.7 s); pause / PA2 inside a death freeze only on Hercules
+  (RPLOST). MVS-RP CLOSED.
