@@ -5,10 +5,13 @@ score byte-identical, timers, cadence, D40 case (a) clean startup (rp3-fast-live
 Remaining: D40 case (b) (the RP.0 `***` reproduction), a NORMAL ARCADE game to GAME OVER (final death animation, end
 screen), the 10-minute pre-start and pause soak (run at SPEED(FAST), which also covers FAST pause / resume).
 
-## Before the session: the TK4- wait limits (design 8)
-The soak needs the job wait (JWT, SMF parameters) and any TSO input wait limit noted. They live in SYS1.PARMLIB, which
-is outside HERC01.PACMAN.*: either (1) you read `SYS1.PARMLIB(SMFPRM00)` (the JWT value) yourself and tell me, or
-(2) you allow one read-only batch job (IEBGENER, `DISP=SHR`, output to SYSOUT only) that prints that member.
+## TK4- wait limit (design 8) - read 2026-10-13, JOB 288
+One read-only job authorised by the user (IEBGENER, `SYS1.PARMLIB(SMFPRM00)` DISP=SHR, output to SYSOUT; nothing
+modified): `JWT=60,  MAXIMUM WAIT TIME IS 60 MINS` (with `EXT=YES`: SMF user exits are taken). Effective limit: a job /
+TSO session may stay in a wait for up to 60 minutes before S522. The longest planned inactivity in Part B is 10 minutes
+(the pre-start wait and the pause are separate stretches with play in between, and the game reads in a blocking TGET),
+i.e. 1/6 of the limit: Part B can run as designed, no soak adjustment needed. RP.0 / RT sessions already sat idle at
+READY for longer stretches without termination.
 
 ## Setup (user)
 Window 120x30; `tools/c3270_rt.sh ~/rp4-live.txt` (trace outside the repository); log on; READY.
