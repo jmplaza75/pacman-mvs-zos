@@ -252,3 +252,15 @@ docs/CORE_CHANGES.md 2026-10-13). Install: `make_deck.py RP --load PACMAIN --out
 `make_deck.py CLIST` (JOB 287). JWT read-only check JOB 288. Live: docs/evidence/rp3-fast-live.md, rp-live.md
 (analysers tools/c3270_rt_game.py --period, tools/c3270_gp2_trace.py --speed / --cards). Evidence of the builds:
 docs/evidence/rp2-build-tsd.txt, rp2b-d40-build.txt, rp3-speed-build.txt.
+
+## MVS-S2: alarm patterns (in progress, 2026-10-13)
+Design docs/S2-PATTERNS.md (D41, frozen). No probe (E15 evidence). Implementation: PACREQ +REQ-ALARM, PACMAIN PARM column 25
+(`P` = ALARM(PATTERN)), PACDISP (BELL-SET wraps the unchanged SET-BELL: PAT-CLASS / PAT-PLAY on the REALTIME quantum
+writes; END-PAUSE rings the WIN / GAME OVER steps left as bell-only writes inside the 3-s end pause, CLOK + WDLN, then
+PACPLAT DLWT to t0 + 3000), PACPLAT op DLWT, CLIST ALARM(PATTERN). Model tests/ref_s2.py over the screen models (frame
+kinds Q / P / E / N), cases tests/s2cases (tests/search_s2.py). Build + tests (load member PACS2D):
+`python3 tools/make_deck.py S2 && python3 tools/run_deck.py build/S2.jcl`, then
+`python3 tests/test_s2.py build/PACBLDS2-<n>.txt`. SINGLE regression: `make_deck.py RP|GP2|HS --load PACS2D --out ...`,
+listings normalised (`sed 's/PACS2D/PACRPD/g'` for RP, `PACMAIN` for GP2 / HS), then `PACMAN_LATER_PHASE=S2` test_rp /
+test_gp2 / test_hs. COMPRESS JOB 289; S2 JOB 290 PASS; RP 291, COMPRESS 292, GP2 293, HS 294 PASS. Evidence:
+docs/evidence/s2-build-tsd.txt.

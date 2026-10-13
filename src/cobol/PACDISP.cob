@@ -42,6 +42,16 @@
       * THE 6 DEATH FRAMES (PACSCR RTQF, REQ-RTSTAT FRZ, REQ-RTFRZ
       * 10..5; TSC: ONE PERIOD APART BY PACPLAT CLOK / WDLN) BEFORE
       * THE END SCREEN.
+      * MVS-S2 (D41, DOCS/S2-PATTERNS.MD): WITH REQ-ALARM P AND SOUND Y
+      * EVERY SCREEN GOES THROUGH BELL-SET: PAT-CLASS NAMES THE HIGHEST
+      * EVENT OF THE SCREEN (START 1, EXTRA LIFE 2, DEATH 3, LEVEL
+      * CLEAR 4, WIN 5, GAME OVER 6) FROM THE SAME COUNTERS AS SET-BELL,
+      * PAT-PLAY RINGS ITS PATTERN (1 2 2 3 4 3 BELLS, PT-G QUANTA
+      * APART: 2 AT 150 MS, 3 AT 125 MS) ON THE REALTIME QUANTUM
+      * WRITES ONLY (PT-QW); A HIGHER OR EQUAL EVENT REPLACES IT, TURN
+      * PLAY RINGS THE FIRST BELL ONLY. AT THE END ONLY A WIN / GAME
+      * OVER PATTERN GOES ON, AS BELL-ONLY WRITES INSIDE THE 3-S END
+      * PAUSE (END-PAUSE). REQ-ALARM S = THE S1 / GP2 PATH UNCHANGED.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACDISP.
        ENVIRONMENT DIVISION.
@@ -70,6 +80,18 @@
        01  SB-XL                 PIC 9 VALUE 0.
        01  SB-LVL                PIC 999 VALUE 0.
        01  FD-K                  PIC 99 VALUE 0.
+       01  PT-ON                 PIC 9 VALUE 0.
+       01  PT-PRI                PIC 9 VALUE 0.
+       01  PT-EV                 PIC 9 VALUE 0.
+       01  PT-D                  PIC 9 VALUE 0.
+       01  PT-LEFT               PIC 9 VALUE 0.
+       01  PT-NEXT               PIC 9 VALUE 0.
+       01  PT-G                  PIC 9 VALUE 2.
+       01  PT-QW                 PIC 9 VALUE 0.
+       01  PT-T0                 PIC S9(9) COMP VALUE +0.
+       01  PT-TAB                PIC X(6) VALUE '122343'.
+       01  PT-TABR REDEFINES PT-TAB.
+           05  PT-NB             PIC 9 OCCURS 6 TIMES.
        01  FD-SAVE               PIC X(4).
        01  HEXW.
            05  HX-Z              PIC X VALUE LOW-VALUE.
@@ -270,7 +292,7 @@
            CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
                    PAC-ARC.
            ADD DS-LEN TO M-CHARS.
-           PERFORM SET-BELL.
+           PERFORM BELL-SET.
            MOVE 'SEND' TO REQ-OP.
            MOVE SPACE TO REQ-SENDST.
            CALL 'PACPLAT' USING PAC-REQ PAC-DS.
@@ -282,6 +304,9 @@
        SCR-ENDS.
       * MVS-GS: SCALED ONLY - ONE FINAL SCREEN WITH THE END BANNER, THEN
       * A SHORT PAUSE (PACPLAT WAIT, NO INPUT IS READ) BEFORE LINE MODE.
+      * MVS-S2: GAME OVER - ONLY A WIN / GAME OVER PATTERN GOES ON.
+           IF PT-PRI < 5
+               MOVE 0 TO PT-ON.
            IF ARC-ON = 1 AND F-LOST = 1 AND REQ-PLAY = 'R'
                PERFORM FINAL-DEATH.
            MOVE 0 TO DS-LEN.
@@ -296,27 +321,63 @@
        SCR-ENDS-SEND.
            IF DS-LEN > 0
                ADD DS-LEN TO M-CHARS
-               PERFORM SET-BELL
+               PERFORM BELL-SET
                MOVE 'SEND' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ PAC-DS
-               MOVE 'WAIT' TO REQ-OP
-               CALL 'PACPLAT' USING PAC-REQ.
+               PERFORM END-PAUSE THRU END-PAUSE-EXIT.
            MOVE 0 TO WS-NOP.
+       END-PAUSE.
+      * MVS-S2 (D41 5): NO PATTERN LEFT = THE 3-S WAIT AS BEFORE. ELSE
+      * EACH STEP LEFT IS A BELL-ONLY WRITE PT-G PERIODS AFTER THE LAST
+      * (WDLN FROM THE END SCREEN'S CLOCK T0), THEN WAIT UNTIL T0 + 3 S
+      * (DLWT): THE PAUSE IS NEVER LONGER. TSD: THE WRITES, NO WAITS.
+           IF PT-ON = 0
+               MOVE 'WAIT' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ
+               GO TO END-PAUSE-EXIT.
+           IF REQ-MODE = 'TSC'
+               MOVE 'CLOK' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ
+               MOVE REQ-TIME TO PT-T0.
+           PERFORM END-STEP THRU END-STEP-EXIT
+               UNTIL PT-ON = 0.
+           IF REQ-MODE = 'TSC'
+               COMPUTE REQ-TIME = PT-T0 + 3000
+               MOVE 'DLWT' TO REQ-OP
+               CALL 'PACPLAT' USING PAC-REQ.
+       END-PAUSE-EXIT.
+           EXIT.
+       END-STEP.
+           IF REQ-MODE = 'TSC'
+               PERFORM END-WDLN PT-G TIMES.
+           MOVE 'Y' TO REQ-BELL.
+           PERFORM BELL-WRITE.
+           SUBTRACT 1 FROM PT-LEFT.
+           IF PT-LEFT = 0
+               MOVE 0 TO PT-ON.
+       END-STEP-EXIT.
+           EXIT.
+       END-WDLN.
+           MOVE 'WDLN' TO REQ-OP.
+           CALL 'PACPLAT' USING PAC-REQ.
        SCR-END-BELL.
            PERFORM SET-BELL.
            IF REQ-BELL = 'Y' AND REQ-SOUND = 'Y'
-               MOVE 194 TO HEXN
-               MOVE HX-B TO DS-BYTE (1)
-               MOVE 40 TO HEXN
-               MOVE HX-B TO DS-BYTE (2)
-               MOVE LOW-VALUE TO DS-BYTE (3)
-               MOVE LOW-VALUE TO DS-BYTE (4)
-               MOVE 4 TO DS-LEN
-               MOVE 'P' TO DS-KIND
-               ADD DS-LEN TO M-CHARS
-               MOVE 'SEND' TO REQ-OP
-               CALL 'PACPLAT' USING PAC-REQ PAC-DS.
+               PERFORM BELL-WRITE.
            MOVE 'N' TO REQ-BELL.
+       BELL-WRITE.
+      * THE RESTORE-ONLY WRITE C2 28 00 00 (PACPLAT ADDS THE ALARM BIT).
+           MOVE 194 TO HEXN.
+           MOVE HX-B TO DS-BYTE (1).
+           MOVE 40 TO HEXN.
+           MOVE HX-B TO DS-BYTE (2).
+           MOVE LOW-VALUE TO DS-BYTE (3).
+           MOVE LOW-VALUE TO DS-BYTE (4).
+           MOVE 4 TO DS-LEN.
+           MOVE 'P' TO DS-KIND.
+           ADD DS-LEN TO M-CHARS.
+           MOVE 'SEND' TO REQ-OP.
+           CALL 'PACPLAT' USING PAC-REQ PAC-DS.
        FINAL-DEATH.
       * MVS-RP: THE LAST LIFE LOST (NO FREEZE IN THE GAME): THE DEATH
       * FRAMES AS QUANTUM FRAMES, THE STATE UNCHANGED.
@@ -337,6 +398,74 @@
            MOVE FD-K TO REQ-RTFRZ.
            MOVE 'RTQF' TO REQ-OP.
            PERFORM SCR-RTQF THRU SCR-RTQF-EXIT.
+       BELL-SET.
+      * MVS-S2 (D41): SET-BELL (S1 / GP2) BETWEEN THE PATTERN STEPS,
+      * WHICH RUN ONLY WITH ALARM(PATTERN) AND SOUND Y.
+           IF REQ-ALARM = 'P' AND REQ-SOUND = 'Y'
+               PERFORM PAT-CLASS THRU PAT-CLASS-EXIT.
+           PERFORM SET-BELL.
+           IF REQ-ALARM = 'P' AND REQ-SOUND = 'Y'
+               PERFORM PAT-PLAY THRU PAT-PLAY-EXIT.
+           MOVE 0 TO PT-QW.
+       PAT-CLASS.
+      * THE HIGHEST EVENT OF THIS SCREEN (0 NONE), READ BEFORE SET-BELL
+      * UPDATES ITS SB- COPIES. GAME OVER = A DEATH THAT ENDS THE GAME.
+           MOVE 0 TO PT-EV.
+           MOVE 0 TO PT-D.
+           IF SB-SENT = 0
+               MOVE 1 TO PT-EV
+               GO TO PAT-CLASS-EXIT.
+           IF ARC-ON = 1 AND ARC-XL > SB-XL
+               MOVE 2 TO PT-EV.
+           IF ARC-ON = 0 AND LIVES < SB-LIVES
+               MOVE 1 TO PT-D.
+           IF ARC-ON = 1 AND ARC-NDIE > SB-NDIE
+               MOVE 1 TO PT-D.
+           IF PT-D = 1
+               MOVE 3 TO PT-EV.
+           IF ARC-ON = 1 AND ARC-LEVEL > SB-LVL
+               MOVE 4 TO PT-EV.
+           IF F-WON = 1 AND SB-WON = 0
+               MOVE 5 TO PT-EV.
+           IF PT-D = 1 AND F-LOST = 1
+               MOVE 6 TO PT-EV.
+       PAT-CLASS-EXIT.
+           EXIT.
+       PAT-PLAY.
+      * AN EVENT AT OR ABOVE THE RUNNING PATTERN STARTS ITS OWN (FIRST
+      * BELL ON THIS SCREEN); ELSE A QUANTUM WRITE MAY CARRY A STEP.
+           IF PT-EV = 0
+               GO TO PAT-STEP.
+           IF PT-ON = 1 AND PT-EV < PT-PRI
+               GO TO PAT-STEP.
+           MOVE 2 TO PT-G.
+           IF REQ-RTPER < 150
+               MOVE 3 TO PT-G.
+           MOVE 'Y' TO REQ-BELL.
+           MOVE PT-EV TO PT-PRI.
+           MOVE PT-NB (PT-EV) TO PT-LEFT.
+           SUBTRACT 1 FROM PT-LEFT.
+           MOVE PT-G TO PT-NEXT.
+           MOVE 1 TO PT-ON.
+           IF PT-LEFT = 0
+               MOVE 0 TO PT-ON.
+           IF REQ-PLAY = 'T' AND PT-EV < 5
+               MOVE 0 TO PT-ON.
+           GO TO PAT-PLAY-EXIT.
+       PAT-STEP.
+           MOVE 'N' TO REQ-BELL.
+           IF PT-ON = 0 OR PT-QW = 0
+               GO TO PAT-PLAY-EXIT.
+           SUBTRACT 1 FROM PT-NEXT.
+           IF PT-NEXT > 0
+               GO TO PAT-PLAY-EXIT.
+           MOVE 'Y' TO REQ-BELL.
+           MOVE PT-G TO PT-NEXT.
+           SUBTRACT 1 FROM PT-LEFT.
+           IF PT-LEFT = 0
+               MOVE 0 TO PT-ON.
+       PAT-PLAY-EXIT.
+           EXIT.
        SET-BELL.
            MOVE 'N' TO REQ-BELL.
            IF SB-SENT = 0
@@ -356,7 +485,7 @@
                    PAC-ARC.
            IF DS-LEN > 0
                ADD DS-LEN TO M-CHARS
-               PERFORM SET-BELL
+               PERFORM BELL-SET
                MOVE 'SEND' TO REQ-OP
                MOVE SPACE TO REQ-SENDST
                CALL 'PACPLAT' USING PAC-REQ PAC-DS
@@ -369,6 +498,8 @@
       * MVS-RT: EXACTLY ONE WRITE FOR THE QUANTUM, ALWAYS WITH THE
       * KEYBOARD RESTORE: AFTER ENTER / INVALID INPUT / REDRAW THE
       * PROMPT SCREEN (FIELD RESET; F = FULL), ELSE PACSCR RTQF.
+      * MVS-S2: EITHER WAY IT IS THE QUANTUM'S ONE WRITE (PT-QW 1).
+           MOVE 1 TO PT-QW.
            IF REQ-RTFR = 'P' OR REQ-RTFR = 'F'
                MOVE 'MOV' TO REQ-KIND
                IF REQ-RTFR = 'F'
@@ -381,7 +512,7 @@
            CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS
                    PAC-ARC.
            ADD DS-LEN TO M-CHARS.
-           PERFORM SET-BELL.
+           PERFORM BELL-SET.
            MOVE 'SEND' TO REQ-OP.
            MOVE SPACE TO REQ-SENDST.
            CALL 'PACPLAT' USING PAC-REQ PAC-DS.

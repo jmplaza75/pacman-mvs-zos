@@ -65,6 +65,9 @@ DECKS = {
     # (the installed PACMAIN is replaced only by the final RP build), then the RP TSD runs (rp_steps)
     'RP': ('PACBLDRP', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACRPD', []),
+    # MVS-S2 (D41): the RP modules and copies (PACREQ +REQ-ALARM); development load member PACS2D, then the S2 runs
+    'S2': ('PACBLDS2', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
+           ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACS2D', []),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -117,7 +120,7 @@ def run_step(step, pfx, load, sysin, parm=None, dd=None, cond='(0,NE)'):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO'], 'GP2': ['PACTSO', 'PACFSIO'], 'GP23': ['PACTSO', 'PACFSIO'], 'RP': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO'], 'GP2': ['PACTSO', 'PACFSIO'], 'GP23': ['PACTSO', 'PACFSIO'], 'RP': ['PACTSO', 'PACFSIO'], 'S2': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -643,6 +646,66 @@ def rp_steps(pfx, load):
     return out + rp3_steps(pfx, load)
 
 
+# MVS-S2 (D41, docs/S2-PATTERNS.md section 6): after the build, a marker, then TSD dry runs with PARM column 25 P
+# (ALARM(PATTERN)): (play, directory, case, profile = columns 12-17 COLOR HILITE ANIM REDRAW GLYPHS SCALE, canvas,
+# sound, rules, start level, speed, alarm); then BAT / TSO line-mode runs with column 25 P (SYSOUT unchanged):
+# (kind, play, directory, case, rules). Start levels of tests/s2cases: tests/search_s2.py START_OF.
+S2_TSD = [
+    ('R', 'rpcases', 'RPLOST', 'NYYPG4', 'W', 'Y', 'A', '', 'N', 'P'),     # pause + PA2 hold a death pattern; game
+    ('R', 'rpcases', 'RPLOST', 'NYYPG4', 'W', 'Y', 'A', '', 'F', 'P'),     #  over on the final death frames; FAST
+    ('R', 'rpcases', 'RPDCLR', 'NYYPG4', 'W', 'Y', 'A', '', 'N', 'P'),     # death + level clear in one write: clear
+    ('R', 'gp2cases', 'G2RXD', 'NYYPG4', 'D', 'Y', 'A', '13', 'N', 'P'),   # death + extra life in one write, B
+    ('R', 's2cases', 'S2XL', 'NYYPG4', 'W', 'Y', 'A', '13', 'N', 'P'),     # extra life: 2 bells, G 2
+    ('R', 's2cases', 'S2XL', 'NYYPG4', 'W', 'Y', 'A', '13', 'F', 'P'),     #  the same at FAST, G 3
+    ('R', 's2cases', 'S2XLD', 'NYYPG4', 'W', 'Y', 'A', '13', 'N', 'P'),    # a death replaces the extra-life pattern
+    ('R', 's2cases', 'S2XLD', 'NYYPG4', 'T', 'Y', 'A', '13', 'F', 'P'),    #  FAST: death + extra life in one write, T
+    ('R', 's2cases', 'S2XLC', 'NYYPG4', 'W', 'Y', 'A', '12', 'N', 'P'),    # extra life + level clear in one write
+    ('R', 'gp2cases', 'G2RCLR', 'NYYPG4', 'W', 'Y', 'A', '', 'F', 'P'),    # level clear at FAST
+    ('R', 'gpcases', 'RTGPA', 'NYYPG4', 'W', 'Y', 'A', '', 'N', 'P'),      # QUIT inside a death pattern: dropped
+    ('R', 'rpcases', 'RPPAUSE', 'NYYPG4', 'W', 'Y', 'A', '', 'N', 'P'),    # P before the start; QUIT after a death
+    ('R', 'rtcases', 'RTEDGE', 'NYYPG4', 'W', 'Y', 'C', '', 'N', 'P'),     # CLASSIC: last pellet + hit = WIN 4
+    ('R', 'rtcases', 'RTSTILL', 'NYYPG4', 'D', 'Y', 'C', '', 'F', 'P'),    # CLASSIC game over, end pause G 3, B
+    ('R', 'rtcases', 'RTWIN', 'NYYPG4', 'W', 'Y', 'C', '', 'F', 'P'),      # CLASSIC win, end pause G 3
+    ('R', 'rtcases', 'RTPRE', 'NYYPG4', 'W', 'Y', 'C', '', 'N', 'P'),      # pre-start inputs: only the first rings
+    ('R', 's2cases', 'S2PRM', 'NYYPG4', 'W', 'Y', 'C', '', 'N', 'P'),      # steps on prompt-form writes (X, PA2)
+    ('R', 'rpcases', 'RPLOST', 'NYYPG4', 'W', 'N', 'A', '', 'N', 'P'),     # SOUND(NO): silent
+    ('T', 'gp2cases', 'G2CLR', 'NYYPG4', 'W', 'Y', 'A', '', 'N', 'P'),     # TURN: level clear, one bell
+    ('T', 'gp2cases', 'G2XD', 'NYYPG4', 'W', 'Y', 'A', '13', 'N', 'P'),    # TURN: extra life + death, one bell each
+    ('T', 'cases', 'LOST0', 'NYYPG4', 'W', 'Y', 'C', '', 'N', 'P'),        # TURN game over: end screen + 2 steps
+    ('T', 'cases', 'WIN0', 'NYNPG4', 'W', 'Y', 'C', '', 'F', 'P'),         # TURN win, SPEED F = G 3
+    ('T', 'cases', 'WIN0', 'NYNFCN', 'D', 'Y', 'C', '', 'N', 'P'),         # not scaled: the S1 bell-only write
+    ('T', 'cases', 'DIE1', 'NYYPG4', 'W', 'Y', 'C', '', 'N', 'P'),         # QUIT after a death: silent end
+    ('T', 'cases', 'LOST0', 'NYYPG4', 'W', 'N', 'C', '', 'N', 'P')]        # SOUND(NO): silent
+S2_LINE = [('BAT', 'T', 'cases', 'LOST0', 'C'), ('BAT', 'R', 'rtcases', 'RTSTILL', 'C'),
+           ('BAT', 'T', 'gp2cases', 'G2CLR', 'A'), ('TSO', 'T', 'cases', 'DIE1', 'C')]
+S2_MARK = 'PACMAN-S2-ALARM-RUNS-FOLLOW'
+
+
+def s2_parm_and_cards(run):
+    """The configuration card (first card AI<l> <n>) goes to the PARM; without one, AI1 1 (as the RT / S1 decks)."""
+    play, d, c, prof, cv, snd, rules, st, sp, al = run
+    lines = text_of(ROOT / f'tests/{d}/{c}.txt').splitlines(keepends=True)
+    cfg, cards = ('AI1 1', lines) if lines[0][:1] != 'A' else (lines[0].rstrip('\n')[:5], lines[1:])
+    return ('TSD ' + cfg).ljust(11) + prof + cv + play + snd + rules + (st or '1').zfill(2) + sp + al, ''.join(cards)
+
+
+def s2_steps(pfx, load):
+    out = ('//S2MARK   EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+           f'//SYSUT1   DD *\n{S2_MARK}\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    for i, run in enumerate(S2_TSD, 1):
+        parm, cards = s2_parm_and_cards(run)
+        out += run_step(f'S2T{i}', pfx, load, cards, parm=parm)
+    for i, (kind, play, d, c, rules) in enumerate(S2_LINE, 1):
+        text = text_of(ROOT / f'tests/{d}/{c}.txt')
+        if kind == 'BAT':
+            parm = 'BAT'.ljust(18) + ('R' if play == 'R' else ' ') + ' ' + rules + '01NP'
+            out += run_step(f'S2L{i}', pfx, load, text, parm=parm)
+        else:
+            parm, cards = tso_parm_and_cards(c)
+            out += run_step(f'S2L{i}', pfx, load, cards, parm=parm.ljust(11) + 'AAAPAAAAY' + rules + '01NP')
+    return out
+
+
 def tso_parm_and_cards(case):
     """Interactive mode takes the config from the PARM ('TSO AI3 2'), not from a first card."""
     lines = (ROOT / f'tests/cases/{case}.txt').read_text(encoding='ascii').splitlines(keepends=True)
@@ -698,6 +761,8 @@ def build(name, pfx, load_override=None):
         out += hs_steps(pfx, load)
     if name == 'RP':
         out += rp_steps(pfx, load)
+    if name == 'S2':
+        out += s2_steps(pfx, load)
     if name == 'GP1':
         out += gp1_steps(pfx, load)
         out += gp13_steps(pfx, load)

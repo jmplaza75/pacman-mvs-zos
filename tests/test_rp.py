@@ -23,6 +23,9 @@ ARGS, sys.argv = sys.argv[1:], sys.argv[:1]
 sys.path.insert(0, str(R / 'tests'))
 sys.path.insert(0, str(R / 'tools'))
 os.environ.setdefault('PACMAN_LATER_PHASE', 'RP')
+# MVS-S2 (D41): a later phase run (PACMAN_LATER_PHASE=S2) appends the ALARM letter to the CLIST PARM (column 25,
+# default PATTERN); everything else here is unchanged
+LATER = os.environ['PACMAN_LATER_PHASE'] != 'RP'
 import ref_gp2 as L  # noqa: E402
 import ref_rt  # noqa: E402
 import ref_hs as H  # noqa: E402
@@ -117,7 +120,8 @@ assert wd_new == wd_old.replace('           COMPUTE RT-NEXT', '           MOVE R
 assert 'COMPUTE RP-DTH = 11 - REQ-RTFRZ' not in scr and re.search(r'01  RP-DTHMS\s+PIC 999 VALUE 150\.', scr)
 assert 'PERFORM FD-FRAME VARYING FD-K FROM REQ-RTFRT BY -1\n               UNTIL FD-K NOT > REQ-RTRDY.' in disp
 clist = (R / 'src/clist/PACMAN.clist').read_text()
-assert 'LEVEL(1) SPEED(NORMAL)' in clist and 'SET &F = &SUBSTR(1:1,&SPEED)' in clist and '&W&L&F)' in clist
+assert 'LEVEL(1) SPEED(NORMAL)' in clist and 'SET &F = &SUBSTR(1:1,&SPEED)' in clist and \
+    ('&W&L&F)' in clist or (LATER and '&W&L&F&K)' in clist))
 assert all(len(l) <= 72 for l in clist.replace('@@PREFIX@@', 'HERC01.PACMAN').splitlines())
 print('RP sources PASS (core frozen + authorised RP.3 conversion, append-only copies, ARCADE-only RP code, D40 read',
       'loop, one quantum / one conversion)')
@@ -421,7 +425,7 @@ def rp3_check(path):
         assert got == w, (run, next(((x, a, b) for x, (a, b) in enumerate(zip(got, w)) if a != b), (len(got), len(w))))
         nl += len(w)
     cl = [l.rstrip() for l in lines if l.startswith('RP3PARM=')]
-    assert cl == ['RP3PARM=' + p_ + '=' for p_ in CL_WANT], (cl, CL_WANT)
+    assert cl == ['RP3PARM=' + p_ + ('P' if LATER else '') + '=' for p_ in CL_WANT], (cl, CL_WANT)
     print('MVS-RP RP.3 PASS:', len(rp3_tsd), 'TSD runs =', ns, 'model streams (FAST ARCADE / CLASSIC, NORMAL, invalid,',
           'TURN);', len(rp3_bat), 'BAT runs =', nl, 'model lines; CLIST PARM', len(cl), 'keyword sets (TMP)')
 

@@ -319,7 +319,7 @@ def frames(case, hi=True, anim=True, redraw='P', glyphs='G', scale='4', canvas='
     def end(kind, cmd, res):
         if kind == 'QUIT':
             g.state = 'QUIT   '
-        out.append(full(geo, img(cmd, res, None, kind)))
+        out.append(full(geo, img(cmd, res, None, kind)), 'E')
         return out
 
     cmd, res = ' ', 'START  '

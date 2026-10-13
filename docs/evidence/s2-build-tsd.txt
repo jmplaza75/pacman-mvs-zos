@@ -1,0 +1,84 @@
+# MVS-S2 S2.2: alarm patterns, ALARM(PATTERN|SINGLE) (2026-10-13; design docs/S2-PATTERNS.md, D41 frozen 2026-10-13)
+# Changed: PACREQ (+REQ-ALARM, appended), PACMAIN (PARM column 25), PACPLAT (op DLWT, TSC only), PACDISP (BELL-SET,
+# PAT-CLASS, PAT-PLAY, END-PAUSE / END-STEP, BELL-WRITE; SET-BELL / ARC-BELL unchanged), CLIST (ALARM(PATTERN)).
+# GAME / MAP / AI / PACARC / PACRT / PACSCR / assembler modules = tag mvs-rp. Load member PACS2D only: the installed
+# PACMAIN and CLIST are NOT replaced (S2.3). Test models: tests/ref_s2.py (pattern layer), frame kinds in ref_snap /
+# ref_rt / ref_gx_screen (outputs unchanged), cases tests/s2cases (tests/search_s2.py, --build for S2PRM).
+# COMPRESS JOB 289 (3 x IEBCOPY RC 0000). Deck S2 JOB 290 PASS at the first submission:
+S2 sources PASS (core and PACRT as mvs-rp, PACREQ +REQ-ALARM, PACMAIN / PACPLAT added lines only, SET-BELL / ARC-BELL unchanged, pattern code only with PATTERN + SOUND Y, end pause bounded by t0 + 3000, CLIST column 25)
+S2 local checks PASS: 25 TSD runs, 2986 model streams; events = the S1 / GP2 single rings; steps exactly G quantum writes apart; edges 21 (extra [] )
+local checks PASS (core frozen, oracle loaded)
+MVS-S2 PASS: 60 steps RC 0000; 25 TSD runs = 2986 model streams ( 108 with the alarm bit ); 4 BAT / TSO line-mode runs = oracle / models
+# Step RCs JOB 290:
+PACBLDS2   CPY1                IEBGENER  RC= 0000
+PACBLDS2   CPY2                IEBGENER  RC= 0000
+PACBLDS2   CPY3                IEBGENER  RC= 0000
+PACBLDS2   CPY4                IEBGENER  RC= 0000
+PACBLDS2   CPY5                IEBGENER  RC= 0000
+PACBLDS2   CPY6                IEBGENER  RC= 0000
+PACBLDS2   SRC1                IEBGENER  RC= 0000
+PACBLDS2   COB1                IKFCBL00  RC= 0000
+PACBLDS2   SRC2                IEBGENER  RC= 0000
+PACBLDS2   COB2                IKFCBL00  RC= 0000
+PACBLDS2   SRC3                IEBGENER  RC= 0000
+PACBLDS2   COB3                IKFCBL00  RC= 0000
+PACBLDS2   SRC4                IEBGENER  RC= 0000
+PACBLDS2   COB4                IKFCBL00  RC= 0000
+PACBLDS2   SRC5                IEBGENER  RC= 0000
+PACBLDS2   COB5                IKFCBL00  RC= 0000
+PACBLDS2   SRC6                IEBGENER  RC= 0000
+PACBLDS2   COB6                IKFCBL00  RC= 0000
+PACBLDS2   SRC7                IEBGENER  RC= 0000
+PACBLDS2   COB7                IKFCBL00  RC= 0000
+PACBLDS2   SRC8                IEBGENER  RC= 0000
+PACBLDS2   COB8                IKFCBL00  RC= 0000
+PACBLDS2   SRC9                IEBGENER  RC= 0000
+PACBLDS2   COB9                IKFCBL00  RC= 0000
+PACBLDS2   SRC10               IEBGENER  RC= 0000
+PACBLDS2   COB10               IKFCBL00  RC= 0000
+PACBLDS2   ASM1                IFOX00    RC= 0000
+PACBLDS2   ASM2                IFOX00    RC= 0000
+PACBLDS2   ASM3                IFOX00    RC= 0000
+PACBLDS2   LINK                IEWL      RC= 0000
+PACBLDS2   S2MARK              IEBGENER  RC= 0000
+PACBLDS2   S2T1                PACS2D    RC= 0000
+PACBLDS2   S2T2                PACS2D    RC= 0000
+PACBLDS2   S2T3                PACS2D    RC= 0000
+PACBLDS2   S2T4                PACS2D    RC= 0000
+PACBLDS2   S2T5                PACS2D    RC= 0000
+PACBLDS2   S2T6                PACS2D    RC= 0000
+PACBLDS2   S2T7                PACS2D    RC= 0000
+PACBLDS2   S2T8                PACS2D    RC= 0000
+PACBLDS2   S2T9                PACS2D    RC= 0000
+PACBLDS2   S2T10               PACS2D    RC= 0000
+PACBLDS2   S2T11               PACS2D    RC= 0000
+PACBLDS2   S2T12               PACS2D    RC= 0000
+PACBLDS2   S2T13               PACS2D    RC= 0000
+PACBLDS2   S2T14               PACS2D    RC= 0000
+PACBLDS2   S2T15               PACS2D    RC= 0000
+PACBLDS2   S2T16               PACS2D    RC= 0000
+PACBLDS2   S2T17               PACS2D    RC= 0000
+PACBLDS2   S2T18               PACS2D    RC= 0000
+PACBLDS2   S2T19               PACS2D    RC= 0000
+PACBLDS2   S2T20               PACS2D    RC= 0000
+PACBLDS2   S2T21               PACS2D    RC= 0000
+PACBLDS2   S2T22               PACS2D    RC= 0000
+PACBLDS2   S2T23               PACS2D    RC= 0000
+PACBLDS2   S2T24               PACS2D    RC= 0000
+PACBLDS2   S2T25               PACS2D    RC= 0000
+PACBLDS2   S2L1                PACS2D    RC= 0000
+PACBLDS2   S2L2                PACS2D    RC= 0000
+PACBLDS2   S2L3                PACS2D    RC= 0000
+PACBLDS2   S2L4                PACS2D    RC= 0000
+# Regression of the SINGLE path on the same sources into PACS2D (listings normalised PACS2D -> PACRPD / PACMAIN):
+# RP JOB 291 (PACMAN_LATER_PHASE=S2 tests/test_rp.py; CLIST PARMs now end with the ALARM letter P):
+RP local checks PASS: 42 TURN and 18 REALTIME TSD runs, 6265 model streams, largest 1992 bytes; edges 23 + config 9
+RP.3 local checks PASS: identity at 150 ms on 13 rows; FAST fright [48, 41, 32, 24, 16, 41, 16, 16, 8, 41, 16, 8, 8] warning [12, 12, 12, 8, 8, 12, 8, 8, 4, 12, 8, 4, 4] (<= fright), fruit 72, eyes 24, freeze 12, READY! 5, popup 6; RP3TIM timers 48/24/72 = 6.0/3.0/9.0 s; cadence per quantum; pause freezes the timers; 12 TSD runs ( 1495 streams ) + 9 BAT runs
+MVS-RP RP.2 PASS: 127 steps RC 0000; 60 ARCADE TSD runs = 6265 model streams
+MVS-RP RP.2b D40 PASS: 29 startup sequences = model (valid first, ENTER / junk / AIDs / malformed then valid, empty reads, fallback by records and by time, single-record validity)
+MVS-RP RP.3 PASS: 12 TSD runs = 1495 model streams (FAST ARCADE / CLASSIC, NORMAL, invalid, TURN); 9 BAT runs = 6268 model lines; CLIST PARM 7 keyword sets (TMP)
+# COMPRESS JOB 292; GP2 JOB 293 (PACMAN_LATER_PHASE=S2 tests/test_gp2.py: S1 + RT regression + 1.0-MVS oracle):
+MVS-GP2 GP2.2 PASS: 237 steps RC 0000; S1 regression: MVS-S1 PASS: 162 steps RC 0000; RT regression: MVS-RT RT2 PA ...; 71 ARCADE runs = model ( 52640 lines ); 2 columns 21-23 CLASSIC runs = oracle/model
+# HS JOB 294 (GP23 end lines from build/PACBLG23-263.txt):
+MVS-HS HS.2 PASS: 71 steps (HSFILL RC 0012, the rest RC 0000); 21 runs = model + HS lines ( 23869 text lines, 394 TSD streams = RP models) ; 9 member prints = model; CLIST block both paths
+core frozen (authorised 2026-10-13 by project owner (RP.3 approval)): PASS

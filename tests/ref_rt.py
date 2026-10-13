@@ -205,20 +205,20 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
             st['face'] = g.cmd
         return st['face']
 
-    def prmt(rdr):
+    def prmt(rdr, kind='N'):
         if geo is None:
             return
         paused = c.status() == 'PAUS'
         show = st['msg_on']
         cur = gx.image(geo, g, g.cmd, g.res, None if paused else show, True, c.vis, face(),
                        'PAUSE' if paused else None, decor())
-        frames.append(gx.full(geo, cur) if st['prev'] is None or rdr else gx.partial(geo, cur, st['prev'], 'P'))
+        frames.append(gx.full(geo, cur) if st['prev'] is None or rdr else gx.partial(geo, cur, st['prev'], 'P'), kind)
         st['prev'], st['msg_last'], st['msg_on'] = cur, show, None
 
     def rtqf(rtstat=None, rtfrz=None):
         cur = gx.image(geo, g, g.cmd, g.res, st['msg_last'], True, c.vis, face(), None, decor(rtstat, rtfrz))
         p = gx.partial(geo, cur, st['prev'], 'T')
-        frames.append(p if p is not None else bytes([0xC2, 0x28, 0x00, 0x00]))
+        frames.append(p if p is not None else bytes([0xC2, 0x28, 0x00, 0x00]), 'Q')
         st['prev'] = cur
 
     def event(e):
@@ -243,8 +243,8 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
         if kind == 'RDR':
             st['frame'] = 'F'
 
-    def pre_screen():
-        prmt(st['frame'] == 'F')
+    def pre_screen(kind='N'):
+        prmt(st['frame'] == 'F', kind)
         st['frame'] = ' '
 
     prmt(False)
@@ -286,7 +286,7 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
                        f'S={g.score:04d} L={g.left:03d} V={g.lives} ST={g.state}')
             out.append('  G=' + ' '.join('%02d,%02d' % (gx_, gy) for gx_, gy, _ in g.gh))
         elif st['frame'] != ' ':
-            pre_screen()
+            pre_screen('P')                     # MVS-S2: the quantum's one write in prompt form
         else:
             rtqf()
         st['frame'] = ' '
@@ -298,7 +298,7 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
             rtqf('FRZ ', k)
     if geo is not None and geo.fam != 'G':
         frames.append(gx.full(geo, gx.image(geo, g, g.cmd, g.res, None, True, c.vis, face(), end,
-                                            decor(ends=True))))
+                                            decor(ends=True))), 'E')
     if hasattr(g, 'end_lines'):
         return out + g.end_lines(end, c.q), frames
     out += [end, f'TURNS {g.t:03d}', f'SCORE {g.score:04d}', f'LIVES {g.lives}', f'QUANTA {c.q:07d}']

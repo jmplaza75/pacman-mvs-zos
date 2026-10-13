@@ -157,4 +157,11 @@ MVS-S2 IN PROGRESS (started 2026-10-13 on the user's go): alarm patterns and sou
 - Go on the S1 evidence (E15 screens 5/6: separate bells not merged); no probe step.
 - S2.1 design docs/S2-PATTERNS.md: D41 APPROVED and frozen (2026-10-13, user decisions in its section 8): ALARM(PATTERN|SINGLE)
   column 25, exact spacing G = 2 / 3 quanta (NORMAL / FAST), no new sound event (all six already rang), 3-s end pause kept.
-- S2.2 next: PACREQ/PACMAIN/PACDISP/PACPLAT/CLIST + model; GAME/MAP/AI/PACARC/PACRT untouched.
+- S2.1 design checkpoint c340b99.
+- S2.2 BUILD GREEN (2026-10-13, NOT installed; PACMAIN and the CLIST not replaced): PACREQ +REQ-ALARM, PACMAIN column
+  25, PACPLAT op DLWT, PACDISP pattern player + end pause, CLIST ALARM(PATTERN); GAME/MAP/AI/PACARC/PACRT/PACSCR = mvs-rp.
+  Model tests/ref_s2.py, cases tests/s2cases (tests/search_s2.py). COMPRESS JOB 289; deck S2 JOB 290 (load PACS2D): 60
+  steps RC 0000 at the first submission, 25 TSD runs = 2986 model streams (108 alarm writes), 21 D41 edges reached, 4
+  line-mode runs = oracle / models. SINGLE regression into PACS2D: RP JOB 291, GP2 JOB 293 (after COMPRESS 292), HS
+  JOB 294 PASS. Evidence docs/evidence/s2-build-tsd.txt. Test: `python3 tests/test_s2.py build/PACBLDS2-290.txt`.
+- Next: S2.3 install (PACMAIN + CLIST) on the user's approval, then the S2.4 live checklist.

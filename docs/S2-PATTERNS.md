@@ -13,7 +13,7 @@ confirmed by the live checklist (S2.4).
 | Step | Content | Exit |
 |---|---|---|
 | S2.1 | this design | user approval, D41 frozen (done 2026-10-13) |
-| S2.2 | PACREQ (appended), PACMAIN (PARM column 25), PACDISP (pattern player), PACPLAT (op DLWT for the end pause), CLIST `ALARM`, model + cases | deck `S2` (TSD runs = model), regression decks rerun, every earlier reference unchanged |
+| S2.2 (BUILD GREEN 2026-10-13, JOB 290; docs/evidence/s2-build-tsd.txt) | PACREQ (appended), PACMAIN (PARM column 25), PACDISP (pattern player), PACPLAT (op DLWT for the end pause), CLIST `ALARM`, model + cases | deck `S2` (TSD runs = model), regression decks rerun, every earlier reference unchanged |
 | S2.3 | install (PACMAIN + CLIST) on the user's approval | install jobs |
 | S2.4 | live c3270 checklist: the user counts the bells per event; the trace shows the alarm WCC on the modelled writes | docs/evidence/s2-live.md, README, CURRENT_PHASE, tag `mvs-s2` |
 

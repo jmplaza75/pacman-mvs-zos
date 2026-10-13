@@ -254,7 +254,7 @@
   (docs/RP-POLISH.md 11): PACQRY accepts only a structurally valid Query Reply (AID X'88', exact chain of X'81'
   fields, Summary first); PACPLAT reads past anything else with PACFSIO RECT, at most 8 records / 6 empty reads,
   then the line-mode fallback after a drain; a valid first reply = no extra read (start unchanged); no re-query.
-- D41 (MVS-S2, APPROVED and frozen 2026-10-13, docs/S2-PATTERNS.md) Alarm patterns. No probe: E15 showed separate
+- D41 (MVS-S2, APPROVED and frozen 2026-10-13, docs/S2-PATTERNS.md; S2.2 build JOB 290) Alarm patterns. No probe: E15 showed separate
   bells are not merged. `ALARM(PATTERN|SINGLE)` = PARM column 25 (`P`; absent/else SINGLE = S1/GP2 bytes and waits;
   CLIST default PATTERN); SOUND(NO) suppresses every alarm. No new sound event: start, death, extra life, level clear,
   game over (the last death, which already rang as a death) and win all rang before S2; under PATTERN they give 1 / 2

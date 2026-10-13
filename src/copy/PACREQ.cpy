@@ -92,3 +92,7 @@
            05  REQ-RTFRT             PIC 99.
            05  REQ-RTRDY             PIC 99.
            05  REQ-RTPUQ             PIC 99.
+      * MVS-S2 (D41, DOCS/S2-PATTERNS.MD): REQ-ALARM = PARM COLUMN 25,
+      * SET ONCE BY PACMAIN: P = ALARM(PATTERN), S = SINGLE (ABSENT OR
+      * ANY OTHER VALUE: THE S1 / GP2 ONE BELL). READ BY PACDISP ONLY.
+           05  REQ-ALARM             PIC X.
