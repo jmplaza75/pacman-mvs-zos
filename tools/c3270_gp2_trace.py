@@ -99,6 +99,8 @@ def main():
     ap.add_argument('--from', dest='frm', default='000000')
     ap.add_argument('--sound', default='Y')
     ap.add_argument('--speed', default='N')
+    ap.add_argument('--cards', help='REALTIME: replay this card list (one line, blank-separated; the attribution of a '
+                    'previous run) instead of searching it')
     a = ap.parse_args()
     per = ref_rt.period(a.speed)
     if a.scenario:
@@ -145,15 +147,19 @@ def main():
         shift = [0] * len(aids)
 
         def attempt(sh):
-            cs = cards_for(gw, aids, sh)
-            while cs and cs[-1] == '.':
-                cs.pop()
+            cs = cards_for(gw, aids, sh)      # untrimmed: a LOST game needs its idle quanta up to the last death
             ql = []
             e, f = model(a.cfg, a.start, 'R', cs, a.sound, per, hs, ql)
             pre = next((k for k, (p, q) in enumerate(zip(live, f)) if not same(p, q, k)), min(len(live), len(f)))
             k_same = sum(1 for k, (p, q) in enumerate(zip(live, f)) if same(p, q, k))
             return (pre, k_same), (k_same, cs, e, f, ql)
         score, best = attempt(shift)
+        if a.cards:
+            cs = Path(a.cards).read_text().split()
+            ql = []
+            e, f = model(a.cfg, a.start, 'R', cs, a.sound, per, hs, ql)
+            best = (sum(1 for k, (p, q) in enumerate(zip(live, f)) if same(p, q, k)), cs, e, f, ql)
+            near = []
         for i in near:
             for sh in (1, 2):                  # 2: two writes of one TCP read share the AID's millisecond
                 if score[1] == len(live) == len(best[3]):
@@ -250,9 +256,6 @@ def report(a, cards, per=150, wtimes=None, qlog=None, aids=()):
         timing(spans, per, wtimes, qlog, aids)
 
 
-if __name__ == '__main__':
-    sys.exit(main())
-
 
 DESIGN = {'freeze': lambda lv: ref_rt.FREEZE, 'eyes': lambda lv: L.EYES['R'], 'fruit': lambda lv: L.FRUIT_TIME['R'],
           'fright': lambda lv: L.ROWS[min(lv, 13)][4]}
@@ -303,3 +306,7 @@ def timing(spans, per, wtimes, qlog, aids):
     for t0, name, n, dt, seq in sorted(runs):
         extra = f' frames {seq}' if name == 'DEATH' else f' quanta Q{seq[0]}-Q{seq[-1]}'
         print(f'  {name:22} {n:3d} writes {dt:5d} ms{extra}')
+
+
+if __name__ == '__main__':
+    sys.exit(main())

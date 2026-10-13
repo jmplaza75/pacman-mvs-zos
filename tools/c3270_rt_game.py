@@ -119,15 +119,21 @@ if cur:
 for k, st_ in enumerate(stretches, 1):
     if len(st_) < 10:
         continue
-    t0 = st_[0][0]
-    grid = [(round((o[0] - t0) / P), o[0]) for o in st_]
-    if round((st_[-1][0] - t0) / P) + 1 == len(st_):      # one write per period: write k belongs to slot k
-        grid = [(k, o[0]) for k, o in enumerate(st_)]
+    # slots as PACPLAT DO-WDLN schedules them: each write is its own slot's (a held write may be more than a period
+    # late); after a write late by >= one period the next deadline skips the periods already missed, so the next write
+    # lands within a period of its slot: only there are skipped slots counted. The stretch clock = its first write.
+    t0, slot, grid, prev_late = st_[0][0], -1, [], 0
+    for o in st_:
+        lat = o[0] - (t0 + (slot + 1) * P)
+        jump = max(0, int(lat // P)) if prev_late >= P else 0
+        slot += 1 + jump
+        prev_late = o[0] - (t0 + slot * P)
+        grid.append((slot, o[0]))
     late = [t - (t0 + n * P) for n, t in grid]
-    base = min(late)
+    base = sorted(late)[len(late) // 50]               # the stretch's own on-time level (2nd percentile)
     late = [x - base for x in late]
-    skips = sum(max(0, b[0] - a_[0] - 1) for a_, b in zip(grid, grid[1:]))
-    dup = sum(1 for a_, b in zip(grid, grid[1:]) if b[0] == a_[0])
+    skips = sum(b[0] - a_[0] - 1 for a_, b in zip(grid, grid[1:]))
+    dup = 0
     m = len(late) // 3
     third = lambda v: sorted(v)[len(v) // 2] if v else '-'  # noqa: E731
     xs = [n for n, _ in grid]
