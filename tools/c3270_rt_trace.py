@@ -20,6 +20,24 @@ def ms(ts):
     return round((h * 3600 + m * 60 + s) * 1000)
 
 
+def split_eor(b):
+    """MVS-RP RP.3: one trace block may hold several telnet records (two host writes in one TCP read): split after
+    every IAC EOR (FF EF), keeping the marker; a doubled IAC (FF FF) is data."""
+    out, i, j = [], 0, 0
+    while i < len(b) - 1:
+        if b[i] == 0xFF and b[i + 1] == 0xFF:
+            i += 2
+            continue
+        if b[i] == 0xFF and b[i + 1] == 0xEF:
+            out.append(b[j:i + 2])
+            j = i = i + 2
+            continue
+        i += 1
+    if j < len(b):
+        out.append(b[j:])
+    return out
+
+
 def load(path):
     ev, cur, d, ts, start_ts = [], None, None, None, None
     for line in open(path, errors='replace'):
@@ -37,15 +55,15 @@ def load(path):
         if m:
             if int(m.group(2), 16) == 0:
                 if cur is not None:
-                    ev.append((d, start_ts, bytes(cur)))
+                    ev += [(d, start_ts, r) for r in split_eor(bytes(cur))]
                 cur, d, start_ts = bytearray(), m.group(1), ts
             cur += bytes.fromhex(m.group(3))
             continue
         if cur is not None:
-            ev.append((d, start_ts, bytes(cur)))
+            ev += [(d, start_ts, r) for r in split_eor(bytes(cur))]
             cur = None
     if cur is not None:
-        ev.append((d, start_ts, bytes(cur)))
+        ev += [(d, start_ts, r) for r in split_eor(bytes(cur))]
     return ev
 
 

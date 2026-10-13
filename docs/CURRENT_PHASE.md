@@ -141,3 +141,9 @@ MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gamep
 - RP.3 INSTALLED (2026-10-13, user approval): PACMAIN = deck RP JOB 286 (load PACMAIN, same sources as JOB 285; all
   RP / D40 / RP3 checks re-passed on the installed module), CLIST JOB 287 (only new default SPEED(NORMAL)). Next: ONE
   directed FAST live capture (docs/evidence/rp3-fast-live-checklist.md), analysed before the rest of RP.4.
+- RP.3 FAST LIVE PASS (2026-10-13, docs/evidence/rp3-fast-live.md): 344/344 writes = FAST models, 343 writes in 343
+  periods, gap median 125 / p95 133 ms, lateness median 7 / p95 13 ms, 2 isolated late writes (160 ms) recovered at
+  once, drift +0.5 ms / 100 quanta; fright 5999 / 5997 ms, eyes 2998, freeze 1501 (NORMAL design 6000 / 3000 / 1500);
+  D40 case (a) clean startup. SPEED(FAST) kept. Pause at FAST not taken: folded into the RP.4 soak.
+- RP.4 NEXT: docs/evidence/rp-live-checklist.md (D40 case (b), NORMAL game to GAME OVER, 10-minute pre-start + pause
+  soak at FAST; JWT limits read first). Do not close / tag RP before its analysis.

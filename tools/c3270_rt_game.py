@@ -121,6 +121,8 @@ for k, st_ in enumerate(stretches, 1):
         continue
     t0 = st_[0][0]
     grid = [(round((o[0] - t0) / P), o[0]) for o in st_]
+    if round((st_[-1][0] - t0) / P) + 1 == len(st_):      # one write per period: write k belongs to slot k
+        grid = [(k, o[0]) for k, o in enumerate(st_)]
     late = [t - (t0 + n * P) for n, t in grid]
     base = min(late)
     late = [x - base for x in late]

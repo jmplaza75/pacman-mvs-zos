@@ -63,9 +63,11 @@ def model(cfg, start, play, cards, sound, per=150, hs=None, qlog=None):
 
         class Rec(orig):                    # one tracker call per composed screen: the quantum of every write
             def frame(self, g, play='T', rtstat=None, rtfrz=0, rtq=0, *x, **kw):
+                rp = super().frame(g, play, rtstat, rtfrz, rtq, *x, **kw)
                 if qlog is not None:
-                    qlog.append((rtq, rtstat))
-                return super().frame(g, play, rtstat, rtfrz, rtq, *x, **kw)
+                    qlog.append((rtq, rtstat, rp and (rp['ready'], rp['dth'] and rp['dth'][0],
+                                                       rp['pu'] and (rp['pu']['msg'], rp['pu']['t0']))))
+                return rp
         ref_rp.Tracker = Rec
         try:
             end, fs = ref_rt.tsd([cfg] + cards, 'W', snap=log, mk_game=lambda a, n: L.Level(a, n, 'R', start),
@@ -128,7 +130,7 @@ def main():
     live = [b[1:] for _, b in gw]
     import re
     first = live[0].decode('cp037', 'replace') if live else ''
-    m = re.search(r'HIGH +(\d{7})', first) or re.search(r'HI (\d{7})', first)
+    m = re.search(r'HIGH[^0-9]{0,8}(\d{7})', first) or re.search(r'HI (\d{7})', first)   # an SBA may follow HIGH
     hs = ('R', int(m.group(1)), a.start) if m else None
     print('speed', 'FAST' if per != 150 else 'NORMAL', f'({per} ms) | HUD high score at the start:',
           m.group(1) if m else 'none (unavailable)')
@@ -137,22 +139,30 @@ def main():
         end, fs = model(a.cfg, a.start, 'T', cards, a.sound, hs=hs)
         n_same = sum(1 for k, (p, q) in enumerate(zip(live, fs)) if same(p, q, k))
     else:
-        best = None
+        # an AID just before a write may belong to that quantum or the next: decided AID by AID in time order (RP.3:
+        # greedy on the identical prefix, so any number of ambiguous AIDs; the game is deterministic)
         near = [i for i, (t, _) in enumerate(aids) if any(0 <= tw - t < 60 for tw, _ in gw)]
-        for combo in itertools.product((0, 1), repeat=min(len(near), 10)):
-            shift = [0] * len(aids)
-            for i, s in zip(near, combo):
-                shift[i] = s
-            cs = cards_for(gw, aids, shift)
+        shift = [0] * len(aids)
+
+        def attempt(sh):
+            cs = cards_for(gw, aids, sh)
             while cs and cs[-1] == '.':
                 cs.pop()
             ql = []
             e, f = model(a.cfg, a.start, 'R', cs, a.sound, per, hs, ql)
+            pre = next((k for k, (p, q) in enumerate(zip(live, f)) if not same(p, q, k)), min(len(live), len(f)))
             k_same = sum(1 for k, (p, q) in enumerate(zip(live, f)) if same(p, q, k))
-            if best is None or k_same > best[0]:
-                best = (k_same, cs, e, f, ql)
-            if k_same == len(live) == len(f):
-                break
+            return (pre, k_same), (k_same, cs, e, f, ql)
+        score, best = attempt(shift)
+        for i in near:
+            for sh in (1, 2):                  # 2: two writes of one TCP read share the AID's millisecond
+                if score[1] == len(live) == len(best[3]):
+                    break
+                trial = list(shift)
+                trial[i] = sh
+                sc, res = attempt(trial)
+                if sc > score:
+                    shift, score, best = trial, sc, res
         n_same, cards, end, fs, qlog = best
     ok = n_same == len(live) == len(fs)
     print(f'game writes: live {len(live)}, model {len(fs)}, identical {n_same}' + (' | ALL IDENTICAL' if ok else ''))
@@ -189,8 +199,10 @@ def report(a, cards, per=150, wtimes=None, qlog=None, aids=()):
             show(f'T{k:03d}')
         return
     c = L.LevelRT(g, per)
-    frz, spans, open_ = 0, [], {}
+    frz, spans, open_, quit_ = 0, [], {}, False
     for card in cards:
+        if quit_:
+            break
         for kind, d, ch in next(ref_rt.events([card])):
             if kind in ('MOV', 'PAU', 'RDR', 'INV'):
                 c.rin(kind, d, ch)
@@ -201,8 +213,9 @@ def report(a, cards, per=150, wtimes=None, qlog=None, aids=()):
                 print(f'   input PA2 -> full redraw of quantum {c.q + 1} (BT={g.bt:03d}, LV={g.level:02d})')
             if kind == 'QUI':
                 print(f'   input Q after quantum {c.q}: QUIT')
-                return
-        if c.status() in ('PAUS', 'WAIT'):
+                quit_ = True
+                break
+        if quit_ or c.status() in ('PAUS', 'WAIT'):
             continue
         g.log = []
         fr0, bt0, md0, frz0 = g.fr, g.bt, list(g.mode), c.frz
@@ -222,7 +235,7 @@ def report(a, cards, per=150, wtimes=None, qlog=None, aids=()):
                 open_[f'eyes{i}'] = q
             if md0[i] == 'E' and g.mode[i] == 'N' and not dc and f'eyes{i}' in open_:
                 spans.append(('eyes', open_.pop(f'eyes{i}'), q, g.level))
-        if dc and c.frz:
+        if dc and c.frz == c.frt:                  # the death / clear quantum (the flags stay set while frozen)
             open_['freeze'] = q
         if frz0 == 1 and c.frz == 0 and 'freeze' in open_:
             spans.append(('freeze', open_.pop('freeze'), q, g.level))
@@ -249,7 +262,7 @@ def timing(spans, per, wtimes, qlog, aids):
     """Wall clock of each converted timer: from the write of its first quantum to the write of the quantum where it
     has run out (freeze: the death / clear quantum to its last frozen quantum), minus the pause time between."""
     at = {}
-    for (q, st), t in zip(qlog, wtimes):
+    for (q, st, _), t in zip(qlog, wtimes):
         if st not in ('WAIT', 'PAUS'):
             at.setdefault(q, t)
     ps = [t for t, c in aids if c == 'P']
@@ -263,3 +276,30 @@ def timing(spans, per, wtimes, qlog, aids):
         paused = sum(max(0, min(t1, b) - max(t0, a_)) for a_, b in pauses)
         print(f'  {kind:6} L{lv:02d} {q1 - q0:3d} q | {t1 - t0 - paused:6d} ms' + (f' ({paused} ms paused)' if paused
               else '') + f' | {(q1 - q0) * per:6d} | {DESIGN[kind](lv) * 150:6d}')
+    # the RP decorations as shown: each run of consecutive writes with READY! / a death frame / a popup, its writes and
+    # its time on screen (first such write to the first write without it)
+    print('decorations on screen (write runs; ms from the first write showing it to the first write without it):')
+    runs, cur = [], None
+    for k, ((q, st, d), t) in enumerate(zip(qlog, wtimes)):
+        tags = []
+        if d:
+            if d[0]:
+                tags.append('READY!')
+            if d[1]:
+                tags.append('DEATH')
+            if d[2]:
+                tags.append('POPUP ' + d[2][0])
+        for tag in ('READY!', 'DEATH', 'POPUP'):
+            on = next((x for x in tags if x.startswith(tag)), None)
+            key = tag
+            if on and (cur is None or key not in cur):
+                cur = cur or {}
+                cur[key] = (k, t, on, [])
+            if on:
+                cur[key][3].append(d[1] if tag == 'DEATH' else q)
+            if not on and cur and key in cur:
+                k0, t0, name, seq = cur.pop(key)
+                runs.append((t0, name, k - k0, t - t0, seq))
+    for t0, name, n, dt, seq in sorted(runs):
+        extra = f' frames {seq}' if name == 'DEATH' else f' quanta Q{seq[0]}-Q{seq[-1]}'
+        print(f'  {name:22} {n:3d} writes {dt:5d} ms{extra}')
