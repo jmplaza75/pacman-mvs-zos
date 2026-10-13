@@ -31,10 +31,10 @@ class Probe(ref_rp.Tracker):
         super().__init__(hs)
         self.seen, self.last, self.st = seen, None, st if st is not None else []
 
-    def frame(self, g, play='T', rtstat=None, rtfrz=0, rtq=0, dth=None, ends=False):
+    def frame(self, g, play='T', rtstat=None, rtfrz=0, rtq=0, dth=None, ends=False, **kw):
         eat0 = self.eat
         self.st.append((rtq, rtstat, rtfrz))
-        rp = super().frame(g, play, rtstat, rtfrz, rtq, dth, ends)
+        rp = super().frame(g, play, rtstat, rtfrz, rtq, dth, ends, **kw)
         if rp is None:
             return rp
         s = self.seen
@@ -177,6 +177,75 @@ def rt_search(tries=4000, want=('death-clear', 'popup-under-ghost', 'popup-clear
     return best
 
 
+# ---- RP.3 SPEED(FAST): one REALTIME card list (quantum 125 ms) where every converted timer runs out on the model:
+# eyes revive (wait 24), a fruit expires uneaten (72), a fright ends after its warning (48 / 12)
+RP3_WANT = ('eyes-revive', 'fruit-expire', 'fright-end')
+
+
+def rp3_events(g, c, prev):
+    """The RP.3 timer events of the quantum just played (prev = (modes, bt, fr) before it)."""
+    out = set()
+    modes, bt, fr = prev
+    if 'D' in g.evf or 'C' in g.evf:
+        return out
+    if any(modes[i] == 'E' and g.mode[i] == 'N' for i in range(g.n)):
+        out.add('eyes-revive')
+    if bt == 1 and g.bt == 0 and 'F' not in g.evf:
+        out.add('fruit-expire')
+    if fr == 1 and g.fr == 0:
+        out.add('fright-end')
+    return out
+
+
+def rp3_search(tries=3000):
+    import random
+    import search_gp2 as S2
+    rng, best = random.Random(20261013), None
+    for t in range(tries):
+        ai, n = rng.choice((1, 2)), rng.choice((1, 2, 3))
+        style = ('avoid', 'hunt', 'greedy', 'walk')[t % 4]
+        g = L.Level(ai, n, 'R', 1)
+        g.start = 1
+        c = L.LevelRT(g, ref_rt.FAST)
+        cards_, seen = [f'AI{ai} {n}'], set()
+        for q in range(500):
+            d = S2.choose(rng, g, style, c.cur) if q == 0 or rng.random() < 0.6 else None
+            if d and d != c.cur and not c.frz:
+                c.rin('MOV', d, d)
+            else:
+                d = None
+            cards_.append(d or '.')
+            prev = (list(g.mode), g.bt, g.fr)
+            c.rq()
+            seen |= rp3_events(g, c, prev)
+            if g.won or g.lost or all(w in seen for w in RP3_WANT):
+                break
+        if all(w in seen for w in RP3_WANT) and not g.lost and (best is None or len(cards_) < len(best)):
+            best = list(cards_)
+    return best
+
+
+if __name__ == '__main__' and '--rp3' in sys.argv:
+    cs = rp3_search()
+    print('RP3TIM', len(cs) - 1 if cs else 'NOT FOUND')
+    if cs:
+        cs = cs + ['.'] * 4 + ['Q']
+        (R / 'tests/rpcases/RP3TIM.txt').write_text('\n'.join(cs) + '\n')
+        # RP3PAU: the same with a pause (P, two empty reads, P) after the first quantum where a fright, a fruit and
+        # eyes are all running and the next card is empty: the resume card (P) is that quantum's card, so the game
+        # must be the same quantum for quantum (every converted timer stands still while paused)
+        g = L.Level(*parse_config(cs)[:2], 'R', 1)
+        c = L.LevelRT(g, ref_rt.FAST)
+        for k, cd in enumerate(cs[1:], 1):
+            if cd[:1] in DIRS:
+                c.rin('MOV', cd[:1], cd[:1])
+            c.rq()
+            if g.fr > 0 and g.bt > 0 and 'E' in g.mode[:g.n] and cs[k + 1] == '.':
+                break
+        (R / 'tests/rpcases/RP3PAU.txt').write_text('\n'.join(cs[:k + 1] + ['P', '.', '.', 'P'] + cs[k + 2:]) + '\n')
+        print('RP3PAU pause after quantum', k)
+
+
 if __name__ == '__main__' and '--write' in sys.argv:
     cases = constructed()
     found = rt_search()
@@ -189,7 +258,7 @@ if __name__ == '__main__' and '--write' in sys.argv:
         (R / f'tests/rpcases/{k}.txt').write_text('\n'.join(cs) + '\n')
         print('wrote', k, len(cs) - 1)
 
-if __name__ == '__main__' and '--write' not in sys.argv:
+if __name__ == '__main__' and '--write' not in sys.argv and '--rp3' not in sys.argv:
     from make_deck import RP_TURN, RP_RT
     total = set()
     for kind, runs in (('T', RP_TURN), ('R', RP_RT)):

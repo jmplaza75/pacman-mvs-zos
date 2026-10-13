@@ -326,7 +326,8 @@
            IF REQ-MODE = 'TSC'
                MOVE 'CLOK' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ.
-           PERFORM FD-FRAME VARYING FD-K FROM 10 BY -1 UNTIL FD-K < 5.
+           PERFORM FD-FRAME VARYING FD-K FROM REQ-RTFRT BY -1
+               UNTIL FD-K NOT > REQ-RTRDY.
            MOVE FD-SAVE TO REQ-RTSTAT.
            MOVE 0 TO REQ-RTFRZ.
        FD-FRAME.

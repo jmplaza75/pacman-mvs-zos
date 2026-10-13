@@ -239,7 +239,11 @@
   level-clear flash; score popups for an eaten ghost and the eaten fruit (one 4x2 tile, 6 quanta, display state in
   PACSCR, no game freeze; drawn over Pac-Man, under ghosts); HUD high score = max(REQ-HISCORE, ARC-SCORE) when HS is R / Z; end screen with SCORE /
   HIGH SCORE / NEW HIGH SCORE. An RP decoration over DS-LIMIT is dropped for that frame, never the G4 fallback.
-  `SPEED(NORMAL|FAST)` = 150 / 125 ms, PARM column 24, any REALTIME game. ESTAE validated live by the test driver
+  `SPEED(NORMAL|FAST)` = 150 / 125 ms, PARM column 24, any REALTIME game; amended for RP.3 (user, 2026-10-12/13):
+  FAST changes the movement cadence only. Every timed event keeps its wall-clock length through one conversion
+  Q' = (Q x 300 + P) / (2 x P) of the quanta designed at 150 ms (P = REQ-RTPER, chosen only by PACMAIN): freezes,
+  READY!, popups (PACRT), fright / warning / eyes / fruit (PACGAME, authorised core change 2026-10-13); the death
+  frames are 150 ms each (docs/RP-POLISH.md 6). NORMAL = identity. ESTAE validated live by the test driver
   PACRPE (forced 0C7 in full-screen mode, also after a PACHSIO call), not by a hook in the game. Soak: 10-minute pause
   and 10-minute pre-start wait in one live session.
 - D40 (APPROVED 2026-10-12, implemented in RP.2b; recorded from RP.0 live 1/2, docs/evidence/rp-estae-live1.md, rp-estae-live2.md) Startup

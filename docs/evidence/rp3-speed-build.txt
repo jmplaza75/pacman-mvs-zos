@@ -1,0 +1,65 @@
+# MVS-RP RP.3: SPEED(NORMAL|FAST) (2026-10-13; design docs/RP-POLISH.md 6, core change authorised by the user 2026-10-13)
+# Changed: PACREQ (+REQ-RTPER/RTFRT/RTRDY/RTPUQ, appended), PACMAIN (PARM column 24, the only 125; a digit there = old
+# 3-digit level), PACPLAT (DO-WDLN period = REQ-RTPER), PACRT (RT-CONV: freeze 10, READY! 4, popup 5), PACGAME (RT-CONV
+# at fright / warning / eyes / fruit load, ARCADE REALTIME; docs/CORE_CHANGES.md 2026-10-13), PACSCR (READY!, death
+# frame, popup from the converted quanta), PACDISP (final death loop), CLIST (SPEED, LEVEL padding).
+# Load member PACRPD only: the installed PACMAIN and CLIST are NOT replaced.
+# JOB 278: R3CLT RC 0012 (a SYSTSIN card past column 72 in the deck, cut by the TMP; the 6 complete keyword sets = model);
+#   deck fixed (column-72 assert). JOB 279 all PASS. GP2 regression JOB 280: G2ROW start '123' read as level 12 (column 24
+#   now SPEED) -> PACMAIN: a digit in column 24 = the old 3-digit level (1). JOB 281: SRC8 SE37 (COBOL library full)
+#   -> COMPRESS JOB 282 (3 x IEBCOPY RC 0000) -> GP2 JOB 283 PASS. Final RP deck JOB 285 (final sources):
+RP sources PASS (core frozen + authorised RP.3 conversion, append-only copies, ARCADE-only RP code, D40 read loop, one quantum / one conversion)
+RP local checks PASS: 42 TURN and 18 REALTIME TSD runs, 6265 model streams, largest 1992 bytes; edges 23 + config 9
+local checks PASS (core frozen, oracle loaded)
+RP.3 local checks PASS: identity at 150 ms on 13 rows; FAST fright [48, 41, 32, 24, 16, 41, 16, 16, 8, 41, 16, 8, 8] warning [12, 12, 12, 8, 8, 12, 8, 8, 4, 12, 8, 4, 4] (<= fright), fruit 72, eyes 24, freeze 12, READY! 5, popup 6; RP3TIM timers 48/24/72 = 6.0/3.0/9.0 s; cadence per quantum; pause freezes the timers; 12 TSD runs ( 1495 streams ) + 9 BAT runs
+MVS-RP RP.2 PASS: 127 steps RC 0000; 60 ARCADE TSD runs = 6265 model streams
+MVS-RP RP.2b D40 PASS: 29 startup sequences = model (valid first, ENTER / junk / AIDs / malformed then valid, empty reads, fallback by records and by time, single-record validity)
+MVS-RP RP.3 PASS: 12 TSD runs = 1495 model streams (FAST ARCADE / CLASSIC, NORMAL, invalid, TURN); 9 BAT runs = 6268 model lines; CLIST PARM 7 keyword sets (TMP)
+# CLIST PARM lines of JOB 285 (real src/clist/PACMAN.clist lines under IKJEFT01):
+RP3PARM=TSO AI1 1 NAAAPAAARAC01N=
+  EXEC 'HERC01.PACMAN.RP3CL(PARMS)' 'RULES(ARCADE) SPEED(FAST)'
+RP3PARM=TSO AI1 1 NAAAPAAARAA01F=
+  EXEC 'HERC01.PACMAN.RP3CL(PARMS)' 'RULES(ARCADE) LEVEL(7) SPEED(FAST)'
+RP3PARM=TSO AI1 1 NAAAPAAARAA07F=
+  EXEC 'HERC01.PACMAN.RP3CL(PARMS)' 'LEVEL(13) SPEED(NORMAL)'
+RP3PARM=TSO AI1 1 NAAAPAAARAC13N=
+  EXEC 'HERC01.PACMAN.RP3CL(PARMS)' 'LEVEL(123) SPEED(XYZ)'
+RP3PARM=TSO AI1 1 NAAAPAAARAC01X=
+  EXEC 'HERC01.PACMAN.RP3CL(PARMS)' 'LEVEL(0)'
+RP3PARM=TSO AI1 1 NAAAPAAARAC00N=
+  EXEC 'HERC01.PACMAN.RP3CL(PARMS)' 'PLAY(TURN) SPEED(F) AI(3)'
+RP3PARM=TSO AI3 1 NAAAPAAATAC01F=
+# Regression on the same sources into PACRPD (listings normalised PACRPD -> PACMAIN):
+# GP2 JOB 283:
+MVS-GP2 GP2.2 PASS: 237 steps RC 0000; S1 regression: MVS-S1 PASS: 162 steps RC 0000; RT regression: MVS-RT RT2 PA ...; 71 ARCADE runs = model ( 52640 lines ); 2 columns 21-23 CLASSIC runs = oracle/model
+# HS JOB 284 (GP23 end lines from build/PACBLG23-263.txt):
+MVS-HS HS.2 PASS: 71 steps (HSFILL RC 0012, the rest RC 0000); 21 runs = model + HS lines ( 23869 text lines, 394 TSD streams = RP models) ; 9 member prints = model; CLIST block both paths
+# Step RCs JOB 285 (all):
+127
+# RP3 step RCs JOB 285:
+PACBLDRP   R3T1                PACRPD    RC= 0000
+PACBLDRP   R3T2                PACRPD    RC= 0000
+PACBLDRP   R3T3                PACRPD    RC= 0000
+PACBLDRP   R3T4                PACRPD    RC= 0000
+PACBLDRP   R3T5                PACRPD    RC= 0000
+PACBLDRP   R3T6                PACRPD    RC= 0000
+PACBLDRP   R3T7                PACRPD    RC= 0000
+PACBLDRP   R3T8                PACRPD    RC= 0000
+PACBLDRP   R3T9                PACRPD    RC= 0000
+PACBLDRP   R3T10               PACRPD    RC= 0000
+PACBLDRP   R3T11               PACRPD    RC= 0000
+PACBLDRP   R3T12               PACRPD    RC= 0000
+PACBLDRP   R3B1                PACRPD    RC= 0000
+PACBLDRP   R3B2                PACRPD    RC= 0000
+PACBLDRP   R3B3                PACRPD    RC= 0000
+PACBLDRP   R3B4                PACRPD    RC= 0000
+PACBLDRP   R3B5                PACRPD    RC= 0000
+PACBLDRP   R3B6                PACRPD    RC= 0000
+PACBLDRP   R3B7                PACRPD    RC= 0000
+PACBLDRP   R3B8                PACRPD    RC= 0000
+PACBLDRP   R3B9                PACRPD    RC= 0000
+PACBLDRP   R3DEL0              IEFBR14   RC= 0000
+PACBLDRP   R3ALC               IEFBR14   RC= 0000
+PACBLDRP   R3CLS               IEBGENER  RC= 0000
+PACBLDRP   R3CLT               IKJEFT01  RC= 0000
+PACBLDRP   R3DEL9              IEFBR14   RC= 0000

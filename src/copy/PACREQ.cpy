@@ -83,3 +83,12 @@
            05  REQ-RTFRZ             PIC 99.
            05  REQ-DTHX              PIC 99.
            05  REQ-DTHY              PIC 99.
+      * MVS-RP RP.3 SPEED (D39 6): REQ-RTPER = THE REALTIME QUANTUM IN
+      * MS, SET ONCE BY PACMAIN (PARM COLUMN 24: F FAST, ELSE NORMAL).
+      * PACRT RINI CONVERTS THE DESIGNED 150 MS QUANTA TO IT: REQ-RTFRT
+      * FREEZE LENGTH, REQ-RTRDY READY! QUANTA (LAST OF THE FREEZE),
+      * REQ-RTPUQ POPUP QUANTA AFTER ITS FIRST FRAME (DISPLAY ONLY).
+           05  REQ-RTPER             PIC 999.
+           05  REQ-RTFRT             PIC 99.
+           05  REQ-RTRDY             PIC 99.
+           05  REQ-RTPUQ             PIC 99.

@@ -13,7 +13,8 @@
       *            WHEN LEGAL ELSE TTL - 1, PLAYER STEP WHEN THE
       *            CURRENT DIRECTION IS OPEN; PACGAME MOVE WITH
       *            REQ-STEP B (BOTH), P (PLAYER) OR G (GHOSTS). A LOST
-      *            LIFE FREEZES 10 QUANTA AND CLEARS BOTH DIRECTIONS.
+      *            LIFE FREEZES 1.5 S (RT-FRT QUANTA, 10 AT 150 MS) AND
+      *            CLEARS BOTH DIRECTIONS.
       * OUT (EVERY OP): REQ-RTSTAT WAIT/RUN /PAUS/FRZ , REQ-RTQ,
       *      REQ-RTCUR, REQ-RTREQ, REQ-RTTTL, REQ-VIS; RQ ALSO REQ-RTIN
       *      (THE QUANTUM'S INPUTS) AND REQ-STEP (B P G - OR F).
@@ -30,6 +31,11 @@
       * MVS-RP (D39): PUBLISH ALSO GIVES REQ-RTFRZ (FREEZE QUANTA LEFT);
       *      EVERY GAME STEP SETS REQ-DTHX/REQ-DTHY = PAC-MAN'S CELL
       *      AFTER HIS MOVE OF THE STEP (THE DEATH CELL; DISPLAY ONLY).
+      * MVS-RP RP.3 SPEED (D39 6): THE DESIGNED QUANTA (150 MS) ARE
+      *      CONVERTED ONCE AT RINI TO THE QUANTUM REQ-RTPER BY RT-CONV
+      *      (THE SAME PARAGRAPH AS PACGAME): THE FREEZE (10 = 1.5 S),
+      *      READY! (4) AND THE POPUP (5), PUBLISHED AS REQ-RTFRT,
+      *      REQ-RTRDY, REQ-RTPUQ. MOVEMENT STAYS PER QUANTUM.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACRT.
        ENVIRONMENT DIVISION.
@@ -54,6 +60,14 @@
            05  WS-IN-CH          PIC X OCCURS 8 TIMES.
        01  TTL-INIT              PIC 9 VALUE 3.
        01  FRZ-INIT              PIC 99 VALUE 10.
+       01  RDY-INIT              PIC 99 VALUE 4.
+       01  PUQ-INIT              PIC 99 VALUE 5.
+       01  RT-FRT                PIC 99 VALUE 10.
+       01  RT-RDY                PIC 99 VALUE 4.
+       01  RT-PUQ                PIC 99 VALUE 5.
+       01  WS-CQ                 PIC 999.
+       01  WS-CN                 PIC 9(7).
+       01  WS-CD                 PIC 9(4).
        01  GH-NUM                PIC 9 VALUE 4.
        01  GH-DEN                PIC 9 VALUE 5.
        01  GH-DEN10              PIC 99 VALUE 10.
@@ -102,6 +116,15 @@
            MOVE '-' TO REQ-STEP.
            MOVE 0 TO REQ-DTHX.
            MOVE 0 TO REQ-DTHY.
+           MOVE FRZ-INIT TO WS-CQ.
+           PERFORM RT-CONV THRU RT-CONV-EXIT.
+           MOVE WS-CQ TO RT-FRT.
+           MOVE RDY-INIT TO WS-CQ.
+           PERFORM RT-CONV THRU RT-CONV-EXIT.
+           MOVE WS-CQ TO RT-RDY.
+           MOVE PUQ-INIT TO WS-CQ.
+           PERFORM RT-CONV THRU RT-CONV-EXIT.
+           MOVE WS-CQ TO RT-PUQ.
        DO-RIN.
            IF RT-NIN < 8
                ADD 1 TO RT-NIN
@@ -229,7 +252,7 @@
            IF WS-KIND NOT = 'G'
                ADD 1 TO RT-STEPS.
            IF WS-FRZE = 1 AND F-LOST = 0
-               MOVE FRZ-INIT TO RT-FRZ
+               MOVE RT-FRT TO RT-FRZ
                MOVE SPACE TO RT-CUR
                MOVE SPACE TO RT-REQ
                MOVE 0 TO RT-TTL.
@@ -275,6 +298,9 @@
            MOVE RT-TTL TO REQ-RTTTL.
            MOVE RT-VIS TO REQ-VIS.
            MOVE RT-FRZ TO REQ-RTFRZ.
+           MOVE RT-FRT TO REQ-RTFRT.
+           MOVE RT-RDY TO REQ-RTRDY.
+           MOVE RT-PUQ TO REQ-RTPUQ.
            MOVE 'RUN ' TO REQ-RTSTAT.
            IF RT-FRZ > 0
                MOVE 'FRZ ' TO REQ-RTSTAT.
@@ -283,3 +309,17 @@
            IF RT-START = 0
                MOVE 'WAIT' TO REQ-RTSTAT.
            MOVE 0 TO WS-NOP.
+       RT-CONV.
+      * MVS-RP RP.3 (D39 6), THE ONE QUANTUM CONVERSION (THE SAME
+      * PARAGRAPH AS PACGAME): WS-CQ QUANTA OF 150 MS -> THE SAME LENGTH
+      * IN QUANTA OF REQ-RTPER MS, ROUNDED HALF UP (150 = IDENTITY).
+      * NO PERIOD SET (NOT NUMERIC OR 0) = UNCHANGED.
+           IF REQ-RTPER NOT NUMERIC
+               GO TO RT-CONV-EXIT.
+           IF REQ-RTPER = 0
+               GO TO RT-CONV-EXIT.
+           COMPUTE WS-CN = WS-CQ * 300 + REQ-RTPER.
+           COMPUTE WS-CD = REQ-RTPER * 2.
+           DIVIDE WS-CN BY WS-CD GIVING WS-CQ.
+       RT-CONV-EXIT.
+           EXIT.

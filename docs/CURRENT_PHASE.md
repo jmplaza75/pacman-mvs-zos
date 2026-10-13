@@ -131,5 +131,11 @@ MVS-RP IN PROGRESS (started 2026-10-12 on the user's go): presentation and gamep
   PASS (docs/evidence/rp2-build-tsd.txt).
 - RP.2b D40 COMPLETE (2026-10-12, NOT installed): PACQRY validity + bounded selection, PACPLAT read loop + drain,
   PACQRYT sequence mode; deck RP JOB 275 (after COMPRESS JOB 274): 100 steps RC 0000, 60 TSD runs = model, 29 startup
-  sequences = model; regression GP2 JOB 276, HS JOB 277 PASS (docs/evidence/rp2b-d40-build.txt). Next: RP.3 SPEED,
-  then install + RP.4 live. Test: `python3 tests/test_rp.py build/PACBLDRP-275.txt`.
+  sequences = model; regression GP2 JOB 276, HS JOB 277 PASS (docs/evidence/rp2b-d40-build.txt).
+- RP.3 SPEED BUILD GREEN (2026-10-13, NOT installed; PACMAIN and the CLIST not replaced): REQ-RTPER (PACMAIN, PARM
+  column 24), PACPLAT period, RT-CONV in PACRT and PACGAME (authorised core change, docs/CORE_CHANGES.md), PACSCR /
+  PACDISP timers from the converted quanta, CLIST SPEED + LEVEL padding. Deck RP JOB 285: 127 steps RC 0000, RP.2
+  6265 streams unchanged, D40 29 sequences, RP3 12 TSD runs = 1495 streams + 9 BAT runs = model, CLIST PARM lines
+  under the TMP; regression GP2 JOB 283 (after COMPRESS JOB 282), HS JOB 284 PASS (docs/evidence/rp3-speed-build.txt).
+  Next (on user approval): install PACMAIN + CLIST, live FAST capture, then RP.4. Test:
+  `python3 tests/test_rp.py build/PACBLDRP-285.txt`.

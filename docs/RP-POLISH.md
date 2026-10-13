@@ -13,7 +13,7 @@ core change, tests/core_baseline.json unchanged. Batch and TSO line-mode SYSOUT 
 | RP.1 | this design | user approval, D39 frozen |
 | RP.2 | PACRT (publish freeze count + death cell), PACREQ (appended), PACSCR/PACPAL/PACDISP (sections 2-5), models | deck `RP` (TSD runs = model), regression decks GP2/GP23/HS rerun |
 | RP.2b | D40 startup hardening (section 11): PACQRY validity + bounded selection, PACPLAT TRY-COLOUR loop | PACQRYT sequence cases = model; every earlier reference unchanged |
-| RP.3 | `SPEED(NORMAL\|FAST)` (section 6): PARM column 24, PACPLAT period, CLIST | deck `RP` + CLIST job; live capture analysed |
+| RP.3 | `SPEED(NORMAL\|FAST)` (section 6): PARM column 24, PACPLAT period, one conversion (PACRT, PACGAME core), CLIST | deck `RP` + CLIST job; live capture analysed |
 | RP.4 | live c3270 checklist + the 10-minute pause soak (section 8) | docs/evidence/rp-live.md, README, CURRENT_PHASE, tag `mvs-rp` |
 
 ## 1. Scope rule (proposed D39.1)
@@ -82,15 +82,45 @@ core change, tests/core_baseline.json unchanged. Batch and TSO line-mode SYSOUT 
   line-mode end lines are unchanged.
 - Level shown in the HUD: already done in GP2.3 (wide / tall / status line) - no change.
 
-## 6. SPEED (RP.3, the roadmap's narrow scope)
-- `SPEED(NORMAL|FAST)` = period T 150 / 125 ms on the existing absolute-deadline loop (PACPLAT RT-PERIOD). PARM column
-  24 (N / F, absent = N). CLIST keyword `SPEED(NORMAL)`; the CLIST zero-pads LEVEL to 2 digits so column 24 is fixed
-  (PACMAIN: PARM-LEN 22-23 parsing unchanged, column 24 read only when PARM-LEN > 23).
-- Everything counted in quanta (ghost cadence, fright, fruit, freeze, RP effects) simply runs 1.2x faster; nothing
-  is rescaled. Batch / TSD output unchanged (no clock there).
-- Acceptance: one live capture at FAST analysed by tools/c3270_rt_game.py: median frame gap 125 ms +-10 %, p95 within
-  the NORMAL run's margin, keyboard restored on every frame (no lost key). If FAST misses, SPEED closes at NORMAL only
-  (documented), no timing research is reopened (E14 stays closed).
+## 6. SPEED (RP.3; amended by the user 2026-10-12, core change authorised 2026-10-13; implemented, JOB 285)
+Superseded first draft: "everything counted in quanta runs 1.2x faster". User rule (2026-10-12): FAST changes the
+movement cadence only; every timed event keeps its wall-clock length.
+- `SPEED(NORMAL|FAST)` = quantum 150 / 125 ms, PARM column 24 (`F` = FAST, anything else / absent = NORMAL), CLIST
+  keyword `SPEED(NORMAL)` (default; first letter, like every keyword). The CLIST pads LEVEL to 2 characters (`7` ->
+  `07`; any length other than 1 or 2 -> `01`) so column 24 is fixed. A digit in column 24 makes columns 22-24 one
+  3-digit start level (= 1, the D37 rule) and SPEED NORMAL: every pre-RP.3 PARM keeps its meaning (GP2 `A123`).
+  REALTIME only (TURN ignores it), CLASSIC and ARCADE, in TSC, TSD and BAT (so FAST is testable); NORMAL = every
+  current output.
+- One place for the quantum: PACMAIN sets `REQ-RTPER` (150 / 125, PACREQ appended); PACPLAT's deadline period
+  (DO-WDLN, otherwise unchanged: absolute deadlines, missed periods skipped, no catch-up) and every conversion read it.
+  No other 125 in the sources (checked).
+- One conversion, `Q' = (Q x 300 + P) / (2 x P)` (Q quanta designed at 150 ms, P = REQ-RTPER, integer division =
+  round half up; P = 150 gives Q exactly), paragraph RT-CONV, identical in PACGAME and PACRT (checked). Applied
+  where a REALTIME duration is loaded:
+  - core (PACGAME, ARCADE, REQ-PLAY R; authorised core change 2026-10-13, docs/CORE_CHANGES.md): fright and warning
+    (FRIGHT-START, LEVEL-ROW), eyes wait (EAT-GHOST), fruit time (FRUIT-SPAWN);
+  - PACRT RINI: the death / level-clear freeze (10), READY! (4) and the popup (5), published as `REQ-RTFRT`,
+    `REQ-RTRDY`, `REQ-RTPUQ` (CLASSIC uses the freeze only).
+  FAST values: freeze 12, READY! 5, popup 6, fruit 72, eyes 24, fright 48/41/32/24/16/41/16/16/8/41/16/8/8, warning
+  12/12/12/8/8/12/8/8/4/12/8/4/4 quanta (each = the NORMAL length within half a quantum; warning <= fright on every
+  row). Pause stops every one of them (no quantum is played while paused).
+- Presentation boundaries (REALTIME; deterministic from quantum counts x REQ-RTPER, never from measured time), with
+  REQ-RTFRZ = the freeze quanta left as published (REQ-RTFRT in the death / clear quantum, then down to 0):
+  - READY!: before the start, and in the freeze quanta with 0 < REQ-RTFRZ <= REQ-RTRDY (4 at NORMAL = 600 ms, 5 at
+    FAST = 625 ms);
+  - death animation (flag D): the freeze quanta with REQ-RTFRZ > REQ-RTRDY; frame = min(6, E / 150 + 1), E =
+    (REQ-RTFRT - REQ-RTFRZ) x REQ-RTPER ms elapsed since the death quantum (150 ms a frame). NORMAL: frames 1..6 in
+    REQ-RTFRZ 10..5 (= 11 - REQ-RTFRZ); FAST: 1 1 2 3 4 5 6 in 12..6;
+  - the final death (PACDISP): the same frames, REQ-RTFRZ from REQ-RTFRT down to REQ-RTRDY + 1;
+  - popup: shown in the quanta t0 .. t0 + REQ-RTPUQ (t0 = its first quantum; 5 at NORMAL = 6 frames, 6 at FAST = 7
+    frames, 900 / 875 ms on screen), removed earlier by a death or a level clear. TURN popups: unchanged.
+  At NORMAL these are exactly the RP.2 rules (RP.2 streams byte-identical, JOB 285).
+- Unchanged: ghost and Pac-Man cadence per quantum (the game is faster: that is FAST), the RT-VIS animation phase
+  (every 3 quanta), the direction TTL (3 steps), D28, keyboard restore. No 100 ms option, no E14/RT0 reopening.
+- Tests: tests/test_rp.py sections 2b / rp3_check; FAST cases tests/rpcases/RP3TIM, RP3PAU (tests/search_rp.py
+  --rp3); deck RP RP3 runs (12 TSD, 9 BAT, the CLIST PARM lines under the batch TMP). Live (RP.4): one FAST capture
+  analysed by tools/c3270_rt_game.py (median frame gap 125 ms +-10 %, p95, freeze and fright wall-clock lengths,
+  keyboard restore). A renderer / deadline margin problem at 125 ms is reported, not redesigned.
 
 ## 7. ESTAE live validation (RP.0)
 The PACFSIO abend exit (since G1) is validated with a **test driver, not a hook in the game**: `src/probe/PACRPE.cob`

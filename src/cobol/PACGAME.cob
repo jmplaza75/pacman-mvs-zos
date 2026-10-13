@@ -15,6 +15,10 @@
       *       REQ-START); A CLEARED MAZE IS REFILLED AND THE NEXT LEVEL
       *       STARTS (LEVEL 99 CLEARED = WON); PER-LEVEL TABLE K-LVL;
       *       FRUIT AT 30 / 70 ITEMS; ONE EXTRA LIFE AT 10000.
+      *       MVS-RP RP.3 (D39 6, ARCADE REALTIME ONLY): THE QUANTA OF
+      *       K-ARC ROW R AND K-LVL ARE DESIGNED AT 150 MS; RT-CONV
+      *       CONVERTS FRIGHT, WARNING, EYES WAIT AND FRUIT TIME TO THE
+      *       QUANTUM REQ-RTPER WHEN LOADED (150 MS = UNCHANGED).
       * RULES : SEE DOCS/DECISIONS.MD D7, D9, D11, D14, D36, D37.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACGAME.
@@ -91,6 +95,9 @@
        01  WS-R                  PIC 9.
        01  NEW-X                 PIC 99.
        01  NEW-Y                 PIC 99.
+       01  WS-CQ                 PIC 999.
+       01  WS-CN                 PIC 9(7).
+       01  WS-CD                 PIC 9(4).
        LINKAGE SECTION.
        01  PAC-STATE COPY PACSTATE.
        01  PAC-REQ COPY PACREQ.
@@ -416,7 +423,14 @@
            MOVE KL-WRR (WS-LR) TO ARC-KWARN.
            IF WS-KR = 1
                MOVE KL-FRT (WS-LR) TO ARC-FR
-               MOVE KL-WRT (WS-LR) TO ARC-KWARN.
+               MOVE KL-WRT (WS-LR) TO ARC-KWARN
+           ELSE
+               MOVE ARC-FR TO WS-CQ
+               PERFORM RT-CONV THRU RT-CONV-EXIT
+               MOVE WS-CQ TO ARC-FR
+               MOVE ARC-KWARN TO WS-CQ
+               PERFORM RT-CONV THRU RT-CONV-EXIT
+               MOVE WS-CQ TO ARC-KWARN.
            MOVE 0 TO ARC-FTURN.
            MOVE 0 TO ARC-FACC.
            MOVE 0 TO ARC-CHAIN.
@@ -457,6 +471,10 @@
            PERFORM PICK-ROW.
            MOVE 'E' TO ARC-GM (WS-G).
            MOVE K-EYES (WS-KR) TO ARC-GW (WS-G).
+           IF WS-KR = 2
+               MOVE ARC-GW (WS-G) TO WS-CQ
+               PERFORM RT-CONV THRU RT-CONV-EXIT
+               MOVE WS-CQ TO ARC-GW (WS-G).
            MOVE 0 TO ARC-GR (WS-G).
            PERFORM RESET-GHOST.
       * ------------- MVS-GP2 ARCADE (D37, ARC-ON = 1) -------------
@@ -478,7 +496,11 @@
            MOVE KL-NUM (WS-LR) TO ARC-KNUM.
            MOVE KL-WRR (WS-LR) TO ARC-KWARN.
            IF WS-KR = 1
-               MOVE KL-WRT (WS-LR) TO ARC-KWARN.
+               MOVE KL-WRT (WS-LR) TO ARC-KWARN
+           ELSE
+               MOVE ARC-KWARN TO WS-CQ
+               PERFORM RT-CONV THRU RT-CONV-EXIT
+               MOVE WS-CQ TO ARC-KWARN.
            MOVE KL-BK (WS-LR) TO ARC-BK.
            MOVE KL-BV (WS-LR) TO ARC-BV.
        LEVEL-ROW-EXIT.
@@ -543,6 +565,10 @@
            ADD 1 TO ARC-BN.
            PERFORM PICK-ROW.
            MOVE K-BT (WS-KR) TO ARC-BT.
+           IF WS-KR = 2
+               MOVE ARC-BT TO WS-CQ
+               PERFORM RT-CONV THRU RT-CONV-EXIT
+               MOVE WS-CQ TO ARC-BT.
            MOVE 'A' TO ARC-EA.
        FRUIT-SPAWN-EXIT.
            EXIT.
@@ -560,4 +586,18 @@
            MOVE 'F' TO ARC-EF.
            PERFORM XLIFE THRU XLIFE-EXIT.
        FRUIT-EAT-EXIT.
+           EXIT.
+       RT-CONV.
+      * MVS-RP RP.3 (D39 6), THE ONE QUANTUM CONVERSION (THE SAME
+      * PARAGRAPH AS PACRT): WS-CQ QUANTA OF 150 MS -> THE SAME LENGTH
+      * IN QUANTA OF REQ-RTPER MS, ROUNDED HALF UP (150 = IDENTITY).
+      * NO PERIOD SET (NOT NUMERIC OR 0) = UNCHANGED.
+           IF REQ-RTPER NOT NUMERIC
+               GO TO RT-CONV-EXIT.
+           IF REQ-RTPER = 0
+               GO TO RT-CONV-EXIT.
+           COMPUTE WS-CN = WS-CQ * 300 + REQ-RTPER.
+           COMPUTE WS-CD = REQ-RTPER * 2.
+           DIVIDE WS-CN BY WS-CD GIVING WS-CQ.
+       RT-CONV-EXIT.
            EXIT.

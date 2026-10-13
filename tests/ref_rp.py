@@ -36,7 +36,9 @@ class Tracker:
         (REQ-HSNEW Y) = a level-1 start whose final score is strictly higher (the save succeeds in the test decks)."""
         self.pu, self.eat, self.frt, self.hs = None, 0, 0, hs
 
-    def frame(self, g, play='T', rtstat=None, rtfrz=0, rtq=0, dth=None, ends=False):
+    def frame(self, g, play='T', rtstat=None, rtfrz=0, rtq=0, dth=None, ends=False, tm=(150, 10, 4, 5)):
+        """tm (REALTIME, RP.3): (quantum ms, freeze quanta, READY! quanta, popup quanta) of the selected SPEED."""
+        per, frt, rdy, puq = tm
         if not getattr(g, 'arc', False) or not hasattr(g, 'evf'):
             return None                  # CLASSIC, or the superseded GP1-only model (no GP2 counters)
         now = rtq if play == 'R' else g.turns
@@ -47,7 +49,8 @@ class Tracker:
         if g.eaten != self.eat:
             self.eat = g.eaten
             self.start((g.x, g.y), g.pts, POPUP_GHOST, 'GHOST', now)
-        if self.pu is not None and ((play == 'R' and now > self.pu['t0'] + 5) or (play != 'R' and now != self.pu['t0'])):
+        if self.pu is not None and ((play == 'R' and now > self.pu['t0'] + puq) or
+                                    (play != 'R' and now != self.pu['t0'])):
             self.pu = None
         if 'D' in g.evf or 'C' in g.evf:
             self.pu = None
@@ -56,9 +59,10 @@ class Tracker:
             hi = max(self.hs[1], g.ascore)
         ready, d = False, None
         if play == 'R':
-            ready = rtstat == 'WAIT' or (rtstat == 'FRZ ' and 0 < rtfrz < 5)
-            if rtstat == 'FRZ ' and rtfrz > 4 and 'D' in g.evf:
-                d = (11 - rtfrz, dth[0], dth[1])
+            ready = rtstat == 'WAIT' or (rtstat == 'FRZ ' and 0 < rtfrz <= rdy)
+            if rtstat == 'FRZ ' and rtfrz > rdy and 'D' in g.evf:
+                # the frame of the elapsed freeze time (the death quantum = 0 ms), 150 ms each, at most 6
+                d = (min(6, (frt - rtfrz) * per // 150 + 1), dth[0], dth[1])
         else:
             ready = g.turns == 0 or 'D' in g.evf or 'C' in g.evf
         if g.lost or g.won:

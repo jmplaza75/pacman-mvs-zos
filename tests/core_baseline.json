@@ -1,7 +1,7 @@
 {
- "baseline": "authorised 2026-10-12 by project owner (D37 approval)",
+ "baseline": "authorised 2026-10-13 by project owner (RP.3 approval)",
  "files": {
-  "src/cobol/PACGAME.cob": "a0aab0509d50aae91d64c25fad0c094352ece1b4faf550eca2ecff670d8c0adf",
+  "src/cobol/PACGAME.cob": "58f06e550f17721515d38d7530748cdf4bebef11ef0604c772569f71a1111ae5",
   "src/cobol/PACMAP.cob": "b91c13ca09a27939e89baea36160c18a0cc848f61092628151f2fc277b4209b9",
   "src/cobol/PACAI.cob": "66d916d8503831e6e2a85a13c86d91992382c4859142cd672126db2d62ab2fab",
   "src/copy/PACSTATE.cpy": "197bbf9ddcbf4df7112e7bb182211bc3dbce550cc9c85feac57b1e9b5a141c43",

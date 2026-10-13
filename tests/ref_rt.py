@@ -19,6 +19,22 @@ from ref_snap import Rec  # noqa: E402
 gs.BANNERS.setdefault('PAUSE', (' PAUSED ', gs.HELP))   # RT3: while paused the message row shows this banner
 
 TTL, FREEZE, GH_NUM, GH_DEN, ANIM_Q = 3, 10, 4, 5, 3
+# MVS-RP RP.3 SPEED (docs/RP-POLISH.md 6): the quantum in ms (PARM column 24: F = FAST, anything else NORMAL). Every
+# REALTIME duration is designed in quanta of 150 ms and converted to the selected quantum, rounded half up; the
+# movement cadence stays per quantum. READY! = the last 4 designed freeze quanta, a popup lasts 5 quanta after its
+# first frame, a death-animation frame is 150 ms.
+NORMAL, FAST = 150, 125
+READY_Q, POPUP_Q, DEATH_FRAME_MS = 4, 5, 150
+
+
+def quanta(q, per=NORMAL):
+    """q quanta of 150 ms -> the same length in quanta of per ms, rounded half up (per 150: q)."""
+    return (q * 300 + per) // (2 * per)
+
+
+def period(speed):
+    """PARM column 24 -> the quantum (ms)."""
+    return FAST if speed == 'F' else NORMAL
 D = {'U': (0, -1), 'D': (0, 1), 'L': (-1, 0), 'R': (1, 0)}
 
 
@@ -68,8 +84,10 @@ class RTGame(Game):
 class Controller:
     """PACRT: directions, TTL, 4/5 ghost cadence, pause, death freeze, counters."""
 
-    def __init__(self, g):
+    def __init__(self, g, per=NORMAL):
         self.g, self.q, self.cur, self.req, self.ttl, self.acc = g, 0, ' ', ' ', 0, 0
+        self.per, g.per = per, per                    # RP.3: the game converts its own REALTIME durations
+        self.frt, self.rdy, self.puq = quanta(FREEZE, per), quanta(READY_Q, per), quanta(POPUP_Q, per)
         self.frz, self.pause, self.started, self.buf, self.vis, self.kind, self.rtin = 0, False, False, [], 0, '-', ''
 
     def status(self):
@@ -113,7 +131,7 @@ class Controller:
             lives = g.lives
             g.play(self.kind, self.cur)
             if g.lives < lives and not g.lost:
-                self.frz, self.cur, self.req, self.ttl = FREEZE, ' ', ' ', 0
+                self.frz, self.cur, self.req, self.ttl = self.frt, ' ', ' ', 0
 
 
 def events(cards):
@@ -145,7 +163,7 @@ def events(cards):
         yield evs
 
 
-def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None):
+def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None, per=NORMAL):
     """The PACMAIN RT-GAME driver. tsd = None (BAT) or a canvas letter (TSD); cfg = (ai, n) from the PARM (TSD).
     snap: optional ref_snap.Log ((lives, won) per screen sent, MVS-S1). mk_game / mk_ctl (MVS-GP1): the ARCADE game
     and controller of tests/ref_arcade.py (TSD screens only; its end lines come from the game)."""
@@ -166,7 +184,7 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
         ai, n, _ = parse_config([cards[0]])
         first = read()
     g = (mk_game or RTGame)(ai, n)
-    c = (mk_ctl or Controller)(g)
+    c = (mk_ctl or Controller)(g, per)
     st = {'prev': None, 'msg_on': None, 'msg_last': None, 'face': 'R', 'frame': ' ', 'over': False}
     from ref_rp import Tracker
     tr = Tracker(hs)
@@ -174,7 +192,7 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
     def decor(rtstat=None, rtfrz=None, ends=False):
         """MVS-RP: the decorations of the screen composed now (PACRT published status, freeze count, death cell)."""
         return tr.frame(g, 'R', rtstat or c.status(), c.frz if rtfrz is None else rtfrz, c.q,
-                        getattr(c, 'dth', None), ends)
+                        getattr(c, 'dth', None), ends, tm=(c.per, c.frt, c.rdy, c.puq))
     geo = None
     if tsd is not None:
         geo = gx.Geo(tsd, True, 4)
@@ -276,7 +294,7 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
             st['over'], st['end'] = True, 'LOST' if g.lost else 'WIN'
     end = 'LOST' if g.lost else 'WIN' if g.won else st.get('end', 'EOF')
     if geo is not None and getattr(g, 'arc', False) and g.lost:
-        for k in range(10, 4, -1):            # MVS-RP: the final death frames (PACDISP, before the end screen)
+        for k in range(c.frt, c.rdy, -1):     # MVS-RP: the final death frames (PACDISP, before the end screen)
             rtqf('FRZ ', k)
     if geo is not None and geo.fam != 'G':
         frames.append(gx.full(geo, gx.image(geo, g, g.cmd, g.res, None, True, c.vis, face(), end,
@@ -304,14 +322,14 @@ def board(g):
     return lines
 
 
-def simulate(cards):
-    return run(list(cards))[0]
+def simulate(cards, per=NORMAL):
+    return run(list(cards), per=per)[0]
 
 
-def tsd(cards, canvas, snap=None, mk_game=None, mk_ctl=None, hs=None):
+def tsd(cards, canvas, snap=None, mk_game=None, mk_ctl=None, hs=None, per=NORMAL):
     """(parm config, cards) as the TSD deck runs them: the config card goes to the PARM."""
     ai, n, rest = parse_config(list(cards))
-    return run(rest, tsd=canvas, cfg=(ai, n), snap=snap, mk_game=mk_game, mk_ctl=mk_ctl, hs=hs)
+    return run(rest, tsd=canvas, cfg=(ai, n), snap=snap, mk_game=mk_game, mk_ctl=mk_ctl, hs=hs, per=per)
 
 
 if __name__ == '__main__':

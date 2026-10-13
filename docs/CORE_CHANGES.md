@@ -24,3 +24,7 @@ Reason: MVS-GP1 GP1.2 (D36, approved by the user 2026-10-11): RULES(ARCADE) powe
 Reason: MVS-GP2 GP2.2 (D37, approved by the user 2026-10-12): RULES(ARCADE) levels 1-99, maze refill on a full clear, per-level table K-LVL in PACGAME (AI bump, REALTIME step, fright/warning, fruit), fruit at (10,8) after 30/70 items, one extra life at 10000 (ARC-XL), event flags incl. death D, wide counters, start level REQ-START. PACARC grew append-only; PACMAP, PACAI, PACSTATE, PACMREQ, LEVEL1, ARCADE1 unchanged; CLASSIC behaviour unchanged. Build JOB 243 RC 0000.
 - src/cobol/PACGAME.cob: ac803883d397adb7 -> a0aab0509d50aae9
 - src/copy/PACARC.cpy: 2f1d2ea50382fc9d -> dd5c83db32ae3d3f
+
+## 2026-10-13 - authorised by project owner (RP.3 approval)
+Reason: MVS-RP RP.3 SPEED (D39 section 6, authorised by the user 2026-10-13): PACGAME paragraph RT-CONV, Q' = (Q*300 + P) / (2*P) rounded half up with P = REQ-RTPER (PACREQ appended; 150 NORMAL, 125 FAST, set once by PACMAIN from PARM column 24), applied only where ARCADE REALTIME durations are loaded: fright and warning (FRIGHT-START, LEVEL-ROW), eyes wait (EAT-GHOST), fruit time (FRUIT-SPAWN). P = 150 is the identity: every NORMAL reference unchanged. TURN and CLASSIC gameplay unchanged; PACMAP, PACAI, PACARC, PACSTATE, PACMREQ, maps unchanged.
+- src/cobol/PACGAME.cob: a0aab0509d50aae9 -> 58f06e550f177215

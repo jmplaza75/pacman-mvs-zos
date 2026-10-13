@@ -534,6 +534,82 @@ RP_RT = [r + ('',) for r in GP23_RT] + [
     ('gp2cases', 'G2RCLR', 'W', 'N', '', 'M:R8'),       # REALTIME high score, new
     ('gp2cases', 'G2RXD', 'D', 'Y', '13', 'M:Z2')]      # B, practice start, missing member
 RP_MARK = 'PACMAN-RP-SCREEN-RUNS-FOLLOW'
+# MVS-RP RP.3 SPEED (docs/RP-POLISH.md 6): PARM columns 22-23 = the start level (2 digits, as the CLIST pads it),
+# column 24 = SPEED (F FAST, anything else NORMAL). RP3_TSD: (play, directory, case, canvas, sound, start, speed,
+# rules) TSD dry runs, REALTIME (play R: COLOR N, HILITE Y, ANIM Y, REDRAW P, GLYPHS G, SCALE 4) or TURN (play T, the
+# same profile). RP3_BAT: (play, directory, case, rules, start, speed) batch runs (the configuration card first).
+RP3_TSD = [
+    ('R', 'rpcases', 'RP3TIM', 'W', 'N', '', 'F', 'A'),     # fright 48 / warning 12, eyes 24, fruit 72 expiring
+    ('R', 'rpcases', 'RP3PAU', 'W', 'N', '', 'F', 'A'),     # the same paused while all three run
+    ('R', 'rpcases', 'RPLOST', 'W', 'Y', '', 'F', 'A'),     # death freezes 12, frames, READY!, pause + PA2, final
+    ('R', 'gp2cases', 'G2RCLR', 'W', 'Y', '', 'F', 'A'),    # level-clear freeze, level 2 fright 41, fruit eaten
+    ('R', 'rpcases', 'RPPAUSE', 'W', 'N', '', 'F', 'A'),    # popup quanta, pause while a popup is shown
+    ('R', 'rpcases', 'RPCLRPU', 'T', 'N', '', 'F', 'A'),    # tall: popup removed by a level clear
+    ('R', 'gp2cases', 'G2RXD', 'D', 'Y', '13', 'F', 'A'),   # B, level 13 (fright 8 / warning 4)
+    ('R', 'rtcases', 'RTEDGE', 'W', 'N', '', 'F', 'C'),     # CLASSIC: death freeze 12, win
+    ('R', 'rtcases', 'RTSTILL', 'D', 'N', '', 'F', 'C'),    # CLASSIC: lost
+    ('R', 'gp2cases', 'G2RPAU', 'W', 'N', '', 'N', 'A'),    # explicit NORMAL = the reference
+    ('R', 'gp2cases', 'G2RPAU', 'W', 'N', '', 'X', 'A'),    # invalid SPEED = NORMAL
+    ('T', 'gp2cases', 'G2CLR', 'W', 'Y', '', 'F', 'A')]     # TURN ignores SPEED
+RP3_BAT = [
+    ('R', 'rpcases', 'RP3TIM', 'A', '', 'F'),               # the timer values in the A / L lines
+    ('R', 'rpcases', 'RP3PAU', 'A', '', 'F'),
+    ('R', 'gp2cases', 'G2RCLR', 'A', '', 'F'),
+    ('R', 'rpcases', 'RPLOST', 'A', '', 'F'),
+    ('R', 'rtcases', 'RTSTILL', 'C', '', 'F'),
+    ('R', 'rtcases', 'RTWIN', 'C', '', 'F'),                # no death: the NORMAL output (cadence per quantum)
+    ('R', 'gp2cases', 'G2RPAU', 'A', '', 'X'),              # invalid SPEED = NORMAL
+    ('T', 'gp2cases', 'G2CLR', 'A', '', 'F'),               # TURN ignores SPEED
+    ('T', 'cases', 'LOST0', 'C', '', 'F')]                  # CLASSIC TURN = the 1.0-MVS oracle
+RP3_MARK = 'PACMAN-RP3-SPEED-RUNS-FOLLOW'
+# the CLIST PARM lines (from the first SET to the SET &P line of src/clist/PACMAN.clist, unchanged) run by the batch
+# TMP with these keyword sets; each writes RP3PARM=<the PARM>= (LEVEL padding, SPEED column 24)
+RP3_CLIST = ['', 'RULES(ARCADE) SPEED(FAST)', 'RULES(ARCADE) LEVEL(7) SPEED(FAST)', 'LEVEL(13) SPEED(NORMAL)',
+             'LEVEL(123) SPEED(XYZ)', 'LEVEL(0)', 'PLAY(TURN) SPEED(F) AI(3)']
+
+
+def rp3_parm(kind, play, cfg, cv, snd, rules, start, speed):
+    lv = (start or '1').zfill(2)
+    if kind == 'BAT':
+        return 'BAT'.ljust(18) + ('R' if play == 'R' else ' ') + ' ' + rules + lv + speed
+    prof = 'NYYPG4' + cv + ('R' if play == 'R' else 'T') + snd + rules + lv + speed
+    return ('TSD ' + cfg).ljust(11) + prof
+
+
+def rp3_steps(pfx, load):
+    out = ('//RP3MARK  EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+           f'//SYSUT1   DD *\n{RP3_MARK}\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    for i, (play, d, c, cv, snd, st, sp, rules) in enumerate(RP3_TSD, 1):
+        lines = text_of(ROOT / f'tests/{d}/{c}.txt').splitlines(keepends=True)
+        parm = rp3_parm('TSD', play, lines[0].rstrip('\n')[:5], cv, snd, rules, st, sp)
+        out += run_step(f'R3T{i}', pfx, load, ''.join(lines[1:]), parm=parm)
+    for i, (play, d, c, rules, st, sp) in enumerate(RP3_BAT, 1):
+        parm = rp3_parm('BAT', play, '', '', '', rules, st, sp)
+        out += run_step(f'R3B{i}', pfx, load, text_of(ROOT / f'tests/{d}/{c}.txt'), parm=parm)
+    ds = f'{pfx}.RP3CL'
+    out += (f'//R3DEL0   EXEC PGM=IEFBR14,COND=(0,NE)\n//D1       DD DSN={ds},DISP=(MOD,DELETE),\n'
+            '//            UNIT=SYSDA,SPACE=(TRK,(1))\n'
+            f'//R3ALC    EXEC PGM=IEFBR14,COND=(0,NE)\n//D1       DD DSN={ds},DISP=(NEW,CATLG),\n'
+            '//            UNIT=SYSDA,SPACE=(TRK,(2,1,2)),\n'
+            f'//            DCB=(DSORG=PO,{DATA_DCB})\n')
+    out += ('//R3CLS    EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT2   DD DSN={ds}(PARMS),DISP=OLD\n//SYSUT1   DD DATA,DLM=ZZ\n'
+            + '\n'.join(rp3_clist_lines(pfx)) + '\nWRITE RP3PARM=&P=\nZZ\n')
+    cmds = [f"  EXEC '{ds}(PARMS)'" + (f" '{k}'" if k else '') for k in RP3_CLIST]
+    assert all(len(c) <= 72 for c in cmds), 'a SYSTSIN card ends at column 72'
+    out += ('//R3CLT    EXEC PGM=IKJEFT01,COND=(0,NE)\n//SYSTSPRT DD SYSOUT=A\n//SYSTSIN  DD *\n'
+            + ''.join(c + '\n' for c in cmds) + '/*\n')
+    out += f'//R3DEL9   EXEC PGM=IEFBR14,COND=EVEN\n//D1       DD DSN={ds},DISP=(OLD,DELETE)\n'
+    return out
+
+
+def rp3_clist_lines(pfx):
+    """The PROC statement and the PARM lines of the CLIST (no ALLOC, no CALL)."""
+    lines = clist_text(pfx).splitlines()
+    proc = lines[:lines.index(next(l for l in lines if l.startswith('/*')))]
+    i = lines.index('SET &C = &SUBSTR(1:1,&COLOR)')
+    j = next(k for k, l in enumerate(lines) if l.startswith('SET &P = '))
+    return proc + [l for l in lines[i:j + 1] if not l.startswith(('ALLOC', 'IF &W = A', '  ', 'END', 'ELSE'))]
 
 
 def rp_dd(pfx, dd):
@@ -564,7 +640,7 @@ def rp_steps(pfx, load):
         parm = ('TSD ' + lines[0].rstrip('\n')[:5]).ljust(11) + 'NYYPG4' + cv + 'R' + snd + 'A' + st
         out += run_step(f'RPR{i}', pfx, load, ''.join(lines[1:]), parm=parm, dd=rp_dd(pfx, dd), cond=cond)
     out += f'//RPDEL9   EXEC PGM=IEFBR14,COND=EVEN\n//D1       DD DSN={ds},DISP=(OLD,DELETE)\n'
-    return out
+    return out + rp3_steps(pfx, load)
 
 
 def tso_parm_and_cards(case):

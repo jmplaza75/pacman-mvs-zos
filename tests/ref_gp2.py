@@ -52,8 +52,9 @@ class Level(A.Arcade):
 
     def k(self):
         r = self.row()
-        if self.play == 'R':
-            return (r[4], r[5], EYES['R'], FINC)
+        if self.play == 'R':                           # RP.3: REALTIME quanta converted to the selected quantum
+            p = getattr(self, 'per', ref_rt.NORMAL)
+            return (ref_rt.quanta(r[4], p), ref_rt.quanta(r[5], p), ref_rt.quanta(EYES['R'], p), FINC)
         return (r[2], r[3], EYES['T'], FINC)
 
     def level_start(self):
@@ -143,7 +144,8 @@ class Level(A.Arcade):
                     if self.items in FRUIT_AT:
                         self.log.append(('fruit', self.items, (self.x, self.y) == FRUIT_CELL, self.bt > 0))
                         self.bn += 1
-                        self.bt = FRUIT_TIME['R' if self.play == 'R' else 'T']
+                        self.bt = (ref_rt.quanta(FRUIT_TIME['R'], getattr(self, 'per', ref_rt.NORMAL))
+                                   if self.play == 'R' else FRUIT_TIME['T'])
                         self.flag('A')
                 if self.bt > 0 and (self.x, self.y) == FRUIT_CELL:
                     self.bt = 0
@@ -262,7 +264,7 @@ def simulate(cards, prompts=False, cfg=None, redraw=False, start=1):
 
 class LevelRT(ref_rt.Controller):
     """PACRT under D37: tick first, normal accumulator + the level's step due at >= 10, frightened + 2 due at >= 5;
-    a death (flag D) or a level clear (flag C) resets the normal accumulator and freezes 10 quanta."""
+    a death (flag D) or a level clear (flag C) resets the normal accumulator and freezes 1.5 s (10 quanta at 150 ms)."""
 
     def rq(self):
         g = self.g
@@ -303,10 +305,10 @@ class LevelRT(ref_rt.Controller):
             if 'D' in g.evf or 'C' in g.evf:
                 self.acc = 0
                 if not g.lost:
-                    self.frz, self.cur, self.req, self.ttl = FREEZE, ' ', ' ', 0
+                    self.frz, self.cur, self.req, self.ttl = self.frt, ' ', ' ', 0
 
 
-def rt_simulate(cards, start=1):
+def rt_simulate(cards, start=1, per=ref_rt.NORMAL):
     cards = list(cards)
     stream = []
     for evs in ref_rt.events(cards):
@@ -324,7 +326,7 @@ def rt_simulate(cards, start=1):
         ai, n, _ = parse_config([cards[0]])
         first = read()
     g = Level(ai, n, 'R', start)
-    c = LevelRT(g)
+    c = LevelRT(g, per)
     out = head(g) + g.frame(' ', 'START  ')
     st = {'over': False, 'end': 'EOF'}
 

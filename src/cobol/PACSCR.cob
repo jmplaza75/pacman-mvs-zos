@@ -378,6 +378,8 @@
       * MVS-RP (D39) DECORATIONS OF THE SCREEN BEING BUILT, POPUP STATE.
        01  RP-READY              PIC 9 VALUE 0.
        01  RP-DTH                PIC 9 VALUE 0.
+       01  RP-DTE                PIC 9(5) VALUE 0.
+       01  RP-DTHMS              PIC 999 VALUE 150.
        01  RP-PU                 PIC 9 VALUE 0.
        01  RP-HI                 PIC 9 VALUE 0.
        01  RP-END                PIC 9 VALUE 0.
@@ -2046,7 +2048,8 @@
                MOVE PLAYER-Y TO PU-Y
                MOVE 'GHOST ' TO PM-KIND
                PERFORM PU-START.
-           COMPUTE RP-LIM = PU-T0 + 5.
+           IF PU-ON = 1 AND REQ-PLAY = 'R'
+               COMPUTE RP-LIM = PU-T0 + REQ-RTPUQ.
            IF PU-ON = 1 AND REQ-PLAY = 'R' AND RP-NOW > RP-LIM
                MOVE 0 TO PU-ON.
            IF PU-ON = 1 AND REQ-PLAY NOT = 'R' AND RP-NOW NOT = PU-T0
@@ -2070,14 +2073,26 @@
        RP-STATE-EXIT.
            EXIT.
        RP-RT.
-      * REALTIME: READY! BEFORE THE START AND IN FREEZE QUANTA 4..1; THE
-      * DEATH FRAMES IN FREEZE QUANTA 10..5 OF A DEATH (FLAG D).
+      * REALTIME: READY! BEFORE THE START AND IN THE LAST REQ-RTRDY
+      * FREEZE QUANTA (4 AT 150 MS); THE DEATH FRAMES IN THE FREEZE
+      * QUANTA BEFORE THEM (10..5 AT 150 MS) OF A DEATH (FLAG D): FRAME
+      * = ELAPSED MS / RP-DTHMS + 1 (MAX 6), ELAPSED = (REQ-RTFRT -
+      * REQ-RTFRZ) X REQ-RTPER (RP.3; AT 150 MS = 11 - REQ-RTFRZ).
            IF REQ-RTSTAT = 'WAIT'
                MOVE 1 TO RP-READY.
-           IF REQ-RTSTAT = 'FRZ ' AND REQ-RTFRZ > 0 AND REQ-RTFRZ < 5
+           IF REQ-RTSTAT = 'FRZ ' AND REQ-RTFRZ > 0
+                   AND REQ-RTFRZ NOT > REQ-RTRDY
                MOVE 1 TO RP-READY.
-           IF REQ-RTSTAT = 'FRZ ' AND REQ-RTFRZ > 4 AND ARC-ED = 'D'
-               COMPUTE RP-DTH = 11 - REQ-RTFRZ.
+           IF REQ-RTSTAT = 'FRZ ' AND REQ-RTFRZ > REQ-RTRDY
+                   AND ARC-ED = 'D'
+               PERFORM RP-DFRAME.
+           MOVE 0 TO WS-NOP.
+       RP-DFRAME.
+           COMPUTE RP-DTE = (REQ-RTFRT - REQ-RTFRZ) * REQ-RTPER.
+           DIVIDE RP-DTE BY RP-DTHMS GIVING RP-DTH.
+           ADD 1 TO RP-DTH.
+           IF RP-DTH > 6
+               MOVE 6 TO RP-DTH.
            MOVE 0 TO WS-NOP.
        PU-START.
       * POPUP TEXT: 4 WIDE = 3 DIGITS + BLANK BELOW 1000, ELSE 4 DIGITS;
