@@ -21,3 +21,4 @@ Evidence: docs/evidence/zos0-discovery.md. Credentials: Zowe secure store only, 
 | Binder | IEWBLINK, SYSLIB CEE.SCEELKEX + CEE.SCEELKED; program objects FORMAT 3 in PDSE | ZOS-1 J2 |
 | DISPLAY output | SYSOUT RECFM FBA LRECL 121 (120 data characters; longer lines split); 2.0 oracle max line 120 | ZOS-1 J3/J4 |
 | Build profile | A (D45): RENT, RMODE(24), DATA(24), binder AMODE 24 / RMODE 24, LE ALL31(OFF) STACK BELOW; B (AMODE 31) fallback only | ZOS-1 |
+| Job output limit | ~5,000 SYSOUT lines per job by default: above it `$HASP375 ESTIMATED LINES EXCEEDED` and the running step is cancelled S722 (Z2-1 JOB08497: 5,035 records). The 2.0 oracle jobs print 21,519 (1.0 oracle) to 113,907 (GP2) lines | ZOS-2 Z2-1 |

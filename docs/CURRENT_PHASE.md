@@ -255,4 +255,7 @@ the user approves it. main and the MVS release are not touched.
 - Local tooling done: make_deck.py --target zos (tools/zowe/zos_target.py), zos_listing in-stream PROCs, zos_equiv,
   zos_compile_report, tests/test_zos_tools.py PASS, R3 gate (tools/zowe/r3_gate.py: 13 release decks = SHA256SUMS,
   94 MVS deck generations = zos-1) PASS.
-- Z2-1: pending submission; stop and report after it.
+- Z2-1 PACZ2CMP JOB08497 (docs/evidence/zos2-portable-core.md): C1 not confirmed (PACQRY RC 0); C2 = ANS-68
+  `01 <name> COPY <member>` in 9 modules (RC 12, only cause); C3 = ASMA303W PACFSIO (benign); PACHSIO incomplete
+  (job cancelled S722 at the ~5,000-line site output limit). STOPPED: waiting for the user's decisions. No source
+  changed.
