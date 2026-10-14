@@ -16,7 +16,7 @@ ZHSA (Z2-1b, PACHSIO assembled alone, compact listing); the ZOS-2 jobs of CHUNKS
 deterministic subset of the run steps of an MVS deck, each step taken verbatim from that deck's z/OS rendering, each job
 kept well under the site limit of ~5,000 spool lines (docs/ZOS-ENVIRONMENT.md).
 Listing options (no effect on the object code): COBOL NOSOURCE,NOXREF; HLASM PCONTROL(NOGEN) and no cross-reference
-tables; binder LIST,MAP. Build steps run with COND=(4,LT): RC 4 is accepted by the JCL only so that the known PACFSIO
+tables; binder LIST (no MAP). Build steps run with COND=(4,LT): RC 4 is accepted by the JCL only so that the known PACFSIO
 ASMA303W (C3) does not flush the bind; the job is then judged on the exact per-step expectations (tools/zowe/zos_plan.py).
 """
 from pathlib import Path
@@ -25,7 +25,7 @@ R = Path(__file__).resolve().parent.parent.parent
 PREFIX = '@@HLQ@@.PACMAN'
 COBOL_PARM = ("('RENT,RMODE(24),DATA(24),NODYNAM',", "'TRUNC(STD),NUMPROC(NOPFD),NOSOURCE,NOXREF')")
 ASM_PARM = ("('OBJECT,NODECK,PCONTROL(NOGEN)',", "'NOXREF,NORXREF,NODXREF,NOMXREF,NOESD,NORLD')")
-BIND_PARM = 'LIST,MAP,AMODE=24,RMODE=24,RENT'
+BIND_PARM = 'LIST,AMODE=24,RMODE=24,RENT'
 CEEOPTS = ['ALL31(OFF),STACK(,,BELOW)']
 JOBNAME = None
 PREFIX_IN_USE = [PREFIX]
