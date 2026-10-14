@@ -236,4 +236,7 @@ Open ZOS-1 questions (NOT settled facts): the Enterprise COBOL release actually 
 AMODE 24 viability; the HLASM / binder build procedure; the z/OS DISPLAY / SYSOUT format; the listing translator for
 the existing tests; PDS viability for Z00000.PACMAN.DATA.
 ZOS-2 candidate C1 (docs/ZOS-DIFFS.md): PACQRY paragraph VALIDATE, unchanged.
-NEXT: ZOS-1 Toolchain - NOT STARTED; its action list is shown to the user and approved before anything runs.
+ZOS-1 Toolchain IN PROGRESS (user go 2026-10-14, parts 1-6): tools/zowe helpers; J1 PACZALLO JOB08252 (7 datasets,
+DATA = PDS); 23 sources uploaded IBM-037, all byte-identical; J2 PACZHELO JOB08254 = Enterprise COBOL 6.5.0 P260714
+(IGYWCL, IGY650), IEWBLINK. Evidence docs/evidence/zos1-toolchain.md. J3/J4 (profile probes ZHELLOC/ZHELLOA,
+jcl/zos/PACZPRFA|B.jcl) prepared, NOT uploaded / submitted: awaiting the user's review. AMODE 24 not proven.
