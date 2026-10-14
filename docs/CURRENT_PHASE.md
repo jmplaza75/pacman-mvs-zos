@@ -225,3 +225,10 @@ PACMAN_LATER_PHASE=G8 when run alone (as at mvs-s2); the guards are not weakened
 THE MVS BRANCH IS COMPLETE: 2.0-MVS-MAX is the final MVS release (roadmap decision 3). No active phase. The z/OS port
 (ZOS-*) is NOT started and needs a separate roadmap and the user's go; S3/S4 companion audio is optional, client-side
 and not started.
+
+z/OS PORT (branch `zos`, worktree ~/Documents/Worktrees/Pacman-zOS; `main` keeps the MVS line unchanged).
+Plan docs/ZOS-MIGRATION-PLAN.md APPROVED 2026-10-14 (D44): phases ZOS-0 .. ZOS-10, 2.0-mvs-max = functional oracle,
+release 2.0-ZOS / tag 2.0-zos. Target IBM Z Xplore (shared, non-production), prefix Z00000.PACMAN.
+CURRENT PHASE: ZOS-0 Discovery - NOT STARTED. The command/action list is shown to the user before anything runs;
+discovery-only (no upload, no Pac-Man dataset, no install, no CICS, nothing outside Z00000.*, no deletion); the one
+IEFBR14 needs explicit authorisation after being shown in full.

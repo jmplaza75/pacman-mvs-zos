@@ -283,3 +283,9 @@
   libraries), the validated R20 PACMAIN copied (not relinked) into HERC01.PACMAN.LOAD as the installed 2.0 module
   (JOB 298 historical), final CLIST installed, minimal installed live smoke; folder releases/2.0-MVS-MAX, annotated
   tag 2.0-mvs-max.
+- D44 (ZOS plan, APPROVED 2026-10-14, docs/ZOS-MIGRATION-PLAN.md sec. 17) z/OS port: 2.0-mvs-max is the immutable
+  functional oracle (R0-R8). Release name `2.0-ZOS`, tag `2.0-zos` (supersedes only the `1.0-zOS` name of requirements v4
+  sec. 13). Target IBM Z Xplore, prefix Z00000.PACMAN. High score starts empty (no MVS import). AMODE 24 preferred only if
+  it runs the complete program without source changes; otherwise stop and report before AMODE 31 or any source change.
+  Work on branch `zos` in worktree ~/Documents/Worktrees/Pacman-zOS. Job output left to site retention, never purged
+  automatically. ZOS-0 discovery-only; the single IEFBR14 is authorised by the user after being shown in full.
