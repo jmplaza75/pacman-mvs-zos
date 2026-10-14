@@ -184,3 +184,28 @@ Tool note: zos_equiv --subset printed 103700-103904 for G2B49: oracle steps G2B4
 all level 1) print the same 205-line block and the subset search reports the first identical block. A separate
 read-only check located every step at its own oracle block (table above): all 10 identical, each with its exact
 separator. Not a divergence; a tool improvement (anchor each subset step at its own oracle block) is proposed.
+
+## Tool correction: zos_equiv --subset anchored at each step's own oracle block (2026-10-14, after G1)
+Problem (found on JOB09069): in subset mode each z/OS step was located by searching the oracle stream for its content;
+oracle 310 G2B46..G2B49 (start '', '  ', '00', 'ab', all level 1) print the same 205-line block, so G2B49 was reported
+at G2B46's block (103700) instead of its own (104321). Content was identical either way; the attribution was wrong.
+Change (tools/zowe/zos_equiv.py, subset mode only; normalisation unchanged: ASA column + record padding only):
+- anchors(oracle, programs): the z/OS step name selects the unique entry of oracle['steps']; its ordinal among the
+  oracle's run steps selects the run dataset of the stream (a block after the TK4- two-line separator whose first line
+  is a run header). Program and deck PARM (TSD or not) are consistency checks of the header only. A duplicated oracle
+  step name, an inconsistent header (that step and every later one) or a stream whose run-dataset count differs from
+  the run-step count leaves the step unanchored -> FAIL "cannot be anchored"; no fallback to a content search.
+- ends_ok: the block must end where the oracle's next dataset begins (the next run step's own block, else a separator,
+  a page eject or the end of the stream); z/OS steps must appear in oracle order; a duplicated z/OS step name fails.
+- Full (non-subset) mode untouched: old and new compare() give identical results on the passing simulated job and its
+  7 mutations.
+Regression (tests/test_zos_tools.py section 6, PASS): G2B46..G2B49 model outputs each anchored at its own block
+(G2B49 = 104321-104525, structurally = G2B45 + 4 x 207); a one-character mutation of G2B48 fails G2B48 only; a
+truncated G2B49, a wrong order and a level-1 output given to G2B45 fail; a duplicated oracle step name and oracle 309
+are not anchorable. Existing sections (CLASSIC subset chunks, full-mode mutations) unchanged and PASS.
+Re-processing of the downloaded evidence (no z/OS job): JOB09069 10/10 PASS with G2B49 at 104321-104525 (own block);
+a one-character mutation of G2B49 in a scratch copy fails G2B49 at its own block (block line 186), the 9 others OK;
+C1..C7 (zos_classic_check --all) PASS with a report byte-identical to docs/evidence/zos2-classic-check.txt.
+Finding for a later job: oracle 309 (RP) holds 80 run datasets for 81 PACMAIN run steps (RPT1's TSD output follows
+the IEBUPDTE listing after one empty line, not the two-line separator), so no 309 step can be anchored: PACZ2RP as
+designed would fail "cannot be anchored" until this is resolved (to be proposed separately; no oracle change).

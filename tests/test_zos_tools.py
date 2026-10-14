@@ -200,3 +200,71 @@ for name, (job, *_rest) in zos_target.CHUNKS.items():
             assert (Path(t) / 'c.jcl').read_text() == rec.read_text(), f'{rec.name} is not the generated deck'
         n += 1
 print(f'run-chunk decks of record = generated: {n}: PASS')
+
+# 6. zos_equiv --subset anchors every step at its OWN oracle block (oracle step metadata), not at the first block with
+#    the same content: oracle 310 G2B46..G2B49 (start '', '  ', '00', 'ab': all level 1) print identical blocks
+sys.path[:0] = [str(R / 'tests'), str(R / 'tools')]
+import ref_gp2 as GP2  # noqa: E402
+from make_deck import GP2_BAT  # noqa: E402
+from zos_equiv import anchors  # noqa: E402
+o310 = json.load(gzip.open(R / 'tests/oracle20/310-PACBLGP2.json.gz'))
+anc = anchors(o310, {'PACMAIN'})
+
+
+def g2b(i):
+    d, c, st = GP2_BAT[i - 1]
+    return [l.rstrip() for l in GP2.simulate((R / f'tests/{d}/{c}.txt').read_text().splitlines(),
+                                             start=GP2.parse_start(st))]
+
+
+same = {f'G2B{i}': g2b(i) for i in (46, 47, 48, 49)}
+assert all(v == same['G2B46'] for v in same.values()), 'G2B46..G2B49 should print identical output'
+# own blocks derived structurally: G2B45..G2B49 are consecutive oracle steps of 205 lines each, so G2B46 starts one
+# block (205 + the 2-line separator) after G2B45 and G2B49 three blocks after G2B46 (= stream line 104321, evidence)
+assert anc['G2B46'] == anc['G2B45'] + 207 and anc['G2B49'] == anc['G2B46'] + 3 * 207 == 104321, anc['G2B49']
+assert len({anc[k] for k in same}) == 4, 'four distinct own blocks'
+
+
+def check310(outputs, order=None):
+    steps = [(k, None, 'PACZ2D', '0000') for k in (order or outputs)]
+    with tempfile.TemporaryDirectory() as t:
+        _, _, runs = zos_runs(spool(Path(t) / 's', steps, outputs))
+        return compare(o310, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+
+
+bad, msgs = check310(same)
+assert bad == 0, msgs
+for k in same:                                    # each reported at its own block
+    assert any(m.startswith(f'OK   {k}:') and f'stream lines {anc[k]}-{anc[k] + len(same[k]) - 1})' in m for m in msgs), k
+bad, msgs = check310({'G2B49': same['G2B49']})        # alone: still its own block, not G2B46's (the first identical)
+assert bad == 0 and msgs[0].startswith('OK   G2B49') and 'stream lines 104321-104525' in msgs[0], msgs
+mut = list(same['G2B48'])
+mut[1] = mut[1].replace('A', 'a', 1) if 'A' in mut[1] else mut[1] + 'X'
+bad, msgs = check310({'G2B47': same['G2B47'], 'G2B48': mut})
+assert bad == 1 and any(m.startswith('OK   G2B47') for m in msgs) and any(m.startswith('FAIL G2B48') for m in msgs), msgs
+bad, msgs = check310({'G2B49': same['G2B49'][:-1]})          # truncated: the own block does not end there
+assert bad == 1 and 'does not end there' in msgs[0], msgs
+bad, msgs = check310({'G2B47': same['G2B47'], 'G2B49': same['G2B49']}, order=['G2B49', 'G2B47'])
+assert bad >= 1 and any('not in oracle order' in m for m in msgs), msgs
+bad, msgs = check310({'G2B45': g2b(49)})                     # level-13 step given the level-1 output
+assert bad == 1 and msgs[0].startswith('FAIL G2B45'), msgs
+# not anchorable: a duplicated oracle step name, and an oracle whose run datasets cannot be delimited one per step
+dupo = dict(o310, steps=[['G2B49'] + x[1:] if x[0] == 'G2B48' else x for x in o310['steps']])   # same step count
+ad = anchors(dupo, {'PACMAIN'})
+assert 'G2B49' not in ad and 'G2B48' not in ad and ad['G2B47'] == anc['G2B47'] and ad['G2B55'] == anc['G2B55']
+with tempfile.TemporaryDirectory() as t:
+    _, _, runs = zos_runs(spool(Path(t) / 's', [('G2B49', None, 'PACZ2D', '0000')], {'G2B49': same['G2B49']}))
+    bad, msgs = compare(dupo, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+assert bad >= 1 and any(m.startswith('FAIL G2B49: its oracle block cannot be anchored') for m in msgs), msgs
+assert not any(m.startswith('OK') for m in msgs), msgs                         # no fallback to a content search
+o309 = json.load(gzip.open(R / 'tests/oracle20/309-PACBLDRP.json.gz'))
+assert anchors(o309, {'PACMAIN'}) == {}, 'oracle 309: 80 run datasets for 81 run steps -> nothing anchored'
+# a duplicated z/OS step name fails in every mode
+with tempfile.TemporaryDirectory() as t:
+    _, _, runs = zos_runs(spool(Path(t) / 's', [('G2B49', None, 'PACZ2D', '0000'), ('G2B49', None, 'PACZ2D', '0000')],
+                                {'G2B49': same['G2B49']}))
+    bad, msgs = compare(o310, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+assert bad >= 1 and 'DUPLICATED STEP NAME' in ' '.join(msgs), msgs
+print('zos_equiv --subset anchoring: G2B46..G2B49 (identical output) each at its own block (G2B49 = 104321-104525), '
+      'mutation / truncation / order / wrong-level output detected, duplicated or undelimitable steps not anchorable: '
+      'PASS')

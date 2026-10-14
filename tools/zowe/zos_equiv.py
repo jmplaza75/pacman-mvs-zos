@@ -4,7 +4,11 @@
 Usage: zos_equiv.py SPOOLDIR ORACLE.json.gz --map PACMAIN=PACZ2D [--map ...] [--skip STEP ...] [--subset]
                    [--clock STEP]
 --subset: the job runs a deterministic subset of the oracle's run steps (ZOS-2 chunks): the oracle run steps absent
-from the job are not compared (counted), every run step of the job must exist in the oracle, in oracle order.
+from the job are not compared (counted), every run step of the job must exist in the oracle, in oracle order. Each
+step is compared with its OWN oracle block, located from the oracle's step identity (anchors(): the exact step name
+and its ordinal among the oracle's run steps; program and deck PARM only as consistency checks), never by searching
+the stream for matching content, so executions with identical output (e.g. oracle 310 G2B46..G2B49) are told apart;
+a step that cannot be anchored uniquely fails; the block must also end where the oracle's next dataset begins.
 --clock STEP: that step is the PACTSOT clock driver; its lines carry real elapsed times, so it is checked with the
 rules of tests/test_rt.py (21 TSOT lines, RC 0 and 0..30 ms late for the 20 deadlines, 120..180 ms apart, last line LA
 RC 4 at most 30 ms later) instead of an exact comparison.
@@ -56,7 +60,10 @@ def zos_runs(d):
             else:
                 extra.append(f['ddname'])
         out[s] = {'pgm': pgm, 'rc': rc, 'lines': lines or [], 'extra': extra}
-    return job, [s for s, _, _, _ in steps], out
+    names = [s for s, _, _, _ in steps]
+    for s in {n for n in names if names.count(n) > 1}:      # a step name must identify one execution
+        out[s]['extra'].append('DUPLICATED STEP NAME')
+    return job, names, out
 
 
 def first_diff(a, b):
@@ -80,6 +87,57 @@ def clock_ok(lines):
             and rows[20][0] == 'LA' and rows[20][3] == 4 and rows[20][2] - rows[19][2] <= 30)
 
 
+# first line of a run dataset per (program, TSD or not): used only to tell run datasets from the compiler / utility
+# listings that share the oracle stream and as a consistency check of the anchoring, never to match a z/OS output
+HEADS = {('PACMAIN', ''): ('PACMAN',), ('PACMAIN', 'TSD'): ('TSX',), ('PACQRYT', ''): ('QRY ',),
+         ('PACTSOT', ''): ('TSOT ',)}
+DECKS = Path(__file__).resolve().parent.parent.parent / 'releases/2.0-MVS-MAX/decks'
+
+
+def anchors(oracle, progs):
+    """{oracle run step name: index of the first line of its own block in the stream}.
+    Identity = the exact oracle step name and its ordinal among the oracle's run steps (oracle['steps'] order, the
+    programs in progs): the k-th run step owns the k-th run dataset of the stream (a block after the TK4- separator
+    whose first line is a run header). Program and deck PARM are consistency checks only: the block's header must be
+    the one of the step's program / mode; the first inconsistent step and every later one are left unanchored. If the
+    stream holds a different number of run datasets than there are run steps, nothing is anchored (the mapping would
+    not be unique). Unanchored steps fail explicitly in compare(); there is no fallback to a content search."""
+    import re
+    s = oracle['stream']
+    parm = {}
+    for b in re.split(r'(?m)^(?=//\w+\s+EXEC )', (DECKS / oracle['deck']).read_text())[1:]:
+        m = re.search(r"PARM='([^']*)", '\n'.join(b.split('\n', 2)[:2]))
+        parm[re.match(r'//(\w+)', b).group(1)] = m.group(1) if m else ''
+    names = [st for st, _, _ in oracle['steps']]
+    dup = {st for st in names if names.count(st) > 1}          # a duplicated name is never anchored
+    heads = tuple(h for (prog, _), hs in HEADS.items() if prog in progs for h in hs)
+    steps = [(st, p) for st, p, _ in oracle['steps'] if p in progs]
+    blocks = [p + 2 for p in range(len(s) - 2) if s[p] == '' and s[p + 1] == '' and s[p + 2] != ''
+              and (p == 0 or s[p - 1] != '') and s[p + 2].startswith(heads)]
+    out = {}
+    if len(blocks) != len(steps):
+        return out
+    for (st, prog), b in zip(steps, blocks):
+        want = HEADS.get((prog, 'TSD' if parm.get(st, '')[:3] == 'TSD' else ''))
+        if not want or not s[b].startswith(want):
+            break
+        if st not in dup:
+            out[st] = b
+    return out
+
+
+def ends_ok(oracle, anc, step, e):
+    """The block ending before stream line e must end exactly where the oracle's next dataset begins: the next oracle
+    step's own block (when it is an anchored run), else a separator, a page eject (one empty line, then text) or the
+    end of the stream."""
+    s, names = oracle['stream'], [x[0] for x in oracle['steps']]
+    i = names.index(step)
+    nxt = names[i + 1] if i + 1 < len(names) else None
+    if nxt in anc:
+        return e + 2 == anc[nxt]
+    return e == len(s) or s[e:e + 2] == SEP or (s[e] == '' and e + 1 < len(s) and s[e + 1] != '')
+
+
 def compare(oracle, runs, pmap, skip=(), subset=False, clock=()):
     stream, msgs, bad = oracle['stream'], [], 0
     present = [s for s in runs if runs[s]['pgm'] in pmap.values()]
@@ -89,6 +147,11 @@ def compare(oracle, runs, pmap, skip=(), subset=False, clock=()):
         msgs.append(f'FAIL run steps not in the oracle: {extra}')
         bad += 1
     nsub = 0
+    anc = anchors(oracle, set(pmap)) if subset else {}
+    order = [st for st, _, _ in oracle['steps'] if st in present]
+    if subset and order != present:
+        msgs.append(f'FAIL run steps not in oracle order: {present}')
+        bad += 1
     cur, gap_ok = 0, True               # gap_ok: oracle lines may be skipped (non-run steps since the last run)
     for step, opgm, orc in oracle['steps']:
         if opgm not in pmap:
@@ -113,10 +176,14 @@ def compare(oracle, runs, pmap, skip=(), subset=False, clock=()):
         block = z['lines']
         if step in clock:
             # the clock lines: same position rule, content checked by the RT3 rules (real elapsed times)
-            cands = [p for p in range(cur, len(stream) - 1) if stream[p:p + 2] == SEP and stream[p + 2:p + 3]
-                     and stream[p + 2].startswith('TSOT ')] if gap_ok else [cur]
+            if subset:
+                cands = [anc[step] - 2] if step in anc else []
+            else:
+                cands = [p for p in range(cur, len(stream) - 1) if stream[p:p + 2] == SEP and stream[p + 2:p + 3]
+                         and stream[p + 2].startswith('TSOT ')] if gap_ok else [cur]
             p = cands[0] if cands else None
             ok = p is not None and stream[p:p + 2] == SEP and clock_ok(block) and clock_ok(stream[p + 2:p + 2 + len(block)])
+            ok = ok and (not subset or ends_ok(oracle, anc, step, p + 2 + len(block)))
             msgs.append(f'{"OK  " if ok else "FAIL"} {step}: clock driver, {len(block)} lines, RT3 timing rules')
             bad += not ok
             if ok:
@@ -128,9 +195,21 @@ def compare(oracle, runs, pmap, skip=(), subset=False, clock=()):
             gap_ok = True
             continue
         want = SEP + block
-        cands = [cur] if not gap_ok else [p for p in range(cur, len(stream) - len(want) + 1)
-                                          if stream[p:p + 2] == SEP and stream[p + 2] == block[0]]
+        if subset:                     # the step's own oracle block (anchors), never a content search
+            if step not in anc:
+                msgs.append(f'FAIL {step}: its oracle block cannot be anchored from the oracle metadata')
+                bad += 1
+                continue
+            cands = [anc[step] - 2]
+        else:
+            cands = [cur] if not gap_ok else [p for p in range(cur, len(stream) - len(want) + 1)
+                                              if stream[p:p + 2] == SEP and stream[p + 2] == block[0]]
         hit = next((p for p in cands if stream[p:p + len(want)] == want), None)
+        if hit is not None and subset and not ends_ok(oracle, anc, step, hit + len(want)):
+            msgs.append(f'FAIL {step}: {len(block)} lines match the start of its oracle block (stream line {hit + 2}) '
+                        f'but the oracle block does not end there')
+            bad += 1
+            continue
         if hit is None:
             p = cands[0] if cands else cur
             d = first_diff(want, stream[p:p + len(want)])
