@@ -186,3 +186,17 @@ assert steps[-1].startswith('//LINK     EXEC PGM=IEWBLINK,COND=(4,LT)') and len(
 assert '  ENTRY PACMAIN\n  NAME PACZ2D(R)\n' in steps[-1] and all('COND=(4,LT)' in s.split('\n')[0] for s in steps)
 assert 'DELETE' not in bld and 'PGM=PACZ2D' not in bld
 print('PACZ2BLD: 13 objects regenerated in the job before the bind, LOAD(PACZ2D), no run, no DELETE: PASS')
+
+# 5. every ZOS-2 run-chunk deck of record in jcl/zos is the generated deck (step text verbatim from the MVS deck)
+sys.path.insert(0, str(R / 'tools/zowe'))
+import zos_target  # noqa: E402
+n = 0
+for name, (job, *_rest) in zos_target.CHUNKS.items():
+    rec = R / f'jcl/zos/{job}.jcl'
+    if rec.exists() and name != 'Z2BLD':
+        with tempfile.TemporaryDirectory() as t:
+            subprocess.run([sys.executable, str(R / 'tools/make_deck.py'), '--target', 'zos', name, '--out',
+                            str(Path(t) / 'c.jcl')], check=True, capture_output=True)
+            assert (Path(t) / 'c.jcl').read_text() == rec.read_text(), f'{rec.name} is not the generated deck'
+        n += 1
+print(f'run-chunk decks of record = generated: {n}: PASS')

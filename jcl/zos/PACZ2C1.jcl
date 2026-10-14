@@ -1,0 +1,362 @@
+//PACZ2C1 JOB 1,'PACMAN ZOS2 Z2C1',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//RUN1     EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+R
+R
+U
+L
+L
+L
+D
+D
+R
+X
+r
+R
+R
+D
+Q
+R
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//RUN2     EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+L
+R
+L
+R
+U
+L
+L
+R
+L
+D
+R
+U
+U
+R
+D
+L
+U
+D
+R
+U
+R
+L
+D
+R
+U
+D
+R
+L
+D
+L
+L
+R
+R
+U
+U
+D
+L
+L
+L
+L
+U
+R
+L
+L
+D
+U
+U
+L
+R
+U
+D
+U
+R
+R
+R
+R
+R
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//RUN3     EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+R
+U
+U
+D
+U
+R
+R
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//RUN4     EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+AI0
+D
+D
+D
+D
+D
+D
+D
+R
+U
+R
+D
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+R
+R
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+R
+U
+U
+U
+R
+R
+U
+U
+L
+L
+U
+U
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+U
+R
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+D
+L
+U
+U
+U
+U
+U
+L
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+D
+L
+U
+L
+D
+L
+U
+U
+U
+L
+L
+U
+U
+L
+R
+R
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+R
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//RUN5     EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+AI0
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+L
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
