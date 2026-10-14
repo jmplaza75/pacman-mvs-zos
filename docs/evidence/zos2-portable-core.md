@@ -105,3 +105,16 @@ evidence that the full Pac-Man program object runs under profile A (AMODE 24, RM
 with output identical to 2.0-mvs-max for these five deterministic CLASSIC games.
 Scope (user, 2026-10-14): JOB08984 is the first successful execution proof of PACZ2D on z/OS; it covers these five
 deterministic CLASSIC cases only and is not generalised beyond them.
+
+## Z2-2 PACZ2C2 (JOB09000) - CLASSIC oracle RUN6..RUN8
+Deck jcl/zos/PACZ2C2.jcl, approved as presented, submitted once, spool kept. Job CC 0000; spool 3,532 lines (estimate
+~3,540): JESMSGLG 20, JESJCL 24, JESYSMSG 63, SYSOUT 3,425. Spool files: the JES files and one SYSOUT (FBA 121) per
+step; no CEEDUMP, no CEE / abend / $HASP375 message, no step skipped; each step `EXEC PGM=PACZ2D`, STEPLIB
+Z00000.PACMAN.LOAD (IGD104I), CEEOPTS ALL31(OFF),STACK(,,BELOW).
+| Step | Case | RC | SYSOUT lines | zos_equiv vs oracle 307 | = model |
+|---|---|---|---|---|---|
+| RUN6 | DIE1 | 0000 | 324 | identical, stream 13215-13538 | MVS6-DIE1 |
+| RUN7 | LOST0 | 0000 | 808 | identical, stream 13541-14348 | MVS6-LOST0 |
+| RUN8 | WINAFTER | 0000 | 2293 | identical, stream 14351-16643 | MVS6-WINAFTER |
+`zos_equiv --subset`: 3 runs identical, 0 failures, PASS (22 oracle runs not in this job). Maximum line 60.
+Scope: these three deterministic CLASSIC cases (death, game lost, death then win).
