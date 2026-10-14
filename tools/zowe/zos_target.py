@@ -46,7 +46,7 @@ CHUNKS = {
     'Z2STF': ('PACZ2STF', 'GP2', ['RUN3', 'RUN13', 'TSO3', 'G2B21', 'G2R7'], 'STORAGE(FF,NONE,FF)', 310),
     'Z2G1': ('PACZ2G1', 'GP2', ['G2B1', 'G2B2', 'G2B9', 'G2B12', 'G2B21', 'G2B33', 'G2B45', 'G2B49', 'G2B55', 'G2T1'],
              None, 310),
-    'Z2G2': ('PACZ2G2', 'GP2', ['RTB1', 'RTB7', 'RTB8', 'RTB10', 'RTB11', 'S1S2', 'G2R1', 'G2R5', 'G2R7'], None, 310),
+    'Z2G2': ('PACZ2G2', 'GP2', ['RTB1', 'RTB7', 'RTB8', 'RTB10', 'RTB11', 'G2R1', 'G2R5', 'G2R7'], None, 310),
     'Z2G3': ('PACZ2G3', 'GP2', ['S1S3', 'G2B19', 'G2T3'], None, 310),
     'Z2RP': ('PACZ2RP', 'RP', ['R3B1', 'R3B2', 'R3B4', 'R3B5', 'R3B6', 'R3B7', 'R3B9'], None, 309),
     'Z2S2': ('PACZ2S2', 'S2', ['S2L1', 'S2L2', 'S2L4'], None, 308),
