@@ -139,7 +139,8 @@ main = '\n'.join(code(src('src/cobol/PACMAIN.cob')))
 assert 'MOVE 1 TO REQ-START.' in main and 'IF PARM-LEN = 22' in main and (
     'IF PARM-LEN = 23' in main or (LATER and 'IF PARM-LEN > 22' in main))      # RP.3: column 24 = SPEED
 clist = (R / 'src/clist/PACMAN.clist').read_text()
-assert 'RULES(CLASSIC) LEVEL(1)' in clist and ('&V&Y&U&W&LEVEL)' in clist or
+# MVS-G8 (D43): the CLIST default flips to RULES(ARCADE); tests/test_g8.py pins the final default set
+assert ('RULES(CLASSIC) LEVEL(1)' in clist or 'RULES(ARCADE) LEVEL(1)' in clist) and ('&V&Y&U&W&LEVEL)' in clist or
                                               (LATER and re.search(r'&V&Y&U&W&L&F(&K)?\)', clist)))   # RP.3 / S2
 for n, line in enumerate(clist.replace('@@PREFIX@@', 'HERC01.PACMAN').splitlines(), 1):
     assert len(line) <= 72, ('PACMAN.clist', n)

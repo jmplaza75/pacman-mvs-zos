@@ -8,6 +8,7 @@ Sources are validated (ASCII, 80 columns, COBOL to column 72, assembler to 71, n
 IEBGENER, compiled with IKFCBL00 (+ IFOX00 for the PACTSO stub), link-edited with IEWL and executed.
 """
 import argparse
+import os
 from pathlib import Path
 import sys
 
@@ -68,6 +69,11 @@ DECKS = {
     # MVS-S2 (D41): the RP modules and copies (PACREQ +REQ-ALARM); development load member PACS2D, then the S2 runs
     'S2': ('PACBLDS2', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
            ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACS2D', []),
+    # MVS-G8 (D43): the 2.0-MVS-MAX build of record. Every copybook and every production source of the S2 build,
+    # compiled into empty libraries and linked into <prefix>.LOAD(PACMAIN), then the 1.0-MVS oracle (19 batch cases
+    # + 6 TSO line-mode replays, tests/test_mvs8.py). The other regressions run run-only on this module (RUNONLY).
+    'REL20': ('PACREL20', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT'],
+              ['PACSTATE', 'PACREQ', 'PACMREQ', 'PACPAL', 'PACDS', 'PACARC'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
     'MVS8': ('PACBLD08', ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT'],
              ['PACSTATE', 'PACREQ', 'PACMREQ'], 'PACMAIN', ['tests/cases/' + n + '.txt' for n in ('MOVES', 'RAND', 'CATCH1', 'WIN0', 'CATCH0', 'DIE1', 'LOST0', 'WINAFTER', 'LOST1', 'EDGE3', 'EDGE2', 'EDGE1', 'P2', 'P2N3', 'R1N2', 'C3WALK', 'C3', 'C3N2', 'MULTI')]),
 }
@@ -122,7 +128,7 @@ def run_step(step, pfx, load, sysin, parm=None, dd=None, cond='(0,NE)'):
     return t + '//SYSOUT   DD SYSOUT=A\n//SYSUDUMP DD SYSOUT=A\n'
 
 
-ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO'], 'GP2': ['PACTSO', 'PACFSIO'], 'GP23': ['PACTSO', 'PACFSIO'], 'RP': ['PACTSO', 'PACFSIO'], 'S2': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
+ASM = {'RT': ['PACTSO', 'PACFSIO'], 'MVS8': ['PACTSO'], 'RELEASE': ['PACTSO'], 'G0': ['PACTSO'], 'G1': ['PACTSO', 'PACFSIO'], 'G2': ['PACTSO', 'PACFSIO'], 'G3': ['PACTSO', 'PACFSIO'], 'G4': ['PACTSO', 'PACFSIO'], 'GS': ['PACTSO', 'PACFSIO'], 'GX': ['PACTSO', 'PACFSIO'], 'S1': ['PACTSO', 'PACFSIO'], 'GP1': ['PACTSO', 'PACFSIO'], 'GP2': ['PACTSO', 'PACFSIO'], 'GP23': ['PACTSO', 'PACFSIO'], 'RP': ['PACTSO', 'PACFSIO'], 'S2': ['PACTSO', 'PACFSIO'], 'REL20': ['PACTSO', 'PACFSIO']}          # assembler stubs (src/asm/NAME.asm) linked with the COBOL objects
 
 
 def asm_step(step, obj, text):
@@ -137,6 +143,7 @@ def asm_step(step, obj, text):
 
 
 TSO = {'MVS8': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
+       'REL20': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'RELEASE': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G0': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
        'G1': ['MOVES', 'DIE1', 'P2', 'MULTI', 'C3N2', 'TSORDR'],
@@ -601,7 +608,10 @@ def rp3_steps(pfx, load):
             f'//SYSUT2   DD DSN={ds}(PARMS),DISP=OLD\n//SYSUT1   DD DATA,DLM=ZZ\n'
             + '\n'.join(rp3_clist_lines(pfx)) + '\nWRITE RP3PARM=&P=\nZZ\n')
     cmds = [f"  EXEC '{ds}(PARMS)'" + (f" '{k}'" if k else '') for k in RP3_CLIST]
-    assert all(len(c) <= 72 for c in cmds), 'a SYSTSIN card ends at column 72'
+    # MVS-G8: a longer prefix (HERC01.PACMAN.R20) moves the keywords to a TSO continuation card ('+'); with the
+    # default prefix every command fits and the deck is unchanged
+    cmds = [c if len(c) <= 72 else f"  EXEC '{ds}(PARMS)' +\n  '{k}'" for c, k in zip(cmds, RP3_CLIST)]
+    assert all(len(x) <= 72 for c in cmds for x in c.split('\n')), 'a SYSTSIN card ends at column 72'
     out += ('//R3CLT    EXEC PGM=IKJEFT01,COND=(0,NE)\n//SYSTSPRT DD SYSOUT=A\n//SYSTSIN  DD *\n'
             + ''.join(c + '\n' for c in cmds) + '/*\n')
     out += f'//R3DEL9   EXEC PGM=IEFBR14,COND=EVEN\n//D1       DD DSN={ds},DISP=(OLD,DELETE)\n'
@@ -708,6 +718,31 @@ def s2_steps(pfx, load):
     return out
 
 
+# MVS-G8 (D43): the final CLIST defaults, checked under the TMP like RP.3: the PROC and PARM lines of the CLIST in a
+# scratch PDS <prefix>.G8CL, run with these keywords; each run writes G8PARM=<the PARM CALL would get>=.
+G8_CLIST = ['', 'RULES(CLASSIC)', 'RULES(ARCADE) SPEED(FAST) ALARM(SINGLE)', 'PLAY(TURN) RULES(XYZ) LEVEL(5)']
+
+
+def g8_clist_steps(pfx):
+    ds = f'{pfx}.G8CL'
+    out = (f'//G8DEL0   EXEC PGM=IEFBR14,COND=(0,NE)\n//D1       DD DSN={ds},DISP=(MOD,DELETE),\n'
+           '//            UNIT=SYSDA,SPACE=(TRK,(1))\n'
+           f'//G8ALC    EXEC PGM=IEFBR14,COND=(0,NE)\n//D1       DD DSN={ds},DISP=(NEW,CATLG),\n'
+           '//            UNIT=SYSDA,SPACE=(TRK,(2,1,2)),\n'
+           f'//            DCB=(DSORG=PO,{DATA_DCB})\n')
+    out += ('//G8CLS    EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT2   DD DSN={ds}(PARMS),DISP=OLD\n//SYSUT1   DD DATA,DLM=ZZ\n'
+            + '\n'.join(rp3_clist_lines(pfx)) + '\nWRITE G8PARM=&P=\nZZ\n')
+    cmds = []
+    for k in G8_CLIST:
+        c = f"  EXEC '{ds}(PARMS)'" + (f" '{k}'" if k else '')
+        cmds.append(c if len(c) <= 72 else f"  EXEC '{ds}(PARMS)' +\n  '{k}'")
+    assert all(len(x) <= 72 for c in cmds for x in c.split('\n')), 'a SYSTSIN card ends at column 72'
+    out += ('//G8CLT    EXEC PGM=IKJEFT01,COND=(0,NE)\n//SYSTSPRT DD SYSOUT=A\n//SYSTSIN  DD *\n'
+            + ''.join(c + '\n' for c in cmds) + '/*\n')
+    return out + f'//G8DEL9   EXEC PGM=IEFBR14,COND=EVEN\n//D1       DD DSN={ds},DISP=(OLD,DELETE)\n'
+
+
 def tso_parm_and_cards(case):
     """Interactive mode takes the config from the PARM ('TSO AI3 2'), not from a first card."""
     lines = (ROOT / f'tests/cases/{case}.txt').read_text(encoding='ascii').splitlines(keepends=True)
@@ -716,23 +751,38 @@ def tso_parm_and_cards(case):
     return 'TSO', ''.join(lines)
 
 
+def runonly():
+    """MVS-G8 (D43): PACMAN_RUNONLY=1 (make_deck.py --runonly, and the tests that regenerate a deck to count its
+    steps) leaves out the upload / compile / assemble / link steps of the game modules: the deck runs its test steps
+    against the load member already in <prefix>.LOAD (the REL20 build of record). A marker step named LINK (IEBGENER)
+    stands in for the link, so COND=(0,NE,LINK) keeps its meaning. Test drivers (PACQRYT, PACTSOT) are still built."""
+    return os.environ.get('PACMAN_RUNONLY') == '1'
+
+
+RUNONLY_MARK = 'PACMAN-RUN-ONLY-NO-BUILD'
+
+
 def build(name, pfx, load_override=None):
     job, modules, copies, load, runs = DECKS[name]
     load = load_override or load
     out = job_card(job, f'PACMAN {name}') + f'//* PREFIX {pfx}\n'
-    for i, c in enumerate(copies, 1):
-        out += upload(f'CPY{i}', pfx, 'COPY', c, text_of(ROOT / f'src/copy/{c}.cpy'))
-    for i, m in enumerate(modules, 1):
-        out += upload(f'SRC{i}', pfx, 'COBOL', m, text_of(ROOT / f'src/cobol/{m}.cob'))
-        out += compile_step(f'COB{i}', pfx, m, f'OBJ{i}')
-    objs = [f'OBJ{i}' for i in range(1, len(modules) + 1)]
-    asms = ASM.get(name, ['PACTSO', 'PACFSIO'] if name == 'HS' else [])
-    if 'PACFSIO' in asms:
-        asms = asms + ['PACHSIO']    # MVS-HS: PACPLAT calls PACHSIO (D38)
-    for i, a in enumerate(asms, 1):
-        out += asm_step(f'ASM{i}', f'OBJA{i}', text_of(ROOT / f'src/asm/{a}.asm'))
-        objs.append(f'OBJA{i}')
-    out += link_step(pfx, objs, load, modules[0])
+    if runonly() and name != 'REL20':
+        out += ('//LINK     EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+                f'//SYSUT1   DD *\n{RUNONLY_MARK} {pfx}.LOAD({load})\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    else:
+        for i, c in enumerate(copies, 1):
+            out += upload(f'CPY{i}', pfx, 'COPY', c, text_of(ROOT / f'src/copy/{c}.cpy'))
+        for i, m in enumerate(modules, 1):
+            out += upload(f'SRC{i}', pfx, 'COBOL', m, text_of(ROOT / f'src/cobol/{m}.cob'))
+            out += compile_step(f'COB{i}', pfx, m, f'OBJ{i}')
+        objs = [f'OBJ{i}' for i in range(1, len(modules) + 1)]
+        asms = ASM.get(name, ['PACTSO', 'PACFSIO'] if name == 'HS' else [])
+        if 'PACFSIO' in asms:
+            asms = asms + ['PACHSIO']    # MVS-HS: PACPLAT calls PACHSIO (D38)
+        for i, a in enumerate(asms, 1):
+            out += asm_step(f'ASM{i}', f'OBJA{i}', text_of(ROOT / f'src/asm/{a}.asm'))
+            objs.append(f'OBJA{i}')
+        out += link_step(pfx, objs, load, modules[0])
     for i, r in enumerate(runs, 1):
         sysin = None if r is None else text_of(ROOT / r)
         out += run_step(f'RUN{i}', pfx, load, sysin)
@@ -749,6 +799,8 @@ def build(name, pfx, load_override=None):
         if hilite:
             parm = (parm + ' AI1 1' if parm == 'TSD' else parm).ljust(11) + 'N' + hilite
         out += run_step(f'TSD{i}', pfx, load, cards, parm=parm)
+    if name == 'REL20':
+        out += g8_clist_steps(pfx)
     if name in ('G4', 'GS', 'GX', 'RT', 'S1', 'GP1', 'GP2', 'RP'):
         out += qry_test_steps(pfx)
     if name in ('RT', 'S1', 'GP1', 'GP2'):
@@ -796,9 +848,11 @@ def alloc_deck(pfx):
         '//* FIRST USE ONLY: CREATES THE PROJECT LIBRARIES. NOT IDEMPOTENT AND NEVER\n'
         '//* DELETES ANYTHING: IF A DATASET EXISTS THE JOB FAILS WITH NOT CATLGD 2.\n'
         '//ALLOC    EXEC PGM=IEFBR14\n')
-    for dd, lib, space, dcb in (('COBOL', 'COBOL', '(TRK,(15,5,10))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
-                                ('COPY', 'COPY', '(TRK,(5,2,5))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
-                                ('LOAD', 'LOAD', '(TRK,(15,5,10))', 'RECFM=U,BLKSIZE=6144'),
+    # MVS-G8 (D43): sized for 2.0 (about 7000 source lines; one full upload is about 30 tracks): a fresh install
+    # builds, regresses and rebuilds several times without COMPRESS (1.0 had COBOL / LOAD (15,5,10), COPY (5,2,5))
+    for dd, lib, space, dcb in (('COBOL', 'COBOL', '(CYL,(5,2,20))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
+                                ('COPY', 'COPY', '(TRK,(30,10,10))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
+                                ('LOAD', 'LOAD', '(CYL,(5,2,20))', 'RECFM=U,BLKSIZE=6144'),
                                 ('CLIST', 'CLIST', '(TRK,(2,1,5))', 'RECFM=FB,LRECL=80,BLKSIZE=3120'),
                                 ('DATA', 'DATA', DATA_SPACE, DATA_DCB)):
         out += (f'//{dd:<8} DD DSN={pfx}.{lib},DISP=(NEW,CATLG,DELETE),\n'
@@ -1159,10 +1213,14 @@ if __name__ == '__main__':
     ap.add_argument('--parm', help="RUN: PARM, e.g. 'BAT                 A' for RULES(ARCADE)")
     ap.add_argument('--hiscore', action='store_true', help='RUN: add the high-score DD (<prefix>.DATA(HISCORE))')
     ap.add_argument('--out', help='output file (default build/<DECK>.jcl)')
+    ap.add_argument('--runonly', action='store_true', help='MVS-G8: no upload / compile / link of the game; run the '
+                                                            'deck\'s tests against the existing load member')
     ap.add_argument('--load', help='MVS-RP: link into this LOAD member instead of the deck default (regression decks '
                                    'rebuilt without replacing the installed PACMAIN)')
     a = ap.parse_args()
     pfx = a.prefix or f'{a.hlq}.PACMAN'
+    if a.runonly:
+        os.environ['PACMAN_RUNONLY'] = '1'
     if a.deck == 'ALLOC':
         text = alloc_deck(pfx)
     elif a.deck == 'CLIST':

@@ -23,7 +23,7 @@ project uses the maximum viable presentation without breaking compatibility"), s
 | Step | Content | Exit |
 |---|---|---|
 | G8.1 | this design | user approval, D43 frozen |
-| G8.2 | CLIST defaults, ALLOC space, deck `REL20`, tests/test_g8.py, tools/g8_bench.py (deterministic bytes/frame), CLIST-dependent checks of earlier decks adapted | build green on Hercules under `HERC01.PACMAN` (not installed) |
+| G8.2 (BUILD GREEN 2026-10-14, JOBs 302-304; docs/evidence/g8-build.txt) | CLIST defaults, ALLOC space, deck `REL20`, tests/test_g8.py, tools/g8_bench.py (deterministic bytes/frame), CLIST-dependent checks of earlier decks adapted | build green on Hercules under `HERC01.PACMAN` (not installed) |
 | G8.3 | on the user's approval: fresh build from empty libraries under `HERC01.PACMAN.R20` (ALLOC, REL20, CLIST, DATA, regression decks with `--prefix`, JCL audit), then install: the validated R20 PACMAIN copied into `HERC01.PACMAN.LOAD` and the final CLIST, with installed checks | all checks PASS on R20 and on the installed copy; install jobs |
 | G8.4 | minimal live smoke of the installed release (section 9) + the screenshot set | docs/evidence/g8-live.md |
 | G8.5 | final capability matrix, benchmarks page, README (incl. "what runs on MVS vs the client"), releases/2.0-MVS-MAX (decks + SHA256SUMS), CURRENT_PHASE, roadmap | tag `2.0-mvs-max` |

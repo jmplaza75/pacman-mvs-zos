@@ -1,0 +1,54 @@
+# MVS-G8 G8.2 build evidence (2026-10-14; D43, docs/G8-RELEASE.md). Not installed; HERC01.PACMAN.LOAD(PACMAIN) untouched.
+# Extracted with grep from build/PACCMP10-302.txt, build/PACREL20-303.txt, build/PACBLDS2-304.txt (listings not committed).
+
+## COMPRESS JOB 302 (HERC01.PACMAN, space before the build)
+12.14.17 JOB  302  PACCMP10   CMP1                IEBCOPY   RC= 0000
+12.14.17 JOB  302  PACCMP10   CMP2                IEBCOPY   RC= 0000
+12.14.17 JOB  302  PACCMP10   CMP3                IEBCOPY   RC= 0000
+
+## REL20 JOB 303: make_deck.py REL20 --load PACR20D (development member under HERC01.PACMAN)
+60 steps, all RC 0000: CPY x6, SRC x10, COB x10, ASM x3, LINK x1, RUN x19, TSO x6, G8DEL x2, G8ALC x1, G8CLS x1, G8CLT x1
+(CPY = copybook upload, SRC / COB = source upload / IKFCBL00, ASM = IFOX00 PACTSO PACFSIO PACHSIO, LINK = IEWL,
+ RUN / TSO = 1.0-MVS oracle runs of PACR20D, G8* = CLIST default check under the TMP)
+
+G8PARM=TSO AI1 1 NAAAPAAARAA01NP=
+G8PARM=TSO AI1 1 NAAAPAAARAC01NP=
+G8PARM=TSO AI1 1 NAAAPAAARAA01FS=
+G8PARM=TSO AI1 1 NAAAPAAATAX05NP=
+
+$ python3 tests/test_g8.py --prefix HERC01.PACMAN --load PACR20D --rel20 build/PACREL20-303.txt
+G8 local checks PASS: final CLIST defaults AI(1) GHOSTS(1) COLOR(AUTO) HILITE(AUTO) ANIM(AUTO) REDRAW(PARTIAL) METRICS
+(NO) GLYPHS(AUTO) SCALE(AUTO) CANVAS(AUTO) PLAY(REALTIME) SOUND(AUTO) RULES(ARCADE) LEVEL(1) SPEED(NORMAL) ALARM(PATTE
+RN) ; sources = mvs-s2; core frozen; REL20 = S2 module set; R20 decks audited (8)
+REL20 PASS: 60 steps RC 0000, no warnings; CLIST PARMs ['TSO AI1 1 NAAAPAAARAA01NP', 'TSO AI1 1 NAAAPAAARAC01NP', 'TSO
+ AI1 1 NAAAPAAARAA01FS', 'TSO AI1 1 NAAAPAAATAX05NP'] ; MVS-8 runtime PASS: batch identical to MVS-7; 6 interactive tr
+anscripts match; 43 steps RC 0000
+
+## S2 run-only JOB 304: make_deck.py S2 --runonly --load PACR20D (no upload / compile / link; marker step LINK)
+PACMAN-RUN-ONLY-NO-BUILD HERC01.PACMAN.LOAD(PACR20D)
+steps: 31, not RC 0000: 0
+$ python3 tests/test_g8.py --prefix HERC01.PACMAN --load PACR20D --s2 build/PACBLDS2-304.txt
+S2 run-only: MVS-S2 PASS: 31 steps RC 0000; 25 TSD runs = 2986 model streams ( 108 with the alarm bit ); 4 BAT / TSO l
+ine-mode runs = oracle / models
+
+## R20 decks (generated, not submitted): JCL audit
+ALLOC.jcl: PASS (5 HERC01 names, all under HERC01.PACMAN.R20.)
+CLIST.jcl: PASS (3 HERC01 names, all under HERC01.PACMAN.R20.)
+DATA.jcl: PASS (1 HERC01 names, all under HERC01.PACMAN.R20.)
+REL20.jcl: PASS (5 HERC01 names, all under HERC01.PACMAN.R20.)
+R20-GP2.jcl: PASS (4 HERC01 names, all under HERC01.PACMAN.R20.)
+R20-GP23.jcl: PASS (2 HERC01 names, all under HERC01.PACMAN.R20.)
+R20-HS.jcl: PASS (5 HERC01 names, all under HERC01.PACMAN.R20.)
+R20-RP.jcl: PASS (6 HERC01 names, all under HERC01.PACMAN.R20.)
+R20-S2.jcl: PASS (2 HERC01 names, all under HERC01.PACMAN.R20.)
+
+## Local regression (PACMAN_LATER_PHASE=G8)
+test_s2: S2 local checks PASS: 25 TSD runs, 2986 model streams; events = the S1 / GP2 single rings; steps exa
+test_rp: RP.3 local checks PASS: identity at 150 ms on 13 rows; FAST fright [48, 41, 32, 24, 16, 41, 16, 16, 
+test_hs: HS local checks PASS
+test_gp2: GP2.3 local checks PASS: 33 TURN and 10 REALTIME ARCADE TSD runs, 3697 model streams, largest 1990 b
+test_gp1: local checks PASS: 12 edge cases reached; 18 TURN, 6 REALTIME, 2 TSO ARCADE model runs
+test_gs: local checks PASS: 44 runs, 931 streams; first 4x2 screen 1556 bytes, 3x2 1495 ; largest 1653
+test_g4: local checks PASS: [15, 4, 19, 29, 21, 12, 15, 15, 6, 15, 29, 19, 15, 4, 19, 29, 12, 21, 30, 26, 15,
+test_core_frozen: core frozen (authorised 2026-10-13 by project owner (RP.3 approval)): PASS
+test_mvs8: local checks PASS

@@ -138,7 +138,8 @@ for name in ('PACMAIN', 'PACRT', 'PACDISP', 'PACAI', 'PACMAP'):   # constants on
 rt = (R / 'src/cobol/PACRT.cob').read_text()
 assert 'ADD ARC-KFINC TO ARC-FACC' in rt and 'MOVE 0 TO RT-ACC' in rt
 clist = (R / 'src/clist/PACMAN.clist').read_text()
-assert 'RULES(CLASSIC)' in clist and ('&V&Y&U&W)' in clist or (LATER and '&V&Y&U&W' in clist)) and 'SET &W = &SUBSTR(1:1,&RULES)' in clist
+# MVS-G8 (D43): the CLIST default flips to RULES(ARCADE); tests/test_g8.py pins the final default set
+assert ('RULES(CLASSIC)' in clist or 'RULES(ARCADE) LEVEL(1)' in clist) and ('&V&Y&U&W)' in clist or (LATER and '&V&Y&U&W' in clist)) and 'SET &W = &SUBSTR(1:1,&RULES)' in clist
 for n, line in enumerate(clist.replace('@@PREFIX@@', 'HERC01.PACMAN').splitlines(), 1):
     assert len(line) <= 72, ('PACMAN.clist', n)
 for t in ('test_mvs7', 'test_mvs8'):          # architecture rules (core has no terminal / host verbs) and the map

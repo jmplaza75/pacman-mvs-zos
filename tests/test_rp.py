@@ -26,6 +26,8 @@ os.environ.setdefault('PACMAN_LATER_PHASE', 'RP')
 # MVS-S2 (D41): a later phase run (PACMAN_LATER_PHASE=S2) appends the ALARM letter to the CLIST PARM (column 25,
 # default PATTERN); everything else here is unchanged
 LATER = os.environ['PACMAN_LATER_PHASE'] != 'RP'
+# MVS-G8 (D43): the CLIST default is RULES(ARCADE) (PARM column 21 A for a call without RULES)
+G8 = os.environ['PACMAN_LATER_PHASE'] == 'G8'
 import ref_gp2 as L  # noqa: E402
 import ref_rt  # noqa: E402
 import ref_hs as H  # noqa: E402
@@ -326,7 +328,7 @@ n3 = sum(len(f) for _, (fs, _), _ in rp3_tsd for f in [fs])
 def clist_parm(kw):
     """The PARM the CLIST builds (design 6: first letters, LEVEL zero-padded to 2 characters, else 01, SPEED in 24)."""
     d = dict(AI='1', GHOSTS='1', COLOR='AUTO', HILITE='AUTO', ANIM='AUTO', REDRAW='PARTIAL', METRICS='NO',
-             GLYPHS='AUTO', SCALE='AUTO', CANVAS='AUTO', PLAY='REALTIME', SOUND='AUTO', RULES='CLASSIC', LEVEL='1',
+             GLYPHS='AUTO', SCALE='AUTO', CANVAS='AUTO', PLAY='REALTIME', SOUND='AUTO', RULES='ARCADE' if G8 else 'CLASSIC', LEVEL='1',
              SPEED='NORMAL')
     d.update(re.findall(r'(\w+)\((\w*)\)', kw))
     lv = '0' + d['LEVEL'] if len(d['LEVEL']) == 1 else d['LEVEL']

@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (fase actual: MVS-G8 / 2.0-MVS-MAX, secciones 25-28; D43 aprobado, en G8.2).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (fase actual: MVS-G8 / 2.0-MVS-MAX, secciones 25-28; D43 aprobado, G8.2 verde, siguiente G8.3).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -194,4 +194,9 @@ MVS-G8 / 2.0-MVS-MAX IN PROGRESS (started 2026-10-14 on the user's go; docs/ROAD
   the old libraries, RP live timing reused, minimal installed live smoke (section 9).
   Release phase: no game / display / platform source changes; CLIST default RULES(ARCADE) (rest of the AUTO chain
   unchanged), benchmarks, screenshots, fresh rebuild under HERC01.PACMAN.R20, README authenticity section, tag
-  2.0-mvs-max. Nothing built or installed yet.
+  2.0-mvs-max.
+- G8.2 BUILD GREEN (2026-10-14, NOT installed; HERC01.PACMAN.LOAD(PACMAIN) and CLIST untouched): CLIST default
+  RULES(ARCADE) (final default set frozen in tests/test_g8.py), deck REL20, `make_deck.py --runonly`, ALLOC sized for
+  2.0, tools/g8_jcl_audit.py, tools/g8_bench.py, tests/test_g8.py, `tools/release_check.sh 2.0`. COMPRESS JOB 302;
+  REL20 into PACR20D JOB 303 (60 steps RC 0000, CLIST PARMs, 1.0 oracle PASS); S2 run-only on PACR20D JOB 304
+  (2986 streams = model). Evidence docs/evidence/g8-build.txt. Next: G8.3 (fresh R20 build + install) on the user's go.

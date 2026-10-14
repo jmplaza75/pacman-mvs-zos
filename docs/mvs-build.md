@@ -275,3 +275,16 @@ IEBGENER of SYS1.PARMLIB(LNKLST00), LISTDS MEMBERS of the seven link-list librar
 `./tools/job_output.py PACG7C02 > build/PACG7C02.txt && python3 tools/g7_gddm_scan.py build/PACG7C02.txt` (exit 0 = no
 GDDM-like name). JOB 301 all RC 0000, nothing found (JOB 300 = first pass, four libraries). Evidence:
 docs/evidence/g7-gddm-check.md.
+
+## MVS-G8 / 2.0-MVS-MAX (D43, docs/G8-RELEASE.md)
+No source change but the CLIST (default RULES(ARCADE), two comment lines shortened so every line fits column 72 with
+the prefix HERC01.PACMAN.R20). New: deck `REL20` (job PACREL20: every copybook / source of the S2 build, IKFCBL00,
+IFOX00 PACTSO / PACFSIO / PACHSIO, IEWL into `<prefix>.LOAD(PACMAIN)`, the 1.0-MVS oracle runs, the CLIST default check
+G8* under the TMP); `make_deck.py --runonly` (env PACMAN_RUNONLY=1: no upload / compile / link of the game, a marker
+step LINK, the deck's tests on the existing load member); ALLOC sized for 2.0 (COBOL / LOAD (CYL,(5,2,20)), COPY
+(TRK,(30,10,10))); TSO continuation `+` for RP3 / G8 EXEC cards that pass column 72 with a long prefix (default-prefix
+decks unchanged); tools/g8_jcl_audit.py, tools/g8_bench.py, tests/test_g8.py, `tools/release_check.sh 2.0 [PREFIX]`.
+G8.2 (2026-10-14, not installed): COMPRESS JOB 302; REL20 into the development member PACR20D JOB 303 (60 steps RC
+0000 at the first submission, CLIST PARMs as modelled, 1.0 oracle PASS); S2 run-only on PACR20D JOB 304 (31 steps,
+2986 streams = model). Check: `python3 tests/test_g8.py --prefix HERC01.PACMAN --load PACR20D --rel20
+build/PACREL20-303.txt --s2 build/PACBLDS2-304.txt`. Evidence docs/evidence/g8-build.txt.
