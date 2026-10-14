@@ -272,5 +272,6 @@ the user approves it. main and the MVS release are not touched.
   LINK RC 0, LOAD(PACZ2D) AMODE 24 / RMODE 24 / RENT, entry PACMAIN: build PASS (accepted as build of record).
 - PACZ2C1 JOB08984: RUN1..RUN5 RC 0, = oracle 307 and models, 3,586 spool lines: PASS.
 - PACZ2C2 JOB09000: RUN6..RUN8 RC 0, = oracle 307 and models, 3,532 spool lines: PASS.
-- PACZ2C3 JOB09015: RUN9 RC 0, = oracle 307 and model, 839 spool lines: PASS. NEXT: PACZ2C4 only after the user's
-  approval.
+- PACZ2C3 JOB09015: RUN9 RC 0, = oracle 307 and model, 839 spool lines: PASS.
+- PACZ2C4 JOB09023: RUN10 EDGE3 RC 0, = oracle 307 and model (WIN / TURNS 319 / SCORE 1000 / LIVES 2), 3,578 spool
+  lines: PASS. NEXT: PACZ2C5 only after the user's approval.

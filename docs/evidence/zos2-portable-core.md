@@ -129,3 +129,15 @@ Z00000.PACMAN.LOAD (IGD104I), CEEOPTS ALL31(OFF),STACK(,,BELOW).
 | RUN9 | LOST1 | 0000 | 786 | identical, stream 16646-17431 | MVS6-LOST1 |
 `zos_equiv --subset`: 1 run identical, 0 failures, PASS (24 oracle runs not in this job). Maximum line 60.
 Scope: this deterministic CLASSIC case (default chasing ghost, game lost). CLASSIC oracle so far: RUN1..RUN9.
+
+## Z2-2 PACZ2C4 (JOB09023) - CLASSIC oracle RUN10 (EDGE3, D11 edge case)
+Deck jcl/zos/PACZ2C4.jcl, approved as presented, submitted once, spool kept. Job CC 0000; spool 3,578 lines (estimate
+~3,580): JESMSGLG 18, JESJCL 10, JESYSMSG 25, SYSOUT 3,525. Spool files: the JES files and one SYSOUT (FBA 121); no
+CEEDUMP, no CEE / abend / $HASP375 message; the step executed (IEF142I COND CODE 0000), `EXEC PGM=PACZ2D`, STEPLIB
+Z00000.PACMAN.LOAD (IGD104I), CEEOPTS ALL31(OFF),STACK(,,BELOW).
+| Step | Case | RC | SYSOUT lines | zos_equiv vs oracle 307 | = model |
+|---|---|---|---|---|---|
+| RUN10 | EDGE3 | 0000 | 3525 | identical, stream 17434-20958 | MVS6-EDGE3 |
+Last tick `T319 R DIED    X=02 Y=02 S=1000 L=000 G=19,09 V=2 ST=WON`; end lines WIN / TURNS 319 / SCORE 1000 /
+LIVES 2 (D11: the hit beats the simultaneous last pellet; lives remain and no pellet is left, so the game is WON).
+`zos_equiv --subset`: 1 run identical, 0 failures, PASS. Maximum line 60. CLASSIC oracle so far: RUN1..RUN10.
