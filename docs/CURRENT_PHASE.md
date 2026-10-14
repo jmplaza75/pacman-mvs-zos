@@ -265,5 +265,7 @@ the user approves it. main and the MVS release are not touched.
   ASMA303W, base R15) as technical debt for recovery work; PACHSIO: standalone compact assembly (deck ZHSA) to be
   shown before submission; no LINES=, no full GP2 battery in ZOS-2 (full regression = ZOS-9/10): Z2-2..Z2-4
   redesigned as small jobs (tools/zowe/zos_target.py CHUNKS, matrix tools/zowe/zos_plan.py, every job < 4,000
-  estimated spool lines; zos_equiv --subset, PACTSOT clock by the RT3 rules). NEXT: user review of the PACHSIO JCL
-  and the matrix; the 9 Z1 members must be re-uploaded (IBM-037, verified) before Z2-2.
+  estimated spool lines; zos_equiv --subset, PACTSOT clock by the RT3 rules).
+- Z1 members uploaded and verified 9/9, other members 14/14 unchanged; PACZ2HSA JOB08810 RC 0, 266 records, END
+  processed, no diagnostic, OBJ(PACHSIO) written: PASS. NEXT: PACZ2BLD only after the user's approval of its rendered
+  JCL and matrix.

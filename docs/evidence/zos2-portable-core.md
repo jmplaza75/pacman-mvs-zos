@@ -53,3 +53,18 @@ for Z2-2..Z2-4). No source changed by Z2-1.
   R3 gate PASS (13 release files, 13 regenerations with the current tools on the 2.0-mvs-max sources, 94 generator
   comparisons with zos-1, 26 source-carrying decks of the zos tree differ only by Z1 lines).
 - Line budget: no LINES=; ZOS-2 jobs = CHUNKS of tools/zowe/zos_target.py, matrix tools/zowe/zos_plan.py.
+
+## Z1 upload (2026-10-14)
+The 9 Z1 members (PACAI, PACDISP, PACGAME, PACINPT, PACMAIN, PACMAP, PACPLAT, PACRT, PACSCR) uploaded to
+Z00000.PACMAN.COBOL with IBM-037 and verified by binary round trip against the zos-branch sources (fixed 80): 9/9
+identical. Read-only check of every other source member (COBOL PACHELLO / PACQRY / PACQRYT / PACTSOT, 6 COPY, 3 ASM,
+CLIST): 14/14 unchanged. No delete, no purge.
+
+## Z2-1b PACZ2HSA (JOB08810) - PACHSIO completion
+Deck jcl/zos/PACZ2HSA.jcl (= `make_deck.py --target zos ZHSA`), submitted once, spool kept. CC 0000, no JES / output
+limit message; 449 spool lines (SYSPRINT 400). HLASM summary: `266 Primary Input Records Read` (= src/asm/PACHSIO.asm,
+266 lines), statement 2832 = the source `END` (line 266) listed, `No Statements Flagged in this Assembly`,
+`32 Object Records Written`, `Return Code 000`; options PCONTROL(NOGEN) etc. as overriding parameters. No ASMA
+diagnostic at all. Z00000.PACMAN.OBJ(PACHSIO) present. Result: clean PASS (RC 0).
+Note: OBJ also holds the members written by the RC 12 compiles of Z2-1 (not usable); PACZ2BLD replaces every one of
+them before any bind.
