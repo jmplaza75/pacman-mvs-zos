@@ -34,7 +34,7 @@ LOAD = 'PACZ2D'
 # name -> (job name, MVS deck whose z/OS rendering gives the steps, steps in deck order, extra LE options, oracle job)
 CHUNKS = {
     'Z2BLD': ('PACZ2BLD', 'REL20', [f'COB{i}' for i in range(1, 11)] + ['ASM1', 'ASM2', 'ASM3', 'LINK'], None, None),
-    'Z2DRV': ('PACZ2DRV', 'GP2', ['COBQ1', 'COBQ2', 'LINKQ', 'QRY1', 'COBT', 'ASMT', 'LINKT', 'TSOT1'], None, 310),
+    'Z2DRV': ('PACZ2DRV', 'GP2', ['COBQ1', 'LINKQ', 'QRY1', 'COBT', 'LINKT', 'TSOT1'], None, 310),
     'Z2C1': ('PACZ2C1', 'REL20', ['RUN1', 'RUN2', 'RUN3', 'RUN4', 'RUN5'], None, 307),
     'Z2C2': ('PACZ2C2', 'REL20', ['RUN6', 'RUN7', 'RUN8'], None, 307),
     'Z2C3': ('PACZ2C3', 'REL20', ['RUN9'], None, 307),
