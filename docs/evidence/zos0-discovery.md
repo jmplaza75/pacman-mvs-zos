@@ -1,6 +1,7 @@
-# ZOS-0 discovery evidence - parts A, B, C (2026-10-14)
-Authorised by the user: A (local), B (read-only z/OS), C (TN3270 to the welcome screen). D (manual TSO logon by the
-user) and E (IEFBR14) NOT run. Nothing was uploaded, allocated, modified, deleted or purged on z/OS. No credential is
+# ZOS-0 discovery evidence (2026-10-14): parts A, B, C, D, E
+Authorised by the user step by step: A (local), B (read-only z/OS), C (TN3270 to the welcome screen), D (manual TSO
+logon by the user), E (one IEFBR14 without DD, shown in full and approved). Nothing was uploaded, allocated,
+modified, deleted or purged on z/OS; the only job submitted is JOB08215 (E), left on the spool. No credential is
 recorded here; the Zowe secure store supplied them. Raw outputs: build/zos0/ (gitignored, local).
 
 ## A. Local
@@ -71,3 +72,37 @@ recorded here; the Zowe secure store supplied them. Raw outputs: build/zos0/ (gi
   internet (site design, outside the project's control; noted for the user).
 - The TSO session BIND (logmode, alternate size) and the Query Reply are only visible after logon: step D (user) and
   ZOS-5 (probe), not ZOS-0.
+
+## D. Manual TSO logon (by the user, 2026-10-14)
+`c3270 -model 2 -oversize auto 198.51.100.200:623`, `logon Z00000`: logon succeeded; **no ISPF menu appeared, the
+session reached TSO `READY` directly**; c3270 window 120 x 30; no unusual site messages. (The negotiated logical
+screen size / logmode of the TSO session was not captured; it is read by the ZOS-5 probe capture.) Claude typed
+nothing in the session and entered no password. Result: PASS.
+
+## E. One IEFBR14 (JCL approved verbatim by the user)
+```
+//Z00000B  JOB 1,'PACMAN ZOS0',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//BR14     EXEC PGM=IEFBR14
+```
+`zowe zos-jobs submit local-file build/zos0/BR14.jcl --wait-for-output`: **JOB08215, CC 0000**, status OUTPUT. Spool
+read with `zowe zos-jobs view all-spool-content`: JESMSGLG, JESJCL, JESYSMSG (36 print records, 2 KB).
+- `$HASP373 Z00000B STARTED - INIT 1 - CLASS 7 - SYS S0W1`, `$HASP395 Z00000B ENDED - RC=0000`; JES2 node SVSCJES2.
+- Step table in JESMSGLG: `-STEPNAME PROCSTEP RC EXCP ...` / `-BR14 00 ...`; JESYSMSG `IEF142I Z00000B BR14 - STEP
+  WAS EXECUTED - COND CODE 0000`, `IEF373I` / `IEF032I` / `IEF375I` / `IEF033I` (z/OS replaces TK4- IEF374I/IEF376I
+  and the TK4- IEFACTRT table: the ZOS-1 listing adapter maps IEF142I / the JESMSGLG step table).
+- `IEFC653I SUBSTITUTION JCL ... NOTIFY=Z00000`; `IEFA111I ... SWA=BELOW,TIOT SIZE=32K,DSENQSHR=DISALLOW,GDGBIAS=JOB`.
+- No MSGCLASS given: the site default class held the output and Zowe retrieved it. Job not purged.
+Result: PASS (submit, wait, spool retrieval proven).
+
+## Classification of findings (plan ZOS-0 exit criteria)
+- Blocking: none.
+- To resolve in ZOS-1 (toolchain): which Enterprise COBOL release the build uses (IGYWCL reportedly 6.5; 4.2 and 6.4
+  also cataloged) and its exact level from a compile listing; AMODE 24 viability with that release (LE SIBMAM24
+  present); no assembler PROC in use -> explicit ASMA90 step (HLA.SASMMOD1); SYSOUT DCB / record format of DISPLAY;
+  listing adapter (IEF142I, JESMSGLG step table, per-DD spool) to the shape the tests parse; upload encoding (any of
+  IBM-037 / IBM-1047 gives the same code bytes, proved by binary download); DATA as PDS (allocation proves it).
+- Expected compile issue (ZOS-2): `VALIDATE` paragraph in PACQRY (docs/ZOS-DIFFS.md C1).
+- Runtime to characterise later: site CEEOPTS (LE options) in TSO (ZOS-3 / ZOS-8 ESTAE); TSO session logmode and
+  Query Reply (ZOS-5); network jitter of the internet 3270 path (ZOS-6).
+- Security note (site design): TN3270 on 623 is unencrypted; the TSO password travels in clear.

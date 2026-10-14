@@ -1,4 +1,4 @@
-# PACMAN z/OS - target environment (ZOS-0, 2026-10-14; parts A/B/C done, D/E pending)
+# PACMAN z/OS - target environment (ZOS-0, 2026-10-14; parts A-E done)
 Evidence: docs/evidence/zos0-discovery.md. Credentials: Zowe secure store only, never in git.
 
 | Item | Value | Status |
@@ -15,5 +15,5 @@ Evidence: docs/evidence/zos0-discovery.md. Credentials: Zowe secure store only, 
 | Job card | CLASS=7, NOTIFY=&SYSUID, no MSGCLASS in any example (site default) | B5/B6 |
 | TSO (z/OSMF) | IZUFPROC: STEPLIB ZXP.PUBLIC.LOAD, SYSPROC VENDOR.CLIST + ZXP.PUBLIC.CLIST + ISP | B7 |
 | TN3270 | 198.51.100.200:623 plain TN3270E (no TLS), LU TCP00906, IBM-3278-4-E accepted, USS 24x80 | C |
-| Interactive TSO / READY / logmode size | pending (step D, user) | D |
-| Submit + spool | pending (step E, IEFBR14) | E |
+| Interactive TSO | logon OK, no ISPF, TSO READY directly; c3270 window 120 x 30; logical size / logmode not yet captured (ZOS-5) | D |
+| Submit + spool | IEFBR14 JOB08215 CC 0000, CLASS 7 INIT 1, JES2 node SVSCJES2, spool JESMSGLG/JESJCL/JESYSMSG via Zowe; no MSGCLASS needed | E |

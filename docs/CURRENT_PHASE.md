@@ -229,6 +229,7 @@ and not started.
 z/OS PORT (branch `zos`, worktree ~/Documents/Worktrees/Pacman-zOS; `main` keeps the MVS line unchanged).
 Plan docs/ZOS-MIGRATION-PLAN.md APPROVED 2026-10-14 (D44): phases ZOS-0 .. ZOS-10, 2.0-mvs-max = functional oracle,
 release 2.0-ZOS / tag 2.0-zos. Target IBM Z Xplore (shared, non-production), prefix Z00000.PACMAN.
-CURRENT PHASE: ZOS-0 Discovery - NOT STARTED. The command/action list is shown to the user before anything runs;
-discovery-only (no upload, no Pac-Man dataset, no install, no CICS, nothing outside Z00000.*, no deletion); the one
-IEFBR14 needs explicit authorisation after being shown in full.
+CURRENT PHASE: ZOS-0 Discovery - A/B/C/D/E PASS (2026-10-14), awaiting the user's approval of the environment and
+the `zos-0` tag; ZOS-1 not started. Evidence docs/evidence/zos0-discovery.md, summary docs/ZOS-ENVIRONMENT.md,
+oracle tests/oracle20 (tools/oracle_extract.py), candidate C1 in docs/ZOS-DIFFS.md (PACQRY paragraph VALIDATE).
+Only z/OS job so far: JOB08215 (IEFBR14, no DD, CC 0000, not purged).
