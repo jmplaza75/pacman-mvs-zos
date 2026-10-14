@@ -178,3 +178,11 @@ JOB09195 PACZ2STF
   archive  PACZ2STF-JOB09195.tar.gz
   sha256   c4f2b43474b1dd1bffab6a1bef32876131edddd5da5bd054c1343d63557bd25e
   z/OS     present in z/OS spool (checked 2026-10-14)
+
+JOB09245 PACZ2RP
+  phase    ZOS-2 Z2-4: RP3 batch speed runs vs oracle 309 (R3B1, R3B2, R3B4, R3B5, R3B6, R3B7, R3B9; known-boundary anchoring)
+  result   CC 0000; PASS
+  spool    10 files, 3166 lines
+  archive  PACZ2RP-JOB09245.tar.gz
+  sha256   f7f9011dd53e01d8f6668103990c0717b49da6cc9ccb6b7f7d45b06c07f0ce1e
+  z/OS     present in z/OS spool (checked 2026-10-14)

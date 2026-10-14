@@ -293,3 +293,29 @@ models; (3) cross-check: the 5 steps in the same order, every SYSOUT identical b
 padding removed only): ARCADE CHECK PASS. The observable behaviour of PACZ2D on these paths (every game COBOL module,
 batch and TSO input, CLASSIC and ARCADE rules, AI 0/1/2, REALTIME, level clear) does not depend on the LE heap / stack
 initialisation value (00 versus FF). Assembler module data live in their own CSECTs and are not affected by STORAGE.
+
+## Z2-4 PACZ2RP (JOB09245) - RP3 batch speed runs (oracle 309, known-boundary anchoring)
+Deck jcl/zos/PACZ2RP.jcl (commit 7cfa8c6), approved as reviewed, submitted once, spool kept and archived
+(docs/evidence/zos2-spool/PACZ2RP-JOB09245.tar.gz). Job CC 0000; spool 3,166 lines (JESMSGLG 24, JESJCL 52, JESYSMSG
+139, SYSOUT 2,951). All 7 steps IEF142I COND CODE 0000, EXEC PGM=PACZ2D, STEPLIB Z00000.PACMAN.LOAD retained 7/7,
+CEEOPTS ALL31(OFF),STACK(,,BELOW) 7/7 (deck as submitted), no CEE / abend / $HASP375, one SYSOUT per step.
+`zos_arcade_check.py --oracle 309` (docs/evidence/zos2-rp-check.txt): ARCADE CHECK PASS.
+| Step | Case, PARM | RC | SYSOUT | Own 309 block (anchored) | test_rp reference | = |
+|---|---|---|---|---|---|---|
+| R3B1 | RP3TIM ARCADE REALTIME, `R A01F` | 0000 | 456 | 51923-52378 | ref_gp2.rt_simulate per 125 | oracle, model |
+| R3B2 | RP3PAU ARCADE REALTIME + pause, `R A01F` | 0000 | 456 | 52381-52836 | ref_gp2.rt_simulate per 125 | oracle, model |
+| R3B4 | RPLOST ARCADE REALTIME 3 ghosts, `R A01F` | 0000 | 229 | 53665-53893 | ref_gp2.rt_simulate per 125 | oracle, model |
+| R3B5 | RTSTILL CLASSIC REALTIME, `R C01F` | 0000 | 259 | 53896-54154 | ref_rt.simulate per 125 | oracle, model |
+| R3B6 | RTWIN CLASSIC REALTIME, `R C01F` | 0000 | 383 | 54157-54539 | ref_rt.simulate per 125 | oracle, model |
+| R3B7 | G2RPAU ARCADE REALTIME, invalid speed `X` | 0000 | 360 | 54542-54901 | ref_gp2.rt_simulate per 150 | oracle, model |
+| R3B9 | LOST0 CLASSIC TURN, `C01F` | 0000 | 808 | 57399-58206 | 1.0-MVS oracle LOST0 | oracle, model |
+FAST converts the designed 150 ms durations (fright FR 40 -> 48, death / freeze 20 -> 24 quanta); R3B6 / R3B7 / R3B9
+prove that the speed has no effect where it must not (no timed event, invalid value = NORMAL, TURN).
+
+## ZOS-2 result (2026-10-14)
+All ZOS-2 jobs executed and PASS on z/OS with the build of record LOAD(PACZ2D) (JOB08888, profile A, AMODE 24 /
+RMODE 24 / RENT): CLASSIC oracle C1..C7 (25 runs, combined check), ARCADE G1 / G2 / G3, drivers DRV (QRY1, TSOT1 real
+clock), LE storage equivalence ST0 / STF, RP3 speed runs RP. Port deltas: Z1 (28 COPY statements). Known items: C3
+(PACFSIO ASMA303W, accepted provisionally, recovery-phase debt); S2 deferred to the TSD / full-screen phase; the oracle
+309 boundary resolved by the digest-bound KNOWN_BOUNDARIES entry. Raw spool of every project job preserved in
+docs/evidence/zos2-spool (22 archives). ZOS-2 closure / tag pending the user's decision.

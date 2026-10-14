@@ -1,0 +1,18 @@
+local checks PASS
+PACZ2RP JOB09245 CC 0000: 7 steps, 3166 spool lines
+  oracle OK   R3B1: 456 lines identical (oracle stream lines 51923-52378)
+  oracle OK   R3B2: 456 lines identical (oracle stream lines 52381-52836)
+  oracle OK   R3B4: 229 lines identical (oracle stream lines 53665-53893)
+  oracle OK   R3B5: 259 lines identical (oracle stream lines 53896-54154)
+  oracle OK   R3B6: 383 lines identical (oracle stream lines 54157-54539)
+  oracle OK   R3B7: 360 lines identical (oracle stream lines 54542-54901)
+  oracle OK   R3B9: 808 lines identical (oracle stream lines 57399-58206)
+  model  OK   R3B1 ARCADE REALTIME rpcases/RP3TIM per 125: 456 lines
+  model  OK   R3B2 ARCADE REALTIME rpcases/RP3PAU per 125: 456 lines
+  model  OK   R3B4 ARCADE REALTIME rpcases/RPLOST per 125: 229 lines
+  model  OK   R3B5 CLASSIC REALTIME rtcases/RTSTILL per 125: 259 lines
+  model  OK   R3B6 CLASSIC REALTIME rtcases/RTWIN per 125: 383 lines
+  model  OK   R3B7 ARCADE REALTIME gp2cases/G2RPAU per 150: 360 lines
+local checks PASS (core frozen, oracle loaded)
+  model  OK   R3B9 CLASSIC TURN cases/LOST0 = 1.0-MVS oracle: 808 lines
+ARCADE CHECK PASS
