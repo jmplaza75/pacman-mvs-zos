@@ -291,8 +291,10 @@ the user approves it. main and the MVS release are not touched.
 - PACZ2S2 review (2026-10-14): not built. The S2 alarm patterns (D41) are observable only in the 25 TSD dry runs S2T1..
   S2T25 of oracle 308 (3270 streams: WCC alarm bit X'04', bell-only writes; tests/test_s2.py, tests/ref_s2.py), and TSD
   is outside ZOS-2. The 4 line-mode runs S2L1..S2L4 ignore the alarm ("no screen sent") and their oracle 308 blocks are
-  byte-identical to blocks already PASS on z/OS (RUN7 C2, RTB7 G2, G2B19 G3, TSO2 C7). Decision pending: defer S2 to the
-  TSD phase, or amend the ZOS-2 scope for TSD dry runs. NEXT: only after the user's decision. CLIST install / interactive EXEC stay in the later z/OS platform/install phase.
+  byte-identical to blocks already PASS on z/OS (RUN7 C2, RTB7 G2, G2B19 G3, TSO2 C7).
+- S2 DEFERRED to the TSD / full-screen phase (user decision 2026-10-14, option 1): only S2T1..S2T25 exercise the alarm
+  and they are TSD; S2L1..S2L4 do not exercise it and each is byte-for-byte covered by a z/OS PASS case. No PACZ2S2 in
+  ZOS-2; ZOS-2 scope unchanged. NEXT: the oracle 309 RP anchoring design (local only), then PACZ2RP. CLIST install / interactive EXEC stay in the later z/OS platform/install phase.
 - Tool fix 4ff8b4d (accepted): zos_equiv --subset anchors each step at its own oracle block.
 - KNOWN ZOS-2 TOOLING ISSUE (open, not to be solved before an RP-specific design is approved): oracle 309 (RP) holds
   80 run datasets for 81 PACMAIN run steps (RPT1's TSD output follows the IEBUPDTE listing after one empty line, not
