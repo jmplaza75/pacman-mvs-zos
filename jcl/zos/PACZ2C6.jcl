@@ -1,0 +1,326 @@
+//PACZ2C6 JOB 1,'PACMAN ZOS2 Z2C6',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//RUN13    EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+AI2
+L
+L
+U
+R
+D
+U
+D
+U
+L
+R
+D
+R
+U
+D
+U
+D
+R
+L
+D
+R
+D
+U
+D
+R
+D
+D
+U
+U
+D
+D
+D
+D
+L
+L
+D
+D
+D
+D
+R
+L
+U
+L
+R
+D
+D
+L
+U
+L
+L
+U
+L
+U
+L
+L
+L
+R
+L
+D
+R
+R
+D
+U
+L
+U
+L
+R
+U
+R
+L
+R
+U
+R
+U
+D
+D
+U
+D
+R
+L
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//RUN14    EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+AI2 3
+L
+L
+U
+R
+D
+U
+D
+U
+L
+R
+D
+R
+U
+D
+U
+D
+R
+L
+D
+R
+D
+U
+D
+R
+D
+D
+U
+U
+D
+D
+D
+D
+L
+L
+D
+D
+D
+D
+R
+L
+U
+L
+R
+D
+D
+L
+U
+L
+L
+U
+L
+U
+L
+L
+L
+R
+L
+D
+R
+R
+D
+U
+L
+U
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//RUN15    EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+AI1 2
+L
+L
+U
+R
+D
+U
+D
+U
+L
+R
+D
+R
+U
+D
+U
+D
+R
+L
+D
+R
+D
+U
+D
+R
+D
+D
+U
+U
+D
+D
+D
+D
+L
+L
+D
+D
+D
+D
+R
+L
+U
+L
+R
+D
+D
+L
+U
+L
+L
+U
+L
+U
+L
+L
+L
+R
+L
+D
+R
+R
+D
+U
+L
+U
+L
+R
+U
+R
+L
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//RUN16    EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+AI3
+D
+U
+D
+U
+D
+U
+R
+L
+L
+D
+R
+L
+L
+U
+R
+D
+D
+D
+D
+U
+R
+L
+U
+R
+U
+R
+R
+D
+U
+U
+L
+U
+U
+D
+R
+U
+R
+U
+D
+U
+R
+R
+U
+U
+L
+R
+R
+L
+U
+U
+D
+D
+R
+D
+D
+U
+L
+U
+U
+D
+U
+D
+U
+R
+L
+R
+R
+R
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
