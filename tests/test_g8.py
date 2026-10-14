@@ -10,6 +10,10 @@ Hercules (any subset of the options):
   --s2 L --rp L --gp2 L --gp23 L --hs L   the regression decks run-only (make_deck.py --runonly --load PACMAIN) on
              the REL20 module: JCL audit, the run-only marker, then test_s2 / test_rp / test_hs (GP23 + GP2) with
              PACMAN_RUNONLY=1 PACMAN_LATER_PHASE=G8 on listings normalised to the decks' default load names.
+  --clist L  deck CLIST: the member printed back = src/clist/PACMAN.clist with the prefix.
+  --inst L   deck INST20 (job PACINS20): IEBCOPY replaced PACMAIN, the AMASPZAP dumps of the source and the installed
+             member are identical (every CSECT, every byte), all RC 0000.
+  --oracle L deck RELEASE run-only on the installed member (with --rel20): the 19 batch + 6 TSO blocks = REL20's.
   --prefix P (default HERC01.PACMAN.R20); --load M: the load member the listings ran (default PACMAIN; G8.2 used
              the development member PACR20D under HERC01.PACMAN, the installed PACMAIN untouched)."""
 import argparse
@@ -23,7 +27,7 @@ from pathlib import Path
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / 'tools'))
 ap = argparse.ArgumentParser()
-for o in ('rel20', 's2', 'rp', 'gp2', 'gp23', 'hs'):
+for o in ('rel20', 's2', 'rp', 'gp2', 'gp23', 'hs', 'clist', 'inst', 'oracle'):
     ap.add_argument('--' + o)
 ap.add_argument('--prefix', default='HERC01.PACMAN.R20')
 ap.add_argument('--load', default='PACMAIN')
@@ -113,7 +117,8 @@ def run_test(script, listings, renames=()):
         f.close()
         tmp.append(f.name)
     r = subprocess.run([sys.executable, str(R / 'tests' / script)] + tmp, capture_output=True, text=True,
-                       env=dict(os.environ, PACMAN_RUNONLY='1', PACMAN_LATER_PHASE='G8'))
+                       env=dict(os.environ, PACMAN_RUNONLY='1', PACMAN_LATER_PHASE='G8',
+                                PACMAN_PREFIX=ARGS.prefix))
     assert r.returncode == 0, (script, r.stdout[-3000:], r.stderr[-3000:])
     return r.stdout.strip().splitlines()[-1]
 
@@ -147,3 +152,71 @@ if ARGS.rp:
     print('RP run-only:', run_test('test_rp.py', [ARGS.rp], ['PACRPD']))
 if ARGS.hs and ARGS.gp23 and ARGS.gp2:
     print('HS + GP23 + GP2 run-only:', run_test('test_hs.py', [ARGS.hs, ARGS.gp23, ARGS.gp2]))
+
+
+def oracle_blocks(ls):
+    out, i = [], 0
+    while i < len(ls):
+        if ls[i] == 'PACMAN MVS-6 SMART GHOSTS':
+            j = next(k for k in range(i, len(ls)) if ls[k].startswith('LIVES '))
+            out.append([l.rstrip() for l in ls[i:j + 1]])
+            i = j
+        i += 1
+    return out
+
+
+if ARGS.oracle:
+    assert ARGS.rel20, '--oracle needs --rel20'
+    t = audited(ARGS.oracle)
+    assert f'{M.RUNONLY_MARK} {ARGS.prefix}.LOAD({ARGS.load})' in t
+    os.environ['PACMAN_RUNONLY'] = '1'
+    nsteps = len(re.findall(r'^//\w+\s+EXEC PGM=', M.build('RELEASE', ARGS.prefix), re.M))
+    del os.environ['PACMAN_RUNONLY']
+    rcs = re.findall(r'PACREL10\s+(\w+)\s+(\S+)\s+RC= (\d{4})', t)
+    assert len(rcs) == nsteps and all(rc == '0000' for *_, rc in rcs), (nsteps, rcs)
+    a, b = oracle_blocks(t.splitlines()), oracle_blocks(read(ARGS.rel20).splitlines())
+    assert len(a) == 25 and a == b, (len(a), len(b))
+    print('installed oracle PASS:', len(rcs), 'steps RC 0000;', len(a), '1.0-MVS blocks = the REL20 runs of the release')
+
+if ARGS.clist:
+    t = audited(ARGS.clist)
+    rcs = re.findall(r'PACCLS10\s+(\w+)\s+(\S+)\s+RC= (\d{4})', t)
+    assert [(n, rc) for n, _, rc in rcs] == [('STORE', '0000'), ('PRINT', '0000')], rcs
+    want = M.clist_text(ARGS.prefix).splitlines()
+    ls = [l.rstrip() for l in t.splitlines()]
+    w = [x.rstrip() for x in want]       # in-stream data is not echoed: the only copy is the PRINT output
+    assert sum(ls[i:i + len(w)] == w for i in range(len(ls))) == 1, 'printed CLIST member differs'
+    assert dict(re.findall(r'(\w+)\((\w*)\)', ' '.join(want[:4]))) == FINAL
+    print('CLIST PASS: member printed back =', len(want), 'lines of src/clist/PACMAN.clist for', ARGS.prefix)
+
+
+def zap_dumps(ls):
+    """The two AMASPZAP DUMP outputs after the marker: per dump, the CSECT names and hex rows (disk addresses and
+    page headings dropped)."""
+    start = next(i for i, l in enumerate(ls) if M.INST_MARK in l)     # may follow IEB147I on one line
+    dumps, cur = [], None
+    for l in ls[start:]:
+        if 'DUMP PACMAIN ALL' in l:
+            cur = []
+            dumps.append(cur)
+        elif cur is not None:
+            m = re.search(r'RECORD LENGTH- *(\S+) .*CSECT NAME-? *(\S+)', l)
+            if m:
+                cur.append(f'CSECT {m.group(2)} LEN {m.group(1)}')
+            m = re.match(r'\s*([0-9A-F]{4,6})\s+((?:[0-9A-F]{8}\s+)*[0-9A-F]{8})\s', l + ' ')
+            if m:
+                cur.append(m.group(1) + ' ' + ' '.join(m.group(2).split()))
+    return dumps
+
+
+if ARGS.inst:
+    t = read(ARGS.inst)
+    rcs = re.findall(r'PACINS20\s+(\w+)\s+(\S+)\s+RC= (\d{4})', t)
+    assert [(n, rc) for n, _, rc in rcs] == [('COPY', '0000'), ('MARK', '0000'), ('ZAPSRC', '0000'),
+                                              ('ZAPINST', '0000')], rcs
+    assert re.search(r'PACMAIN\s+HAS BEEN SUCCESSFULLY\s+COPIED', t) and 'IEB154I' in t, 'IEBCOPY message'
+    d = zap_dumps(t.splitlines())
+    assert len(d) == 2 and d[0] and d[0] == d[1], [len(x) for x in d]
+    cs = [x for x in d[0] if x.startswith('CSECT ')]
+    print('INST20 PASS: IEBCOPY replaced PACMAIN; AMASPZAP dumps identical:', len(cs), 'CSECTs,', len(d[0]) - len(cs),
+          'hex rows')

@@ -1,0 +1,84 @@
+# MVS-G8 G8.3: fresh R20 build of record, run-only regressions, promotion (2026-10-14; D43, docs/G8-RELEASE.md)
+# Extracted with grep / the tests from build/<JOB>-<n>.txt listings (listings not committed: they hold JES data).
+# Sequence exactly as approved: R20 check -> ALLOC -> REL20 -> run-only S2 RP GP2 GP23 HS -> R20 CLIST -> INST20
+# (IEBCOPY + SPZAP identity) -> installed checks (RELEASE + S2 run-only) -> final CLIST. Nothing failed; no step was
+# skipped. HERC01.PACMAN.DATA(HISCORE) was never allocated by any job (no IEF285I for it in JOBs 305-317).
+
+## 1. Fresh allocation
+JOB 305 PACR20CK (read-only IDCAMS LISTCAT LEVEL(HERC01.PACMAN.R20)): IDC3012I ENTRY HERC01.PACMAN.R20. NOT FOUND,
+  0 entries (RC 0004 = nothing to list) -> no R20 dataset existed; nothing scratched, deleted or reused.
+JOB 306 PACALC10 (make_deck.py ALLOC --prefix HERC01.PACMAN.R20, DISP=(NEW,CATLG,DELETE)): RC 0000
+  IEF285I HERC01.PACMAN.R20.COBOL CATALOGED *--------0
+  IEF285I HERC01.PACMAN.R20.COPY CATALOGED *--------0
+  IEF285I HERC01.PACMAN.R20.LOAD CATALOGED *--------0
+  IEF285I HERC01.PACMAN.R20.CLIST CATALOGED *--------0
+  IEF285I HERC01.PACMAN.R20.DATA CATALOGED *--------0
+
+## 2. Build of record: REL20 JOB 307 into HERC01.PACMAN.R20.LOAD(PACMAIN)
+  link: IEW0000     ENTRY PACMAIN
+  link:  TOTAL LENGTH     308F8
+  link: ****PACMAIN   DOES NOT EXIST BUT HAS BEEN ADDED TO DATA SET
+$ python3 tests/test_g8.py --rel20 build/PACREL20-307.txt
+REL20 PASS: 60 steps RC 0000, no warnings; CLIST PARMs ['TSO AI1 1 NAAAPAAARAA01NP', 'TSO AI1 1 NAAAPAAARAC01NP', 'TSO
+AI1 1 NAAAPAAARAA01FS', 'TSO AI1 1 NAAAPAAATAX05NP'] ; MVS-8 runtime PASS: batch identical to MVS-7; 6 interactive
+transcripts match; 43 steps RC 0000
+
+## 3. Regressions run-only on that member (make_deck.py <D> --runonly --load PACMAIN --prefix HERC01.PACMAN.R20):
+## no upload / compile / link of the game; the only link steps write the test drivers PACQRYT / PACTSOT.
+JOB 308 S2, JOB 309 RP, JOB 310 GP2, JOB 311 GP23, JOB 312 HS (HSFILL RC 0012 by design: the full directory)
+$ python3 tests/test_g8.py --rel20 ...307 --s2 ...308 --rp ...309 --gp2 ...310 --gp23 ...311 --hs ...312
+S2 run-only: MVS-S2 PASS: 31 steps RC 0000; 25 TSD runs = 2986 model streams ( 108 with the alarm bit ); 4 BAT / TSO
+line-mode runs = oracle / models
+RP run-only: MVS-RP RP.3 PASS: 12 TSD runs = 1495 model streams (FAST ARCADE / CLASSIC, NORMAL, invalid, TURN); 9 BAT
+runs = 6268 model lines; CLIST PARM 7 keyword sets (TMP)
+HS + GP23 + GP2 run-only: GP2 regression (test_gp2 GP2 + GP23, PACMAN_LATER_PHASE=HS): MVS-GP2 GP2.2 PASS: 208 steps
+RC 0000; S1 regression: MVS-S1 PASS: 134 steps RC 0000; RT regression: MVS-RT RT2 PA ...;
+$ PACMAN_RUNONLY=1 PACMAN_LATER_PHASE=G8 PACMAN_PREFIX=HERC01.PACMAN.R20 python3 tests/test_hs.py ...312 ...311 ...310
+MVS-HS HS.2 PASS: 42 steps (HSFILL RC 0012, the rest RC 0000); 21 runs = model + HS lines ( 23869 text lines, 394 TSD 
+streams = RP models) ; 9 member prints = model; CLIST block both paths
+GP2 regression (test_gp2 GP2 + GP23, PACMAN_LATER_PHASE=HS): MVS-GP2 GP2.2 PASS: 208 steps RC 0000; S1 regression: MVS
+-S1 PASS: 134 steps RC 0000; RT regression: MVS-RT RT2 PA ...; 
+core frozen: core frozen (authorised 2026-10-13 by project owner (RP.3 approval)): PASS
+
+JCL / listing audit (tools/g8_jcl_audit.py --prefix HERC01.PACMAN.R20): decks and listings 305-313:
+build/PACALC10-306.txt: PASS (5 HERC01 names, all under HERC01.PACMAN.R20.)
+build/PACREL20-307.txt: PASS (5 HERC01 names, all under HERC01.PACMAN.R20.)
+build/PACBLDS2-308.txt: PASS (2 HERC01 names, all under HERC01.PACMAN.R20.)
+build/PACBLDRP-309.txt: PASS (6 HERC01 names, all under HERC01.PACMAN.R20.)
+build/PACBLGP2-310.txt: PASS (4 HERC01 names, all under HERC01.PACMAN.R20.)
+build/PACBLG23-311.txt: PASS (2 HERC01 names, all under HERC01.PACMAN.R20.)
+build/PACBLDHS-312.txt: PASS (5 HERC01 names, all under HERC01.PACMAN.R20.)
+build/PACCLS10-313.txt: PASS (3 HERC01 names, all under HERC01.PACMAN.R20.)
+
+## 4. R20 CLIST: JOB 313 (STORE + PRINT back)
+CLIST PASS: member printed back = 75 lines of src/clist/PACMAN.clist for HERC01.PACMAN.R20
+  No arguments -> RULES(ARCADE), explicit RULES(CLASSIC) -> CLASSIC: G8PARM lines of REL20 JOB 307 above (the same
+  CLIST source); batch / direct-call behaviour unchanged: the 1.0-MVS oracle of JOB 307 (no RULES column = CLASSIC).
+
+## 5. Promotion: INST20 JOB 314 (PACINS20; copy only, no compile or link)
+  12.33.17 JOB 314 PACINS20 COPY IEBCOPY RC= 0000
+  12.33.17 JOB 314 PACINS20 MARK IEBGENER RC= 0000
+  12.33.17 JOB 314 PACINS20 ZAPSRC AMASPZAP RC= 0000
+  12.33.17 JOB 314 PACINS20 ZAPINST AMASPZAP RC= 0000
+  IEB167I FOLLOWING MEMBER(S) COPIED FROM INPUT DATA SET REFERENCED BY R20 -
+  IEB154I PACMAIN HAS BEEN SUCCESSFULLY COPIED
+ dump 1 first record: **CCHHR- 004100001D RECORD LENGTH- 1800 MEMBER NAME PACMAIN CSECT NAME PACMAIN
+ dump 2 first record: **CCHHR- 0039000713 RECORD LENGTH- 1800 MEMBER NAME PACMAIN CSECT NAME PACMAIN
+$ python3 tests/test_g8.py --inst build/PACINS20-314.txt
+INST20 PASS: IEBCOPY replaced PACMAIN; AMASPZAP dumps identical: 33 CSECTs, 4494 hex rows
+  (dump 1 = HERC01.PACMAN.R20.LOAD, dump 2 = HERC01.PACMAN.LOAD: different disk addresses, identical bytes)
+
+## 6. Installed member checks (run-only, STEPLIB HERC01.PACMAN.LOAD, PGM=PACMAIN)
+JOB 315 RELEASE run-only (CLASSIC: 19 batch + 6 TSO line-mode), JOB 316 S2 run-only (ARCADE + CLASSIC TSD / BAT / TSO)
+$ python3 tests/test_g8.py --prefix HERC01.PACMAN --rel20 ...307 --oracle ...315 --s2 ...316
+S2 run-only: MVS-S2 PASS: 31 steps RC 0000; 25 TSD runs = 2986 model streams ( 108 with the alarm bit ); 4 BAT / TSO
+line-mode runs = oracle / models
+installed oracle PASS: 26 steps RC 0000; 25 1.0-MVS blocks = the REL20 runs of the release
+S2 program output of the installed member (JOB 316) = the R20 member (JOB 308): 19014 lines identical
+
+## 7. Final CLIST: JOB 317 into HERC01.PACMAN.CLIST(PACMAN), only after 5 and 6 passed
+CLIST PASS: member printed back = 75 lines of src/clist/PACMAN.clist for HERC01.PACMAN
+
+Installed 2.0 release: HERC01.PACMAN.LOAD(PACMAIN) = copy of HERC01.PACMAN.R20.LOAD(PACMAIN) (REL20 JOB 307, copy JOB
+314); HERC01.PACMAN.CLIST(PACMAN) = JOB 317. JOB 298 (S2 link) is historical evidence only. Development member
+HERC01.PACMAN.LOAD(PACR20D) (G8.2 JOB 303) is not release evidence.

@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (fase actual: MVS-G8 / 2.0-MVS-MAX, secciones 25-28; D43 aprobado, G8.2 verde, siguiente G8.3).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (fase actual: MVS-G8 / 2.0-MVS-MAX, secciones 25-28; D43 aprobado, G8.3 instalado, siguiente G8.4).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -199,4 +199,13 @@ MVS-G8 / 2.0-MVS-MAX IN PROGRESS (started 2026-10-14 on the user's go; docs/ROAD
   RULES(ARCADE) (final default set frozen in tests/test_g8.py), deck REL20, `make_deck.py --runonly`, ALLOC sized for
   2.0, tools/g8_jcl_audit.py, tools/g8_bench.py, tests/test_g8.py, `tools/release_check.sh 2.0`. COMPRESS JOB 302;
   REL20 into PACR20D JOB 303 (60 steps RC 0000, CLIST PARMs, 1.0 oracle PASS); S2 run-only on PACR20D JOB 304
-  (2986 streams = model). Evidence docs/evidence/g8-build.txt. Next: G8.3 (fresh R20 build + install) on the user's go.
+  (2986 streams = model). Evidence docs/evidence/g8-build.txt.
+- G8.3 COMPLETE (2026-10-14, user go; docs/evidence/g8-install.txt): R20 check JOB 305 (no R20 dataset), ALLOC JOB 306
+  (new empty HERC01.PACMAN.R20.*), build of record REL20 JOB 307 into HERC01.PACMAN.R20.LOAD(PACMAIN) (60 steps RC
+  0000, link: member did not exist), run-only on that member S2 308 / RP 309 / GP2 310 / GP23 311 / HS 312 all PASS,
+  every deck and listing audited (no old-library reference), R20 CLIST JOB 313; promotion INST20 JOB 314 (IEBCOPY
+  replace, no compile / link; AMASPZAP dumps of both members identical: 33 CSECT records, 4494 hex rows), installed
+  checks JOB 315 (1.0 oracle = REL20 runs) and JOB 316 (S2 = model, = R20 output byte for byte), final CLIST JOB 317
+  (default RULES(ARCADE)). INSTALLED 2.0: HERC01.PACMAN.LOAD(PACMAIN) = copy of the R20 build of record (JOB 307 / 314),
+  CLIST JOB 317; JOB 298 historical. HISCORE untouched. Harness only: test_hs made run-only aware (no assemblies in a
+  run-only deck) and prefix-aware (PACMAN_PREFIX) for the CLIST-block lines. Next: G8.4 (minimal live) on the user's go.

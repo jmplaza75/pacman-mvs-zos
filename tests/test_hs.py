@@ -182,7 +182,8 @@ rcs = re.findall(r'PACBLDHS\s+(\w+)\s+\S+\s+RC= (\d{4})', '\n'.join(lines))
 assert len(rcs) == nsteps, (nsteps, len(rcs))
 assert [s for s, r in rcs if r != '0000'] == ['HSFILL'] and dict(rcs)['HSFILL'] == '0012', [x for x in rcs if x[1] != '0000']
 assert not [l for l in lines if re.search(r'IKF\d{4}I-[WCE]', l)], 'compiler warnings'
-assert sum(l.strip() == 'HIGHEST SEVERITY WAS    0' for l in lines) == 3
+# MVS-G8 (D43): a run-only deck (PACMAN_RUNONLY=1) assembles nothing; the three assemblies are in the REL20 listing
+assert sum(l.strip() == 'HIGHEST SEVERITY WAS    0' for l in lines) == (0 if os.environ.get('PACMAN_RUNONLY') == '1' else 3)
 assert any('IEB813I OUTPUT DIRECTORY FULL' in l for l in lines)
 t = [l.rstrip() for l in lines[lines.index(HS_MARK) + 1:]]
 gp23 = None
@@ -233,10 +234,11 @@ for l in t[mem + 1:]:
 assert sorted(listed) == sorted(set(PDS.members) | {'HSCLY', 'HSCLN'}), listed
 assert 'HS8' not in listed
 # the CLIST block: DATA present -> the member allocated SHR; DATA missing -> DUMMY (NULLFILE); the CLIST goes on
-cl = t[t.index("  EXEC 'HERC01.PACMAN.HSTEST(HSCLY)'", j):mem]
-i1 = cl.index('HERC01.PACMAN.HSCL.DATA(HISCORE)')
+PFX = os.environ.get('PACMAN_PREFIX', 'HERC01.PACMAN')       # MVS-G8 (D43): the R20 rebuild runs under its own prefix
+cl = t[t.index(f"  EXEC '{PFX}.HSTEST(HSCLY)'", j):mem]
+i1 = cl.index(f'{PFX}.HSCL.DATA(HISCORE)')
 assert cl[i1 + 1].split() == ['PACHS', 'KEEP'] and cl.count('HSCL END') == 2
-assert any(l.startswith('IDC0550I ENTRY (A) HERC01.PACMAN.HSCL.DATA DELETED') for l in cl)
+assert any(l.startswith(f'IDC0550I ENTRY (A) {PFX}.HSCL.DATA DELETED') for l in cl)
 assert cl.index('NULLFILE  PACHS') > i1 and not any('IKJ56' in l for l in cl), cl
 print('MVS-HS HS.2 PASS:', len(rcs), 'steps (HSFILL RC 0012, the rest RC 0000);', len(RUNS), 'runs = model + HS lines (',
       nlines, 'text lines,', nstreams, 'TSD streams', ('= RP models)' if LATER else '= GP23)') if gp23 is not None else 'not compared)', ';',

@@ -890,10 +890,33 @@ def compress_deck(pfx):
 
 
 def clist_deck(pfx):
+    # MVS-G8 (D43): the stored member is printed back (step PRINT), so the listing proves what was installed
     return (job_card('PACCLS10', 'PACMAN CLIST') + '//* STORES/REPLACES THE TSO LAUNCHER MEMBER PACMAN.\n'
             '//STORE    EXEC PGM=IEBGENER\n//SYSPRINT DD SYSOUT=A\n'
             f'//SYSUT2   DD DSN={pfx}.CLIST(PACMAN),DISP=OLD\n//SYSIN    DD DUMMY\n'
-            '//SYSUT1   DD DATA,DLM=ZZ\n' + clist_text(pfx) + 'ZZ\n//\n')
+            '//SYSUT1   DD DATA,DLM=ZZ\n' + clist_text(pfx) + 'ZZ\n'
+            '//PRINT    EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT1   DD DSN={pfx}.CLIST(PACMAN),DISP=SHR\n//SYSUT2   DD SYSOUT=A\n//\n')
+
+
+INST_MARK = 'PACMAN-INST20-ZAP-DUMPS-FOLLOW'
+
+
+def inst20_deck(src, dst):
+    """MVS-G8 (D43 amendment): promotion of the validated release module. Copy only, no compile or link: IEBCOPY
+    <src>.LOAD(PACMAIN) -> <dst>.LOAD(PACMAIN) (replace), then an AMASPZAP DUMP of every CSECT of both members (the
+    test compares the hex text: byte identity). Checks of the installed member: decks RELEASE and S2 with --runonly."""
+    out = job_card('PACINS20', 'PACMAN INSTALL 2.0') + f'//* PROMOTES {src}.LOAD(PACMAIN) TO {dst}.LOAD\n'
+    out += ('//COPY     EXEC PGM=IEBCOPY\n//SYSPRINT DD SYSOUT=A\n'
+            f'//R20      DD DSN={src}.LOAD,DISP=SHR\n//INST     DD DSN={dst}.LOAD,DISP=OLD\n'
+            '//SYSUT3   DD UNIT=SYSDA,SPACE=(TRK,(5,5))\n//SYSUT4   DD UNIT=SYSDA,SPACE=(TRK,(5,5))\n'
+            '//SYSIN    DD *\n  COPY OUTDD=INST,INDD=R20\n  SELECT MEMBER=((PACMAIN,,R))\n/*\n')
+    out += ('//MARK     EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD DUMMY\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT1   DD *\n{INST_MARK}\n/*\n//SYSUT2   DD SYSOUT=A\n')
+    for step, lib in (('ZAPSRC', src), ('ZAPINST', dst)):
+        out += (f'//{step:<8} EXEC PGM=AMASPZAP,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n'
+                f'//SYSLIB   DD DSN={lib}.LOAD,DISP=SHR\n//SYSIN    DD *\n DUMP PACMAIN ALL\n/*\n')
+    return out + '//\n'
 
 
 def run_deck(pfx, cards, hiscore=False, parm=None):
@@ -1206,13 +1229,14 @@ def rpe_deck(pfx):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'HSP', 'RPE', 'DATA', 'COMPRESS'])
+    ap.add_argument('deck', choices=sorted(DECKS) + ['INST20', 'ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'HSP', 'RPE', 'DATA', 'COMPRESS'])
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
     ap.add_argument('--parm', help="RUN: PARM, e.g. 'BAT                 A' for RULES(ARCADE)")
     ap.add_argument('--hiscore', action='store_true', help='RUN: add the high-score DD (<prefix>.DATA(HISCORE))')
     ap.add_argument('--out', help='output file (default build/<DECK>.jcl)')
+    ap.add_argument('--source', default='HERC01.PACMAN.R20', help='INST20: the validated release prefix')
     ap.add_argument('--runonly', action='store_true', help='MVS-G8: no upload / compile / link of the game; run the '
                                                             'deck\'s tests against the existing load member')
     ap.add_argument('--load', help='MVS-RP: link into this LOAD member instead of the deck default (regression decks '
@@ -1221,7 +1245,9 @@ if __name__ == '__main__':
     pfx = a.prefix or f'{a.hlq}.PACMAN'
     if a.runonly:
         os.environ['PACMAN_RUNONLY'] = '1'
-    if a.deck == 'ALLOC':
+    if a.deck == 'INST20':
+        text = inst20_deck(a.source, pfx)
+    elif a.deck == 'ALLOC':
         text = alloc_deck(pfx)
     elif a.deck == 'CLIST':
         text = clist_deck(pfx)

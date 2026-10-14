@@ -288,3 +288,9 @@ G8.2 (2026-10-14, not installed): COMPRESS JOB 302; REL20 into the development m
 0000 at the first submission, CLIST PARMs as modelled, 1.0 oracle PASS); S2 run-only on PACR20D JOB 304 (31 steps,
 2986 streams = model). Check: `python3 tests/test_g8.py --prefix HERC01.PACMAN --load PACR20D --rel20
 build/PACREL20-303.txt --s2 build/PACBLDS2-304.txt`. Evidence docs/evidence/g8-build.txt.
+G8.3 (2026-10-14): JOB 305 LISTCAT (no R20 entry), ALLOC 306, REL20 307 (build of record, R20 PACMAIN), run-only
+`make_deck.py S2|RP|GP2|GP23|HS --runonly --load PACMAIN --prefix HERC01.PACMAN.R20` JOBs 308-312, CLIST R20 313,
+`make_deck.py INST20` JOB 314 (IEBCOPY R20 -> HERC01.PACMAN.LOAD(PACMAIN), AMASPZAP DUMP of both), installed checks
+`make_deck.py RELEASE|S2 --runonly --load PACMAIN` JOBs 315 / 316, CLIST 317. Checks: `python3 tests/test_g8.py --rel20
+L307 --s2 L308 --rp L309 --gp2 L310 --gp23 L311 --hs L312`, `--clist L313`, `--inst L314`, `--prefix HERC01.PACMAN
+--rel20 L307 --oracle L315 --s2 L316`, `--prefix HERC01.PACMAN --clist L317`. Evidence docs/evidence/g8-install.txt.
