@@ -161,3 +161,26 @@ every run identical to oracle 307 and to its independent model; the 19 batch run
 before/after evidence (docs/evidence/mvs7-refactor.txt): CLASSIC CHECK PASS. The 1.0-MVS functional oracle
 (19 batch + 6 TSO line-mode replays) is reproduced exactly on z/OS by PACZ2D under profile A. Not covered by these
 jobs: the REL20 CLIST PARM steps (CLIST out of ZOS-2), ARCADE / REALTIME / RP / S2 / STORAGE (later ZOS-2 jobs).
+
+## Z2-4 PACZ2G1 (JOB09069) - ARCADE representative subset (oracle 310)
+Deck jcl/zos/PACZ2G1.jcl (commit 4c0bd92), approved as reviewed, submitted once, spool kept. Job CC 0000; spool 3,268
+lines (estimate ~3,280): JESMSGLG 27, JESJCL 73, JESYSMSG 196, SYSOUT 2,972. `tools/zowe/zos_arcade_check.py`:
+spool health (IEF142I COND CODE 0000 for all 10 steps, STEPLIB Z00000.PACMAN.LOAD per step, no CEE / abend /
+$HASP375, one SYSOUT per step), zos_equiv --subset vs oracle 310, independent model tests/ref_gp2.py as in
+tests/test_gp2.py: ARCADE CHECK PASS.
+| Step | Case / PARM level | RC | SYSOUT | Oracle 310 own block | ref_gp2 | Observed in the z/OS output |
+|---|---|---|---|---|---|---|
+| G2B1 | GPAI0 `AI0 3` | 0000 | 738 | 60064-60801 = | = | AI=0, 3 ghosts (L=098 at T000, M=N000 N000 N000); 4 power pellets FR=020; QUIT 51 turns, SCORE 0001310, GHOSTS EATEN 0003 |
+| G2B2 | GPHOME `AI0 2` | 0000 | 332 | 60804-61135 = | = | AI=0, 2 ghosts (L=099); 2 power pellets; T019 DIED; LIVES 2, GHOSTS EATEN 0001 |
+| G2B9 | GPPOW2 `AI1 1` | 0000 | 101 | 66104-66204 = | = | second power pellet during the fright: FR back to 020 (refresh); ghost F at the end |
+| G2B12 | GPTIE `AI2 1` | 0000 | 127 | 67007-67133 = | = | power FR=020, frightened flee with a direction tie (model event flee-tie; order U D L R) |
+| G2B21 | G2BDIE `AI1 1` | 0000 | 413 | 75169-75581 = | = | death with the fruit shown (model event deathfruit): T030 DIED, L line BN=1 EV=A---D; LIVES 2 |
+| G2B33 | G2ROW `01` | 0000 | 205 | 101009-101213 = | = | LEVEL 001, L LV=001 AI=1, power FR=020 |
+| G2B45 | G2ROW `13` | 0000 | 205 | 103493-103697 = | = | LEVEL 013, L LV=013 AI=3 (AI1 + bump 2) BK=K BV=5000, power FR=004 (row 13 fright) |
+| G2B49 | G2ROW `ab` | 0000 | 205 | 104321-104525 = | = | invalid start -> LEVEL 001; output identical to G2B33, different from G2B45 |
+| G2B55 | MULTI `AI3 3`, `05` | 0000 | 276 | 106096-106371 = | = | LEVEL 005, L LV=005 AI=3 BK=A BV=0700, 3 ghosts (L=098); T014 DIED; EOF, LIVES 2 |
+| G2T1 | GPTSO, PARM `TSO AI0 2 ... A` | 0000 | 370 | 111310-111679 = | = | TSO line-mode ARCADE, 2 ghosts (L=099), 24 prompts, blank-card redraw; same game as GPHOME |
+Tool note: zos_equiv --subset printed 103700-103904 for G2B49: oracle steps G2B46..G2B49 (start '', '  ', '00', 'ab',
+all level 1) print the same 205-line block and the subset search reports the first identical block. A separate
+read-only check located every step at its own oracle block (table above): all 10 identical, each with its exact
+separator. Not a divergence; a tool improvement (anchor each subset step at its own oracle block) is proposed.

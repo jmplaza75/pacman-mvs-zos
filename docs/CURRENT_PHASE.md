@@ -276,5 +276,6 @@ the user approves it. main and the MVS release are not touched.
 - PACZ2C4 JOB09023: RUN10 EDGE3 RC 0, = oracle 307 and model (WIN / TURNS 319 / SCORE 1000 / LIVES 2), 3,578 spool
   lines: PASS.
 - PACZ2C5 JOB09027, PACZ2C6 JOB09030, PACZ2C7 JOB09031 (batch approval): all runs RC 0, = oracle 307 and models.
-  Combined CLASSIC validation (25 runs, order, models, MVS-7 before/after): PASS. NEXT: PACZ2DRV / ST0 / STF / G1..G3
-  / RP / S2 only after the user's approval.
+  Combined CLASSIC validation (25 runs, order, models, MVS-7 before/after): PASS.
+- PACZ2G1 JOB09069: 10 ARCADE runs RC 0, = oracle 310 (own blocks) and ref_gp2: PASS. NEXT: PACZ2G2 only after the
+  user's approval. CLIST install / interactive EXEC stay in the later z/OS platform/install phase.
