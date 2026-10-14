@@ -1,0 +1,83 @@
+//PACZ2C3 JOB 1,'PACMAN ZOS2 Z2C3',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//RUN9     EXEC PGM=PACZ2D,COND=(0,NE)
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//SYSIN    DD *
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+L
+R
+L
+L
+U
+L
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+R
+L
+U
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
