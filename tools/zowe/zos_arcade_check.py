@@ -11,6 +11,7 @@ independent model tests/ref_gp2.py exactly as tests/test_gp2.py applies it:
   QRY1 (PACQRYT driver of PACQRY)                   = one QRY line per recorded reply (qry_cases.expect,
                                                       expect_size: tests/test_g4.py, test_gs.py), the QSL startup
                                                       sequences (qry_cases.seq_lines: tests/test_rp.py), QRY TEST END;
+  RUN<i> / TSO<i> (the 1.0-MVS oracle runs of the GP2 deck) = tests/test_mvs8.py models (zos_classic_check.model);
   TSOT1 (PACTSOT driver of the PACTSO clock)        = real elapsed times: checked with the RT3 rules of tests/test_rt.py
                                                       (zos_equiv --clock) instead of an exact comparison.
 Usage: zos_arcade_check.py SPOOLDIR [SPOOLDIR ...]   (read-only; exit 0 only if everything passes)
@@ -90,6 +91,13 @@ def main():
         for s in steps:
             if runs[s]['pgm'] in BUILD:
                 continue                       # build steps: health above + zos_compile_report
+            if s[:3] in ('RUN', 'TSO') and s[3:].isdigit():
+                from zos_classic_check import CASE, model
+                r = model(s, runs[s]['lines'])
+                print(f'  model  {"OK  " if r is None else "FAIL"} {s} CLASSIC {CASE[s]}: {len(runs[s]["lines"])} lines'
+                      + (f' - {r}' if r else ''))
+                bad += r is not None
+                continue
             what, want = expected(s)
             if s in CLOCK:
                 ok = clock_ok(runs[s]['lines'])
@@ -107,6 +115,11 @@ def main():
             print(f'  model  {"OK  " if ok else "FAIL"} {s} {what}: {len(got)} lines'
                   + ('' if ok else f' - first difference at line {i + 1}'))
             bad += not ok
+    if len(sys.argv) == 3:                     # two jobs of the same steps (PACZ2ST0 / PACZ2STF): identical output
+        r1, r2 = (health(d, tuple(PMAP.values()))[2] for d in sys.argv[1:])
+        same = list(r1) == list(r2) and all(r1[k]['lines'] == r2[k]['lines'] for k in r1)
+        print(f'cross-check: {len(r1)} steps, every SYSOUT identical between the two jobs: {same}')
+        bad += not same
     print('ARCADE CHECK ' + ('PASS' if not bad else f'FAIL ({bad})'))
     sys.exit(1 if bad else 0)
 
