@@ -258,7 +258,8 @@ with tempfile.TemporaryDirectory() as t:
 assert bad >= 1 and any(m.startswith('FAIL G2B49: its oracle block cannot be anchored') for m in msgs), msgs
 assert not any(m.startswith('OK') for m in msgs), msgs                         # no fallback to a content search
 o309 = json.load(gzip.open(R / 'tests/oracle20/309-PACBLDRP.json.gz'))
-assert anchors(o309, {'PACMAIN'}) == {}, 'oracle 309: 80 run datasets for 81 run steps -> nothing anchored'
+o309x = dict(o309, stream=o309['stream'][:-1] + [o309['stream'][-1] + ' '])    # same structure, other digest
+assert anchors(o309x, {'PACMAIN'}) == {}, '80 run datasets for 81 run steps and no known boundary -> nothing anchored'
 # a duplicated z/OS step name fails in every mode
 with tempfile.TemporaryDirectory() as t:
     _, _, runs = zos_runs(spool(Path(t) / 's', [('G2B49', None, 'PACZ2D', '0000'), ('G2B49', None, 'PACZ2D', '0000')],
@@ -296,3 +297,68 @@ assert two_jobs(st, {'G2R7': st['G2R7'], 'G2B21': st['G2B21']})[0] is False     
 assert two_jobs(st, {'G2B21': st['G2B21']})[0] is False                             # a step missing
 print('ST0 / STF: exact STORAGE CEEOPTS on ST0 / STF only, profile A CEEOPTS on every other deck; cross-check passes on '
       'identical SYSOUT and fails on a one-character difference: PASS')
+
+
+# 8. oracle 309 (RP): the one known boundary without the two-line separator (RPT1 after the RPSEED IEBUPDTE listing),
+#    bound to the frozen stream digest; generic anchoring of every other oracle unchanged; every deviation fails closed
+import zos_equiv as ZE  # noqa: E402
+import ref_rt  # noqa: E402
+from test_g0 import oracle as oracle10  # noqa: E402
+from make_deck import RP3_BAT  # noqa: E402
+a309 = anchors(o309, {'PACMAIN'})
+assert len(a309) == sum(1 for x in o309['steps'] if x[1] == 'PACMAIN') == 81 and a309['RPT1'] == 662, len(a309)
+s9 = o309['stream']
+seps = [p + 2 for p in range(len(s9) - 2) if s9[p] == '' and s9[p + 1] == '' and s9[p + 2] != ''
+        and (p == 0 or s9[p - 1] != '')]
+text = [p for p in seps if s9[p].startswith('PACMAN ')]          # independent: the 9 text runs are R3B1..R3B9
+assert [a309[f'R3B{i}'] for i in range(1, 10)] == text, 'R3B anchors'
+assert all(a309[st] in seps for st in a309 if st != 'RPT1'), 'every other step at a separator boundary'
+saved = dict(ZE.KNOWN_BOUNDARIES)
+for name in ('307-PACREL20', '308-PACBLDS2', '310-PACBLGP2', '315-PACREL10'):    # the table never touches them
+    o = json.load(gzip.open(R / f'tests/oracle20/{name}.json.gz'))
+    for progs in ({'PACMAIN'}, {'PACMAIN', 'PACQRYT', 'PACTSOT'}):
+        with_t = anchors(o, progs)
+        ZE.KNOWN_BOUNDARIES.clear()
+        without_t = anchors(o, progs)
+        ZE.KNOWN_BOUNDARIES.update(saved)
+        assert with_t == without_t and with_t, name
+digest = next(iter(saved))
+for bad in ({'line': 661}, {'line': 663}, {'step': 'RPT2'}, {'prev': 'IEB818I HIGHEST CONDITION CODE WAS 00000000'},
+            {'head': 'PACMAN '}):
+    ZE.KNOWN_BOUNDARIES[digest] = [dict(saved[digest][0], **bad)]
+    got = anchors(o309, {'PACMAIN'})
+    ZE.KNOWN_BOUNDARIES.update(saved)
+    assert got == {} or (bad == {'head': 'PACMAN '} and got == {}), (bad, len(got))
+assert anchors(o309, {'PACQRYT'}) == anchors(o309x, {'PACQRYT'}), 'an entry of another class is ignored'
+
+
+def rp3_model(step):
+    play, d, c, rules, st_, sp = RP3_BAT[int(step[3:]) - 1]
+    cs = (R / f'tests/{d}/{c}.txt').read_text().splitlines()
+    start, per = GP2.parse_start(st_), ref_rt.period(sp)
+    if rules == 'C':
+        w = oracle10()[0][c] if play == 'T' else ref_rt.simulate(cs, per=per)
+    else:
+        w = GP2.rt_simulate(cs, start, per=per) if play == 'R' else GP2.simulate(cs, start=start)
+    return [l.rstrip() for l in w]
+
+
+rp = {f'R3B{i}': rp3_model(f'R3B{i}') for i in (1, 2, 4, 5, 6, 7, 9)}
+for k, w in rp.items():
+    assert s9[a309[k]:a309[k] + len(w)] == w, k
+with tempfile.TemporaryDirectory() as t:
+    _, _, runs = zos_runs(spool(Path(t) / 's', [(k, None, 'PACZ2D', '0000') for k in rp], rp))
+    bad, msgs = compare(o309, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+assert bad == 0 and sum(m.startswith('OK') for m in msgs) == 7, msgs
+mut = dict(rp, R3B5=rp['R3B5'][:3] + [rp['R3B5'][3] + 'X'] + rp['R3B5'][4:])
+with tempfile.TemporaryDirectory() as t:
+    _, _, runs = zos_runs(spool(Path(t) / 's', [(k, None, 'PACZ2D', '0000') for k in mut], mut))
+    bad, msgs = compare(o309x, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+assert bad == 7 and all('cannot be anchored' in m for m in msgs if m.startswith('FAIL G') or 'R3B' in m), msgs
+with tempfile.TemporaryDirectory() as t:
+    _, _, runs = zos_runs(spool(Path(t) / 's', [(k, None, 'PACZ2D', '0000') for k in mut], mut))
+    bad, msgs = compare(o309, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+assert bad == 1 and [m.split(':')[0] for m in msgs if m.startswith('FAIL')] == ['FAIL R3B5'], msgs
+print('oracle 309 RP anchoring: 81/81 with the digest-bound RPT1 boundary (R3B = the 9 text blocks), other oracles '
+      'unchanged, wrong line / step / preceding line / header / digest fail closed, 7 RP3 BAT models = own blocks, '
+      'a mutation fails R3B5 only: PASS')

@@ -94,6 +94,17 @@ HEADS = {('PACMAIN', ''): ('PACMAN',), ('PACMAIN', 'TSD'): ('TSX',), ('PACQRYT',
 DECKS = Path(__file__).resolve().parent.parent.parent / 'releases/2.0-MVS-MAX/decks'
 
 
+# Known run-dataset boundaries without the TK4- two-line separator, bound to one frozen oracle stream (SHA-256 of
+# '\n'.join(stream)). Oracle 309 (RP): RPT1's SYSOUT follows the RPSEED IEBUPDTE listing after ONE empty line. An entry
+# is used only if the oracle stream has exactly this digest and every recorded fact holds (empty line before, the
+# preceding text line, the run header, not already a separator boundary, the anchored step name); otherwise nothing of
+# that oracle is anchored. Other oracles never consult the table.
+KNOWN_BOUNDARIES = {
+    'a549c3f181981b9d4b52cb6517f664469490d5e0e9b57539f5a360e636b25621': [
+        {'line': 662, 'step': 'RPT1', 'prev': 'IEB819I END OF JOB IEBUPDTE.', 'head': 'TSX SWITCH '}],
+}
+
+
 def anchors(oracle, progs):
     """{oracle run step name: index of the first line of its own block in the stream}.
     Identity = the exact oracle step name and its ordinal among the oracle's run steps (oracle['steps'] order, the
@@ -115,8 +126,21 @@ def anchors(oracle, progs):
     blocks = [p + 2 for p in range(len(s) - 2) if s[p] == '' and s[p + 1] == '' and s[p + 2] != ''
               and (p == 0 or s[p - 1] != '') and s[p + 2].startswith(heads)]
     out = {}
+    import hashlib
+    known = KNOWN_BOUNDARIES.get(hashlib.sha256('\n'.join(s).encode()).hexdigest(), [])
+    known = [k for k in known if k['head'].startswith(heads)]      # only entries of the requested run classes
+    for k in known:
+        n = k['line']
+        if not (2 <= n < len(s) and s[n - 1] == '' and s[n - 2] == k['prev'] and s[n].startswith(k['head'])
+                and n not in blocks):
+            return out                                       # a recorded fact does not hold: fail closed
+        blocks.append(n)
+    blocks.sort()
     if len(blocks) != len(steps):
         return out
+    pos = dict(zip(blocks, [st for st, _ in steps]))
+    if any(pos.get(k['line']) != k['step'] for k in known):
+        return out                                           # the boundary is not the declared step's: fail closed
     for (st, prog), b in zip(steps, blocks):
         want = HEADS.get((prog, 'TSD' if parm.get(st, '')[:3] == 'TSD' else ''))
         if not want or not s[b].startswith(want):
