@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from zos_listing import steps_of  # noqa: E402
 
 IGY = re.compile(r'^\s*(\d+)?\s*(IGY[A-Z]{2}\d{4})-([IWESU])\s+(.*)$')
-ASMA = re.compile(r'^\s*\*\* (ASMA\d{3})([IWESNCU])\s+(.*)$')
+ASMA = re.compile(r'^.?\s*\*\* (ASMA\d{3})([IWESNCU])\s+(.*)$')
 STATS = re.compile(r'(\d+) (Informational|Warning|Error|Severe|Terminating)?|Messages\s+Total')
 
 
@@ -58,7 +58,7 @@ def report(d):
                 m = re.match(r'^0Printed:\s+(\d+)', l)
                 if m:
                     printed = int(m.group(1))
-                m = ASMA.match(l[1:] if l[:1] in ' 01-+' else l)
+                m = ASMA.match(l)            # column 1 = carriage control (ASA or a machine code)
                 if m:
                     code, sev, text = m.groups()
                     msgs.append(({'N': 'W', 'C': 'S'}.get(sev, sev), code, '', text.strip(), 1))

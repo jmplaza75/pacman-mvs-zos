@@ -267,5 +267,7 @@ the user approves it. main and the MVS release are not touched.
   redesigned as small jobs (tools/zowe/zos_target.py CHUNKS, matrix tools/zowe/zos_plan.py, every job < 4,000
   estimated spool lines; zos_equiv --subset, PACTSOT clock by the RT3 rules).
 - Z1 members uploaded and verified 9/9, other members 14/14 unchanged; PACZ2HSA JOB08810 RC 0, 266 records, END
-  processed, no diagnostic, OBJ(PACHSIO) written: PASS. NEXT: PACZ2BLD only after the user's approval of its rendered
-  JCL and matrix.
+  processed, no diagnostic, OBJ(PACHSIO) written: PASS.
+- PACZ2BLD JOB08888 (binder LIST without MAP): 10 COBOL RC 0 clean, PACTSO / PACHSIO RC 0, PACFSIO RC 4 = C3 only,
+  LINK RC 0, LOAD(PACZ2D) AMODE 24 / RMODE 24 / RENT, entry PACMAIN: build PASS. NEXT: execution jobs (PACZ2DRV,
+  C1..C7, ST0/STF, G1..G3, RP, S2) only after the user's approval; nothing submitted after PACZ2BLD.

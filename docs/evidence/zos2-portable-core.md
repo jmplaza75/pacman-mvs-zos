@@ -68,3 +68,21 @@ limit message; 449 spool lines (SYSPRINT 400). HLASM summary: `266 Primary Input
 diagnostic at all. Z00000.PACMAN.OBJ(PACHSIO) present. Result: clean PASS (RC 0).
 Note: OBJ also holds the members written by the RC 12 compiles of Z2-1 (not usable); PACZ2BLD replaces every one of
 them before any bind.
+
+## Z2-2 PACZ2BLD (JOB08888) - build of LOAD(PACZ2D), profile A
+Deck jcl/zos/PACZ2BLD.jcl (= `make_deck.py --target zos Z2BLD`; binder options LIST,AMODE=24,RMODE=24,RENT, MAP removed
+by the user), submitted once, spool kept. Job CC 0004 (= PACFSIO C3). 3,266 spool lines in total (estimate ~3,800 with
+MAP). No abend, no CEE message, no step skipped.
+| Step | Program | RC | Result |
+|---|---|---|---|
+| COB1..COB10 (PACMAIN, PACGAME, PACMAP, PACAI, PACINPT, PACDISP, PACPLAT, PACSCR, PACQRY, PACRT) | IGYCRCTL | 0000 each | "no statements flagged", no IGY message; options in effect RENT, RMODE(24), DATA(24), NODYNAM, TRUNC(STD), NUMPROC(NOPFD) |
+| ASM1 PACTSO | ASMA90 | 0000 | 109 input records, no statement flagged |
+| ASM2 PACFSIO | ASMA90 | 0004 | 216 input records; 1 statement flagged: ASMA303W on stmt 343 `USING ABEXIT,15` vs stmt 38 (+ its ASMA435I record locator, record 196); `S 12,ABOFF` = 5BC0 F014 (base R15). Exactly C3 |
+| ASM3 PACHSIO | ASMA90 | 0000 | 266 input records, no statement flagged |
+| LINK | IEWBLINK | 0000 | IEW2278I `LIST,AMODE=24,RMODE=24,RENT`; 13 INCLUDE, ENTRY PACMAIN, NAME PACZ2D(R); SAVE: PACZ2D in Z00000.PACMAN.LOAD, PROGRAM OBJECT(FORMAT 3), ADDED NEW; SAVE MODULE ATTRIBUTES AMODE 24, RMODE 24, RENT YES, REUS YES, EXCEEDS 16MB NO, module size X'200B0'; entry PACMAIN MAIN_EP AMODE 24; IEW2008I RETURN CODE 0; message summary: severity 4/8/12/16 NONE |
+Every object bound was rewritten by this job (COB1..ASM3) before LINK. LOAD now holds PACHELLO, PACZ2D, ZHELLO24,
+ZHELLO31 (no PACMAIN). Result: PASS for the build; no execution submitted (AMODE 24 at run time is proven only by the
+run jobs).
+Tool fix: tools/zowe/zos_compile_report.py did not list HLASM messages whose carriage-control column holds a machine
+control character (U+008D); the ASMA pattern now accepts any first column. Z2-1 report re-run: PACFSIO shows the same
+ASMA303W + ASMA435I.
