@@ -11,17 +11,15 @@
 *        OPERAND: IT ONLY COPIES THE CURRENT ADDRESSING-MODE BIT INTO
 *        BIT 0 OF R2; IT DOES NOT BRANCH AND DOES NOT CHANGE THE MODE.
 *        THE TWO READINGS ARE INDEPENDENT AND MUST AGREE.
+*        REENTRANT LEAF ROUTINE: NO CALLS, NO STORE INTO ITSELF, R13
+*        UNCHANGED; REGISTERS SAVED IN THE CALLER'S SAVE AREA.
 ZHELLOA  CSECT
 ZHELLOA  AMODE ANY
 ZHELLOA  RMODE 24
          STM   14,12,12(13)
          LR    12,15
          USING ZHELLOA,12
-         LR    11,13               CALLER'S SAVE AREA
-         LA    14,SAVE
-         ST    13,4(14)            BACK CHAIN
-         ST    14,8(13)            FORWARD CHAIN
-         LR    13,14
+         LR    11,13               CALLER'S SAVE AREA (RECORDED)
          L     4,0(1)              ADDRESS OF ZOUT
          N     4,=X'7FFFFFFF'      DROP THE END-OF-LIST BIT
 *        READING 1: TAM
@@ -50,11 +48,9 @@ BSMX     ST    6,4(4)
          ST    7,16(4)
          SR    15,15
          ST    15,20(4)
-         L     13,4(13)
          L     14,12(13)
          LM    0,12,20(13)
          SR    15,15
          BR    14
-SAVE     DS    18F
          LTORG
          END   ZHELLOA

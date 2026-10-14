@@ -238,5 +238,7 @@ the existing tests; PDS viability for Z00000.PACMAN.DATA.
 ZOS-2 candidate C1 (docs/ZOS-DIFFS.md): PACQRY paragraph VALIDATE, unchanged.
 ZOS-1 Toolchain IN PROGRESS (user go 2026-10-14, parts 1-6): tools/zowe helpers; J1 PACZALLO JOB08252 (7 datasets,
 DATA = PDS); 23 sources uploaded IBM-037, all byte-identical; J2 PACZHELO JOB08254 = Enterprise COBOL 6.5.0 P260714
-(IGYWCL, IGY650), IEWBLINK. Evidence docs/evidence/zos1-toolchain.md. J3/J4 (profile probes ZHELLOC/ZHELLOA,
-jcl/zos/PACZPRFA|B.jcl) prepared, NOT uploaded / submitted: awaiting the user's review. AMODE 24 not proven.
+(IGYWCL, IGY650), IEWBLINK. Evidence docs/evidence/zos1-toolchain.md. J3 PACZPRFA JOB08331 PASS (probe in AMODE 24 / RMODE 24 /
+RENT: TAM=0 BSM=0, data and save area below the line), J4 PACZPRFB JOB08335 PASS (AMODE 31: TAM=1 BSM=1). DISPLAY
+SYSOUT = FBA 121 (120 data characters; 2.0 oracle max line 120). AMODE 24 proven for the toolchain probe only, not for
+the full Pac-Man module. ZOS-1 NOT closed: awaiting the user's review (build profile D-number, zos-1 tag).

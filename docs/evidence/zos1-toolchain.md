@@ -47,3 +47,47 @@ Steps HELLO.COBOL IGYCRCTL RC 0000, HELLO.LKED IEWBLINK RC 0000.
 - No assembler PROC used: J3/J4 call ASMA90 directly (HLA.SASMMOD1, SYS1.MACLIB, SYS1.MODGEN).
 Open after J2: AMODE 24 viability (J3), HLASM / binder procedure (J3/J4), DISPLAY / SYSOUT format (J3/J4 SYSOUT),
 listing translator on a real multi-step run (J3/J4).
+
+## 7. Probe correction before upload (user review)
+ZHELLOA made genuinely reentrant (leaf routine: no static save area, no chaining, R13 unchanged, registers saved in
+the caller's save area, entry R13 still recorded); RENT added explicitly to the COBOL options and to the binder in J3
+and J4. TAM / BSM logic unchanged. Uploads: COBOL(ZHELLOC) 93 records and ASM(ZHELLOA) 56 records, both byte-identical
+to their IBM-037 fixed-80 records after binary download.
+
+## 8. J3 PACZPRFA (profile A) - JOB08331, CC 0000: PASS
+- COB IGYCRCTL RC 0 (`RENT,RMODE(24),DATA(24),NODYNAM,TRUNC(STD),NUMPROC(NOPFD)`; no statements flagged); ASM ASMA90
+  (HLASM R6.0, PTF UO07449) RC 0, no statements flagged; BIND IEWBLINK RC 0, `LIST,MAP,XREF,AMODE=24,RMODE=24,RENT`,
+  no IEW warning / error, PROGRAM OBJECT FORMAT 3 ZHELLO24 ADDED NEW: **AMODE 24, RMODE 24, RENT YES, REUS YES, REFR
+  NO**; LE pieces resolved from SCEELKED (CEESTART, IGZX*). RUN1 / RUN2 RC 0 with `CEEOPTS ALL31(OFF),STACK(,,BELOW)`;
+  no CEE message, no abend, no CEEDUMP produced.
+- RUN1: `ZH PARMLEN=025`, `ZH PARM=TSO AI1 1 NAAAPAAARAA01NP` (exact); **TAM=0, BSM=0** (agree: AMODE 24);
+  PARM1 = 299520, CSECT = 36416, SAVEA = 155696: all **BELOW** 16 MB. RUN2: PARMLEN 000, empty PARM, same readings.
+## 9. J4 PACZPRFB (profile B) - JOB08335, CC 0000: PASS
+- COB RC 0 (`RENT,NODYNAM,TRUNC(STD),NUMPROC(NOPFD)`, site DATA(31) / RMODE(AUTO)); ASM RC 0; BIND RC 0
+  `AMODE=31,RENT`: **AMODE 31, RMODE 24** (the RMODE 24 ZHELLOA CSECT keeps the module below the line), RENT YES,
+  REUS YES. RUN1 / RUN2 RC 0, no CEE message, no abend.
+- **TAM=1, BSM=1** (agree: AMODE 31); PARM1 = 458306072 ABOVE, CSECT = 36416 BELOW, SAVEA = 458174512 ABOVE; PARM echo
+  exact (025 / 000).
+## 10. DISPLAY / SYSOUT format (both jobs)
+- DISPLAY output DD SYSOUT: **RECFM FBA, LRECL 121** (ASA byte + 120 data characters). An 80-character line is one
+  record; the 130-character line is **split into two records (120 + 10)**, nothing lost. The CHARS line
+  (` !"#$%&'()*+,-./0-9:<=>?@A-Z` + `cdelopqru`) arrives intact.
+- Impact on Pac-Man: the longest line in the 2.0 oracle (tests/oracle20, all 8 jobs) is exactly 120 characters; no
+  2.0 DISPLAY line exceeds 120, so the 121-byte record holds every line. To keep checked in ZOS-2 (any line > 120
+  would be split).
+- Other spool formats: COBOL SYSPRINT FBA 133, HLASM SYSPRINT FBM 133, binder SYSPRINT FBA 121, JESMSGLG UA 133,
+  JESJCL V 136, JESYSMSG VA 137.
+## 11. Listing translator on real multi-step jobs
+tools/zowe/zos_listing.py on JOB08331 / JOB08335: the test-style step regex (`<JOB>\s+(\w+)\s+(\S+)\s+RC= (\d{4})`)
+yields the five steps with their programs and RC 0000; ASA control removed ('1' -> form feed); no IKF / IGY W/E/S
+lines; RUN output equals the expected probe lines (addresses aside).
+## Status of the ZOS-1 questions
+- Enterprise COBOL release of the site procedure: **6.5.0 P260714** (J2).
+- HLASM / binder procedure: **established** (J3/J4: IGYCRCTL + ASMA90 + IEWBLINK with SCEELKEX / SCEELKED).
+- DISPLAY / SYSOUT format: **FBA 121** (sec. 10).
+- Listing translator: **works** on real jobs (sec. 11); full-size validation in ZOS-2.
+- PDS for PACMAN.DATA: **yes** (J1).
+- AMODE 24: the COBOL 6.5 / HLASM / LE **toolchain probe** runs correctly in AMODE 24 (RMODE 24, DATA(24),
+  ALL31(OFF), STACK BELOW) and in AMODE 31. This is NOT a proof for the complete Pac-Man module (TPUT / TGET /
+  STFSMODE / ESTAE / BPAM paths, size, LE services); that is established in ZOS-2 / ZOS-3.
+Jobs of ZOS-1: JOB08252 (J1), JOB08254 (J2), JOB08331 (J3), JOB08335 (J4); none purged.
