@@ -266,3 +266,10 @@ returns "Zero jobs were returned" for JOB08497, JOB08888, JOB08984, JOB09031: th
 purge by this project, D44). The complete spool of every job is kept locally under build/zos/<JOBNAME>-<JOBID>/
 (downloaded right after each job), but build/ is git-ignored. Also listed: JOB08863 CXZ00000 (class C4Z, ACTIVE) and
 TSU09158, not submitted by this project, left untouched.
+
+## Raw spool preserved (docs/evidence/zos2-spool/)
+The downloaded raw spool of the 19 project jobs (ZOS-0 JOB08215, ZOS-1 J1-J4, ZOS-2 JOB08497 .. JOB09164) is kept
+as one deterministic .tar.gz per job with SHA256SUMS and MANIFEST.txt (phase, result, spool files and lines, archive,
+SHA-256, z/OS presence). Secret audit: no password / credential / token / logon trace. On 2026-10-14, 15 jobs had
+expired from the z/OS spool by site retention (not purged by the project), 4 were still present (G1, G2, G3, DRV).
+`python3 tools/zowe/zos_spool_archive.py --verify-only` rebuilds every archive from build/zos and checks it.
