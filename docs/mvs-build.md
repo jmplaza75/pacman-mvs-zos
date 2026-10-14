@@ -268,3 +268,10 @@ Install (S2.3): `make_deck.py S2 --load PACMAIN --out build/S2INST.jcl` (JOB 297
 `make_deck.py RP --load PACMAIN --out build/RPS2INST.jcl` (JOB 298), `make_deck.py CLIST` (JOB 299). Live (S2.4):
 docs/evidence/s2-live-checklist.md (`tools/gp2_live.py S2A..S2E`, analysis `tools/c3270_s2_trace.py`); PASS,
 docs/evidence/s2-live.md.
+
+## MVS-G7: host graphics (2026-10-14) - closed negative (paper phase, D42)
+No build. One read-only check: `./tools/submit.sh jcl/mvs/G7CHK.jcl` (job PACG7C02: IDCAMS LISTCAT ALIAS / NONVSAM NAME,
+IEBGENER of SYS1.PARMLIB(LNKLST00), LISTDS MEMBERS of the seven link-list libraries + SYS1.LPALIB), then
+`./tools/job_output.py PACG7C02 > build/PACG7C02.txt && python3 tools/g7_gddm_scan.py build/PACG7C02.txt` (exit 0 = no
+GDDM-like name). JOB 301 all RC 0000, nothing found (JOB 300 = first pass, four libraries). Evidence:
+docs/evidence/g7-gddm-check.md.

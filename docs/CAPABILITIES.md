@@ -21,7 +21,7 @@ NOT EXPECTED = documented as unsupported by the emulator, to be confirmed by a p
 | APL / graphic character set (GE order) | CONFIRMED (E9 live; used by G4) | QCode 85: GE flag, base 697/CP037, LCID F1 = 963/CP310; GE X'08' and SA X'43' F1 equivalent in c3270; box-drawing maze rendered (docs/evidence/g4-probe-analysis.md) | G4 |
 | Programmed Symbols | NOT SUPPORTED (c3270) | E10 live (JOB 196, D30): QCode 85 load bytes 00000000; Load PS traced `unsupported ID 0x06`, no inbound; SA 43 to the loaded LCID = base set (docs/evidence/g5-probe-analysis.md) | G5 closed negative |
 | Triple-plane PS | NOT APPLICABLE | depends on PS (G5 negative, D30) | G6 blocked |
-| Vector / host graphics (GDDM, GOCA) | NOT ANNOUNCED | E5 Query Reply has no graphics-related codes; x3270 documents no graphics | G7 |
+| Vector / host graphics (GDDM, GOCA) | NOT AVAILABLE (G7 closed negative, D42) | E5 Query Reply has no graphics-related codes; c3270 documents no graphics; no GDDM on TK4- (JOB 301: catalog + LNKLST00 + LPALIB, docs/evidence/g7-gddm-check.md) | G7 closed |
 | Capability detection (Read Partition Query) | CONFIRMED | E5: TPUT NOEDIT WSF, reply AID 88 at TGET ASIS without user action; codes 80 81 84 85 86 87 88 95 A1 A6 | G1, G9 |
 | Colour renderer TSC (G1) | CONFIRMED | live c3270: clean full-screen colour game, moves, INVALID, PA2, Q (JOBs 157/161) | G1 |
 | Audible alarm (WCC alarm bit) | CONFIRMED (E15 live) | X'04' in the WCC reaches c3270 through SENX, SEND and SENP and rings the Mac terminal bell (Terminal "Audible bell" on); 3 bells audible back to back and 0.5 s apart; docs/evidence/s1-e15-alarm.md | S1 |

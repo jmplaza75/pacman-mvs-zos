@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-S2 cerrada; siguiente fase: MVS-G7, pendiente de decision del usuario).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G7 cerrada negativa; siguiente fase: MVS-G8 / 2.0-MVS-MAX, pendiente de decision del usuario).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -180,4 +180,12 @@ GP2 293 / HS 294 (docs/evidence/s2-build-tsd.txt); installed baseline PACMAIN = 
 RP checks, same sources), CLIST JOB 299 (defaults ... SPEED(NORMAL) ALARM(PATTERN)); live docs/evidence/s2-live.md.
 Regression to keep: tests/test_s2.py (`build/PACBLDS2-290.txt`), test_rp / test_gp2 / test_hs with
 PACMAN_LATER_PHASE=S2, tests/test_core_frozen.py.
-Next phase: MVS-G7 (host graphics, paper phase, docs/ROADMAP-POST-RT.md row 7) - NOT started; on the user's go.
+MVS-G7 CLOSED NEGATIVE (tag mvs-g7, 2026-10-14, closure approved by the user, D42): host graphics, paper phase; a
+negative capability closure, not a failed implementation. Terminal: E5 Query Reply
+announces no graphics, c3270 documents none. Host: read-only check jcl/mvs/G7CHK.jcl, JOB 301 (JOB 300 = first pass
+without the full link list), all RC 0000: no GDDM (ADM*) or other graphics module in the master catalog (the only
+catalog), the seven LNKLST00 libraries or SYS1.LPALIB (tools/g7_gddm_scan.py, self-checked on synthetic positives).
+Evidence docs/evidence/g7-gddm-check.md. Nothing of PACMAN changed; installed baseline = S2 (PACMAIN JOB 298, CLIST
+JOB 299). The existing 3270 scaled / glyph renderer (GS over G4) is the final MVS graphics solution;
+adding GDDM is outside the requirements.
+Next phase: MVS-G8 / 2.0-MVS-MAX (docs/ROADMAP-POST-RT.md row 8) - NOT started; on the user's go.

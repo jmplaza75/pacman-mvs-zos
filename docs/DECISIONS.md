@@ -265,3 +265,11 @@
   Game end drops in-play steps; game-over / win steps left go as bell-only writes inside the existing 3-s end pause
   (CLOK at the end screen, WDLN pacing, new PACPLAT op DLWT to t0 + 3000 ms), never lengthening it; not scaled = S1.
   Display/platform only: GAME, MAP, AI, PACARC, PACRT unchanged.
+- D42 (MVS-G7, APPROVED 2026-10-14) Host graphics: negative capability closure, not a failed implementation (paper phase, docs/evidence/g7-gddm-check.md). Terminal: the
+  E5 Query Reply (QCodes 80 81 84 85 86 87 88 95 A1 A6) announces no graphics and c3270 documents none. Host: read-only
+  check jcl/mvs/G7CHK.jcl (JOB 301, all RC 0000): one master catalog, 140 non-VSAM names and 26 aliases, the seven
+  LNKLST00 libraries plus SYS1.LPALIB (4077 member / alias names) contain no GDDM (ADM*) or other graphics module
+  (tools/g7_gddm_scan.py, self-checked on synthetic positives). GDDM is a licensed product, not added (requirements
+  sec. 29). The existing 3270 scaled / glyph renderer (GS over G4) is the final MVS graphics solution;
+  nothing of PACMAN changed (installed PACMAIN JOB 298, CLIST JOB 299). A graphics-capable terminal
+  plus a licensed host stack is a possible separate branch, not pursued.

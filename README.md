@@ -191,6 +191,9 @@ only (GAME / MAP / AI / PACARC / PACRT unchanged). Hercules deck S2 JOB 290 (`te
 model streams of the independent pattern model `tests/ref_s2.py`, 21 documented edge cases), SINGLE regression RP 291 /
 GP2 293 / HS 294; installed JOB 297 / 298 (PACMAIN) and 299 (CLIST); live in c3270 with six scripted runs byte-identical
 to the models and the bells heard as separate (`docs/evidence/s2-live.md`).
+MVS-G7 (host graphics) is closed negative (tag `mvs-g7`, D42), a capability limit, not a failed implementation: the 3270 Query Reply and c3270 offer no graphics, and a read-only
+check of the TK4- catalog, link list and LPA (`jcl/mvs/G7CHK.jcl`, JOB 301) found no GDDM. The existing
+GS scaled renderer over G4 glyphs is the final MVS graphics solution; nothing in the game changed. Evidence: `docs/evidence/g7-gddm-check.md`.
 Roadmap to the final MVS release 2.0-MVS-MAX: `docs/ROADMAP-POST-RT.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
 (ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.
