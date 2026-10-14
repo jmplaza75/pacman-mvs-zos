@@ -3,11 +3,13 @@
 parse (ZOS-1; docs/ZOS-MIGRATION-PLAN.md sec. 7, 13). It relabels, never invents: every line comes from the spool.
 
 Usage: zos_listing.py SPOOLDIR [OUT.txt]
-Shape: '****A  START  JOB  <n>  <JOBNAME>', the TK4- step table ('hh.mm.ss JOB  <n>  <JOBNAME> <step> [<procstep>]
+Shape: '****A  START  JOB  <n>  <JOBNAME>', the TK4- step table (procedure steps of cataloged 'XX' and in-stream
+'++' PROCs as <step> <procstep>; the in-stream PROC definitions are not steps) ('hh.mm.ss JOB  <n>  <JOBNAME> <step> [<procstep>]
 <pgm> RC= nnnn'; RC from JESYSMSG IEF142I, program from the expanded JESJCL; a step without IEF142I (flushed /
 abended) is printed as 'RC= FLSH' or 'AB <code>'), 'IEF376I  JOB /<JOBNAME>/ STOP', then every non-JES spool file in
 spool order. ASA files (recfm with A): '1' -> form feed, '0' -> one blank line, '-' -> two, '+' -> line dropped, ' ' ->
-the line; first column removed. Lines right-stripped. A summary of the spool attributes goes to stderr.
+the line; first column removed. Lines right-stripped (the trailing blanks are the fixed-record padding; nothing else is
+changed: spaces inside a line, case, order and the record split of a line over 120 characters stay as printed). A summary of the spool attributes goes to stderr.
 """
 import json
 import re
@@ -20,10 +22,18 @@ JES = ('JESMSGLG', 'JESJCL', 'JESYSMSG')
 def steps_of(d, jobname):
     jcl = next(d.glob('*-JESJCL.txt')).read_text()
     msg = next(d.glob('*-JESYSMSG.txt')).read_text()
-    order, pgm, proc = [], {}, None
+    order, pgm, proc, indef = [], {}, None, False
     for line in jcl.splitlines():
-        m = re.match(r'\s*\d*\s*(//|XX)(\w+)\s+EXEC\s+(.*)', line)
-        if not m:
+        # in-stream PROC definitions (// PROC .. // PEND) are not steps; their expansion is listed with '++' (cataloged
+        # PROCs with 'XX')
+        if re.match(r'\s*\d*\s*//\w*\s+PROC\b', line):
+            indef = True
+            continue
+        if re.match(r'\s*\d*\s*//\w*\s+PEND\b', line):
+            indef = False
+            continue
+        m = re.match(r'\s*\d*\s*(//|XX|\+\+)(\w+)\s+EXEC\s+(.*)', line)
+        if not m or (indef and m.group(1) == '//'):
             continue
         kind, name, ops = m.groups()
         p = re.match(r'PGM=([\w#$@]+)', ops)

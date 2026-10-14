@@ -51,6 +51,16 @@ absorb it.
   JESJCL + IEF142I, then the non-JES spool files with ASA control applied). Validated on JOB08331 / JOB08335.
 - JOB card: `JOB 1,'...',CLASS=7,MSGLEVEL=(1,1),NOTIFY=&SYSUID`; no MSGCLASS (site default class A held).
 
+## z/OS decks (ZOS-2)
+- `python3 tools/make_deck.py --target zos DECK [--load M] [--job NAME]` writes build/zos/decks/DECK.jcl with prefix
+  `@@HLQ@@.PACMAN`: the MVS deck with the step builders of tools/zowe/zos_target.py (no in-stream upload: the members
+  verified by zos_sync; IGYCRCTL profile A -> OBJ(member); ASMA90 from ASM(member); IEWBLINK INCLUDE OBJ(...) AMODE 24;
+  run steps = the MVS EXEC / PARM / cards / DDs + CEEOPTS, CEEDUMP, SYSUDUMP DUMMY; REL20 without the CLIST steps).
+  `ZCMP` = Z2-1 compile inventory (jcl/zos/PACZ2CMP.jcl). The MVS target is unchanged: `tools/zowe/r3_gate.py`.
+- `tools/zowe/zos_compile_report.py SPOOLDIR`: RC and every IGY / ASMA diagnostic per step.
+- `tools/zowe/zos_equiv.py SPOOLDIR tests/oracle20/<JOB>.json.gz --map PACMAIN=<load>`: every run's SYSOUT equal to
+  the oracle run (only the ASA column and the record padding removed; TK4- separator = exactly two empty lines).
+
 ## DISPLAY / SYSOUT behaviour
 COBOL DISPLAY output on DD SYSOUT is **RECFM FBA, LRECL 121**: one ASA byte + 120 data characters. A longer line is
 split into further records (the 130-character probe line became 120 + 10). The 2.0 oracle (tests/oracle20) has no

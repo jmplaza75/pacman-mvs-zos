@@ -1228,8 +1228,16 @@ def rpe_deck(pfx):
 
 
 if __name__ == '__main__':
-    ap = argparse.ArgumentParser()
-    ap.add_argument('deck', choices=sorted(DECKS) + ['INST20', 'ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'HSP', 'RPE', 'DATA', 'COMPRESS'])
+    # ZOS-2: --target zos swaps the step builders for the z/OS ones (tools/zowe/zos_target.py); mvs is unchanged
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument('--target', choices=('mvs', 'zos'), default='mvs', help='ZOS-2: zos = tools/zowe/zos_target.py')
+    pre.add_argument('--job', help='zos: job name of the deck')
+    zos = None
+    if pre.parse_known_args()[0].target == 'zos':
+        sys.path.insert(0, str(ROOT / 'tools/zowe'))
+        import zos_target as zos  # noqa: E402
+    ap = argparse.ArgumentParser(parents=[pre])
+    ap.add_argument('deck', choices=sorted(DECKS) + (zos.DECKS if zos else ['INST20', 'ALLOC', 'CLIST', 'RUN', 'G0X', 'G1P', 'G1Q', 'G3P', 'E7P', 'E8P', 'G4P', 'G5P', 'GSP', 'GEP', 'RTP', 'RTL', 'S1P', 'HSP', 'RPE', 'DATA', 'COMPRESS']))
     ap.add_argument('--hlq', default='HERC01', help='shorthand: prefix becomes HLQ.PACMAN')
     ap.add_argument('--prefix', help='dataset prefix, e.g. HERC01.PACMAN (default HLQ.PACMAN)')
     ap.add_argument('--cards', default='tests/cases/MOVES.txt', help='RUN: card file')
@@ -1245,6 +1253,16 @@ if __name__ == '__main__':
     pfx = a.prefix or f'{a.hlq}.PACMAN'
     if a.runonly:
         os.environ['PACMAN_RUNONLY'] = '1'
+    if zos:
+        pfx = a.prefix or zos.PREFIX
+        zos.JOBNAME = a.job
+        zos.apply(sys.modules[__name__], pfx)
+        text = zos.deck(a.deck, pfx) if a.deck in zos.DECKS else build(a.deck, pfx, a.load)
+        dest = Path(a.out) if a.out else ROOT / 'build/zos/decks' / f'{a.deck}.jcl'
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(text, encoding='ascii')
+        print(dest)
+        sys.exit(0)
     if a.deck == 'INST20':
         text = inst20_deck(a.source, pfx)
     elif a.deck == 'ALLOC':

@@ -243,4 +243,16 @@ DISPLAY SYSOUT FBA 121 (safe line limit 120 = oracle maximum); tools/zowe listin
 = D45 (docs/zos-build.md): proven for the toolchain probe only, not for the full application; profile B fallback only.
 Evidence docs/evidence/zos1-toolchain.md. No job purged.
 Carried into ZOS-2: candidate C1 (PACQRY paragraph VALIDATE), AMODE 24 of the full module, full-size listing checks.
-NEXT: ZOS-2 Portable core - NOT STARTED; its action list is shown to the user and approved before anything runs.
+
+## ZOS-2 Portable core - IN PROGRESS
+Approved (2026-10-14): local tooling and Z2-1 (PACZ2CMP, diagnostic compile inventory: no bind, no run, no source
+change, no COND between modules); Z2-2 / Z2-3 / Z2-4 approved in architecture only, each needs the full rendered JCL
+and its expected step/result matrix reviewed before submission. SSRANGE: optional diagnostic only, never automatic,
+never in the release build. Out of ZOS-2: TSD / full screen, CLIST install, PACMAIN promotion, live 3270.
+C1 (VALIDATE): no fix before the compiler confirms it; if it is the only issue the preferred resolution is a minimal
+paragraph rename in the zos branch source (port compatibility delta) + MVS oracle/model regression, applied only after
+the user approves it. main and the MVS release are not touched.
+- Local tooling done: make_deck.py --target zos (tools/zowe/zos_target.py), zos_listing in-stream PROCs, zos_equiv,
+  zos_compile_report, tests/test_zos_tools.py PASS, R3 gate (tools/zowe/r3_gate.py: 13 release decks = SHA256SUMS,
+  94 MVS deck generations = zos-1) PASS.
+- Z2-1: pending submission; stop and report after it.
