@@ -162,3 +162,19 @@ JOB09164 PACZ2DRV
   archive  PACZ2DRV-JOB09164.tar.gz
   sha256   8057d8b2452701f9fb67b9fcac9180fefa33e758c830c53928119cda9c8909f6
   z/OS     present in z/OS spool
+
+JOB09191 PACZ2ST0
+  phase    ZOS-2 Z2-3: LE STORAGE(00,NONE,00) equivalence (RUN3, RUN13, TSO3, G2B21, G2R7)
+  result   CC 0000; PASS
+  spool    8 files, 3550 lines
+  archive  PACZ2ST0-JOB09191.tar.gz
+  sha256   8e10659e9b1a03197d9334323dbebbb863e59230503d0ad222151fcc644bbec4
+  z/OS     present in z/OS spool (checked 2026-10-14)
+
+JOB09195 PACZ2STF
+  phase    ZOS-2 Z2-3: LE STORAGE(FF,NONE,FF) equivalence (same 5 steps; SYSOUT = ST0)
+  result   CC 0000; PASS
+  spool    8 files, 3550 lines
+  archive  PACZ2STF-JOB09195.tar.gz
+  sha256   c4f2b43474b1dd1bffab6a1bef32876131edddd5da5bd054c1343d63557bd25e
+  z/OS     present in z/OS spool (checked 2026-10-14)

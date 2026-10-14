@@ -1,0 +1,25 @@
+local checks PASS
+PACZ2ST0 JOB09191 CC 0000: 5 steps, 3550 spool lines
+  oracle OK   RUN3: 302 lines identical (oracle stream lines 811-1112)
+  oracle OK   RUN13: 885 lines identical (oracle stream lines 14686-15570)
+  oracle OK   TSO3: 965 lines identical (oracle stream lines 19953-20917)
+  oracle OK   G2B21: 413 lines identical (oracle stream lines 75169-75581)
+  oracle OK   G2R7: 824 lines identical (oracle stream lines 108630-109453)
+  model  OK   RUN3 CLASSIC CATCH1: 302 lines
+  model  OK   RUN13 CLASSIC P2: 885 lines
+  model  OK   TSO3 CLASSIC P2: 965 lines
+  model  OK   G2B21 gp2cases/G2BDIE start '': 413 lines
+  model  OK   G2R7 REALTIME gp2cases/G2RCLR start '': 824 lines
+PACZ2STF JOB09195 CC 0000: 5 steps, 3550 spool lines
+  oracle OK   RUN3: 302 lines identical (oracle stream lines 811-1112)
+  oracle OK   RUN13: 885 lines identical (oracle stream lines 14686-15570)
+  oracle OK   TSO3: 965 lines identical (oracle stream lines 19953-20917)
+  oracle OK   G2B21: 413 lines identical (oracle stream lines 75169-75581)
+  oracle OK   G2R7: 824 lines identical (oracle stream lines 108630-109453)
+  model  OK   RUN3 CLASSIC CATCH1: 302 lines
+  model  OK   RUN13 CLASSIC P2: 885 lines
+  model  OK   TSO3 CLASSIC P2: 965 lines
+  model  OK   G2B21 gp2cases/G2BDIE start '': 413 lines
+  model  OK   G2R7 REALTIME gp2cases/G2RCLR start '': 824 lines
+cross-check: 5 steps, every SYSOUT identical between the two jobs: True
+ARCADE CHECK PASS

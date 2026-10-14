@@ -273,3 +273,23 @@ as one deterministic .tar.gz per job with SHA256SUMS and MANIFEST.txt (phase, re
 SHA-256, z/OS presence). Secret audit: no password / credential / token / logon trace. On 2026-10-14, 15 jobs had
 expired from the z/OS spool by site retention (not purged by the project), 4 were still present (G1, G2, G3, DRV).
 `python3 tools/zowe/zos_spool_archive.py --verify-only` rebuilds every archive from build/zos and checks it.
+
+## Z2-3 PACZ2ST0 (JOB09191) / PACZ2STF (JOB09195) - LE storage-initialisation equivalence
+Decks jcl/zos/PACZ2ST0.jcl / PACZ2STF.jcl (commit 600f283; the two differ only in the job name and the CEEOPTS line),
+approved as presented, submitted once each, ST0 first, spool kept and archived (docs/evidence/zos2-spool). CEEOPTS of
+every step, as submitted (deck.jcl): ST0 `ALL31(OFF),STACK(,,BELOW),STORAGE(00,NONE,00)` (5/5), STF
+`ALL31(OFF),STACK(,,BELOW),STORAGE(FF,NONE,FF)` (5/5); all other ZOS-2 decks keep the profile A CEEOPTS (asserted by
+tests/test_zos_tools.py). Both: CC 0000, 5 steps IEF142I COND CODE 0000, STEPLIB Z00000.PACMAN.LOAD, no CEE / abend /
+$HASP375, one SYSOUT per step, spool 3,550 lines each (JESMSGLG 22, JESJCL 38, JESYSMSG 101, SYSOUT 3,389).
+| Step | Case | SYSOUT | Own 310 block | Model | ST0 | STF |
+|---|---|---|---|---|---|---|
+| RUN3 | CATCH1, batch CLASSIC AI1 | 302 | 811-1112 | MVS6-CATCH1 + test_mvs8 behaviour | = | = |
+| RUN13 | P2, batch CLASSIC AI2 | 885 | 14686-15570 | MVS6-P2 + behaviour | = | = |
+| TSO3 | P2, TSO line mode `TSO AI2` | 965 | 19953-20917 | test_mvs8 TSO transcript rules | = | = |
+| G2B21 | G2BDIE, ARCADE TURN | 413 | 75169-75581 | ref_gp2.simulate | = | = |
+| G2R7 | G2RCLR, ARCADE REALTIME | 824 | 108630-109453 | ref_gp2.rt_simulate | = | = |
+`zos_arcade_check.py ST0 STF` (docs/evidence/zos2-storage-check.txt): (1) ST0 = oracle and models; (2) STF = oracle and
+models; (3) cross-check: the 5 steps in the same order, every SYSOUT identical between ST0 and STF (ASA column and record
+padding removed only): ARCADE CHECK PASS. The observable behaviour of PACZ2D on these paths (every game COBOL module,
+batch and TSO input, CLASSIC and ARCADE rules, AI 0/1/2, REALTIME, level clear) does not depend on the LE heap / stack
+initialisation value (00 versus FF). Assembler module data live in their own CSECTs and are not affected by STORAGE.
