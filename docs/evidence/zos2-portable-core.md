@@ -141,3 +141,23 @@ Z00000.PACMAN.LOAD (IGD104I), CEEOPTS ALL31(OFF),STACK(,,BELOW).
 Last tick `T319 R DIED    X=02 Y=02 S=1000 L=000 G=19,09 V=2 ST=WON`; end lines WIN / TURNS 319 / SCORE 1000 /
 LIVES 2 (D11: the hit beats the simultaneous last pellet; lives remain and no pellet is left, so the game is WON).
 `zos_equiv --subset`: 1 run identical, 0 failures, PASS. Maximum line 60. CLASSIC oracle so far: RUN1..RUN10.
+
+## Z2-2 PACZ2C5..C7 (user batch approval) and the complete CLASSIC oracle
+Each deck = its generated reference (tests/test_zos_tools.py) and passed tools/zowe/zos_run_precheck.py before
+submission (audit, only dataset STEPLIB Z00000.PACMAN.LOAD, no DELETE, every step EXEC PGM=PACZ2D, CEEOPTS
+ALL31(OFF),STACK(,,BELOW), estimate < 4,000). Submitted once each, in order, spool kept. Checked with
+tools/zowe/zos_classic_check.py: spool health (IEF142I COND CODE 0000 per step, IGD104I STEPLIB per step, no CEE /
+abend / $HASP375 / IEA995, only one SYSOUT per step), zos_equiv --subset vs oracle 307, and the runtime checks of
+tests/test_mvs8.py (batch = MVS6 model + behaviour rules; TSO = batch reference without prompts, board before the
+first prompt, one prompt per read, no DBG line).
+| Job | JOBID | Steps / cases | RC | SYSOUT lines | Spool lines | Oracle 307 | Models |
+|---|---|---|---|---|---|---|---|
+| PACZ2C5 | JOB09027 | RUN11 EDGE2, RUN12 EDGE1 | 0000 each | 1688, 1809 | 3,577 | identical | MVS6 = |
+| PACZ2C6 | JOB09030 | RUN13 P2, RUN14 P2N3, RUN15 R1N2, RUN16 C3WALK | 0000 each | 885, 785, 845, 764 | 3,413 | identical | MVS6 = |
+| PACZ2C7 | JOB09031 | RUN17 C3, RUN18 C3N2, RUN19 MULTI, TSO1 MOVES, TSO2 DIE1, TSO3 P2, TSO4 MULTI, TSO5 C3N2, TSO6 TSORDR | 0000 each | 940, 269, 233, 175, 353, 965, 252, 290, 53 | 3,799 | identical | MVS6 / TSO transcript = |
+Combined CLASSIC validation over JOB08984, JOB09000, JOB09015, JOB09023, JOB09027, JOB09030, JOB09031
+(docs/evidence/zos2-classic-check.txt): the 25 runs RUN1..RUN19 + TSO1..TSO6 present exactly once, in oracle order;
+every run identical to oracle 307 and to its independent model; the 19 batch runs also identical to the MVS-7
+before/after evidence (docs/evidence/mvs7-refactor.txt): CLASSIC CHECK PASS. The 1.0-MVS functional oracle
+(19 batch + 6 TSO line-mode replays) is reproduced exactly on z/OS by PACZ2D under profile A. Not covered by these
+jobs: the REL20 CLIST PARM steps (CLIST out of ZOS-2), ARCADE / REALTIME / RP / S2 / STORAGE (later ZOS-2 jobs).

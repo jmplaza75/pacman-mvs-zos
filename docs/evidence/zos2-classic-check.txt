@@ -1,0 +1,61 @@
+local checks PASS
+PACZ2C1 JOB08984 CC 0000: 5 steps, 3586 spool lines
+  oracle OK   RUN1: 160 lines identical (oracle stream lines 9780-9939)
+  oracle OK   RUN2: 643 lines identical (oracle stream lines 9942-10584)
+  oracle OK   RUN3: 302 lines identical (oracle stream lines 10587-10888)
+  oracle OK   RUN4: 2029 lines identical (oracle stream lines 10891-12919)
+  oracle OK   RUN5: 291 lines identical (oracle stream lines 12922-13212)
+  model  OK   RUN1 MOVES: 160 lines
+  model  OK   RUN2 RAND: 643 lines
+  model  OK   RUN3 CATCH1: 302 lines
+  model  OK   RUN4 WIN0: 2029 lines
+  model  OK   RUN5 CATCH0: 291 lines
+PACZ2C2 JOB09000 CC 0000: 3 steps, 3532 spool lines
+  oracle OK   RUN6: 324 lines identical (oracle stream lines 13215-13538)
+  oracle OK   RUN7: 808 lines identical (oracle stream lines 13541-14348)
+  oracle OK   RUN8: 2293 lines identical (oracle stream lines 14351-16643)
+  model  OK   RUN6 DIE1: 324 lines
+  model  OK   RUN7 LOST0: 808 lines
+  model  OK   RUN8 WINAFTER: 2293 lines
+PACZ2C3 JOB09015 CC 0000: 1 steps, 839 spool lines
+  oracle OK   RUN9: 786 lines identical (oracle stream lines 16646-17431)
+  model  OK   RUN9 LOST1: 786 lines
+PACZ2C4 JOB09023 CC 0000: 1 steps, 3578 spool lines
+  oracle OK   RUN10: 3525 lines identical (oracle stream lines 17434-20958)
+  model  OK   RUN10 EDGE3: 3525 lines
+PACZ2C5 JOB09027 CC 0000: 2 steps, 3577 spool lines
+  oracle OK   RUN11: 1688 lines identical (oracle stream lines 20961-22648)
+  oracle OK   RUN12: 1809 lines identical (oracle stream lines 22651-24459)
+  model  OK   RUN11 EDGE2: 1688 lines
+  model  OK   RUN12 EDGE1: 1809 lines
+PACZ2C6 JOB09030 CC 0000: 4 steps, 3413 spool lines
+  oracle OK   RUN13: 885 lines identical (oracle stream lines 24462-25346)
+  oracle OK   RUN14: 785 lines identical (oracle stream lines 25349-26133)
+  oracle OK   RUN15: 845 lines identical (oracle stream lines 26136-26980)
+  oracle OK   RUN16: 764 lines identical (oracle stream lines 26983-27746)
+  model  OK   RUN13 P2: 885 lines
+  model  OK   RUN14 P2N3: 785 lines
+  model  OK   RUN15 R1N2: 845 lines
+  model  OK   RUN16 C3WALK: 764 lines
+PACZ2C7 JOB09031 CC 0000: 9 steps, 3799 spool lines
+  oracle OK   RUN17: 940 lines identical (oracle stream lines 27749-28688)
+  oracle OK   RUN18: 269 lines identical (oracle stream lines 28691-28959)
+  oracle OK   RUN19: 233 lines identical (oracle stream lines 28962-29194)
+  oracle OK   TSO1: 175 lines identical (oracle stream lines 29197-29371)
+  oracle OK   TSO2: 353 lines identical (oracle stream lines 29374-29726)
+  oracle OK   TSO3: 965 lines identical (oracle stream lines 29729-30693)
+  oracle OK   TSO4: 252 lines identical (oracle stream lines 30696-30947)
+  oracle OK   TSO5: 290 lines identical (oracle stream lines 30950-31239)
+  oracle OK   TSO6: 53 lines identical (oracle stream lines 31242-31294)
+  model  OK   RUN17 C3: 940 lines
+  model  OK   RUN18 C3N2: 269 lines
+  model  OK   RUN19 MULTI: 233 lines
+  model  OK   TSO1 MOVES: 175 lines
+  model  OK   TSO2 DIE1: 353 lines
+  model  OK   TSO3 P2: 965 lines
+  model  OK   TSO4 MULTI: 252 lines
+  model  OK   TSO5 C3N2: 290 lines
+  model  OK   TSO6 TSORDR: 53 lines
+combined: 25 CLASSIC runs, order and coverage = oracle 307: True
+combined: 19 batch runs identical to the MVS-7 before/after evidence: True
+CLASSIC CHECK PASS
