@@ -14,7 +14,8 @@ PA2 and ENTER = IGN, dropped by PACMAIN RT-EVENT before PACRT: no input, no fram
 so every card is one AID and every Wait(Output) blocks for exactly one host write. The scenarios are unchanged.
 TURN (B): every card is typed in the command field + ENTER, then the next write is awaited.
 MVS-S2 S2.4: scenarios S2A-S2E (tests/s2live, REALTIME; ended by the game or by Q).
-Usage: gp2_live.py A|B|C|S2A..S2E [--port 4001] [--prefix HERC01.PACMAN] [--pause 3] [--log FILE]"""
+MVS-G8 G8.4: scenario G8 = no CLIST operand at all (the 2.0 defaults).
+Usage: gp2_live.py A|B|C|S2A..S2E|G8 [--port 4001] [--prefix HERC01.PACMAN] [--pause 3] [--log FILE] [--snap DIR]"""
 import argparse
 import subprocess
 import time
@@ -31,7 +32,14 @@ SCEN = {   # card file, CLIST keywords (defaults: COLOR/HILITE/GLYPHS/SCALE/CANV
     'S2C': ('../s2live/LIVEC', 'RULES(CLASSIC) AI(0) GHOSTS(1)'),
     'S2D': ('../s2live/LIVED', 'RULES(ARCADE) AI(3) GHOSTS(1) ALARM(SINGLE)'),
     'S2E': ('../s2live/LIVEE', 'RULES(CLASSIC) AI(0) GHOSTS(1) SOUND(NO)'),
+    # MVS-G8 G8.4: the installed release with NO CLIST operand (tests/s2live/LIVEG8.txt, make_live.py G8)
+    'G8': ('../s2live/LIVEG8', ''),
 }
+# MVS-G8 G8.4: --snap DIR saves the emulator screen (c3270 PrintText: HTML with the 3270 colours + plain text; a local
+# action, nothing reaches the host) after these host writes of the model (tests/s2live/make_live.py G8 + the RP model):
+# write w is on the screen after card w-1 and its Wait(Output); write 0 = the start screen, the last = the end screen.
+SNAPS = {'G8': {0: '01-ready', 20: '02-fright', 30: '03-popup', 100: '04-play', 149: '05-death', 154: '06-ready-death',
+                179: '07-end'}}
 KEY = {'U': 'PF(7)', 'D': 'PF(8)', 'L': 'PF(10)', 'R': 'PF(11)', 'P': 'PF(9)', '*': 'PA(2)', 'Q': 'String("Q") Enter()',
        '.': 'PF(1)'}
 
@@ -41,6 +49,7 @@ ap.add_argument('--port', default='4001')
 ap.add_argument('--prefix', default='HERC01.PACMAN')
 ap.add_argument('--pause', type=float, default=3.0)
 ap.add_argument('--log', default=str(Path.home() / 'gp2-live-driver.log'))
+ap.add_argument('--snap', help='MVS-G8: directory for the screen captures (SNAPS)')
 a = ap.parse_args()
 name, words = SCEN[a.scenario]
 cards = (R / f'tests/gp2live/{name}.txt').read_text().splitlines()[1:]
@@ -59,6 +68,15 @@ def x(action, timeout=30):
     return r.stdout
 
 
+def snap(w):
+    name = SNAPS.get(a.scenario, {}).get(w) if a.snap else None
+    if name:
+        base = str(Path(a.snap).resolve() / f'g8-{name}')
+        x(f'PrintText(html,file,{base}.html)')
+        x(f'PrintText(file,{base}.txt)')
+        say(f'snap write {w} {name}')
+
+
 def screen():
     return [l.rstrip() for l in x('Ascii()').splitlines()]
 
@@ -72,7 +90,7 @@ if not at_ready():
     raise SystemExit('the terminal is not at TSO READY (log on first)')
 x('TemporaryKeymap()')
 say(f'start {name}: {words}')
-x(f'String("EXEC \'{a.prefix}.CLIST(PACMAN)\' \'{words}\'")')
+x(f'String("EXEC \'{a.prefix}.CLIST(PACMAN)\'' + (f' \'{words}\'' if words else '') + '")')
 x('Enter()')
 end = time.time() + 60
 while not any('COMMAND ===>' in l for l in screen()):
@@ -80,12 +98,17 @@ while not any('COMMAND ===>' in l for l in screen()):
         raise SystemExit('no game screen within 60 s')
     time.sleep(0.5)
 time.sleep(1.0)                                  # let the first screen settle (keyboard restored)
+snap(0)
 print(f'{time.strftime("%H:%M:%S")} scenario {a.scenario} ({name}, {len(cards)} cards): {words}')
 paused = False
 for k, card in enumerate(cards):
     if card == 'Q':
         say(f'card {k} Q')
-        x(KEY['Q'])
+        if k + 1 in SNAPS.get(a.scenario, {}) and a.snap:
+            x(KEY['Q'] + ' Wait(5,Output)')          # the end screen (3-s end pause), then its capture
+            snap(k + 1)
+        else:
+            x(KEY['Q'])
         break
     if a.scenario == 'B':                        # TURN: one command per screen
         x(f'String("{card}") Enter() Wait(5,Output)')
@@ -93,6 +116,7 @@ for k, card in enumerate(cards):
         continue
     x(KEY[card] + ' Wait(5,Output)')
     say(f'card {k} {card}')
+    snap(k + 1)
     if card == 'P':
         paused = not paused
         if paused:

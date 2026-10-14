@@ -14,7 +14,8 @@ before the game start is read (no logon); inbound records are used only by their
 --aids: replay the cards rebuilt from the AIDs that actually reached the host (one card per write after the first; an
 AID just before a write may belong to the next quantum, decided greedily as tools/c3270_gp2_trace.py), for a run whose
 inputs differ from the scenario (a key pressed by hand, a dropped idle PF1).
-Usage: c3270_s2_trace.py TRACE --scenario S2A|S2B|S2C|S2D|S2E [--from HHMMSS] [--aids]"""
+MVS-G8 G8.4: --scenario G8 (the no-operand release smoke, tests/s2live/LIVEG8.txt).
+Usage: c3270_s2_trace.py TRACE --scenario S2A|S2B|S2C|S2D|S2E|G8 [--from HHMMSS] [--aids]"""
 import argparse
 import re
 import sys
@@ -53,11 +54,11 @@ def pct(v, p):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('trace')
-    ap.add_argument('--scenario', required=True, choices=['S2' + k for k in M.SCEN])
+    ap.add_argument('--scenario', required=True, choices=['S2' + k for k in M.SCEN if len(k) == 1] + ['G8'])
     ap.add_argument('--from', dest='frm', default='000000')
     ap.add_argument('--aids', action='store_true')
     a = ap.parse_args()
-    name = a.scenario[2:]
+    name = a.scenario[2:] if a.scenario.startswith('S2') else a.scenario     # MVS-G8: scenario G8
     src, cfg, rules, sp, snd, al, words = M.SCEN[name]
     per = ref_rt.period(sp)
     cards = (R / f'tests/s2live/LIVE{name}.txt').read_text().splitlines()

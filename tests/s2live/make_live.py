@@ -9,6 +9,7 @@ table for docs/evidence/s2-live-checklist.md.
   C  RTWIN cards, RULES(CLASSIC) AI(0) GHOSTS(1), NORMAL: start 1, win 4 (1 + 3 bell-only writes in the end pause)
   D  = A with ALARM(SINGLE): one bell per event (S1 / GP2)
   E  = C with SOUND(NO): silent, end pause 3 s
+  G8 MVS-G8 smoke: no CLIST operand (defaults), ARCADE, power pellet, eaten-ghost popup, death, READY!, QUIT
 Usage: make_live.py [--write]"""
 import sys
 from pathlib import Path
@@ -28,6 +29,11 @@ SCEN = {
     'C': ('rtcases/RTWIN', 'AI0 1', 'C', 'N', 'Y', 'P', 'RULES(CLASSIC) AI(0) GHOSTS(1)'),
     'D': ('rtcases/RTSTILL', 'AI3 1', 'A', 'N', 'Y', 'S', 'RULES(ARCADE) AI(3) GHOSTS(1) ALARM(SINGLE)'),
     'E': ('rtcases/RTWIN', 'AI0 1', 'C', 'N', 'N', 'P', 'RULES(CLASSIC) AI(0) GHOSTS(1) SOUND(NO)'),
+    # MVS-G8 G8.4 (D43 section 9): the installed release started with NO operand (every CLIST default: ARCADE, AI1,
+    # one ghost, NORMAL, PATTERN). tests/g8live/G8.txt = the Hercules-tested RP3TIM cards (power pellet, eaten ghost,
+    # popup) up to its Q, then direction / idle cards found on the models until a death (animation, READY!), then Q.
+    # QUIT with score 1050, below the stored high score: no high-score write.
+    'G8': ('g8live/G8', 'AI1 1', 'A', 'N', 'Y', 'P', ''),
 }
 
 

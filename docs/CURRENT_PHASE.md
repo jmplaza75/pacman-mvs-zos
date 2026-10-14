@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (fase actual: MVS-G8 / 2.0-MVS-MAX, secciones 25-28; D43 aprobado, G8.3 instalado, siguiente G8.4).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (fase actual: MVS-G8 / 2.0-MVS-MAX, secciones 25-28; D43 aprobado, G8.4 PASS, material de release listo; falta la etiqueta 2.0-mvs-max).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -209,3 +209,9 @@ MVS-G8 / 2.0-MVS-MAX IN PROGRESS (started 2026-10-14 on the user's go; docs/ROAD
   (default RULES(ARCADE)). INSTALLED 2.0: HERC01.PACMAN.LOAD(PACMAIN) = copy of the R20 build of record (JOB 307 / 314),
   CLIST JOB 317; JOB 298 historical. HISCORE untouched. Harness only: test_hs made run-only aware (no assemblies in a
   run-only deck) and prefix-aware (PACMAN_PREFIX) for the CLIST-block lines. Next: G8.4 (minimal live) on the user's go.
+- G8.4 PASS (2026-10-14, docs/evidence/g8-live.md): installed release, CLIST with NO operand (scenario G8,
+  tools/gp2_live.py, tests/s2live/LIVEG8.txt) played twice: 180/180 writes = model each (ARCADE, 120 x 27, GRAPHIC 4x2,
+  REALTIME, PATTERN), clean QUIT -> READY, HISCORE not rewritten (1050 < 1430); 7 screen captures (c3270 PrintText).
+- G8.5 release material prepared (NOT tagged): docs/BENCHMARKS.md, final docs/CAPABILITIES.md, README for 2.0,
+  releases/2.0-MVS-MAX/ (RELEASE-NOTES, MANIFEST, DEFAULTS, CAPABILITIES, BENCHMARKS, SHA256SUMS, decks of record,
+  screenshots). Next: the annotated tag 2.0-mvs-max on the user's go.

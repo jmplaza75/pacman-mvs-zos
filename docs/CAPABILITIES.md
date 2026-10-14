@@ -1,8 +1,9 @@
-# Terminal / platform capability matrix (requirements sec. 28) - first version, MVS-G0 (2026-10-07)
+# Terminal / platform capability matrix (requirements sec. 28) - FINAL for 2.0-MVS-MAX (MVS-G8, 2026-10-14)
+First version MVS-G0 (2026-10-07); every row below is now closed: CONFIRMED (used by 2.0), NOT SUPPORTED / NOT
+AVAILABLE (closed negative with evidence) or NOT TESTED (other emulators, outside the validated environment).
 Environment: Hercules 4.00 (TK4- bundled build, plain TN3270 server; Homebrew 4.9.1 installed but not running), MVS 3.8J TK4-, CPU 3033 S/370, 16 MB, c3270/s3270 4.5ga6 (Homebrew,
 curses-wide, iconv), local 3270 devices 00C0-00C6 (VTAM), TSO/VTAM line mode.
-Status: CONFIRMED = proven on this installation (evidence named); PENDING = must be tested in the phase that needs it;
-NOT EXPECTED = documented as unsupported by the emulator, to be confirmed by a probe before being ruled out.
+Status: CONFIRMED = proven on this installation (evidence named). No row is PENDING at 2.0.
 
 | Capability | Status | Evidence / test | Renderer |
 |---|---|---|---|
@@ -27,7 +28,10 @@ NOT EXPECTED = documented as unsupported by the emulator, to be confirmed by a p
 | Audible alarm (WCC alarm bit) | CONFIRMED (E15 live) | X'04' in the WCC reaches c3270 through SENX, SEND and SENP and rings the Mac terminal bell (Terminal "Audible bell" on); 3 bells audible back to back and 0.5 s apart; docs/evidence/s1-e15-alarm.md | S1 |
 | Partial screen update (Write X'F1' + TPUT NOEDIT) | CONFIRMED (probe E6, live) | docs/evidence/g3-probe-analysis.md; ASIS variant erases the screen | G3+ |
 | Idle animation (visual tick between inputs) | CONFIRMED with COLOR(YES); with COLOR(AUTO) only after the first input (TSO holds NOEDIT output after the capability Query Reply; investigation closed, D28) | docs/G3-PARTIAL.md, docs/evidence/g3-game-timeline*.txt | G3 |
-| Viable update rate | CONFIRMED (turn-based); partial redraw built (G3), 4-5x fewer bytes per turn | docs/G3-PARTIAL.md, JOB 169 | G3/G8 |
+| Viable update rate | CONFIRMED: REALTIME one write per 150 ms quantum (125 ms with SPEED(FAST)) on an absolute grid, no skipped period, lateness median 5-7 ms; 2.0 default median 86 bytes per quantum write (partial redraw, G3) | docs/BENCHMARKS.md, docs/evidence/rp-live.md, rp3-fast-live.md, g8-live.md; G3: docs/G3-PARTIAL.md | G3/RT/G8 |
+| Real-time input (PF7/8/10/11 arrows, PF9 pause, keyboard restore per write) | CONFIRMED | probe E14, docs/evidence/rt3-live.md, rp-live.md | RT |
+| Alarm patterns (separate bells, timed by quanta) | CONFIRMED (S2) | docs/evidence/s2-live.md: 1-4 bells per event, 296-302 ms apart, heard as separate | S2 |
+| Automatic maximum profile (G9) | CONFIRMED (G8.4): the CLIST with no operand selects colour full-screen, highlighting, GRAPHIC glyphs, 4x2 scale, partial redraw, 120 x 27 wide layout, REALTIME, ARCADE, PATTERN; 180/180 live writes = model | docs/evidence/g8-live.md, docs/G8-RELEASE.md (D43) | G8/G9 |
 
 ## Presentation cost baseline (G0 renderer, measured on Hercules, JOB 146, docs/evidence/g0-metrics-altdisplay.txt)
 Per frame: 1 status line (61 chars) + 10 board rows (200 chars) [+ 1 ghost line: 8 chars with 2 ghosts, 17 with 3].
@@ -48,3 +52,23 @@ Totals include the banner and the four end lines. Every frame is redrawn complet
 | s3270 / x3270if `Ascii()` | same Unicode text | CONFIRMED (E9 capture) |
 | c3270 without Unicode / ASCII line-drawing mode | boxes become `+ - \|` (x3270 source, table `apla2uc`); APL symbols may be blank | NOT TESTED |
 | x3270, wc3270, commercial emulators, real 3279 with APL | GE expected where the GE flag is announced; AUTO = CLASSIC otherwise | NOT TESTED |
+
+## 2.0-MVS-MAX: what the defaults select (D43; no PROFILE keyword - the AUTO chain is the maximum mode)
+| What the terminal answers (Read Partition Query) | Selected by the 2.0 defaults | Validated |
+|---|---|---|
+| colour + highlighting + GE / APL set, alternate size 120 x 27 or 132 x 27 (c3270 `-model 2 -oversize auto` / `-model 5`) | full-screen colour, GRAPHIC glyphs, 4x2 maze centred with side panels, partial redraw, REALTIME, ARCADE, PATTERN alarm | live G8.4 (120 x 27), GS live (132 x 27) |
+| the same, alternate size 80 x 32 / 80 x 43 | 4x2 maze centred vertically | GS live (E12) |
+| the same, 80 x 24 only | 4x2 maze 80 x 20 + compact status line | Hercules TSD (JOBs 308-312), GS live |
+| colour + highlighting, no GE / APL set | GLYPHS(AUTO) = CLASSIC: the G3 colour look (`#` walls, `.` pellets, highlighted sprites), not scaled, partial redraw, REALTIME | Hercules TSD, G4 PACQRY cases (reply with ALT cleared -> C) |
+| colour + GE, no highlighting | GRAPHIC sprites with `#` walls (no reverse video), not scaled | Hercules TSD |
+| no colour / no valid Query Reply (D40: a pending `***`, a monochrome terminal) | monochrome line mode, TURN play | Hercules (PACQRYT sequences, JOB 309), D40 live (rp-live.md) |
+| a screen too big for the 2048-byte TPUT budget | size guard: G4 glyph look for that screen set | Hercules TSD (scale T runs) |
+Explicit compatibility modes keep every earlier look: `RULES(CLASSIC)` (1.0-MVS game), `PLAY(TURN)`, `CANVAS(DEFAULT)`,
+`SCALE(NO|3)`, `GLYPHS(CLASSIC|BASE)`, `COLOR(NO)`, `SOUND(NO)`, `ALARM(SINGLE)`. Batch (cards) is the reference and
+fallback; a PARM without the RULES column is CLASSIC (PACMAIN unchanged).
+
+## Ceilings of the validated environment (closed negative)
+- Programmed Symbols / triple-plane PS: not supported by c3270 (G5 D30, G6 blocked).
+- Host graphics (GDDM / GOCA): not in the Query Reply, not in c3270, no GDDM on TK4- (G7 D42).
+- Music / PCM audio: not in the 3270 data stream; only the alarm (S1/S2). A client companion (S3/S4) is optional and
+  not part of 2.0.

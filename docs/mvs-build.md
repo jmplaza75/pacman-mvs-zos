@@ -294,3 +294,7 @@ G8.3 (2026-10-14): JOB 305 LISTCAT (no R20 entry), ALLOC 306, REL20 307 (build o
 `make_deck.py RELEASE|S2 --runonly --load PACMAIN` JOBs 315 / 316, CLIST 317. Checks: `python3 tests/test_g8.py --rel20
 L307 --s2 L308 --rp L309 --gp2 L310 --gp23 L311 --hs L312`, `--clist L313`, `--inst L314`, `--prefix HERC01.PACMAN
 --rel20 L307 --oracle L315 --s2 L316`, `--prefix HERC01.PACMAN --clist L317`. Evidence docs/evidence/g8-install.txt.
+G8.4 (2026-10-14): live smoke `python3 tools/gp2_live.py G8 --snap ~/g8-snaps` (scenario tests/s2live/LIVEG8.txt, CLIST
+with no operand), analysed by `python3 tools/c3270_s2_trace.py TRACE --scenario G8 [--from HHMMSS]` and
+`tools/c3270_rt_game.py`: docs/evidence/g8-live.md. G8.5: `python3 tools/g8_bench.py` on JOBs 308-312 -> docs/BENCHMARKS.md;
+releases/2.0-MVS-MAX/ (decks of record copied from build/, SHA256SUMS, screenshots rendered from the c3270 captures).

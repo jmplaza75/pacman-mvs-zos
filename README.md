@@ -1,10 +1,35 @@
-# Pac-Man for MVS 3.8J — release 1.0-MVS
+# Pac-Man for MVS 3.8J — release 2.0-MVS-MAX (final MVS release)
 
-A text Pac-Man written in conservative COBOL (IBM OS COBOL, `IKFCBL00`) for MVS 3.8J (TK4-) running on Hercules.
-It plays in batch, with one command per card, or interactively from a TSO 3270 session. Everything runs on the
-emulated mainframe: there is no client-side extension and no sound (requirements sec. 27).
+A Pac-Man written in conservative COBOL (IBM OS COBOL, `IKFCBL00`) with three small assembler services, for MVS 3.8J
+(TK4-) on Hercules. Release 2.0-MVS-MAX plays the arcade game in real time on a scaled, coloured 3270 screen with the
+terminal bell as sound, and picks the best presentation the terminal supports automatically. Everything in the game
+runs on the emulated mainframe (see "What runs where"). Release notes, manifest, final defaults, benchmarks,
+capability matrix and screenshots: `releases/2.0-MVS-MAX/`. Design of the release: `docs/G8-RELEASE.md` (D43).
 
-## Game
+## Quick start (2.0)
+1. Hercules / TK4- running; size a macOS Terminal window to 120x30 **before** connecting, then
+   `TYPEAHEAD=false tools/c3270_rt.sh` (c3270 on the 120x27 alternate screen, arrows = PF7/8/10/11) and log on to
+   TSO.
+2. At `READY`: `EXEC 'HERC01.PACMAN.CLIST(PACMAN)'` — no operand needed (or `python3 tools/rt_play.py` from a second
+   shell, which also maps P to PF9 = pause while the game runs; PF9 itself always pauses).
+3. Pac-Man waits for the first arrow, then moves by himself every 150 ms; Q + ENTER quits.
+
+With no operand the launcher selects the 2.0 profile: ARCADE rules (power pellets, levels, fruit, persistent high
+score, READY!, death animation, popups), REALTIME, colour full-screen with highlighting, GRAPHIC glyphs, the 4x2 maze
+centred on the larger screen, partial redraw and alarm patterns. Each feature falls back on its own when the terminal
+lacks it (no APL set -> the G3 colour look; 80x24 -> compact layout; no colour -> line mode, turn by turn). The final
+defaults are frozen in `releases/2.0-MVS-MAX/DEFAULTS.md`; `RULES(CLASSIC)` plays the 1.0-MVS game, and batch runs are
+unchanged (a PARM without the RULES column is CLASSIC).
+
+## What runs where (requirements sec. 27)
+- **In MVS 3.8J:** the whole game — rules, ghost AI, levels, the real-time clock (STCK, STIMER to absolute deadlines),
+  input decoding, every screen as a 3270 data stream built in COBOL and sent with TPUT, the alarm bit that rings the
+  bell, and the high-score file `HERC01.PACMAN.DATA(HISCORE)`.
+- **On the Mac (client):** only the c3270 terminal (it draws what the host sends, maps the keys, rings the bell when the
+  alarm bit arrives — Terminal > Settings > Profiles > Advanced > "Audible bell"), and optional Python helpers that type
+  the `EXEC` command or analyse traces. No companion audio, client rendering or client logic exists in 2.0.
+
+## 1.0-MVS game (RULES(CLASSIC), batch reference)
 - Maze of 20x10 (`maps/LEVEL1.txt`) with 100 pellets worth 10 points each, and three lives.
 - Commands: `U` `D` `L` `R` (any case) move one cell, `Q` quits. Walls block, and a blocked move still costs a turn.
 - Ghosts (1 to 3) use one of four levels: `AI0` still, `AI1` random (default), `AI2` keeps its direction until an
@@ -24,6 +49,14 @@ emulated mainframe: there is no client-side extension and no sound (requirements
   the job card in memory and redacted in saved listings.
 
 ## Install and build from scratch
+2.0 (the build of record was made this way under `HERC01.PACMAN.R20`, `releases/2.0-MVS-MAX/MANIFEST.md`):
+```sh
+python3 tools/make_deck.py ALLOC --prefix HLQ.NAME && python3 tools/run_deck.py build/ALLOC.jcl   # empty libraries
+./tools/release_check.sh 2.0 HLQ.NAME          # REL20 build + run-only S2/RP/GP2/GP23/HS regressions + tests/test_g8.py
+python3 tools/make_deck.py CLIST --prefix HLQ.NAME && python3 tools/run_deck.py build/CLIST.jcl   # TSO launcher
+python3 tools/make_deck.py INST20 --source HLQ.NAME --prefix TARGET   # optional: copy the validated PACMAIN, no relink
+```
+The 1.0-MVS procedure below is kept for the historical release:
 ```sh
 python3 tools/make_deck.py ALLOC   && python3 tools/run_deck.py build/ALLOC.jcl     # first use only
 python3 tools/make_deck.py CLIST   && python3 tools/run_deck.py build/CLIST.jcl     # TSO launcher
@@ -81,8 +114,8 @@ per event (the MVS-S1 / GP2 behaviour); `SOUND(NO)` silences every alarm, PATTER
 measurements: `docs/RT-REALTIME.md` (D33, D34), `docs/evidence/rt-e14-timing.md`, `docs/evidence/rt3-live.md`.
 **Arcade rules (MVS-GP1):** `EXEC 'HERC01.PACMAN.CLIST(PACMAN)' 'RULES(ARCADE)'` adds 4 blinking power pellets `o`
 (50 points), blue frightened ghosts (white just before the end; 40 quanta = 6 s, 20 turns in TURN) that flee more slowly,
-eaten ghosts 200/400/800/1600 that go home as eyes and revive, and a 7-digit score. `RULES(CLASSIC)` (the default) is
-the 1.0-MVS game. Design: `docs/GP1-POWER.md` (D36).
+eaten ghosts 200/400/800/1600 that go home as eyes and revive, and a 7-digit score. `RULES(ARCADE)` is the default since
+2.0-MVS-MAX; `RULES(CLASSIC)` is the 1.0-MVS game. Design: `docs/GP1-POWER.md` (D36).
 **Speed and presentation (MVS-RP):** `SPEED(NORMAL|FAST)` sets the REALTIME quantum to 150 ms (default) or 125 ms:
 with FAST, Pac-Man and the ghosts move faster, while frightened time, the fruit, the death / level-clear freeze, READY!,
 the death animation and the score popups keep their length in seconds. `RULES(ARCADE)` games show READY! before the
@@ -126,7 +159,7 @@ row can still fill the screen once. Validated live in c3270.
 ## Architecture and documentation
 - `PACMAIN` is the driver; the layers are `PACGAME`, `PACMAP` and `PACAI` (portable core), `PACINPT` and `PACDISP`
   (adapters), and `PACPLAT` with `PACTSO` (platform). See `docs/ARCHITECTURE.md`.
-- `docs/DECISIONS.md` records the compiler dialect rules and the game rules (D1–D40).
+- `docs/DECISIONS.md` records the compiler dialect rules and the game rules (D1–D43).
 - `docs/mvs-build.md` holds the per-phase build history and evidence, and `docs/CURRENT_PHASE.md` the status.
 
 ## Phases
@@ -195,5 +228,10 @@ MVS-G7 (host graphics) is closed negative (tag `mvs-g7`, D42), a capability limi
 check of the TK4- catalog, link list and LPA (`jcl/mvs/G7CHK.jcl`, JOB 301) found no GDDM. The existing
 GS scaled renderer over G4 glyphs is the final MVS graphics solution; nothing in the game changed. Evidence: `docs/evidence/g7-gddm-check.md`.
 Roadmap to the final MVS release 2.0-MVS-MAX: `docs/ROADMAP-POST-RT.md`.
-MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). Next is the z/OS migration
-(ZOS-0..ZOS-7) or the graphic ladder after 1.0-MVS (MVS-G0+), which has not started.
+MVS-G8 / 2.0-MVS-MAX (final MVS release, D43, `docs/G8-RELEASE.md`): CLIST default `RULES(ARCADE)` (the rest of the
+AUTO chain was already the maximum), rebuild from empty libraries `HERC01.PACMAN.R20` (REL20 JOB 307) with every
+regression run-only on that module (JOBs 308-312), installed by copy with byte identity (JOB 314, AMASPZAP) and checked
+(JOBs 315-317), live smoke of the installed release (`docs/evidence/g8-live.md`), benchmarks `docs/BENCHMARKS.md`,
+final capability matrix `docs/CAPABILITIES.md`, release folder `releases/2.0-MVS-MAX/`.
+MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). The MVS line ends with 2.0-MVS-MAX; any
+z/OS work is a separate roadmap, and the companion audio (S3/S4) is an optional client extension after 2.0.
