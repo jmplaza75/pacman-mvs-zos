@@ -103,3 +103,5 @@ Each step: `EXEC PGM=PACZ2D`, STEPLIB `Z00000.PACMAN.LOAD` (IGD103I / IGD104I), 
 runs not in this job). Framing removed: ASA column and record padding only; maximum line 60 characters. First
 evidence that the full Pac-Man program object runs under profile A (AMODE 24, RMODE 24, LE ALL31(OFF), stack below)
 with output identical to 2.0-mvs-max for these five deterministic CLASSIC games.
+Scope (user, 2026-10-14): JOB08984 is the first successful execution proof of PACZ2D on z/OS; it covers these five
+deterministic CLASSIC cases only and is not generalised beyond them.
