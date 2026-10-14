@@ -209,3 +209,21 @@ C1..C7 (zos_classic_check --all) PASS with a report byte-identical to docs/evide
 Finding for a later job: oracle 309 (RP) holds 80 run datasets for 81 PACMAIN run steps (RPT1's TSD output follows
 the IEBUPDTE listing after one empty line, not the two-line separator), so no 309 step can be anchored: PACZ2RP as
 designed would fail "cannot be anchored" until this is resolved (to be proposed separately; no oracle change).
+
+## Z2-4 PACZ2G2 (JOB09114) - REALTIME, CLASSIC and ARCADE (oracle 310)
+Deck jcl/zos/PACZ2G2.jcl (commit 9e3075a: S1S2 removed by the user as redundant with RTB7), local checks PASS (deck =
+generated, precheck, 8/8 model = own anchored oracle block, estimate ~2,405), submitted once, spool kept. Job CC 0000;
+spool 2,387 lines: JESMSGLG 25, JESJCL 59, JESYSMSG 158, SYSOUT 2,145. `zos_arcade_check.py`: all 8 steps IEF142I
+COND CODE 0000, STEPLIB Z00000.PACMAN.LOAD, no CEE / abend / $HASP375, one SYSOUT each; every step anchored at its own
+oracle 310 block and identical; ref_rt (RTB) / ref_gp2.rt_simulate (G2R) identical: ARCADE CHECK PASS.
+| Step | Case | RC | SYSOUT | Own 310 block | Observed in the z/OS output |
+|---|---|---|---|---|---|
+| RTB1 | RTLINE `AI0 1` | 0000 | 41 | 38858-38898 | cadence K = P B B B B P B then ghost-only G G G - G; X=09 at Q7 and Q12; EOF, 12 quanta |
+| RTB7 | RTSTILL `AI3 1` | 0000 | 251 | 39072-39322 | hit while stationary at Q27 (K=G, X=02 Y=02 respawn), 10 freeze quanta K=F then play; LOST, 117 quanta |
+| RTB8 | RTPAUSE `AI1 1` | 0000 | 42 | 39325-39366 | IN=PxP (pause, invalid x, resume), INVALID COMMAND x, IN=* (PA2 redraw), IN=PP; QUIT |
+| RTB10 | RTWIN `AI0 1` | 0000 | 383 | 41592-41974 | WIN, TURNS 183, SCORE 1000, LIVES 3, 183 quanta |
+| RTB11 | RTEDGE `AI1 1` | 0000 | 335 | 41977-42311 | D11 in REALTIME: L=001 then L=000 with the hit in the same quantum, ST=WON, LIVES 1 |
+| G2R1 | RTGPA `AI3 3` ARCADE | 0000 | 213 | 107426-107638 | 3 ghosts (L=098, M=N000 N000 N000), fright FR=040 counting down per quantum with FA accumulator (2/5 cadence), 2 ghosts eaten (P=0200, P=0400, EV=GHST), death at Q47 (EV=----D); LIVES 2 |
+| G2R5 | RTMULTI `AI0 1` ARCADE | 0000 | 56 | 108497-108552 | several inputs in one quantum: IN=DL, IN=UDLR (the latest wins); 8 quanta |
+| G2R7 | G2RCLR `AI0` ARCADE | 0000 | 824 | 108630-109453 | fruit appears (EV=A, BT=060) and is eaten (EV=-F---, FRUITS EATEN 001); 5 power pellets; level clear at Q183 (EV=---C-), L LV=002 BK=S BV=0300, board reloaded (L=100, PW=4), freeze quanta K=F; end LEVEL 002, SCORE 0001350 |
+Not covered here: the real clock (PACTSO TIME / DLWT) is in PACZ2DRV (TSOT1); sound / alarm have later ZOS-2 coverage.
