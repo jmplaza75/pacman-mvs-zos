@@ -271,5 +271,6 @@ the user approves it. main and the MVS release are not touched.
 - PACZ2BLD JOB08888 (binder LIST without MAP): 10 COBOL RC 0 clean, PACTSO / PACHSIO RC 0, PACFSIO RC 4 = C3 only,
   LINK RC 0, LOAD(PACZ2D) AMODE 24 / RMODE 24 / RENT, entry PACMAIN: build PASS (accepted as build of record).
 - PACZ2C1 JOB08984: RUN1..RUN5 RC 0, = oracle 307 and models, 3,586 spool lines: PASS.
-- PACZ2C2 JOB09000: RUN6..RUN8 RC 0, = oracle 307 and models, 3,532 spool lines: PASS. NEXT: PACZ2C3 only after the
-  user's approval.
+- PACZ2C2 JOB09000: RUN6..RUN8 RC 0, = oracle 307 and models, 3,532 spool lines: PASS.
+- PACZ2C3 JOB09015: RUN9 RC 0, = oracle 307 and model, 839 spool lines: PASS. NEXT: PACZ2C4 only after the user's
+  approval.
