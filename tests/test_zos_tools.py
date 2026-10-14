@@ -171,3 +171,18 @@ with tempfile.TemporaryDirectory() as t:
         assert 'ALL31(OFF),STACK(,,BELOW)' in zr[s]
     assert '/' not in ''.join(re.findall(r"PARM='([^']*)'", (t / 'zr.jcl').read_text()))
 print('make_deck --target zos: PACZ2CMP generated, 25 run steps = MVS cards/PARM/DDs: PASS')
+
+# 4. PACZ2BLD: the deck of record is generated, and every object the binder includes is written by an earlier step of
+#    the same job (no stale object from another job can be bound); LINK runs only if no earlier step gave RC > 4
+with tempfile.TemporaryDirectory() as t:
+    subprocess.run([sys.executable, str(R / 'tools/make_deck.py'), '--target', 'zos', 'Z2BLD', '--out',
+                    str(Path(t) / 'b.jcl')], check=True, capture_output=True)
+    bld = (Path(t) / 'b.jcl').read_text()
+assert bld == (R / 'jcl/zos/PACZ2BLD.jcl').read_text(), 'jcl/zos/PACZ2BLD.jcl is not the generated deck'
+steps = re.split(r'(?m)^(?=//\w+\s+EXEC )', bld)[1:]
+written = [m.group(1) for s in steps[:-1] for m in [re.search(r'//SYSLIN   DD DSN=@@HLQ@@\.PACMAN\.OBJ\((\w+)\)', s)]]
+inc = re.findall(r'INCLUDE OBJ\((\w+)\)', steps[-1])
+assert steps[-1].startswith('//LINK     EXEC PGM=IEWBLINK,COND=(4,LT)') and len(inc) == 13 and sorted(inc) == sorted(written)
+assert '  ENTRY PACMAIN\n  NAME PACZ2D(R)\n' in steps[-1] and all('COND=(4,LT)' in s.split('\n')[0] for s in steps)
+assert 'DELETE' not in bld and 'PGM=PACZ2D' not in bld
+print('PACZ2BLD: 13 objects regenerated in the job before the bind, LOAD(PACZ2D), no run, no DELETE: PASS')
