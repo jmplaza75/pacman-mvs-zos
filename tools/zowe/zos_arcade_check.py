@@ -4,7 +4,10 @@ tools/zowe/zos_classic_check.py, tools/zowe/zos_equiv.py --subset against tests/
 independent model tests/ref_gp2.py exactly as tests/test_gp2.py applies it:
   G2B<i> (GP2_BAT[i]: directory, case, start text)  = ref_gp2.simulate(cards, start=parse_start(start text));
   G2T<i> (GP2_TSO[i]: case, start text)             = ref_gp2.simulate(cards[1:], prompts=True, cfg=config card,
-                                                      redraw=True, start=parse_start(start text)).
+                                                      redraw=True, start=parse_start(start text));
+  G2R<i> (GP2_RT[i]: directory, case, start text)   = ref_gp2.rt_simulate(cards, parse_start(start text));
+  RTB<i> (RT_BAT[i], CLASSIC REALTIME)              = ref_rt.simulate(cards)              (tests/test_rt.py);
+  S1S<i> (S1_SILENT[i]: BAT / RTB / TSO, SOUND Y)   = the 1.0-MVS oracle run / ref_rt.simulate (tests/test_s1.py).
 Usage: zos_arcade_check.py SPOOLDIR [SPOOLDIR ...]   (read-only; exit 0 only if everything passes)
 """
 import gzip
@@ -18,7 +21,8 @@ sys.path[:0] = [str(HERE), str(R / 'tests'), str(R / 'tools')]
 from zos_classic_check import health  # noqa: E402
 from zos_equiv import compare  # noqa: E402
 import ref_gp2 as L  # noqa: E402
-from make_deck import GP2_BAT, GP2_TSO  # noqa: E402
+import ref_rt  # noqa: E402
+from make_deck import GP2_BAT, GP2_RT, GP2_TSO, RT_BAT, S1_SILENT  # noqa: E402
 
 ORACLE = R / 'tests/oracle20/310-PACBLGP2.json.gz'
 
@@ -38,6 +42,16 @@ def expected(step):
         ai, n, _ = L.parse_config(cs[:1])
         return f'TSO gpcases/{c} start {st!r}', L.simulate(cs[1:], prompts=True, cfg=(ai, n), redraw=True,
                                                            start=L.parse_start(st))
+    if step.startswith('G2R'):
+        d, c, st = GP2_RT[i]
+        return f'REALTIME {d}/{c} start {st!r}', L.rt_simulate(cards(d, c), L.parse_start(st))
+    if step.startswith('RTB'):
+        c = RT_BAT[i]
+        return f'CLASSIC REALTIME rtcases/{c}', ref_rt.simulate(cards('rtcases', c))
+    if step.startswith('S1S'):
+        kind, c = S1_SILENT[i]
+        if kind == 'RTB':
+            return f'CLASSIC REALTIME rtcases/{c} SOUND Y', ref_rt.simulate(cards('rtcases', c))
     return None, None
 
 

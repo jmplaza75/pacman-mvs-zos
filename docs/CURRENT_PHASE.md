@@ -279,3 +279,8 @@ the user approves it. main and the MVS release are not touched.
   Combined CLASSIC validation (25 runs, order, models, MVS-7 before/after): PASS.
 - PACZ2G1 JOB09069: 10 ARCADE runs RC 0, = oracle 310 (own blocks) and ref_gp2: PASS. NEXT: PACZ2G2 only after the
   user's approval. CLIST install / interactive EXEC stay in the later z/OS platform/install phase.
+- Tool fix 4ff8b4d (accepted): zos_equiv --subset anchors each step at its own oracle block.
+- KNOWN ZOS-2 TOOLING ISSUE (open, not to be solved before an RP-specific design is approved): oracle 309 (RP) holds
+  80 run datasets for 81 PACMAIN run steps (RPT1's TSD output follows the IEBUPDTE listing after one empty line, not
+  the TK4- two-line separator), so no 309 step is anchorable and PACZ2RP would fail "cannot be anchored". Oracle 309
+  is not modified, the anchoring rules are not weakened, no generic content-search fallback is added.
