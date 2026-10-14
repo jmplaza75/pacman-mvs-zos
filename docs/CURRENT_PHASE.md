@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (fase actual: MVS-G8 / 2.0-MVS-MAX, secciones 25-28; D43 aprobado, G8.4 PASS, material de release listo; falta la etiqueta 2.0-mvs-max).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G8 / 2.0-MVS-MAX COMPLETA, etiqueta 2.0-mvs-max; la rama MVS esta TERMINADA. No hay fase activa; el port z/OS no esta iniciado).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -214,4 +214,14 @@ MVS-G8 / 2.0-MVS-MAX IN PROGRESS (started 2026-10-14 on the user's go; docs/ROAD
   REALTIME, PATTERN), clean QUIT -> READY, HISCORE not rewritten (1050 < 1430); 7 screen captures (c3270 PrintText).
 - G8.5 release material prepared (NOT tagged): docs/BENCHMARKS.md, final docs/CAPABILITIES.md, README for 2.0,
   releases/2.0-MVS-MAX/ (RELEASE-NOTES, MANIFEST, DEFAULTS, CAPABILITIES, BENCHMARKS, SHA256SUMS, decks of record,
-  screenshots). Next: the annotated tag 2.0-mvs-max on the user's go.
+  screenshots). Release approved by the user (2026-10-14).
+MVS-G8 COMPLETE: annotated tag `2.0-mvs-max` on commit 94fd6f6 (2026-10-14). Installed release verified after tagging
+by the read-only JOB 318: AMASPZAP dumps of HERC01.PACMAN.LOAD(PACMAIN) = HERC01.PACMAN.R20.LOAD(PACMAIN) (build of
+record REL20 JOB 307) = the JOB 314 promotion; HERC01.PACMAN.CLIST(PACMAN) = the tagged src/clist/PACMAN.clist
+(RULES(ARCADE)). Nothing pushed (no remote configured).
+Accepted as documented: tests/test_rt.py and tests/test_s1.py pin sources to their own phases and need
+PACMAN_LATER_PHASE=G8 when run alone (as at mvs-s2); the guards are not weakened.
+
+THE MVS BRANCH IS COMPLETE: 2.0-MVS-MAX is the final MVS release (roadmap decision 3). No active phase. The z/OS port
+(ZOS-*) is NOT started and needs a separate roadmap and the user's go; S3/S4 companion audio is optional, client-side
+and not started.

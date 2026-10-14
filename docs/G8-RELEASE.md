@@ -1,4 +1,4 @@
-# MVS-G8 / 2.0-MVS-MAX: final MVS release - design (D43, APPROVED and frozen 2026-10-14 with the
+# MVS-G8 / 2.0-MVS-MAX: final MVS release - COMPLETE (tag 2.0-mvs-max) - design (D43, APPROVED and frozen 2026-10-14 with the
 release-integrity amendment; user decisions in section 8)
 Source: docs/ROADMAP-POST-RT.md row 8 ("Final capability matrix, CLIST default `RULES(ARCADE)` + best profile (GS,
 REALTIME, SOUND if S1 passes), benchmarks (bytes/frame, frame jitter), screenshots, README "what runs on MVS vs the
@@ -26,7 +26,7 @@ project uses the maximum viable presentation without breaking compatibility"), s
 | G8.2 (BUILD GREEN 2026-10-14, JOBs 302-304; docs/evidence/g8-build.txt) | CLIST defaults, ALLOC space, deck `REL20`, tests/test_g8.py, tools/g8_bench.py (deterministic bytes/frame), CLIST-dependent checks of earlier decks adapted | build green on Hercules under `HERC01.PACMAN` (not installed) |
 | G8.3 (COMPLETE 2026-10-14, JOBs 305-317; docs/evidence/g8-install.txt) | on the user's approval: fresh build from empty libraries under `HERC01.PACMAN.R20` (ALLOC, REL20, CLIST, DATA, regression decks with `--prefix`, JCL audit), then install: the validated R20 PACMAIN copied into `HERC01.PACMAN.LOAD` and the final CLIST, with installed checks | all checks PASS on R20 and on the installed copy; install jobs |
 | G8.4 (PASS 2026-10-14; docs/evidence/g8-live.md) | minimal live smoke of the installed release (section 9) + the screenshot set | docs/evidence/g8-live.md |
-| G8.5 (prepared 2026-10-14; tag pending the user's go) | final capability matrix, benchmarks page, README (incl. "what runs on MVS vs the client"), releases/2.0-MVS-MAX (decks + SHA256SUMS), CURRENT_PHASE, roadmap | tag `2.0-mvs-max` |
+| G8.5 (COMPLETE 2026-10-14, tag 2.0-mvs-max on 94fd6f6; post-tag check JOB 318) | final capability matrix, benchmarks page, README (incl. "what runs on MVS vs the client"), releases/2.0-MVS-MAX (decks + SHA256SUMS), CURRENT_PHASE, roadmap | tag `2.0-mvs-max` |
 
 ## 2. Default profile = maximum mode (D43.1)
 The CLIST `PROC` defaults become the maximum viable profile; the only value that changes is `RULES(CLASSIC)` ->

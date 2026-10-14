@@ -3,7 +3,8 @@ Status: roadmap approved by the user on 2026-10-11 (decisions below). Phases sti
 MVS-S1 COMPLETE (tag mvs-s1, 2026-10-11). MVS-GP1 COMPLETE (tag mvs-gp1, 2026-10-12). MVS-GP2 COMPLETE (tag mvs-gp2, 2026-10-12). MVS-HS COMPLETE (tag mvs-hs, 2026-10-12, D38, docs/HS-HISCORE.md). MVS-RP COMPLETE (tag mvs-rp, 2026-10-13, D39 + D40, docs/RP-POLISH.md; SPEED(NORMAL|FAST) 150 / 125 ms). MVS-S2
 COMPLETE (tag mvs-s2, 2026-10-13, D41, docs/S2-PATTERNS.md; ALARM(PATTERN|SINGLE), CLIST default PATTERN). Next on the
 order below: MVS-G7 CLOSED NEGATIVE (tag mvs-g7, 2026-10-14, D42, docs/evidence/g7-gddm-check.md: no graphics in the Query Reply
-or c3270, no GDDM on TK4-). MVS-G8 / 2.0-MVS-MAX: built, installed and live-validated (2026-10-14; design docs/G8-RELEASE.md, D43; releases/2.0-MVS-MAX/); tag 2.0-mvs-max pending.
+or c3270, no GDDM on TK4-). MVS-G8 / 2.0-MVS-MAX COMPLETE (tag 2.0-mvs-max, 2026-10-14; D43, docs/G8-RELEASE.md, releases/2.0-MVS-MAX/). The MVS branch
+is complete; z/OS is a separate roadmap (not started).
 
 ## Where the project stands
 - Mechanics: 1.0-MVS core (frozen, tests/core_baseline.json): 20x10 maze, 100 pellets x 10 points, 3 lives, 1-3 ghosts,
