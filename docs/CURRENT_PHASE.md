@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G7 cerrada negativa; siguiente fase: MVS-G8 / 2.0-MVS-MAX, pendiente de decision del usuario).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (fase actual: MVS-G8 / 2.0-MVS-MAX, secciones 25-28; D43 aprobado, en G8.2).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -188,4 +188,10 @@ catalog), the seven LNKLST00 libraries or SYS1.LPALIB (tools/g7_gddm_scan.py, se
 Evidence docs/evidence/g7-gddm-check.md. Nothing of PACMAN changed; installed baseline = S2 (PACMAIN JOB 298, CLIST
 JOB 299). The existing 3270 scaled / glyph renderer (GS over G4) is the final MVS graphics solution;
 adding GDDM is outside the requirements.
-Next phase: MVS-G8 / 2.0-MVS-MAX (docs/ROADMAP-POST-RT.md row 8) - NOT started; on the user's go.
+MVS-G8 / 2.0-MVS-MAX IN PROGRESS (started 2026-10-14 on the user's go; docs/ROADMAP-POST-RT.md row 8, final MVS release).
+- G8.1 design docs/G8-RELEASE.md: D43 APPROVED and frozen (2026-10-14) with the release-integrity amendment
+  (section 8a): the validated R20 artifact becomes the installed PACMAIN (JOB 298 = historical), JCL audit against
+  the old libraries, RP live timing reused, minimal installed live smoke (section 9).
+  Release phase: no game / display / platform source changes; CLIST default RULES(ARCADE) (rest of the AUTO chain
+  unchanged), benchmarks, screenshots, fresh rebuild under HERC01.PACMAN.R20, README authenticity section, tag
+  2.0-mvs-max. Nothing built or installed yet.

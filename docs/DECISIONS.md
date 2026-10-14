@@ -273,3 +273,13 @@
   sec. 29). The existing 3270 scaled / glyph renderer (GS over G4) is the final MVS graphics solution;
   nothing of PACMAN changed (installed PACMAIN JOB 298, CLIST JOB 299). A graphics-capable terminal
   plus a licensed host stack is a possible separate branch, not pursued.
+- D43 (MVS-G8 / 2.0-MVS-MAX, APPROVED and frozen 2026-10-14, docs/G8-RELEASE.md) Final MVS release. Release phase, no
+  game / display / platform source change. Only the CLIST default flips RULES(CLASSIC) -> RULES(ARCADE); PACMAIN's
+  absent-PARM behaviour unchanged (no RULES column = CLASSIC; batch stays the reference); no PROFILE keyword, the AUTO
+  chain (COLOR/HILITE/GLYPHS/SCALE/CANVAS AUTO, REALTIME, SOUND AUTO, ALARM PATTERN) is the maximum mode with its
+  fallbacks. Benchmarks: deterministic bytes per frame from Hercules TSD streams + live cadence reused from RP; no CPU.
+  Small PNG screenshot set + text reconstructions from model streams; no live traces committed. Clean rebuild from
+  newly allocated empty libraries HERC01.PACMAN.R20 (larger ALLOC space, deck REL20, JCL audited against the old
+  libraries), the validated R20 PACMAIN copied (not relinked) into HERC01.PACMAN.LOAD as the installed 2.0 module
+  (JOB 298 historical), final CLIST installed, minimal installed live smoke; folder releases/2.0-MVS-MAX, annotated
+  tag 2.0-mvs-max.
