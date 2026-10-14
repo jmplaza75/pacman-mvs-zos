@@ -12,11 +12,19 @@ t=open(f'jcl/zos/{job}.jcl').read(); r=render(t,'Z00000')
 steps=re.split(r'(?m)^(?=//\w+\s+EXEC )',r)[1:]
 ok=[]
 ok.append(('audit', audit_deck(r,'Z00000')==[]))
-ok.append(('only DSN = STEPLIB load', set(re.findall(r'DSN=([\w.]+)',r))=={'Z00000.PACMAN.LOAD'}))
+BUILD=('IGYCRCTL','ASMA90','IEWBLINK')
+SYSLIBS={'IGY650.SIGYCOMP','CEE.SCEERUN','CEE.SCEERUN2','HLA.SASMMOD1','SYS1.MACLIB','SYS1.MODGEN','CEE.SCEELKEX','CEE.SCEELKED'}
+pgm=lambda s: re.match(r'//\w+\s+EXEC PGM=(\w+)',s).group(1)
+runs=[x for x in steps if pgm(x) not in BUILD]; builds=[x for x in steps if pgm(x) in BUILD]
+dsn=set(re.findall(r'DSN=([\w.]+)',r))
+ok.append(('datasets = STEPLIB load (+ build libraries / project libraries in build steps)', dsn=={'Z00000.PACMAN.LOAD'} if not builds else dsn <= SYSLIBS | {'Z00000.PACMAN.'+x for x in ('COBOL','COPY','ASM','OBJ','LOAD')}))
 ok.append(('no DELETE', 'DELETE' not in r))
-ok.append(('all PGM=PACZ2D', all(re.match(r'//\w+\s+EXEC PGM=PACZ2D,COND=\(0,NE\)',s) for s in steps)))
-ok.append(('STEPLIB each', all('//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR\n' in s for s in steps)))
-ok.append(('CEEOPTS exact', all('//CEEOPTS  DD *\nALL31(OFF),STACK(,,BELOW)\n/*\n' in s for s in steps)))
+ok.append(('run steps COND=(0,NE)', all(re.match(r'//\w+\s+EXEC PGM=\w+,COND=\(0,NE\)',s) for s in runs)))
+ok.append(('build steps COND=(4,LT)', all(re.match(r'//\w+\s+EXEC PGM=\w+,COND=\(4,LT\)',s) for s in builds)))
+ok.append(('run programs', all(pgm(s) in ('PACZ2D','PACQRYT','PACTSOT') for s in runs) and (bool(builds) or all(pgm(s)=='PACZ2D' for s in runs))))
+ok.append(('STEPLIB each run step', all('//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR\n' in s for s in runs)))
+ok.append(('CEEOPTS exact each run step', all('//CEEOPTS  DD *\nALL31(OFF),STACK(,,BELOW)\n/*\n' in s for s in runs)))
+ok.append(('no PACZ2D / PACMAIN bind', not re.search(r'NAME (PACZ2D|PACMAIN)\(', r)))
 ok.append(('steps = chunk', [re.match(r'//(\w+)',s).group(1) for s in steps]==Z.CHUNKS[name][2]))
 p=subprocess.run([sys.executable,'tools/zowe/zos_plan.py',name,'--budget','4000'],capture_output=True,text=True)
 ok.append(('estimate < 4000', p.returncode==0)); print(p.stdout.strip())

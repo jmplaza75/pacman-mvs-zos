@@ -7,7 +7,12 @@ independent model tests/ref_gp2.py exactly as tests/test_gp2.py applies it:
                                                       redraw=True, start=parse_start(start text));
   G2R<i> (GP2_RT[i]: directory, case, start text)   = ref_gp2.rt_simulate(cards, parse_start(start text));
   RTB<i> (RT_BAT[i], CLASSIC REALTIME)              = ref_rt.simulate(cards)              (tests/test_rt.py);
-  S1S<i> (S1_SILENT[i]: BAT / RTB / TSO, SOUND Y)   = the 1.0-MVS oracle run / ref_rt.simulate (tests/test_s1.py).
+  S1S<i> (S1_SILENT[i]: BAT / RTB / TSO, SOUND Y)   = the 1.0-MVS oracle run / ref_rt.simulate (tests/test_s1.py);
+  QRY1 (PACQRYT driver of PACQRY)                   = one QRY line per recorded reply (qry_cases.expect,
+                                                      expect_size: tests/test_g4.py, test_gs.py), the QSL startup
+                                                      sequences (qry_cases.seq_lines: tests/test_rp.py), QRY TEST END;
+  TSOT1 (PACTSOT driver of the PACTSO clock)        = real elapsed times: checked with the RT3 rules of tests/test_rt.py
+                                                      (zos_equiv --clock) instead of an exact comparison.
 Usage: zos_arcade_check.py SPOOLDIR [SPOOLDIR ...]   (read-only; exit 0 only if everything passes)
 """
 import gzip
@@ -18,11 +23,15 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 R = HERE.parent.parent
 sys.path[:0] = [str(HERE), str(R / 'tests'), str(R / 'tools')]
-from zos_classic_check import health  # noqa: E402
+from zos_classic_check import BUILD, health  # noqa: E402
 from zos_equiv import compare  # noqa: E402
 import ref_gp2 as L  # noqa: E402
 import ref_rt  # noqa: E402
 from make_deck import GP2_BAT, GP2_RT, GP2_TSO, RT_BAT, S1_SILENT  # noqa: E402
+from zos_equiv import clock_ok  # noqa: E402
+
+CLOCK = {'TSOT1'}
+PMAP = {'PACMAIN': 'PACZ2D', 'PACQRYT': 'PACQRYT', 'PACTSOT': 'PACTSOT'}
 
 ORACLE = R / 'tests/oracle20/310-PACBLGP2.json.gz'
 
@@ -32,6 +41,16 @@ def cards(d, c):
 
 
 def expected(step):
+    if step == 'QRY1':
+        from qry_cases import cases, expect, expect_size, seq_lines
+        out = []
+        for name, b in cases():
+            c, h, g = expect(b)
+            aw, ah = expect_size(b)
+            out.append(f'QRY {name:<8} LEN={len(b):04d} C={c} H={h} GE={g} AW={aw:03d} AH={ah:03d}')
+        return 'PACQRYT recorded replies + startup sequences', out + seq_lines() + ['QRY TEST END']
+    if step in CLOCK:
+        return 'PACTSOT clock (RT3 timing rules)', None
     i = int(step[3:]) - 1
     if step.startswith('G2B'):
         d, c, st = GP2_BAT[i]
@@ -59,17 +78,24 @@ def main():
     oracle = json.load(gzip.open(ORACLE))
     bad = 0
     for d in sys.argv[1:]:
-        job, steps, runs, hb, lines = health(d)
+        job, steps, runs, hb, lines = health(d, tuple(PMAP.values()))
         print(f'{job["jobname"]} {job["jobid"]} {job.get("retcode")}: {len(steps)} steps, {lines} spool lines')
         for b in hb:
             print('  FAIL', b)
-        nb, msgs = compare(oracle, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+        nb, msgs = compare(oracle, runs, PMAP, subset=True, clock=CLOCK)
         for m in msgs:
             if not m.startswith('SUBSET'):
                 print('  oracle', m)
         bad += len(hb) + nb
         for s in steps:
+            if runs[s]['pgm'] in BUILD:
+                continue                       # build steps: health above + zos_compile_report
             what, want = expected(s)
+            if s in CLOCK:
+                ok = clock_ok(runs[s]['lines'])
+                print(f'  model  {"OK  " if ok else "FAIL"} {s} {what}: {len(runs[s]["lines"])} lines')
+                bad += not ok
+                continue
             if want is None:
                 print(f'  model  FAIL {s}: no model mapping')
                 bad += 1

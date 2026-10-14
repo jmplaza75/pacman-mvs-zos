@@ -38,7 +38,13 @@ ORACLE = R / 'tests/oracle20/307-PACREL20.json.gz'
 CASE = dict([(f'RUN{i}', n) for i, n in enumerate(T.RUNS, 1)] + [(f'TSO{i}', n) for i, n in enumerate(T.TSO, 1)])
 
 
-def health(d):
+BUILD = ('IGYCRCTL', 'ASMA90', 'IEWBLINK')
+
+
+def health(d, runprogs=('PACZ2D',)):
+    """Run steps: a program of runprogs, COND CODE 0000, only SYSOUT, STEPLIB Z00000.PACMAN.LOAD retained once each.
+    Build steps (IGYCRCTL / ASMA90 / IEWBLINK, PACZ2DRV): COND CODE 0000 and only SYSPRINT (their diagnostics are read
+    by tools/zowe/zos_compile_report.py). Any other program, CEE / abend / output-limit text or spool DD is a failure."""
     d = Path(d)
     job = json.loads((d / 'job.json').read_text())
     files = json.loads((d / 'spool.json').read_text())
@@ -48,14 +54,20 @@ def health(d):
     if re.search(r'CEE\d{4}|ABEND|\$HASP375|IEA995|IEF472I', jes):
         bad.append('CEE / abend / output-limit text in the JES files')
     _, steps, runs = zos_runs(d)
+    nrun = 0
     for s in steps:
         if not re.search(rf'IEF142I {job["jobname"]} {s} - STEP WAS EXECUTED - COND CODE 0000', msg):
             bad.append(f'{s}: not executed with COND CODE 0000')
-        if runs[s]['pgm'] != 'PACZ2D' or runs[s]['extra']:
+        if runs[s]['pgm'] in BUILD:
+            if runs[s]['extra'] != ['SYSPRINT'] or runs[s]['lines']:
+                bad.append(f'{s}: build step spool {runs[s]["extra"]}')
+        elif runs[s]['pgm'] not in runprogs or runs[s]['extra']:
             bad.append(f'{s}: program {runs[s]["pgm"]}, extra spool {runs[s]["extra"]}')
-    if len(re.findall(rf'IGD104I {re.escape(LOAD)}\s+RETAINED,\s+DDNAME=STEPLIB', msg)) != len(steps):
-        bad.append('STEPLIB Z00000.PACMAN.LOAD not retained once per step')
-    others = [f['ddname'] for f in files if f['stepname'] != 'JES2' and f['ddname'] != 'SYSOUT']
+        else:
+            nrun += 1
+    if len(re.findall(rf'IGD104I {re.escape(LOAD)}\s+RETAINED,\s+DDNAME=STEPLIB', msg)) != nrun:
+        bad.append('STEPLIB Z00000.PACMAN.LOAD not retained once per run step')
+    others = [f['ddname'] for f in files if f['stepname'] != 'JES2' and f['ddname'] not in ('SYSOUT', 'SYSPRINT')]
     if others:
         bad.append(f'unexpected spool DD {others}')
     lines = sum(len(p.read_text().splitlines()) for p in d.glob('[0-9]*.txt'))
