@@ -86,3 +86,20 @@ run jobs).
 Tool fix: tools/zowe/zos_compile_report.py did not list HLASM messages whose carriage-control column holds a machine
 control character (U+008D); the ASMA pattern now accepts any first column. Z2-1 report re-run: PACFSIO shows the same
 ASMA303W + ASMA435I.
+
+## Z2-2 PACZ2C1 (JOB08984) - first execution of PACZ2D: CLASSIC oracle RUN1..RUN5
+Deck jcl/zos/PACZ2C1.jcl (= `make_deck.py --target zos Z2C1`), approved as presented, submitted once, spool kept.
+Job CC 0000; spool 3,586 lines (estimate ~3,560): JESMSGLG 22, JESJCL 38, JESYSMSG 101, SYSOUT 3,425. Spool files:
+only the JES files and one SYSOUT (FBA 121) per step; no CEEDUMP, no CEE / abend / $HASP375 message, no step skipped.
+Each step: `EXEC PGM=PACZ2D`, STEPLIB `Z00000.PACMAN.LOAD` (IGD103I / IGD104I), CEEOPTS ALL31(OFF),STACK(,,BELOW).
+| Step | Case | RC | SYSOUT lines | zos_equiv vs oracle 307 | = model |
+|---|---|---|---|---|---|
+| RUN1 | MOVES | 0000 | 160 | identical, stream 9780-9939 | MVS6-MOVES |
+| RUN2 | RAND | 0000 | 643 | identical, stream 9942-10584 | MVS6-RAND |
+| RUN3 | CATCH1 | 0000 | 302 | identical, stream 10587-10888 | MVS6-CATCH1 |
+| RUN4 | WIN0 | 0000 | 2029 | identical, stream 10891-12919 | MVS6-WIN0 |
+| RUN5 | CATCH0 | 0000 | 291 | identical, stream 12922-13212 | MVS6-CATCH0 |
+`zos_equiv.py ... 307-PACREL20.json.gz --map PACMAIN=PACZ2D --subset`: 5 runs identical, 0 failures, PASS (20 oracle
+runs not in this job). Framing removed: ASA column and record padding only; maximum line 60 characters. First
+evidence that the full Pac-Man program object runs under profile A (AMODE 24, RMODE 24, LE ALL31(OFF), stack below)
+with output identical to 2.0-mvs-max for these five deterministic CLASSIC games.

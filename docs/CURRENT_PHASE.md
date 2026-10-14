@@ -269,5 +269,6 @@ the user approves it. main and the MVS release are not touched.
 - Z1 members uploaded and verified 9/9, other members 14/14 unchanged; PACZ2HSA JOB08810 RC 0, 266 records, END
   processed, no diagnostic, OBJ(PACHSIO) written: PASS.
 - PACZ2BLD JOB08888 (binder LIST without MAP): 10 COBOL RC 0 clean, PACTSO / PACHSIO RC 0, PACFSIO RC 4 = C3 only,
-  LINK RC 0, LOAD(PACZ2D) AMODE 24 / RMODE 24 / RENT, entry PACMAIN: build PASS. NEXT: execution jobs (PACZ2DRV,
-  C1..C7, ST0/STF, G1..G3, RP, S2) only after the user's approval; nothing submitted after PACZ2BLD.
+  LINK RC 0, LOAD(PACZ2D) AMODE 24 / RMODE 24 / RENT, entry PACMAIN: build PASS (accepted as build of record).
+- PACZ2C1 JOB08984: RUN1..RUN5 RC 0, = oracle 307 and models, 3,586 spool lines: PASS. NEXT: PACZ2C2 (or another
+  job) only after the user's approval.
