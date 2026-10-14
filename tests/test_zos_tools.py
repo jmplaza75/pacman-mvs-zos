@@ -268,3 +268,31 @@ assert bad >= 1 and 'DUPLICATED STEP NAME' in ' '.join(msgs), msgs
 print('zos_equiv --subset anchoring: G2B46..G2B49 (identical output) each at its own block (G2B49 = 104321-104525), '
       'mutation / truncation / order / wrong-level output detected, duplicated or undelimitable steps not anchorable: '
       'PASS')
+
+# 7. LE storage-initialization tests: ST0 / STF carry exactly their STORAGE option, every other deck exactly the profile A
+#    CEEOPTS; the ST0 / STF cross-check of tools/zowe/zos_arcade_check.py fails on any SYSOUT difference
+BASE = 'ALL31(OFF),STACK(,,BELOW)'
+WANT = {'PACZ2ST0': BASE + ',STORAGE(00,NONE,00)', 'PACZ2STF': BASE + ',STORAGE(FF,NONE,FF)'}
+for f in sorted((R / 'jcl/zos').glob('PACZ2*.jcl')):
+    vals = re.findall(r'//CEEOPTS  DD \*\n(.*)\n/\*', f.read_text())
+    assert set(vals) <= {WANT.get(f.stem, BASE)}, (f.name, set(vals))
+    assert f.stem not in WANT or (vals and set(vals) == {WANT[f.stem]}), f.name
+import zos_arcade_check as ZAC  # noqa: E402
+
+
+def two_jobs(a, b):
+    with tempfile.TemporaryDirectory() as t:
+        da = spool(Path(t) / 'a', [(k, None, 'PACZ2D', '0000') for k in a], a)
+        db = spool(Path(t) / 'b', [(k, None, 'PACZ2D', '0000') for k in b], b)
+        return ZAC.cross_check(da, db)
+
+
+st = {'G2B21': [l.rstrip() for l in ZAC.expected('G2B21')[1]], 'G2R7': [l.rstrip() for l in ZAC.expected('G2R7')[1]]}
+assert two_jobs(st, st) == (True, 2)
+diff = {k: list(v) for k, v in st.items()}
+diff['G2R7'][5] = diff['G2R7'][5].replace('0', '1', 1)
+assert two_jobs(st, diff) == (False, 2)
+assert two_jobs(st, {'G2R7': st['G2R7'], 'G2B21': st['G2B21']})[0] is False        # different step order
+assert two_jobs(st, {'G2B21': st['G2B21']})[0] is False                             # a step missing
+print('ST0 / STF: exact STORAGE CEEOPTS on ST0 / STF only, profile A CEEOPTS on every other deck; cross-check passes on '
+      'identical SYSOUT and fails on a one-character difference: PASS')

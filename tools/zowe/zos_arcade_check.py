@@ -75,6 +75,14 @@ def expected(step):
     return None, None
 
 
+def cross_check(d1, d2):
+    """PACZ2ST0 / PACZ2STF: the same steps in the same order, and every step's application SYSOUT identical (ASA column
+    and record padding removed as everywhere, nothing else). Returns (identical, number of steps)."""
+    from zos_equiv import zos_runs
+    r1, r2 = zos_runs(d1)[2], zos_runs(d2)[2]
+    return list(r1) == list(r2) and all(r1[k]['lines'] == r2[k]['lines'] for k in r1), len(r1)
+
+
 def main():
     oracle = json.load(gzip.open(ORACLE))
     bad = 0
@@ -116,9 +124,8 @@ def main():
                   + ('' if ok else f' - first difference at line {i + 1}'))
             bad += not ok
     if len(sys.argv) == 3:                     # two jobs of the same steps (PACZ2ST0 / PACZ2STF): identical output
-        r1, r2 = (health(d, tuple(PMAP.values()))[2] for d in sys.argv[1:])
-        same = list(r1) == list(r2) and all(r1[k]['lines'] == r2[k]['lines'] for k in r1)
-        print(f'cross-check: {len(r1)} steps, every SYSOUT identical between the two jobs: {same}')
+        same, n = cross_check(*sys.argv[1:])
+        print(f'cross-check: {n} steps, every SYSOUT identical between the two jobs: {same}')
         bad += not same
     print('ARCADE CHECK ' + ('PASS' if not bad else f'FAIL ({bad})'))
     sys.exit(1 if bad else 0)
