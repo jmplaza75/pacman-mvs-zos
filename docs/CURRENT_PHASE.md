@@ -287,8 +287,12 @@ the user approves it. main and the MVS release are not touched.
 - Site retention removed the older ZOS-2 jobs from the spool (JOB08497 .. JOB09031); the local copies under build/zos
   (git-ignored) were the only full spool record; preserved in docs/evidence/zos2-spool (commit 2fc01d9).
 - PACZ2ST0 JOB09191 (STORAGE 00) / PACZ2STF JOB09195 (STORAGE FF): both = oracle 310 and models, SYSOUT identical
-  between them: PASS. Remaining ZOS-2 jobs: PACZ2S2, PACZ2RP (RP needs its anchoring design first). NEXT: only after
-  the user's decision. CLIST install / interactive EXEC stay in the later z/OS platform/install phase.
+  between them: PASS. Remaining ZOS-2 jobs: PACZ2S2, PACZ2RP (RP needs its anchoring design first).
+- PACZ2S2 review (2026-10-14): not built. The S2 alarm patterns (D41) are observable only in the 25 TSD dry runs S2T1..
+  S2T25 of oracle 308 (3270 streams: WCC alarm bit X'04', bell-only writes; tests/test_s2.py, tests/ref_s2.py), and TSD
+  is outside ZOS-2. The 4 line-mode runs S2L1..S2L4 ignore the alarm ("no screen sent") and their oracle 308 blocks are
+  byte-identical to blocks already PASS on z/OS (RUN7 C2, RTB7 G2, G2B19 G3, TSO2 C7). Decision pending: defer S2 to the
+  TSD phase, or amend the ZOS-2 scope for TSD dry runs. NEXT: only after the user's decision. CLIST install / interactive EXEC stay in the later z/OS platform/install phase.
 - Tool fix 4ff8b4d (accepted): zos_equiv --subset anchors each step at its own oracle block.
 - KNOWN ZOS-2 TOOLING ISSUE (open, not to be solved before an RP-specific design is approved): oracle 309 (RP) holds
   80 run datasets for 81 PACMAIN run steps (RPT1's TSD output follows the IEBUPDTE listing after one empty line, not
