@@ -238,3 +238,31 @@ blocks and identical; ref_gp2 identical: ARCADE CHECK PASS.
 |---|---|---|---|---|---|
 | G2B19 | G2CLR `AI0`, TURN | 0000 | 2493 | 70270-72762 | LEVEL 001; fruits appear at 30 and 70 items (EV=A----, BT=030); the first is eaten (EV=-F---, FRUITS EATEN 001), the second expires (BT 001 -> 000 at IT=089 without F); power pellets FR=020, a second power during the fright refreshes FR=017 -> 020 (twice); level clear T183 CLEARED (EV=---C-) -> L LV=002 BK=S BV=0300, board reloaded (T184 L=099 after a full board, pellets back on the rows); level-2 power FR=017; end QUIT, TURNS 0000190, SCORE 0001370, LEVEL 002 |
 | G2T3 | GPTSO, PARM `TSO AI0 2 ... A03` | 0000 | 370 | 112474-112843 | TSO line mode, 2 ghosts (L=099 at T000); start level 03 from the PARM: LEVEL 003, L LV=003 AI=0 (AI0 invariant under the +1 bump) BK=O BV=0500; power FR=014; 1 ghost eaten (EV=GHST); T019 DIED; 24 prompts; blank card = redraw (T003 shown twice); end QUIT, LIVES 2, LEVEL 003 |
+
+## Z2-4 PACZ2DRV (JOB09164) - QRY1 capability parsing and TSOT1 real clock
+Deck jcl/zos/PACZ2DRV.jcl (commit f6ba545): COBQ2 / ASMT removed by the user, so LINKQ / LINKT bind the reference-build
+objects of JOB08888. Read-only proof before submission: no job submitted after JOB08888 references PACMAN.OBJ;
+OBJ(PACQRY) carries the compile timestamp 20261014113044 = JOB08888 COB9 (11:30:44; Z2-1 compiled at 09:48:58);
+OBJ(PACTSO) = 10 records (= "10 Object Records Written" of JOB08888 ASM1), END IDR date 2026-287, and its 424 TXT
+bytes equal the assembled code of the source (359 bytes listed by Z2-1, 321 by JOB08888, 0 differences; the other
+65 bytes are the SAVE 18F'0' remainder and T0SET X'00', all zero). Local: precheck PASS, QRY1 model = own oracle
+block, TSOT1 oracle block satisfies RT3, estimate ~800.
+Submitted once, spool kept. Job CC 0000; spool 880 lines (JESMSGLG 23, JESJCL 84, JESYSMSG 232, SYSPRINT 470, SYSOUT
+71). All 6 steps IEF142I COND CODE 0000; no CEE / abend / $HASP375; only SYSPRINT (build) / SYSOUT (run) spool.
+| Step | RC | Result |
+|---|---|---|
+| COBQ1 (PACQRYT) | 0000 | no IGY message |
+| LINKQ | 0000 | LIST,AMODE=24,RMODE=24,RENT; INCLUDE OBJ(PACQRYT) + OBJ(PACQRY); PACQRYT program object FORMAT 3, AMODE 24, RMODE 24, RENT YES, MAIN_EP PACQRYT; severity 4/8/12/16 NONE |
+| QRY1 (PACQRYT) | 0000 | STEPLIB Z00000.PACMAN.LOAD; 50 lines = own oracle 310 block 38512-38561 and = qry_cases model (20 QRY lines with C/H/GE/AW/AH, 29 QSL startup sequences, QRY TEST END) |
+| COBT (PACTSOT) | 0000 | no IGY message |
+| LINKT | 0000 | INCLUDE OBJ(PACTSOT) + OBJ(PACTSO); PACTSOT FORMAT 3, AMODE 24, RMODE 24, RENT YES, MAIN_EP PACTSOT; severity 4/8/12/16 NONE |
+| TSOT1 (PACTSOT) | 0000 | STEPLIB Z00000.PACMAN.LOAD; 21 TSOT lines, RT3 rules PASS: 20 deadlines RC 0, lateness 0 ms (one 1 ms at #18), intervals 149-151 ms, LA (deadline 2900, already passed) RC 4 at 3000 = 0 ms after #20 |
+First z/OS execution of PACTSO's STCK / STIMER WAIT path (the game's batch REALTIME runs use simulated quanta; CLOK /
+WDLN reach PACTSO only in TSC). Host timing only; no terminal / TN3270 involved.
+
+## Site retention of job output (observed 2026-10-14)
+A read-only job listing after G3 shows only JOB09069 (G1), JOB09114 (G2), JOB09128 (G3) of the ZOS-2 jobs; z/OSMF
+returns "Zero jobs were returned" for JOB08497, JOB08888, JOB08984, JOB09031: the site's retention removed them (no
+purge by this project, D44). The complete spool of every job is kept locally under build/zos/<JOBNAME>-<JOBID>/
+(downloaded right after each job), but build/ is git-ignored. Also listed: JOB08863 CXZ00000 (class C4Z, ACTIVE) and
+TSU09158, not submitted by this project, left untouched.
