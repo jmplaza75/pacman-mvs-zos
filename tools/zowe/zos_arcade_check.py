@@ -14,7 +14,12 @@ independent model tests/ref_gp2.py exactly as tests/test_gp2.py applies it:
   RUN<i> / TSO<i> (the 1.0-MVS oracle runs of the GP2 deck) = tests/test_mvs8.py models (zos_classic_check.model);
   TSOT1 (PACTSOT driver of the PACTSO clock)        = real elapsed times: checked with the RT3 rules of tests/test_rt.py
                                                       (zos_equiv --clock) instead of an exact comparison.
-Usage: zos_arcade_check.py SPOOLDIR [SPOOLDIR ...]   (read-only; exit 0 only if everything passes)
+  R3B<i> (RP3_BAT[i], the RP deck, oracle JOB 309)  = tests/test_rp.py: CLASSIC TURN = the 1.0-MVS oracle run,
+                                                      CLASSIC REALTIME = ref_rt.simulate(cards, per=period(speed)),
+                                                      ARCADE = ref_gp2.rt_simulate / simulate with the start level and
+                                                      period (anchoring: zos_equiv.anchors, its KNOWN_BOUNDARIES entry).
+Usage: zos_arcade_check.py [--oracle 309] SPOOLDIR [SPOOLDIR ...]   (default oracle 310; read-only; exit 0 only if
+       everything passes)
 """
 import gzip
 import json
@@ -28,13 +33,13 @@ from zos_classic_check import BUILD, health  # noqa: E402
 from zos_equiv import compare  # noqa: E402
 import ref_gp2 as L  # noqa: E402
 import ref_rt  # noqa: E402
-from make_deck import GP2_BAT, GP2_RT, GP2_TSO, RT_BAT, S1_SILENT  # noqa: E402
+from make_deck import GP2_BAT, GP2_RT, GP2_TSO, RP3_BAT, RT_BAT, S1_SILENT  # noqa: E402
 from zos_equiv import clock_ok  # noqa: E402
 
 CLOCK = {'TSOT1'}
 PMAP = {'PACMAIN': 'PACZ2D', 'PACQRYT': 'PACQRYT', 'PACTSOT': 'PACTSOT'}
 
-ORACLE = R / 'tests/oracle20/310-PACBLGP2.json.gz'
+ORACLES = {'310': R / 'tests/oracle20/310-PACBLGP2.json.gz', '309': R / 'tests/oracle20/309-PACBLDRP.json.gz'}
 
 
 def cards(d, c):
@@ -52,6 +57,17 @@ def expected(step):
         return 'PACQRYT recorded replies + startup sequences', out + seq_lines() + ['QRY TEST END']
     if step in CLOCK:
         return 'PACTSOT clock (RT3 timing rules)', None
+    if step.startswith('R3B'):                 # tests/test_rp.py, the RP3 BAT runs
+        play, d, c, rules, st, sp = RP3_BAT[int(step[3:]) - 1]
+        cs, start, per = cards(d, c), L.parse_start(st), ref_rt.period(sp)
+        if rules == 'C':
+            if play == 'T':
+                from test_g0 import oracle
+                return f'CLASSIC TURN {d}/{c} = 1.0-MVS oracle', oracle()[0][c]
+            return f'CLASSIC REALTIME {d}/{c} per {per}', ref_rt.simulate(cs, per=per)
+        if play == 'R':
+            return f'ARCADE REALTIME {d}/{c} per {per}', L.rt_simulate(cs, start, per=per)
+        return f'ARCADE TURN {d}/{c}', L.simulate(cs, start=start)
     i = int(step[3:]) - 1
     if step.startswith('G2B'):
         d, c, st = GP2_BAT[i]
@@ -84,7 +100,12 @@ def cross_check(d1, d2):
 
 
 def main():
-    oracle = json.load(gzip.open(ORACLE))
+    if sys.argv[1:2] == ['--oracle']:
+        oname = sys.argv[2]
+        del sys.argv[1:3]
+    else:
+        oname = '310'
+    oracle = json.load(gzip.open(ORACLES[oname]))
     bad = 0
     for d in sys.argv[1:]:
         job, steps, runs, hb, lines = health(d, tuple(PMAP.values()))
