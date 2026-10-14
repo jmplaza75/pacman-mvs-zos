@@ -44,7 +44,7 @@
        OBJECT-COMPUTER. IBM-370.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
-       01  MAP-REQ COPY PACMREQ.
+       COPY PACMREQ.
        01  RT-Q                  PIC 9(7) VALUE 0.
        01  RT-STEPS              PIC 9(7) VALUE 0.
        01  RT-CUR                PIC X VALUE SPACE.
@@ -86,9 +86,9 @@
        01  WS-R                  PIC 9.
        01  WS-NOP                PIC 9.
        LINKAGE SECTION.
-       01  PAC-STATE COPY PACSTATE.
-       01  PAC-REQ COPY PACREQ.
-       01  PAC-ARC COPY PACARC.
+       COPY PACSTATE.
+       COPY PACREQ.
+       COPY PACARC.
        PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-ARC.
        MAIN-PARA.
            IF REQ-OP = 'RINI'

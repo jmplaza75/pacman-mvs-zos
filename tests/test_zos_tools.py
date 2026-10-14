@@ -128,6 +128,24 @@ bad, _ = check(out, steps=[(s, p, g, '0004' if s == 'TSO6' else rc) for s, p, g,
 assert bad == 1, 'a different RC must fail'
 print(f'zos_equiv: 25 simulated runs = oracle 315; {len(MUT) + 2} mutations detected: PASS')
 
+
+def check_sub(names, outputs=None):
+    o = outputs or {k: out[k] for k in names}
+    with tempfile.TemporaryDirectory() as t:
+        _, _, runs = zos_runs(spool(Path(t) / 's', [(k, None, 'PACZ2D', '0000') for k in o], o))
+        return compare(oracle, runs, pmap, subset=True)
+
+
+for names in (['RUN1', 'RUN2', 'RUN3', 'RUN4', 'RUN5'], ['RUN10'], ['RUN9', 'RUN11', 'TSO6'], ['RUN17', 'TSO1', 'TSO6']):
+    bad, msgs = check_sub(names)
+    assert bad == 0 and sum(m.startswith('OK') for m in msgs) == len(names), msgs
+assert check_sub(None, {'RUN6': out['RUN7'], 'RUN7': out['RUN6']})[0] > 0, 'swapped outputs'
+assert check_sub(None, {'RUN6': out['RUN6'], 'RUN99': out['RUN7']})[0] > 0, 'step not in the oracle'
+assert check_sub(None, {'RUN11': out['RUN11'][:-1] + [out['RUN11'][-1] + ' ']})[0] == 0  # trailing blank = padding
+assert '=' in out['RUN11'][1]
+assert check_sub(None, {'RUN11': out['RUN11'][:1] + [out['RUN11'][1].replace('=', ':', 1)] + out['RUN11'][2:]})[0] > 0
+print('zos_equiv --subset: 4 chunks PASS; swapped outputs, unknown step, changed character detected: PASS')
+
 # 3. make_deck.py --target zos
 with tempfile.TemporaryDirectory() as t:
     t = Path(t)

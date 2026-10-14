@@ -28,7 +28,7 @@
        OBJECT-COMPUTER. IBM-370.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
-       01  MAP-REQ COPY PACMREQ.
+       COPY PACMREQ.
        01  GS-DATA               PIC X(15) VALUE '190930209419023'.
        01  GS-TABLE REDEFINES GS-DATA.
            05  GS-ENTRY          OCCURS 3 TIMES.
@@ -99,9 +99,9 @@
        01  WS-CN                 PIC 9(7).
        01  WS-CD                 PIC 9(4).
        LINKAGE SECTION.
-       01  PAC-STATE COPY PACSTATE.
-       01  PAC-REQ COPY PACREQ.
-       01  PAC-ARC COPY PACARC.
+       COPY PACSTATE.
+       COPY PACREQ.
+       COPY PACARC.
        PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-ARC.
        MAIN-PARA.
            IF REQ-OP = 'RSET'

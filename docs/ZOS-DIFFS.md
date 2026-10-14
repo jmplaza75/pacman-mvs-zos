@@ -1,17 +1,27 @@
 # z/OS differences register (Z-entries, docs/ZOS-MIGRATION-PLAN.md R0)
 Every difference between z/OS and the 2.0-mvs-max oracle that z/OS forces: cause, evidence, test that pins it, user
-approval. Empty until a difference is proven.
+approval.
+
+## Z-entries
+- **Z1 - ANS-68 `01 <name> COPY <member>.` -> `COPY <member>.`** (ex C2; approved by the user 2026-10-14, branch zos
+  only). Cause: Enterprise COBOL 6.5 (ANS-85) inserts the member after the 01 instead of replacing the entry
+  (IKFCBL00), so every name is defined twice (Z2-1 JOB08497, RC 12 in 9 modules). Change: the 28 listed statements of
+  PACMAIN, PACGAME, PACMAP, PACAI, PACINPT, PACDISP, PACPLAT, PACSCR, PACRT become `COPY <member>.` at the same column;
+  each member already owns the identical `01 <name>.` (D16), so the record layouts are those of 2.0-mvs-max.
+  Guards: tests/zos_c2.py + tests/zos_c2.json (exactly these 28 substitutions, copybooks and every other src file =
+  2.0-mvs-max), tests/test_core_frozen.py (explicit Z1 allowance: reversing the listed lines restores the frozen
+  hash), tests/test_g8.py (source diff since mvs-s2 limited to Z1), tools/zowe/r3_gate.py (MVS generator and release
+  decks unchanged on the 2.0-mvs-max sources; z/OS-tree MVS decks differ only by Z1 lines). main, 2.0-mvs-max and the
+  MVS release are untouched; MVS is not rebuilt from branch zos. Proof of unchanged behaviour: the ZOS-2 runs compared
+  with the oracle (Z2-2..Z2-4).
 
 ## Candidates (not yet differences)
-- C1 (ZOS-0 A3): paragraph name `VALIDATE` in src/cobol/PACQRY.cob is an Enterprise COBOL 6 reserved word; expected
-  compile error in ZOS-2. **Not confirmed by the compiler** (Z2-1 JOB08497: PACQRY RC 0000, no message at all). No
-  change needed; kept here only as the record of the ZOS-0 prediction.
-- C2 (Z2-1 JOB08497): ANS-68 `01  <name> COPY <member>.` in 9 modules (PACMAIN, PACGAME, PACMAP, PACAI, PACINPT,
-  PACDISP, PACPLAT, PACSCR, PACRT; 28 statements). IKFCBL00 replaces the whole 01 entry by the member (whose own first
-  entry is `01 <name>.`, D16); Enterprise COBOL 6.5 (ANS-85) inserts the member text after `01 <name>`, so every such
-  name is defined twice: IGYDS1159-E / IGYDS1082-E at the COPY, IGYSC2025-W on the LINKAGE copies, IGYPS0037-S on
-  every reference; RC 0012. All 260 printed messages name only these 01 items. Mechanical dialect difference;
-  resolution pending the user's decision (docs/evidence/zos2-portable-core.md).
+- C1 (ZOS-0 A3): paragraph name `VALIDATE` in src/cobol/PACQRY.cob predicted as an Enterprise COBOL 6 reserved-word
+  error. **Disproved** (Z2-1 JOB08497: PACQRY RC 0000, no message). Not renamed; closed.
+- C2: became Z1 (above).
 - C3 (Z2-1): ASMA303W in PACFSIO (overlapping USING *,12 and USING ABEXIT,15 in the ESTAE exit), RC 0004; the only
-  affected reference, `S 12,ABOFF`, resolved to base R15 (5BC0 F014), the base the code requires. Benign, no change
-  proposed; to be accepted (or not) by the user.
+  affected reference, `S 12,ABOFF`, resolved to base R15 (5BC0 F014), the base the code requires. **Known z/OS
+  assembler warning, accepted provisionally for ZOS-2 (user, 2026-10-14), not resolved**: PACFSIO passes with RC 4
+  only if ASMA303W is its sole diagnostic, the listing still shows `S 12,ABOFF` with base R15, and no other assembler
+  warning or error appears. Technical debt to revisit with the ESTAE / recovery work; PACFSIO is not changed to
+  silence it.

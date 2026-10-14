@@ -146,8 +146,8 @@
            05  HN-LVL            PIC 999.
            05  FILLER            PIC X(60).
        LINKAGE SECTION.
-       01  PAC-REQ COPY PACREQ.
-       01  PAC-DS COPY PACDS.
+       COPY PACREQ.
+       COPY PACDS.
        PROCEDURE DIVISION USING PAC-REQ PAC-DS.
        MAIN-PARA.
            IF REQ-OP = 'INIT'

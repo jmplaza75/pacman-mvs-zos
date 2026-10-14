@@ -61,7 +61,7 @@
        01  WS-V                  PIC 9(4).
        01  WS-NOP                PIC 9.
        LINKAGE SECTION.
-       01  PAC-REQ COPY PACREQ.
+       COPY PACREQ.
        PROCEDURE DIVISION USING PAC-REQ.
        MAIN-PARA.
            IF REQ-OP = 'OPEN'

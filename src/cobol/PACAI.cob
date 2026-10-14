@@ -15,7 +15,7 @@
        OBJECT-COMPUTER. IBM-370.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
-       01  MAP-REQ COPY PACMREQ.
+       COPY PACMREQ.
        01  WS-WORK               PIC 9(9).
        01  WS-QUOT               PIC 9(9).
        01  WS-REM                PIC 9(5).
@@ -44,8 +44,8 @@
        01  DIST-T                PIC S999.
        01  BEST-DIST             PIC S999.
        LINKAGE SECTION.
-       01  PAC-STATE COPY PACSTATE.
-       01  PAC-ARC COPY PACARC.
+       COPY PACSTATE.
+       COPY PACARC.
        PROCEDURE DIVISION USING PAC-STATE PAC-ARC.
        MAIN-PARA.
            PERFORM GHOST-MOVE THRU GHOST-MOVE-EXIT

@@ -53,9 +53,9 @@
        OBJECT-COMPUTER. IBM-370.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
-       01  PAC-STATE COPY PACSTATE.
-       01  PAC-REQ COPY PACREQ.
-       01  PAC-ARC COPY PACARC.
+       COPY PACSTATE.
+       COPY PACREQ.
+       COPY PACARC.
        01  WS-CFG.
            05  WS-CFG-CH         PIC X OCCURS 5 TIMES.
        01  WS-K                  PIC 99.

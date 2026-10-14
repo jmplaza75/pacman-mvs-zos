@@ -67,7 +67,7 @@
        01  WS-SAVE-OP            PIC X(4).
        01  WS-G                  PIC 9.
        01  WS-GX                 PIC 99.
-       01  PAC-DS COPY PACDS.
+       COPY PACDS.
        01  M-FRAMES              PIC 9(4) VALUE 0.
        01  M-LINES               PIC 9(5) VALUE 0.
        01  M-CHARS               PIC 9(7) VALUE 0.
@@ -243,9 +243,9 @@
            05  FILLER            PIC X(25)
                    VALUE ': HIGH SCORE NOT RECORDED'.
        LINKAGE SECTION.
-       01  PAC-STATE COPY PACSTATE.
-       01  PAC-REQ COPY PACREQ.
-       01  PAC-ARC COPY PACARC.
+       COPY PACSTATE.
+       COPY PACREQ.
+       COPY PACARC.
        PROCEDURE DIVISION USING PAC-STATE PAC-REQ PAC-ARC.
        MAIN-PARA.
            IF REQ-MODE = 'TSC' OR REQ-MODE = 'TSD'

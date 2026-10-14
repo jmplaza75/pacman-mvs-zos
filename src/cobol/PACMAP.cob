@@ -35,8 +35,8 @@
        01  WS-ROW                PIC 99.
        01  WS-COL                PIC 99.
        LINKAGE SECTION.
-       01  PAC-STATE COPY PACSTATE.
-       01  MAP-REQ COPY PACMREQ.
+       COPY PACSTATE.
+       COPY PACMREQ.
        PROCEDURE DIVISION USING PAC-STATE MAP-REQ.
        MAIN-PARA.
            MOVE 0 TO M-FLAG.

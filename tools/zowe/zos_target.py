@@ -11,19 +11,48 @@ The MVS generator is reused unchanged; only its step builders are replaced for t
   and CEEDUMP; SYSUDUMP DUMMY. Cards, PARM and DDs stay the MVS ones;
 - job card: CLASS=7, NOTIFY=&SYSUID (site rules), no MSGCLASS.
 The default prefix is @@HLQ@@.PACMAN (rendered by tools/zowe/zos_submit.py; no HLQ literal in the repository).
-Extra deck: ZCMP (Z2-1, diagnostic compile inventory: every release COBOL and assembler module, no bind, no run).
+Extra decks: ZCMP (Z2-1, diagnostic compile inventory: every release COBOL and assembler module, no bind, no run);
+ZHSA (Z2-1b, PACHSIO assembled alone, compact listing); the ZOS-2 jobs of CHUNKS (Z2-2..Z2-4): a build job, or a
+deterministic subset of the run steps of an MVS deck, each step taken verbatim from that deck's z/OS rendering, each job
+kept well under the site limit of ~5,000 spool lines (docs/ZOS-ENVIRONMENT.md).
+Listing options (no effect on the object code): COBOL NOSOURCE,NOXREF; HLASM PCONTROL(NOGEN) and no cross-reference
+tables; binder LIST,MAP. Build steps run with COND=(4,LT): RC 4 is accepted by the JCL only so that the known PACFSIO
+ASMA303W (C3) does not flush the bind; the job is then judged on the exact per-step expectations (tools/zowe/zos_plan.py).
 """
 from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent.parent
 PREFIX = '@@HLQ@@.PACMAN'
-COBOL_PARM = ("('RENT,RMODE(24),DATA(24),NODYNAM',", "'TRUNC(STD),NUMPROC(NOPFD)')")
-BIND_PARM = 'LIST,MAP,XREF,AMODE=24,RMODE=24,RENT'
+COBOL_PARM = ("('RENT,RMODE(24),DATA(24),NODYNAM',", "'TRUNC(STD),NUMPROC(NOPFD),NOSOURCE,NOXREF')")
+ASM_PARM = ("('OBJECT,NODECK,PCONTROL(NOGEN)',", "'NOXREF,NORXREF,NODXREF,NOMXREF,NOESD,NORLD')")
+BIND_PARM = 'LIST,MAP,AMODE=24,RMODE=24,RENT'
 CEEOPTS = ['ALL31(OFF),STACK(,,BELOW)']
 JOBNAME = None
 PREFIX_IN_USE = [PREFIX]
 OBJ = {}                  # make_deck temporary object name -> object member
-DECKS = ['ZCMP']
+LOAD = 'PACZ2D'
+# name -> (job name, MVS deck whose z/OS rendering gives the steps, steps in deck order, extra LE options, oracle job)
+CHUNKS = {
+    'Z2BLD': ('PACZ2BLD', 'REL20', [f'COB{i}' for i in range(1, 11)] + ['ASM1', 'ASM2', 'ASM3', 'LINK'], None, None),
+    'Z2DRV': ('PACZ2DRV', 'GP2', ['COBQ1', 'COBQ2', 'LINKQ', 'QRY1', 'COBT', 'ASMT', 'LINKT', 'TSOT1'], None, 310),
+    'Z2C1': ('PACZ2C1', 'REL20', ['RUN1', 'RUN2', 'RUN3', 'RUN4', 'RUN5'], None, 307),
+    'Z2C2': ('PACZ2C2', 'REL20', ['RUN6', 'RUN7', 'RUN8'], None, 307),
+    'Z2C3': ('PACZ2C3', 'REL20', ['RUN9'], None, 307),
+    'Z2C4': ('PACZ2C4', 'REL20', ['RUN10'], None, 307),
+    'Z2C5': ('PACZ2C5', 'REL20', ['RUN11', 'RUN12'], None, 307),
+    'Z2C6': ('PACZ2C6', 'REL20', ['RUN13', 'RUN14', 'RUN15', 'RUN16'], None, 307),
+    'Z2C7': ('PACZ2C7', 'REL20', ['RUN17', 'RUN18', 'RUN19', 'TSO1', 'TSO2', 'TSO3', 'TSO4', 'TSO5', 'TSO6'], None, 307),
+    'Z2ST0': ('PACZ2ST0', 'GP2', ['RUN3', 'RUN13', 'TSO3', 'G2B21', 'G2R7'], 'STORAGE(00,NONE,00)', 310),
+    'Z2STF': ('PACZ2STF', 'GP2', ['RUN3', 'RUN13', 'TSO3', 'G2B21', 'G2R7'], 'STORAGE(FF,NONE,FF)', 310),
+    'Z2G1': ('PACZ2G1', 'GP2', ['G2B1', 'G2B2', 'G2B9', 'G2B12', 'G2B21', 'G2B33', 'G2B45', 'G2B49', 'G2B55', 'G2T1'],
+             None, 310),
+    'Z2G2': ('PACZ2G2', 'GP2', ['RTB1', 'RTB7', 'RTB8', 'RTB10', 'RTB11', 'S1S2', 'G2R1', 'G2R5', 'G2R7'], None, 310),
+    'Z2G3': ('PACZ2G3', 'GP2', ['S1S3', 'G2B19', 'G2T3'], None, 310),
+    'Z2RP': ('PACZ2RP', 'RP', ['R3B1', 'R3B2', 'R3B4', 'R3B5', 'R3B6', 'R3B7', 'R3B9'], None, 309),
+    'Z2S2': ('PACZ2S2', 'S2', ['S2L1', 'S2L2', 'S2L4'], None, 308),
+}
+DECKS = ['ZCMP', 'ZHSA'] + list(CHUNKS)
+_md = []
 ZCMP_COBOL = ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT',
               'PACQRYT', 'PACTSOT']
 ZCMP_ASM = ['PACTSO', 'PACFSIO', 'PACHSIO']
@@ -52,7 +81,7 @@ def cobol_work():
 
 def compile_step(step, pfx, member, obj):
     OBJ[obj] = member
-    return (f'//{step:<8} EXEC PGM=IGYCRCTL,COND=(0,NE),REGION=0M,\n'
+    return (f'//{step:<8} EXEC PGM=IGYCRCTL,COND=(4,LT),REGION=0M,\n'
             f'//             PARM={COBOL_PARM[0]}\n//             {COBOL_PARM[1]}\n' + COB_LIBS +
             f'//SYSIN    DD DSN={pfx}.COBOL({member}),DISP=SHR\n//SYSLIB   DD DSN={pfx}.COPY,DISP=SHR\n'
             f'//SYSPRINT DD SYSOUT=*\n//SYSLIN   DD DSN={pfx}.OBJ({member}),DISP=SHR\n' + cobol_work())
@@ -69,14 +98,15 @@ def asm_step(step, obj, text):
     member = asm_member(text)
     OBJ[obj] = member
     pfx = PREFIX_IN_USE[0]
-    return (f"//{step:<8} EXEC PGM=ASMA90,COND=(0,NE),PARM='OBJECT,NODECK'\n" + ASM_LIBS +
+    return (f'//{step:<8} EXEC PGM=ASMA90,COND=(4,LT),\n//             PARM={ASM_PARM[0]}\n'
+            f'//             {ASM_PARM[1]}\n' + ASM_LIBS +
             f'//SYSIN    DD DSN={pfx}.ASM({member}),DISP=SHR\n//SYSPRINT DD SYSOUT=*\n'
             f'//SYSLIN   DD DSN={pfx}.OBJ({member}),DISP=SHR\n' + UT.format('SYSUT1'))
 
 
 
 def link_step(pfx, objs, load, entry, step='LINK'):
-    t = (f'//{step:<8} EXEC PGM=IEWBLINK,COND=(0,NE),\n//             PARM=\'{BIND_PARM}\'\n'
+    t = (f'//{step:<8} EXEC PGM=IEWBLINK,COND=(4,LT),\n//             PARM=\'{BIND_PARM}\'\n'
          '//SYSLIB   DD DSN=CEE.SCEELKEX,DISP=SHR\n//         DD DSN=CEE.SCEELKED,DISP=SHR\n'
          f'//OBJ      DD DSN={pfx}.OBJ,DISP=SHR\n//SYSLMOD  DD DSN={pfx}.LOAD,DISP=SHR\n'
          '//SYSPRINT DD SYSOUT=*\n//SYSLIN   DD *\n')
@@ -102,6 +132,7 @@ def no_clist(pfx):
 def apply(md, prefix):
     """Replace the step builders of the make_deck module md for this process (the MVS code is not edited)."""
     PREFIX_IN_USE[0] = prefix
+    _md[:] = [md]
     for name in ('job_card', 'upload', 'compile_step', 'asm_step', 'link_step', 'run_step', 'g8_clist_steps'):
         _mvs[name] = getattr(md, name)
     md.job_card, md.upload, md.compile_step, md.asm_step = job_card, upload, compile_step, asm_step
@@ -125,5 +156,44 @@ def zcmp_deck(pfx):
     return out
 
 
+def zhsa_deck(pfx):
+    """Z2-1b PACZ2HSA: PACHSIO assembled alone (no source change), compact listing: macro expansions not printed
+    (PCONTROL(NOGEN); diagnostics are still listed), no symbol / macro / DSECT cross-reference, ESD or RLD tables."""
+    return (job_card('PACZ2HSA', 'PACMAN ZOS2') +
+            f'//PACHSIO  EXEC PGM=ASMA90,\n//             PARM={ASM_PARM[0]}\n//             {ASM_PARM[1]}\n' +
+            ASM_LIBS + f'//SYSIN    DD DSN={pfx}.ASM(PACHSIO),DISP=SHR\n//SYSPRINT DD SYSOUT=*\n'
+            f'//SYSLIN   DD DSN={pfx}.OBJ(PACHSIO),DISP=SHR\n' + UT.format('SYSUT1'))
+
+
+def steps_of_deck(text):
+    """{step: text} of a deck, split at every EXEC statement (in-stream cards never start with //)."""
+    import re
+    parts = re.split(r'(?m)^(?=//\w+\s+EXEC )', text)
+    return {re.match(r'//(\w+)', b).group(1): b for b in parts[1:]}
+
+
+def chunk_deck(name, pfx):
+    job, base, steps, extra, _ = CHUNKS[name]
+    md = _md[0]
+    if extra:
+        CEEOPTS[:] = [CEEOPTS[0] + ',' + extra]
+    full = steps_of_deck(md.build(base, pfx, LOAD))
+    order = list(full)
+    assert all(s in full for s in steps), [s for s in steps if s not in full]
+    assert [s for s in order if s in steps] == steps, f'{name}: steps not in deck order'
+    out = job_card(job, f'PACMAN ZOS2 {name}')
+    for s in steps:
+        t = full[s].replace('\n//\n', '\n') if full[s].endswith('\n//\n') else full[s]
+        head = t.split('\n', 1)[0]
+        assert re.search(r'COND=\((0,NE|4,LT)\)', head) or 'COND=' not in head, f'{s}: COND refers to other steps'
+        out += t
+    return out
+
+
+import re  # noqa: E402
+
+
 def deck(name, pfx):
-    return {'ZCMP': zcmp_deck}[name](pfx)
+    if name in CHUNKS:
+        return chunk_deck(name, pfx)
+    return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck}[name](pfx)

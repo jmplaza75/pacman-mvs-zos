@@ -42,5 +42,14 @@ items of that module, each member's own first entry is `01 <name>.`, and the mes
 IGYDS1082, IGYSC2025, IGYPS0037. The modules without such a COPY (PACQRY, PACQRYT, PACTSOT) compile with no message.
 Core (PACGAME, PACMAP, PACAI, PACRT): only C2; no other diagnostic.
 
-Status: STOPPED after Z2-1 for the user's decisions (C2 resolution, C3 acceptance, PACHSIO re-assembly, output limit
-for Z2-2..Z2-4). No source changed.
+Status after Z2-1: stopped for the user's decisions (C2 resolution, C3 acceptance, PACHSIO re-assembly, output limit
+for Z2-2..Z2-4). No source changed by Z2-1.
+
+## Decisions and Z1 (2026-10-14)
+- C1 disproved, closed. C3 accepted provisionally (docs/ZOS-DIFFS.md). C2 -> Z1: 28 substitutions on branch zos.
+- Guards: tests/zos_c2.py PASS (28 substitutions in 9 sources; copybooks and all other src = 2.0-mvs-max; negative
+  checks: an extra edit in PACAI and an edit of a copybook both fail); test_core_frozen PASS with the explicit Z1
+  allowance (PACGAME, PACMAP, PACAI; the same two negative checks fail); test_g8, test_mvs8, validate_source PASS;
+  R3 gate PASS (13 release files, 13 regenerations with the current tools on the 2.0-mvs-max sources, 94 generator
+  comparisons with zos-1, 26 source-carrying decks of the zos tree differ only by Z1 lines).
+- Line budget: no LINES=; ZOS-2 jobs = CHUNKS of tools/zowe/zos_target.py, matrix tools/zowe/zos_plan.py.

@@ -1,0 +1,226 @@
+[
+ {
+  "file": "src/cobol/PACAI.cob",
+  "line": 18,
+  "name": "MAP-REQ",
+  "member": "PACMREQ",
+  "old": "       01  MAP-REQ COPY PACMREQ.",
+  "new": "       COPY PACMREQ."
+ },
+ {
+  "file": "src/cobol/PACAI.cob",
+  "line": 47,
+  "name": "PAC-STATE",
+  "member": "PACSTATE",
+  "old": "       01  PAC-STATE COPY PACSTATE.",
+  "new": "       COPY PACSTATE."
+ },
+ {
+  "file": "src/cobol/PACAI.cob",
+  "line": 48,
+  "name": "PAC-ARC",
+  "member": "PACARC",
+  "old": "       01  PAC-ARC COPY PACARC.",
+  "new": "       COPY PACARC."
+ },
+ {
+  "file": "src/cobol/PACDISP.cob",
+  "line": 70,
+  "name": "PAC-DS",
+  "member": "PACDS",
+  "old": "       01  PAC-DS COPY PACDS.",
+  "new": "       COPY PACDS."
+ },
+ {
+  "file": "src/cobol/PACDISP.cob",
+  "line": 246,
+  "name": "PAC-STATE",
+  "member": "PACSTATE",
+  "old": "       01  PAC-STATE COPY PACSTATE.",
+  "new": "       COPY PACSTATE."
+ },
+ {
+  "file": "src/cobol/PACDISP.cob",
+  "line": 247,
+  "name": "PAC-REQ",
+  "member": "PACREQ",
+  "old": "       01  PAC-REQ COPY PACREQ.",
+  "new": "       COPY PACREQ."
+ },
+ {
+  "file": "src/cobol/PACDISP.cob",
+  "line": 248,
+  "name": "PAC-ARC",
+  "member": "PACARC",
+  "old": "       01  PAC-ARC COPY PACARC.",
+  "new": "       COPY PACARC."
+ },
+ {
+  "file": "src/cobol/PACGAME.cob",
+  "line": 31,
+  "name": "MAP-REQ",
+  "member": "PACMREQ",
+  "old": "       01  MAP-REQ COPY PACMREQ.",
+  "new": "       COPY PACMREQ."
+ },
+ {
+  "file": "src/cobol/PACGAME.cob",
+  "line": 102,
+  "name": "PAC-STATE",
+  "member": "PACSTATE",
+  "old": "       01  PAC-STATE COPY PACSTATE.",
+  "new": "       COPY PACSTATE."
+ },
+ {
+  "file": "src/cobol/PACGAME.cob",
+  "line": 103,
+  "name": "PAC-REQ",
+  "member": "PACREQ",
+  "old": "       01  PAC-REQ COPY PACREQ.",
+  "new": "       COPY PACREQ."
+ },
+ {
+  "file": "src/cobol/PACGAME.cob",
+  "line": 104,
+  "name": "PAC-ARC",
+  "member": "PACARC",
+  "old": "       01  PAC-ARC COPY PACARC.",
+  "new": "       COPY PACARC."
+ },
+ {
+  "file": "src/cobol/PACINPT.cob",
+  "line": 64,
+  "name": "PAC-REQ",
+  "member": "PACREQ",
+  "old": "       01  PAC-REQ COPY PACREQ.",
+  "new": "       COPY PACREQ."
+ },
+ {
+  "file": "src/cobol/PACMAIN.cob",
+  "line": 56,
+  "name": "PAC-STATE",
+  "member": "PACSTATE",
+  "old": "       01  PAC-STATE COPY PACSTATE.",
+  "new": "       COPY PACSTATE."
+ },
+ {
+  "file": "src/cobol/PACMAIN.cob",
+  "line": 57,
+  "name": "PAC-REQ",
+  "member": "PACREQ",
+  "old": "       01  PAC-REQ COPY PACREQ.",
+  "new": "       COPY PACREQ."
+ },
+ {
+  "file": "src/cobol/PACMAIN.cob",
+  "line": 58,
+  "name": "PAC-ARC",
+  "member": "PACARC",
+  "old": "       01  PAC-ARC COPY PACARC.",
+  "new": "       COPY PACARC."
+ },
+ {
+  "file": "src/cobol/PACMAP.cob",
+  "line": 38,
+  "name": "PAC-STATE",
+  "member": "PACSTATE",
+  "old": "       01  PAC-STATE COPY PACSTATE.",
+  "new": "       COPY PACSTATE."
+ },
+ {
+  "file": "src/cobol/PACMAP.cob",
+  "line": 39,
+  "name": "MAP-REQ",
+  "member": "PACMREQ",
+  "old": "       01  MAP-REQ COPY PACMREQ.",
+  "new": "       COPY PACMREQ."
+ },
+ {
+  "file": "src/cobol/PACPLAT.cob",
+  "line": 149,
+  "name": "PAC-REQ",
+  "member": "PACREQ",
+  "old": "       01  PAC-REQ COPY PACREQ.",
+  "new": "       COPY PACREQ."
+ },
+ {
+  "file": "src/cobol/PACPLAT.cob",
+  "line": 150,
+  "name": "PAC-DS",
+  "member": "PACDS",
+  "old": "       01  PAC-DS COPY PACDS.",
+  "new": "       COPY PACDS."
+ },
+ {
+  "file": "src/cobol/PACRT.cob",
+  "line": 47,
+  "name": "MAP-REQ",
+  "member": "PACMREQ",
+  "old": "       01  MAP-REQ COPY PACMREQ.",
+  "new": "       COPY PACMREQ."
+ },
+ {
+  "file": "src/cobol/PACRT.cob",
+  "line": 89,
+  "name": "PAC-STATE",
+  "member": "PACSTATE",
+  "old": "       01  PAC-STATE COPY PACSTATE.",
+  "new": "       COPY PACSTATE."
+ },
+ {
+  "file": "src/cobol/PACRT.cob",
+  "line": 90,
+  "name": "PAC-REQ",
+  "member": "PACREQ",
+  "old": "       01  PAC-REQ COPY PACREQ.",
+  "new": "       COPY PACREQ."
+ },
+ {
+  "file": "src/cobol/PACRT.cob",
+  "line": 91,
+  "name": "PAC-ARC",
+  "member": "PACARC",
+  "old": "       01  PAC-ARC COPY PACARC.",
+  "new": "       COPY PACARC."
+ },
+ {
+  "file": "src/cobol/PACSCR.cob",
+  "line": 76,
+  "name": "PAC-PAL",
+  "member": "PACPAL",
+  "old": "       01  PAC-PAL COPY PACPAL.",
+  "new": "       COPY PACPAL."
+ },
+ {
+  "file": "src/cobol/PACSCR.cob",
+  "line": 433,
+  "name": "PAC-STATE",
+  "member": "PACSTATE",
+  "old": "       01  PAC-STATE COPY PACSTATE.",
+  "new": "       COPY PACSTATE."
+ },
+ {
+  "file": "src/cobol/PACSCR.cob",
+  "line": 434,
+  "name": "PAC-REQ",
+  "member": "PACREQ",
+  "old": "       01  PAC-REQ COPY PACREQ.",
+  "new": "       COPY PACREQ."
+ },
+ {
+  "file": "src/cobol/PACSCR.cob",
+  "line": 435,
+  "name": "PAC-DS",
+  "member": "PACDS",
+  "old": "       01  PAC-DS COPY PACDS.",
+  "new": "       COPY PACDS."
+ },
+ {
+  "file": "src/cobol/PACSCR.cob",
+  "line": 436,
+  "name": "PAC-ARC",
+  "member": "PACARC",
+  "old": "       01  PAC-ARC COPY PACARC.",
+  "new": "       COPY PACARC."
+ }
+]

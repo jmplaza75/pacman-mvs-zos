@@ -55,8 +55,12 @@ assert all(len(l) <= 72 for l in clist.replace('@@PREFIX@@', 'HERC01.PACMAN.R20'
 old = git('show', f'{BASE}:./src/clist/PACMAN.clist').stdout.splitlines()
 strip = lambda ls: [l for l in ls if not l.startswith('/*')]
 assert [l.replace('RULES(CLASSIC)', 'RULES(ARCADE)') for l in strip(old)] == strip(lines), 'CLIST code changed'
-changed = git('diff', '--name-only', BASE, '--', 'src/cobol', 'src/copy', 'src/asm').stdout.split()
-assert changed == [], changed
+changed = git('diff', '--name-only', '--relative', BASE, '--', 'src/cobol', 'src/copy', 'src/asm').stdout.splitlines()
+if changed:      # branch zos (ZOS-2): only the explicit z/OS port delta Z1 (tests/zos_c2.py), guarded line by line
+    sys.path.insert(0, str(R / 'tests'))
+    import zos_c2  # noqa: E402
+    assert set(changed) <= {e['file'] for e in zos_c2.table()}, changed
+    zos_c2.guard()
 subprocess.run([sys.executable, str(R / 'tests/test_core_frozen.py')], check=True, stdout=subprocess.DEVNULL)
 assert M.DECKS['REL20'][1:3] == M.DECKS['S2'][1:3] and M.ASM['REL20'] == M.ASM['S2'] and \
     M.DECKS['REL20'][3] == 'PACMAIN' and M.TSO['REL20'] == M.TSO['RELEASE'] and M.DECKS['REL20'][4] == M.DECKS['RELEASE'][4]

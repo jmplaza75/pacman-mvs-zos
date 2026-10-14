@@ -56,7 +56,13 @@ absorb it.
   `@@HLQ@@.PACMAN`: the MVS deck with the step builders of tools/zowe/zos_target.py (no in-stream upload: the members
   verified by zos_sync; IGYCRCTL profile A -> OBJ(member); ASMA90 from ASM(member); IEWBLINK INCLUDE OBJ(...) AMODE 24;
   run steps = the MVS EXEC / PARM / cards / DDs + CEEOPTS, CEEDUMP, SYSUDUMP DUMMY; REL20 without the CLIST steps).
-  `ZCMP` = Z2-1 compile inventory (jcl/zos/PACZ2CMP.jcl). The MVS target is unchanged: `tools/zowe/r3_gate.py`.
+  `ZCMP` = Z2-1 compile inventory (jcl/zos/PACZ2CMP.jcl); `ZHSA` = PACHSIO assembled alone; the ZOS-2 jobs `Z2*`
+  (CHUNKS in tools/zowe/zos_target.py: build, drivers, run subsets, each well under the ~5,000-line site limit;
+  `tools/zowe/zos_plan.py` prints the step / RC / expected-output matrix). Build listings are compact (COBOL
+  NOSOURCE,NOXREF; HLASM PCONTROL(NOGEN), no cross-reference tables; binder LIST,MAP): no effect on the object code.
+  The MVS target is unchanged: `tools/zowe/r3_gate.py` (generator and release decks on the 2.0-mvs-max sources).
+- Z1 (docs/ZOS-DIFFS.md): the shared COBOL sources of branch zos carry 28 `COPY <member>.` substitutions
+  (tests/zos_c2.py); MVS is never rebuilt from branch zos.
 - `tools/zowe/zos_compile_report.py SPOOLDIR`: RC and every IGY / ASMA diagnostic per step.
 - `tools/zowe/zos_equiv.py SPOOLDIR tests/oracle20/<JOB>.json.gz --map PACMAIN=<load>`: every run's SYSOUT equal to
   the oracle run (only the ASA column and the record padding removed; TK4- separator = exactly two empty lines).
