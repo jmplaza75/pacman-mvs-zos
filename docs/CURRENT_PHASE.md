@@ -229,7 +229,11 @@ and not started.
 z/OS PORT (branch `zos`, worktree ~/Documents/Worktrees/Pacman-zOS; `main` keeps the MVS line unchanged).
 Plan docs/ZOS-MIGRATION-PLAN.md APPROVED 2026-10-14 (D44): phases ZOS-0 .. ZOS-10, 2.0-mvs-max = functional oracle,
 release 2.0-ZOS / tag 2.0-zos. Target IBM Z Xplore (shared, non-production), prefix Z00000.PACMAN.
-CURRENT PHASE: ZOS-0 Discovery - A/B/C/D/E PASS (2026-10-14), awaiting the user's approval of the environment and
-the `zos-0` tag; ZOS-1 not started. Evidence docs/evidence/zos0-discovery.md, summary docs/ZOS-ENVIRONMENT.md,
-oracle tests/oracle20 (tools/oracle_extract.py), candidate C1 in docs/ZOS-DIFFS.md (PACQRY paragraph VALIDATE).
-Only z/OS job so far: JOB08215 (IEFBR14, no DD, CC 0000, not purged).
+ZOS-0 Discovery COMPLETE: PASS, no blockers (tag zos-0 on 1e5a9eb, 2026-10-14). Evidence
+docs/evidence/zos0-discovery.md, summary docs/ZOS-ENVIRONMENT.md, oracle tests/oracle20 (tools/oracle_extract.py).
+JOB08215 (IEFBR14, no DD, CC 0000, not purged) is the ZOS-0 submit/spool evidence. No Z00000.PACMAN.* dataset exists.
+Open ZOS-1 questions (NOT settled facts): the Enterprise COBOL release actually used by the site compile procedure;
+AMODE 24 viability; the HLASM / binder build procedure; the z/OS DISPLAY / SYSOUT format; the listing translator for
+the existing tests; PDS viability for Z00000.PACMAN.DATA.
+ZOS-2 candidate C1 (docs/ZOS-DIFFS.md): PACQRY paragraph VALIDATE, unchanged.
+NEXT: ZOS-1 Toolchain - NOT STARTED; its action list is shown to the user and approved before anything runs.
