@@ -1,4 +1,4 @@
-# PACMAN z/OS - target environment (ZOS-0, 2026-10-14; parts A-E done)
+# PACMAN z/OS - target environment (ZOS-0 and ZOS-1, 2026-10-14)
 Evidence: docs/evidence/zos0-discovery.md. Credentials: Zowe secure store only, never in git.
 
 | Item | Value | Status |
@@ -9,7 +9,7 @@ Evidence: docs/evidence/zos0-discovery.md. Credentials: Zowe secure store only, 
 | Zowe | CLI 8.39.0 (v3.6.0); profiles zosmf (10443), tso (FB3, IZUFPROC, cp 1047), ssh, rse, zftp; cics* out of scope | B1 |
 | Enterprise COBOL | IGY420 (4.2), IGY640 (6.4), IGY650 (6.5) cataloged; site IGYWCL = **6.5.0 P260714** (LNGPRFX IGY650), CODEPAGE(1140), DATA(31), RMODE(AUTO), RENT, TRUNC(STD), NUMPROC(NOPFD) | ZOS-1 J2 |
 | LE | CEE.* (SCEELKED, SCEERUN, SCEERUN2, SIBMAM24, ...); TSO (IZUFPROC) allocates a site CEEOPTS | B4/B7 |
-| HLASM | HLA.SASMMOD1/2, HLA.SASMMAC1/2; no assembler PROC in user examples | B4/B5 |
+| HLASM | **R6.0** (PTF UO07449), ASMA90 from HLA.SASMMOD1; no site assembler PROC (direct step, docs/zos-build.md) | B4, ZOS-1 J3 |
 | Macros | SYS1.MACLIB, SYS1.MODGEN (PDS FB 80) | B4 |
 | Dataset types | PDSE default for user libraries; Z00000.PACMAN.DATA allocated as a true PDS (FB/80/80); site ACS reduces allocations > 200 KB (IGD01007I ZXPACS) | B3, ZOS-1 J1 |
 | Job card | CLASS=7, NOTIFY=&SYSUID, no MSGCLASS in any example (site default) | B5/B6 |
@@ -19,3 +19,5 @@ Evidence: docs/evidence/zos0-discovery.md. Credentials: Zowe secure store only, 
 | Submit + spool | IEFBR14 JOB08215 CC 0000, CLASS 7 INIT 1, JES2 node SVSCJES2, spool JESMSGLG/JESJCL/JESYSMSG via Zowe; no MSGCLASS needed | E |
 | Project datasets | Z00000.PACMAN.{COBOL,COPY,ASM,CLIST,OBJ,LOAD} PDSE + DATA PDS (J1 JOB08252); 23 sources uploaded IBM-037, identical | ZOS-1 |
 | Binder | IEWBLINK, SYSLIB CEE.SCEELKEX + CEE.SCEELKED; program objects FORMAT 3 in PDSE | ZOS-1 J2 |
+| DISPLAY output | SYSOUT RECFM FBA LRECL 121 (120 data characters; longer lines split); 2.0 oracle max line 120 | ZOS-1 J3/J4 |
+| Build profile | A (D45): RENT, RMODE(24), DATA(24), binder AMODE 24 / RMODE 24, LE ALL31(OFF) STACK BELOW; B (AMODE 31) fallback only | ZOS-1 |

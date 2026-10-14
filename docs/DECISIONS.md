@@ -289,3 +289,9 @@
   it runs the complete program without source changes; otherwise stop and report before AMODE 31 or any source change.
   Work on branch `zos` in worktree ~/Documents/Worktrees/Pacman-zOS. Job output left to site retention, never purged
   automatically. ZOS-0 discovery-only; the single IEFBR14 is authorised by the user after being shown in full.
+- D45 (ZOS-1, APPROVED 2026-10-14, docs/zos-build.md) Initial z/OS port build profile A: Enterprise COBOL 6.5.0
+  P260714 with `RENT,RMODE(24),DATA(24),NODYNAM,TRUNC(STD),NUMPROC(NOPFD)`; binder IEWBLINK `RENT,AMODE=24,RMODE=24`;
+  LE `ALL31(OFF),STACK(,,BELOW)`; HLASM R6.0. Evidence J3 JOB08331 proves only the toolchain / probe viability in
+  AMODE 24, NOT that the complete Pac-Man application is viable in AMODE 24. Profile B (AMODE 31, J4 JOB08335) is a
+  documented fallback only, never adopted automatically: if a real Pac-Man module exposes an AMODE 24 limitation,
+  stop and report before changing profile or source.

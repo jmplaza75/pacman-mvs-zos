@@ -1,4 +1,4 @@
-# ZOS-1 toolchain evidence (2026-10-14) - parts 1-6
+# ZOS-1 toolchain evidence (2026-10-14) - COMPLETE (tag zos-1)
 Authorised: local Zowe helpers, J1 PACZALLO, attribute check, IBM-037 uploads with binary round trip, J2 PACZHELO
 and its analysis. J3 / J4 (profile probes) and the probe sources are prepared but NOT uploaded or submitted.
 Raw spools: build/zos/<JOBNAME>-<JOBID>/ (gitignored). Nothing deleted, nothing purged, one job at a time.
@@ -91,3 +91,10 @@ lines; RUN output equals the expected probe lines (addresses aside).
   ALL31(OFF), STACK BELOW) and in AMODE 31. This is NOT a proof for the complete Pac-Man module (TPUT / TGET /
   STFSMODE / ESTAE / BPAM paths, size, LE services); that is established in ZOS-2 / ZOS-3.
 Jobs of ZOS-1: JOB08252 (J1), JOB08254 (J2), JOB08331 (J3), JOB08335 (J4); none purged.
+
+## Closure (approved by the user 2026-10-14)
+ZOS-1 PASS. Recorded: Enterprise COBOL 6.5.0 P260714; HLASM R6.0; IEWBLINK toolchain; DISPLAY output FBA / LRECL 121
+with a 120-character safe oracle limit; IBM-037 round trip successful (23 release members + 2 probes); DATA viable as a
+PDS; listing translator working; J3 AMODE 24 PASS and J4 AMODE 31 PASS (toolchain probe only). Build profile A = D45
+(docs/zos-build.md). Open into ZOS-2: candidate C1 (PACQRY paragraph VALIDATE); AMODE 24 for the full module;
+full-size listing translation.

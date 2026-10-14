@@ -236,9 +236,11 @@ Open ZOS-1 questions (NOT settled facts): the Enterprise COBOL release actually 
 AMODE 24 viability; the HLASM / binder build procedure; the z/OS DISPLAY / SYSOUT format; the listing translator for
 the existing tests; PDS viability for Z00000.PACMAN.DATA.
 ZOS-2 candidate C1 (docs/ZOS-DIFFS.md): PACQRY paragraph VALIDATE, unchanged.
-ZOS-1 Toolchain IN PROGRESS (user go 2026-10-14, parts 1-6): tools/zowe helpers; J1 PACZALLO JOB08252 (7 datasets,
-DATA = PDS); 23 sources uploaded IBM-037, all byte-identical; J2 PACZHELO JOB08254 = Enterprise COBOL 6.5.0 P260714
-(IGYWCL, IGY650), IEWBLINK. Evidence docs/evidence/zos1-toolchain.md. J3 PACZPRFA JOB08331 PASS (probe in AMODE 24 / RMODE 24 /
-RENT: TAM=0 BSM=0, data and save area below the line), J4 PACZPRFB JOB08335 PASS (AMODE 31: TAM=1 BSM=1). DISPLAY
-SYSOUT = FBA 121 (120 data characters; 2.0 oracle max line 120). AMODE 24 proven for the toolchain probe only, not for
-the full Pac-Man module. ZOS-1 NOT closed: awaiting the user's review (build profile D-number, zos-1 tag).
+ZOS-1 Toolchain COMPLETE: PASS (tag zos-1, 2026-10-14). Enterprise COBOL 6.5.0 P260714, HLASM R6.0, IEWBLINK;
+datasets Z00000.PACMAN.{COBOL,COPY,ASM,CLIST,OBJ,LOAD} PDSE + DATA PDS (JOB08252); 23 release sources + 2 probes
+uploaded IBM-037, byte-identical; IGYWCL hello JOB08254; probes J3 JOB08331 (AMODE 24) and J4 JOB08335 (AMODE 31) PASS;
+DISPLAY SYSOUT FBA 121 (safe line limit 120 = oracle maximum); tools/zowe listing translator working. Build profile A
+= D45 (docs/zos-build.md): proven for the toolchain probe only, not for the full application; profile B fallback only.
+Evidence docs/evidence/zos1-toolchain.md. No job purged.
+Carried into ZOS-2: candidate C1 (PACQRY paragraph VALIDATE), AMODE 24 of the full module, full-size listing checks.
+NEXT: ZOS-2 Portable core - NOT STARTED; its action list is shown to the user and approved before anything runs.
