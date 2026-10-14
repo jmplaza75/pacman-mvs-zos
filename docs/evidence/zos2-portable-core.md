@@ -227,3 +227,14 @@ oracle 310 block and identical; ref_rt (RTB) / ref_gp2.rt_simulate (G2R) identic
 | G2R5 | RTMULTI `AI0 1` ARCADE | 0000 | 56 | 108497-108552 | several inputs in one quantum: IN=DL, IN=UDLR (the latest wins); 8 quanta |
 | G2R7 | G2RCLR `AI0` ARCADE | 0000 | 824 | 108630-109453 | fruit appears (EV=A, BT=060) and is eaten (EV=-F---, FRUITS EATEN 001); 5 power pellets; level clear at Q183 (EV=---C-), L LV=002 BK=S BV=0300, board reloaded (L=100, PW=4), freeze quanta K=F; end LEVEL 002, SCORE 0001350 |
 Not covered here: the real clock (PACTSO TIME / DLWT) is in PACZ2DRV (TSOT1); sound / alarm have later ZOS-2 coverage.
+
+## Z2-4 PACZ2G3 (JOB09128) - ARCADE level clear in TURN, start level through the TSO PARM (oracle 310)
+Deck jcl/zos/PACZ2G3.jcl (commit 6f52ffd; S1S3 left out: its oracle 310 block is byte-identical to the 307 TSO2 DIE1
+block already PASS in C7), approved as presented, submitted once, spool kept. Job CC 0000; spool 2,943 lines
+(estimate ~2,970): JESMSGLG 19, JESJCL 17, JESYSMSG 44, SYSOUT 2,863. `zos_arcade_check.py`: both steps IEF142I COND
+CODE 0000, STEPLIB Z00000.PACMAN.LOAD, no CEE / abend / $HASP375, one SYSOUT each; anchored at their own oracle 310
+blocks and identical; ref_gp2 identical: ARCADE CHECK PASS.
+| Step | Case | RC | SYSOUT | Own 310 block | Observed in the z/OS output |
+|---|---|---|---|---|---|
+| G2B19 | G2CLR `AI0`, TURN | 0000 | 2493 | 70270-72762 | LEVEL 001; fruits appear at 30 and 70 items (EV=A----, BT=030); the first is eaten (EV=-F---, FRUITS EATEN 001), the second expires (BT 001 -> 000 at IT=089 without F); power pellets FR=020, a second power during the fright refreshes FR=017 -> 020 (twice); level clear T183 CLEARED (EV=---C-) -> L LV=002 BK=S BV=0300, board reloaded (T184 L=099 after a full board, pellets back on the rows); level-2 power FR=017; end QUIT, TURNS 0000190, SCORE 0001370, LEVEL 002 |
+| G2T3 | GPTSO, PARM `TSO AI0 2 ... A03` | 0000 | 370 | 112474-112843 | TSO line mode, 2 ghosts (L=099 at T000); start level 03 from the PARM: LEVEL 003, L LV=003 AI=0 (AI0 invariant under the +1 bump) BK=O BV=0500; power FR=014; 1 ghost eaten (EV=GHST); T019 DIED; 24 prompts; blank card = redraw (T003 shown twice); end QUIT, LIVES 2, LEVEL 003 |

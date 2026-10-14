@@ -279,7 +279,9 @@ the user approves it. main and the MVS release are not touched.
   Combined CLASSIC validation (25 runs, order, models, MVS-7 before/after): PASS.
 - PACZ2G1 JOB09069: 10 ARCADE runs RC 0, = oracle 310 (own blocks) and ref_gp2: PASS.
 - PACZ2G2 JOB09114 (S1S2 removed): 8 REALTIME runs (5 CLASSIC, 3 ARCADE) RC 0, = oracle 310 own blocks, ref_rt and
-  ref_gp2: PASS. NEXT: PACZ2G3 review (not submitted). CLIST install / interactive EXEC stay in the later z/OS platform/install phase.
+  ref_gp2: PASS.
+- PACZ2G3 JOB09128 (S1S3 left out): G2B19 (level clear in TURN, fruit eaten / expired, level-2 FR=017) and G2T3 (TSO
+  start level 03, FR=014) RC 0, = own oracle 310 blocks and ref_gp2: PASS. NEXT: only after the user's decision. CLIST install / interactive EXEC stay in the later z/OS platform/install phase.
 - Tool fix 4ff8b4d (accepted): zos_equiv --subset anchors each step at its own oracle block.
 - KNOWN ZOS-2 TOOLING ISSUE (open, not to be solved before an RP-specific design is approved): oracle 309 (RP) holds
   80 run datasets for 81 PACMAIN run steps (RPT1's TSD output follows the IEBUPDTE listing after one empty line, not
