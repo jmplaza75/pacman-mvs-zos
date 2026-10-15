@@ -91,3 +91,13 @@ smoke is 2 runs, not a battery.
 2. PACZ4CL as one batch job with fresh T1 scratch datasets (no DELETE).
 3. Promotion by IEBCOPY copy of PACZ2D to PACMAIN + 2-run smoke (no rebind, no battery).
 4. Live: the user plays the DIE1 and LOST0 card sequences, transcript compared with the existing models.
+
+## 10. Decisions (user, 2026-10-15) and preparation
+Design approved. Order: (1) interactive CEEOPTS discovery only (docs/zos4-ceeopts-discovery.md; read-only REXX
+tools/zos4/SHOWCEE.rexx prepared, not uploaded); (2) PACZ4CL (one batch job, fresh T1 datasets, no DELETE, never
+DATA) prepared for review: jcl/zos/PACZ4CL.jcl, tools/zowe/zos_clist_check.py (--gate / postcheck), test section 14;
+gate PASS 2026-10-15; not submitted. PACZ4INS (IEBCOPY PACZ2D -> PACMAIN, no rebind, two oracle 307 smoke runs) and the
+live DIE1 / LOST0 acceptance come after the CEEOPTS resolution.
+Finding for PACZ4INS: `Z00000.PACMAN.CLIST(PACMAN)` already exists - it is the raw source template (@@PREFIX@@),
+uploaded by zos_sync in ZOS-1 as an identity copy, not an install. Installing the rendered CLIST into that member
+would replace the template: to be decided in the PACZ4INS review (e.g. PRV copy first, or a separate source library).

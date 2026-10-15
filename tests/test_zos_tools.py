@@ -695,3 +695,46 @@ with tempfile.TemporaryDirectory() as t:
 print(f'PACZ3TD1..4: {len(sel)} S2T runs reach all 21 D41 edges (9 sole runs + the cheapest completion '
       f'{best2[1]}, none removable), ALARM P on each (HG2 / HG3 SINGLE), oracle 308 blocks = ref_s2 model byte for '
       'byte, a flipped alarm bit fails its step only: PASS')
+
+# 14. ZOS-4 PACZ4CL: the generated deck; only the work PDS and the present-path DATA are named / written (never
+#     <HLQ>.PACMAN.DATA, no DELETE, no run of PACMAIN); G8CLS / HSCLS1 / HSCLS2 carry exactly the MVS test CLISTs (the
+#     HS block with the two attempt prefixes instead of one prefix deleted in between); the TMP-output rules accept
+#     the oracle 307 / 312 shapes and fail closed on a wrong PARM, a swapped path, a missing HSCL END or an IKJ56 message
+import zos_clist_check as CLK  # noqa: E402
+cl = (R / 'jcl/zos/PACZ4CL.jcl').read_text()
+with tempfile.TemporaryDirectory() as t:
+    subprocess.run([sys.executable, str(R / 'tools/make_deck.py'), '--target', 'zos', 'Z4CL', '--out',
+                    str(Path(t) / 'c.jcl')], check=True, capture_output=True)
+    assert (Path(t) / 'c.jcl').read_text() == cl, 'PACZ4CL.jcl is not the generated deck'
+cst = zos_target.steps_of_deck(cl)
+assert list(cst) == CLK.STEPS and 'DELETE' not in cl and 'PACMAN.DATA' not in cl and 'PACMAIN' not in cl
+assert set(re.findall(r'DSN=([\w@.]+)', cl)) == {'@@HLQ@@.PACMAN.Z4CL.T1', '@@HLQ@@.PACMAN.Z4HSY.DATA'}
+assert audit_deck(render(cl, 'Z00000'), 'Z00000') == []
+mg8 = zos_target.steps_of_deck(zos_target._mvs['g8_clist_steps']('@@HLQ@@.PACMAN'))['G8CLS']
+assert cst['G8CLS'].split('//SYSUT1   DD DATA,DLM=ZZ\n')[1] == mg8.split('//SYSUT1   DD DATA,DLM=ZZ\n')[1]
+mhs = zos_target.steps_of_deck(md.hs_steps('@@HLQ@@.PACMAN.R20', 'PACZ2D'))
+for s, p in (('HSCLS1', 'Z4HSY'), ('HSCLS2', 'Z4HSN')):
+    a_ = cst[s].split('DLM=ZZ\n')[1]
+    b_ = mhs[s].split('DLM=ZZ\n')[1].replace('@@HLQ@@.PACMAN.R20.HSCL', f'@@HLQ@@.PACMAN.{p}')
+    assert a_ == b_, s
+assert CLK.g8_want() == ['TSO AI1 1 NAAAPAAARAA01NP', 'TSO AI1 1 NAAAPAAARAC01NP', 'TSO AI1 1 NAAAPAAARAA01FS',
+                         'TSO AI1 1 NAAAPAAATAX05NP']
+W, Y = CLK.WORK, CLK.YES
+good = ['READY', f"  EXEC '{W}(PARMS)'"] + [f'G8PARM={p}=' for p in CLK.g8_want()] + [
+    f"  EXEC '{W}(HSCLY)'", '--DDNAME---DISP--', f'{Y}(HISCORE)', '  PACHS    KEEP', 'HSCL END',
+    f"  EXEC '{W}(HSCLN)'", '--DDNAME---DISP--', 'NULLFILE  PACHS', 'HSCL END', 'READY', 'END']
+assert all(v for _, v in CLK.tmp_check(good)), CLK.tmp_check(good)
+bad_tmp = {
+    'wrong PARM': [l.replace('A01FS', 'A01NS') for l in good],
+    'present path DUMMY': [l if l != f'{Y}(HISCORE)' else 'NULLFILE  PACHS' for l in good],
+    'missing path allocated': [l if l != 'NULLFILE  PACHS' else f'{CLK.NO}(HISCORE)' for l in good],
+    'no HSCL END': good[:good.index('HSCL END')] + good[good.index('HSCL END') + 1:],
+    'IKJ56 message': good[:-1] + ['IKJ56228I DATA SET NOT IN CATALOG'] + good[-1:],
+    'order swapped': [l.replace('(HSCLY)', '(TMPX)').replace('(HSCLN)', '(HSCLY)').replace('(TMPX)', '(HSCLN)')
+                      for l in good],
+}
+for why, ls in bad_tmp.items():
+    assert not all(v for _, v in CLK.tmp_check(ls)), why
+print('PACZ4CL: generated deck, only Z4CL.T1 / Z4HSY.DATA (no DATA, no DELETE, no PACMAIN), MVS test CLISTs exactly '
+      '(two prefixes instead of a DELETE), G8PARM = oracle 307, TMP-output rules pass the expected shape and fail '
+      f'{len(bad_tmp)} wrong shapes: PASS')
