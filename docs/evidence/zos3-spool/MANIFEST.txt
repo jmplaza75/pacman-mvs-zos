@@ -106,3 +106,11 @@ JOB02511 PACZ3TD2
   archive  PACZ3TD2-JOB02511.tar.gz
   sha256   745f2083b1ed1ab06290d2471271b2e2dd3df8699b4b7f779ab66a05cd98c50f
   z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 9 raw files, 0 credential pattern hits
+
+JOB02512 PACZ3TD3
+  phase    ZOS-3: minimum ALARM(PATTERN) TSD set, job 3 of 4 (S2T13, S2T17, S2T25); oracle JOB 308
+  result   CC 0000; PASS (tools/zowe/zos_tsd_check.py --job 3: spool health, oracle 308, ref_s2 streams byte for byte; docs/evidence/zos3-td3-check.txt)
+  spool    9 files, 2140 spool lines
+  archive  PACZ3TD3-JOB02512.tar.gz
+  sha256   2df24de1345537ce7c0e747b2bfdc5ffca8c0e9a931ca58881cfb360e3547b57
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 9 raw files, 0 credential pattern hits
