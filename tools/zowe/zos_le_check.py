@@ -7,12 +7,13 @@ Per step, from its SYSOUT (ZHELLOC DISPLAY lines + the LE options report, MSGFIL
   arguments/options), the report present (RPTOPTS(ON) taken from after the '/'), CBLOPTS reported ON;
 - ZHELLOA's readings: TAM / BSM, PARM1 / CSECT / SAVEA BELOW or ABOVE 16 MB;
 - the report lines of ALL31, STACK, RPTOPTS with their LAST-WHERE-SET source (the text before the option):
-  D1 (ZHELLO31, no CEEOPTS): ALL31 / STACK from the installation defaults (recorded), RPTOPTS from the invocation,
-     the save area consistent with the reported stack location;
+  D1 (ZHELLO31, no CEEOPTS): evidence of the effective no-override LE defaults (not a direct observation of the
+     interactive TSO CALL): ALL31 / STACK from the installation defaults (recorded), RPTOPTS from the invocation; the
+     save area must be BELOW only if the reported stack is BELOW (ANYWHERE allows either: information only);
   D2 (ZHELLO24, CEEOPTS ALL31(OFF),STACK(,,BELOW)): ALL31 OFF and STACK BELOW from CEEOPTS, TAM = BSM = 0, PARM1 /
      CSECT / SAVEA BELOW;
-  D3 (ZHELLO31, CEEOPTS ALL31(ON),STACK(,,BELOW), invocation STACK(,,ANYWHERE)): STACK ANYWHERE from the invocation
-     (it outranks CEEOPTS), ALL31 ON from CEEOPTS, SAVEA ABOVE.
+  D3 (ZHELLO31, CEEOPTS ALL31(ON),STACK(,,BELOW), invocation STACK(,,ANYWHERE)): decided by the report only: STACK
+     ANYWHERE from the invocation (it outranks CEEOPTS), ALL31 ON from CEEOPTS; SAVEA recorded for information.
 Spool health: COND CODE 0000 per step, only SYSOUT per step, STEPLIB retained once per step, no CEEnnnn message,
 no ABEND / IEA995 / $HASP375.
 """
@@ -54,7 +55,7 @@ def step_check(step, lines):
                     % (rep.get('ALL31', ('', '?'))[1], rep.get('STACK', ('', '?'))[1]),
                     src(rep, 'ALL31', 'INSTALL') and src(rep, 'STACK', 'INSTALL')
                     and zh.get('TAM') == '0000000001' and zh.get('BSM') == '0000000001'
-                    and sav[0] == ('BELOW' if where == 'BELOW' else 'ABOVE')))
+                    and (where != 'BELOW' or sav[0] == 'BELOW')))      # ANYWHERE allows either: information only
     elif step == 'D2':
         res.append(('D2: ALL31(OFF) and STACK(...,BELOW,...) from CEEOPTS',
                     rep.get('ALL31', ('', ''))[1] == 'OFF' and src(rep, 'ALL31', 'CEEOPTS')
@@ -66,8 +67,8 @@ def step_check(step, lines):
         res.append(('D3: STACK ANYWHERE from the invocation (outranks CEEOPTS BELOW), ALL31(ON) from CEEOPTS',
                     where in ('ANY', 'ANYWHERE') and src(rep, 'STACK', 'INVOCATION')
                     and rep.get('ALL31', ('', ''))[1] == 'ON' and src(rep, 'ALL31', 'CEEOPTS')))
-        res.append(('D3: AMODE 31 (TAM = BSM = 1), SAVEA ABOVE 16 MB',
-                    zh.get('TAM') == '0000000001' and zh.get('BSM') == '0000000001' and sav[0] == 'ABOVE'))
+        res.append(('D3: AMODE 31 (TAM = BSM = 1); SAVEA %s recorded for information only (ANYWHERE allows either)'
+                    % (sav[0] or '?'), zh.get('TAM') == '0000000001' and zh.get('BSM') == '0000000001'))
     return res
 
 

@@ -770,6 +770,13 @@ for s, o in (('D1', d1), ('D2', d2), ('D3', d3)):
     assert all(v for _, v in LEK.step_check(s, o)), (s, LEK.step_check(s, o))
 assert not all(v for _, v in LEK.step_check('D3', [l.replace(inv + ' ' * 10 + 'STACK', 'x') for l in d3]
                                             [:-1] + [f'{cee:<28}STACK(128K,128K,BELOW,KEEP,512K,128K)']))
+assert all(v for _, v in LEK.step_check('D3', [l.replace('SAVEA =0000155696 ABOVE', 'SAVEA =0000155696 BELOW')
+                                              for l in d3])), 'D3: SAVEA is information only'
+assert all(v for _, v in LEK.step_check('D1', [l.replace('SAVEA =0000155696 ABOVE', 'SAVEA =0000155696 BELOW')
+                                              for l in d1])), 'D1 with ANYWHERE: SAVEA is information only'
+assert not all(v for _, v in LEK.step_check('D3', [l.replace('ZH PARM=ZHARG', 'ZH PARM=ZHARGX') for l in d3]))
+assert not all(v for _, v in LEK.step_check('D2', [l.replace('SAVEA =0000155696 BELOW', 'SAVEA =0458174512 ABOVE')
+                                                   for l in d2])), 'D2 stays strict on SAVEA'
 assert not all(v for _, v in LEK.step_check('D2', [l.replace(cee, inst) for l in d2]))
 assert not all(v for _, v in LEK.step_check('D1', [l.replace('ZH PARM=ZHARG', 'ZH PARM=RPTOPTS(ON)')
                                                    .replace('PARMLEN=005', 'PARMLEN=011') for l in d1]))

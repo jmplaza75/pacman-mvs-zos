@@ -19,9 +19,9 @@ option string as the program argument and no report (LE would also flag ZHARG): 
 
 | Step | PGM | PARM | CEEOPTS | Expected options report (value <- LAST WHERE SET) | Argument | TAM / BSM / addresses |
 |---|---|---|---|---|---|---|
-| D1 defaults | ZHELLO31 (AMODE 31, proven without CEEOPTS: JOB08335) | `ZHARG/RPTOPTS(ON)` | none | ALL31, STACK <- installation default (values recorded, PRFB suggests ALL31(ON), stack ANYWHERE); CBLOPTS(ON); RPTOPTS(ON) <- invocation | ZHARG (005) | 1 / 1; SAVEA consistent with the reported stack location (ABOVE if ANYWHERE) |
+| D1 effective no-override LE defaults (evidence for, not an observation of, the interactive CALL) | ZHELLO31 (AMODE 31, proven without CEEOPTS: JOB08335) | `ZHARG/RPTOPTS(ON)` | none | ALL31, STACK <- installation default (values recorded, PRFB suggests ALL31(ON), stack ANYWHERE); CBLOPTS(ON); RPTOPTS(ON) <- invocation | ZHARG (005) | 1 / 1; SAVEA BELOW required only if the reported stack is BELOW; with ANYWHERE information only |
 | D2 profile A | ZHELLO24 (AMODE 24) | `ZHARG/RPTOPTS(ON)` (only RPTOPTS at the higher-precedence source) | `ALL31(OFF),STACK(,,BELOW)` | ALL31(OFF) <- CEEOPTS; STACK(..,BELOW,..) <- CEEOPTS; RPTOPTS(ON) <- invocation | ZHARG (005) | 0 / 0; PARM1, CSECT, SAVEA all BELOW |
-| D3 precedence | ZHELLO31 (AMODE 31: any stack is safe) | `ZHARG/STACK(,,ANYWHERE),RPTOPTS(ON)` | `ALL31(ON),STACK(,,BELOW)` | STACK(..,ANYWHERE,..) <- invocation (outranks CEEOPTS); ALL31(ON) <- CEEOPTS | ZHARG (005) | 1 / 1; SAVEA ABOVE (BELOW would mean CEEOPTS won) |
+| D3 precedence | ZHELLO31 (AMODE 31: any stack is safe) | `ZHARG/STACK(,,ANYWHERE),RPTOPTS(ON)` | `ALL31(ON),STACK(,,BELOW)` | STACK(..,ANYWHERE,..) <- invocation (outranks CEEOPTS); ALL31(ON) <- CEEOPTS | ZHARG (005) | 1 / 1; SAVEA recorded for information only: STACK(,,ANYWHERE) allows either location, so precedence is decided by the report alone |
 
 D3 safety: the contradiction is on STACK only, on the AMODE 31 probe, with ALL31(ON) in CEEOPTS so STACK ANYWHERE is a
 valid combination; no AMODE 24 program ever gets a stack above the line.
@@ -31,8 +31,9 @@ lines; estimate < 700 lines.
 STOP (no rerun, no change) on: a COND CODE other than 0000; any CEEnnnn message (e.g. an invalid option), ABEND,
 IEA995, $HASP375; a spool DD other than SYSOUT; STEPLIB not retained once per step; an argument other than ZHARG
 (CBLOPTS not ON); no options report; D2 not ALL31(OFF) / STACK BELOW from CEEOPTS or any address ABOVE; D3 STACK not
-from the invocation or SAVEA BELOW. The report layout (source column, then option) is the documented LE format; if
+from the invocation or ALL31(ON) not from CEEOPTS (correction 2026-10-15: SAVEA is not a D3 criterion). The report layout (source column, then option) is the documented LE format; if
 the real layout differs the checker fails closed and the result is reviewed, not reclassified silently.
-What it decides: D1 = what the interactive CALL gets today (no session source exists: docs/zos4-ceeopts-analysis.md);
+What it decides: D1 = the effective no-override LE defaults, which the interactive CALL gets today only because no
+session source exists (docs/zos4-ceeopts-analysis.md) - evidence, not a direct observation of that CALL;
 D2 = that a CEEOPTS DD gives profile A to the AMODE 24 module; D3 = that invocation options would outrank it - so a
 CLIST CEEOPTS allocation works only while the CLIST PARM carries no runtime options (it carries none).
