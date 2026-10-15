@@ -1,0 +1,13 @@
+PACZ3FS JOB01362 CC 0000: 2 steps, 786 spool lines
+  oracle 310 OK   S1S3: 353 lines identical (oracle stream lines 59707-60059)
+  model  OK   S1S3: 1.0-MVS oracle TSO DIE1 (353 / 353 lines)
+  model  OK   S1S3: test_mvs8 TSO line-mode model DIE1
+  fallbk OK   S1S3: no data-stream line (TSO line mode)
+  oracle 308 OK   S2L4: 353 lines identical (oracle stream lines 22758-23110)
+  model  OK   S2L4: 1.0-MVS oracle TSO DIE1 (353 / 353 lines)
+  model  OK   S2L4: test_mvs8 TSO line-mode model DIE1
+  fallbk OK   S2L4: no data-stream line (TSO line mode)
+  fallbk OK   S1S3: identical to the z/OS COLOR(N) run of DIE1 (PACZ2C7-JOB09031 TSO2)
+  fallbk OK   S2L4: identical to the z/OS COLOR(N) run of DIE1 (PACZ2C7-JOB09031 TSO2)
+  link   OK   PACZ2BLD JOB08888 bind of PACZ2D: OBJ(PACPLAT) + OBJ(PACFSIO) included, RC 0, nothing unresolved
+PACFSIO BATCH CONTRACT CHECK PASS

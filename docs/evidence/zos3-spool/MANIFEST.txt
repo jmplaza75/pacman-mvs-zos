@@ -1,0 +1,14 @@
+ZOS-3 raw spool evidence of the project jobs (one deterministic .tar.gz per job).
+Source: build/zos/<JOBNAME>-<JOBID>/ as downloaded by tools/zowe/zos_submit.py right after each job; archived by
+tools/zowe/zos_spool_archive.py --phase 3 byte for byte (job.json, spool.json, deck.jcl as submitted, every spool file
+NNN-<step>-<dd>.txt). Nothing was edited. No password, credential, token or interactive logon trace is present (audit
+2026-10-15: 8 raw files scanned, 0 pattern hits). This project never purges a job (D44).
+Verify: python3 tools/zowe/zos_spool_archive.py --phase 3 --verify-only  (rebuilds, compares, checks SHA256SUMS).
+
+JOB01362 PACZ3FS
+  phase    ZOS-3: PACFSIO batch contract (S1S3 oracle 310, S2L4 oracle 308; TSO + COLOR A on PACZ2D)
+  result   CC 0000; PASS (tools/zowe/zos_fs_check.py, docs/evidence/zos3-fs-check.txt)
+  spool    5 files, 786 lines (JESMSGLG 19, JESJCL 17, JESYSMSG 44, S1S3 SYSOUT 353, S2L4 SYSOUT 353)
+  archive  PACZ3FS-JOB01362.tar.gz
+  sha256   f289eeb9c799a60b7b60f1c5eeeda07ff200c9c13d447d595d934aa30159759c
+  z/OS     present on the z/OS spool when downloaded (2026-10-15)
