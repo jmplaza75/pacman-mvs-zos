@@ -80,3 +80,12 @@ anything else -> `PACMAN: CEEOPTS CHECK FAILED (<result>), GAME NOT STARTED`, RC
 allocated), IKJEFT01 with DYNAMNBR=200 (as DBPROCDG), CONTROL LIST in the test members so case 3 must show the
 listed `ALLOC F(CEEOPTS)` (SYSDSN passed, ALLOC reached) and its refusal; the pre-existing DD (on Z4CL.T2(Z2N)) must
 be identical in LISTALC before and after case 3. PACZ4CL (T1) stays frozen as submitted.
+
+## Refinement 3 (user, 2026-10-15, after PACZ4Z2 JOB03829 case 3 SAFE but FAIL) - Z2 still NOT accepted
+Only the ALLOC-error section changes: `CONTROL NOFLUSH` immediately before the ERROR routine, the ALLOC under it,
+`ERROR OFF`, `CONTROL FLUSH` immediately after; &Z handling and the fail-closed branch unchanged. Z2 = 32 lines (31
+before the CALL, 1 after). Hypothesis to be proven by T3: CONTROL FLUSH (default) flushed the input stack on the
+refused ALLOC before the ERROR routine could act. Attempt T3: jcl/zos/PACZ4Z3.jcl (names Z4CL.T3, Z4CY3.CEEOPTS,
+Z4CN3.CEEOPTS), same three-case design, DYNAMNBR=200, CONTROL LIST; check `zos_z2_check.py --attempt T3` with one
+criterion per case-3 requirement (listed ALLOC, FILE IN USE refusal, handler regains control, message, Z2RC=8, no
+MISSING / CHECK FAILED / CALL, original DD identical, SYSIN / SYSOUT freed, final FREE clean).

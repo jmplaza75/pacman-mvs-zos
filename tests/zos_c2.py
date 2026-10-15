@@ -60,14 +60,14 @@ def build_table():
 
 
 def z2_guard(text):
-    """src/zos/PACMAN.clist = the 2.0-mvs-max src/clist/PACMAN.clist with exactly 29 Z2 lines before the CALL (from the
+    """src/zos/PACMAN.clist = the 2.0-mvs-max src/clist/PACMAN.clist with exactly 31 Z2 lines before the CALL (from the
     '/* Z2 (ZOS-4)' comment) and 'FREE F(CEEOPTS)' right after it; every other line identical (docs/zos4-clist-z2.md)."""
     base, now = at_tag('src/clist/PACMAN.clist').split('\n'), text.split('\n')
     zi = next(i for i, l in enumerate(now) if l.startswith('/* Z2 (ZOS-4)'))
     zc = now.index("CALL '@@PREFIX@@.LOAD(PACMAIN)' '&P'")
-    assert zc - zi == 29 and now[:zi] == base[:zi] and now[zc] == base[zi], 'Z2: lines before the CALL'
+    assert zc - zi == 31 and now[:zi] == base[:zi] and now[zc] == base[zi], 'Z2: lines before the CALL'
     assert now[zc + 1] == 'FREE F(CEEOPTS)' and now[zc + 2:] == base[zi + 1:], 'Z2: lines after the CALL'
-    assert len(now) - len(base) == 30
+    assert len(now) - len(base) == 32
 
 
 def guard():

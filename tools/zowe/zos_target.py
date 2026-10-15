@@ -68,7 +68,7 @@ HS_JOBS = {'Z3HS1': ['HA1', 'HA2', 'HA3'], 'Z3HS2': ['HA4'], 'Z3HS3': ['HA5'], '
            'Z3HS5': ['HB1', 'HC1', 'HD1'], 'Z3HS6': ['HE1', 'HE2', 'HF1', 'HF2'], 'Z3HS7': ['HG1', 'HG2', 'HG3'],
            'Z3HS8': ['HH1', 'HTSO1', 'HTSO2']}
 HS_DEFERRED = ['HA6']
-DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL', 'Z4LE', 'Z4Z2'] + list(CHUNKS)
+DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL', 'Z4LE', 'Z4Z2', 'Z4Z3'] + list(CHUNKS)
 # ZOS-4 PACZ4LE (docs/zos4-le-diagnostic.md): LE runtime-option diagnostic with the ZOS-1 probes (no Pac-Man):
 # (step, program, PARM, CEEOPTS records or None). ZHARG is not an LE option name: the program's PARM echo shows which
 # side of the '/' LE gave it (CBLOPTS(ON): arguments/options).
@@ -88,7 +88,9 @@ def zos_clist_text(pfx):
     return (R / 'src/zos/PACMAN.clist').read_text(encoding='ascii').replace('@@PREFIX@@', pfx)
 
 
-Z4Z2_SETS = {'work': 'Z4CL.T2', 'cee_present': 'Z4CY2', 'cee_missing': 'Z4CN2'}   # ZOS-4 Z2 attempt T2
+Z4Z2_SETS = {'work': 'Z4CL.T2', 'cee_present': 'Z4CY2', 'cee_missing': 'Z4CN2'}   # ZOS-4 Z2 attempt T2 (JOB03829)
+Z4Z3_SETS = {'work': 'Z4CL.T3', 'cee_present': 'Z4CY3', 'cee_missing': 'Z4CN3'}   # ZOS-4 Z2 attempt T3
+Z4_ATTEMPTS = {'T2': ('PACZ4Z2', Z4Z2_SETS), 'T3': ('PACZ4Z3', Z4Z3_SETS)}
 
 
 def z2_test_clist(prefix, listing=False):
@@ -331,16 +333,17 @@ def z4le_deck(pfx):
     return out
 
 
-def z4z2_deck(pfx):
-    """ZOS-4 PACZ4Z2 (attempt T2): the three Z2 paths only (G8 / HS proved by JOB03750). As PACZ4CL's Z2 part, with:
+def z4z2_deck(pfx, attempt='T2'):
+    """ZOS-4 PACZ4Z2 / PACZ4Z3 (attempts T2 / T3): the three Z2 paths only (G8 / HS proved by JOB03750). As PACZ4CL's Z2 part, with:
     fresh T2 names; the current Z2 lines (SYSDSN result OK / DATASET NOT FOUND / anything else reported); CONTROL LIST in
     the test members, so every TSO command the CLIST issues is listed - the ALLOC F(CEEOPTS) line in case 3 proves the
     SYSDSN check passed and the ALLOC was reached; the IKJEFT01 step with DYNAMNBR=200 like the interactive logon proc
     DBPROCDG; a LISTALC right before and right after case 3 (the pre-existing DD must be identical)."""
     md = _md[0]
-    ds = f'{pfx}.{Z4Z2_SETS["work"]}'
-    cy, cn = (f'{pfx}.{Z4Z2_SETS[k]}' for k in ('cee_present', 'cee_missing'))
-    out = job_card('PACZ4Z2', 'PACMAN ZOS4 Z4Z2')
+    job, sets = Z4_ATTEMPTS[attempt]
+    ds = f'{pfx}.{sets["work"]}'
+    cy, cn = (f'{pfx}.{sets[k]}' for k in ('cee_present', 'cee_missing'))
+    out = job_card(job, f'PACMAN ZOS4 {job[-4:]}')
     out += (f'//ALLOC    EXEC PGM=IEFBR14\n//D1       DD DSN={ds},DISP=(NEW,CATLG,CATLG),\n'
             f'//            DSNTYPE=PDS,DSORG=PO,{md.DATA_DCB},\n//            SPACE=(TRK,(2,1,2))\n')
     out += ('//Z2CEE    EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
@@ -401,4 +404,4 @@ def deck(name, pfx):
     if name in HS_JOBS:
         return z3hs_deck(name, pfx)
     return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck, 'Z3HA': z3ha_deck, 'Z4CL': z4cl_deck, 'Z4LE': z4le_deck,
-            'Z4Z2': z4z2_deck}[name](pfx)
+            'Z4Z2': z4z2_deck, 'Z4Z3': lambda p: z4z2_deck(p, 'T3')}[name](pfx)
