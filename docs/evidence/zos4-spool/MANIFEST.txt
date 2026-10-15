@@ -26,3 +26,16 @@ JOB03750 PACZ4CL
   archive  PACZ4CL-JOB03750.tar.gz
   sha256   64d6ca16f5c9f3c982420cdaf7faa116484c4c4261fee6166e36f789ad758ec5
   z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 14 raw files, 0 credential pattern hits
+
+JOB03829 PACZ4Z2
+  phase    ZOS-4: Z2-only attempt T2 (DYNAMNBR=200, CONTROL LIST)
+  result   CC 0000 (every step 0000). Z2 case 1 PASS; case 2 PASS; case 3 SAFE but FAIL as controlled-error
+           handling: SYSDSN OK, the listed ALLOC reached and refused (IKJ56246I ... FILE IN USE), no CALL, the original
+           CEEOPTS DD (Z4CL.T2(Z2N)) identical before and after - but the ERROR routine did not regain control: no
+           ALREADY ALLOCATED message, no Z2RC=8, SYSIN / SYSOUT left allocated. Not PASS; not rerun; T2 artifacts
+           unchanged. Check: docs/evidence/zos4-z2-check-first-run.txt (raw SHA-256
+           docs/evidence/zos4-pacz4z2-JOB03829-raw.sha256)
+  spool    11 files, 253 spool lines
+  archive  PACZ4Z2-JOB03829.tar.gz
+  sha256   8dcd7d2f00b7bd8c30ff714a3485a47cbc0c4c0b940a1a7f1447e1b4aa66c3ad
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 11 raw files, 0 credential pattern hits

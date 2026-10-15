@@ -42,3 +42,18 @@ abend; JESYSMSG names only Z4CL.T1, Z4HSY.DATA, Z4CEY.CEEOPTS; no DELETE, no PAC
   record; Z4CEN.CEEOPTS and Z4HSN.DATA absent.
 Follow-up (user, 2026-10-15): Z2 SYSDSN handling refined (OK / not found / any other result reported) and a Z2-only
 attempt T2 (DYNAMNBR=200) prepared for review.
+
+## PACZ4Z2 JOB03829 (Z2 attempt T2) - cases 1-2 PASS, case 3 SAFE but FAIL (controlled-error handling)
+Name gate PASS just before; submitted once, unchanged; every step COND CODE 0000; IKJEFT01 with DYNAMNBR=200; no CEE /
+abend; JESYSMSG names only Z4CL.T2 and Z4CY2.CEEOPTS; no DELETE, no PACMAIN, no Z00000.PACMAN.DATA.
+- Case 1 PASS: CEEOPTS on Z4CY2.CEEOPTS at the simulated CALL, gone after the FREE, Z2RC=0.
+- Case 2 PASS: the exact MISSING message, no CHECK FAILED, no ALLOC of CEEOPTS, no CALL marker, no CEEOPTS DD, Z2RC=8.
+- Case 3 SAFE but FAIL: SYSDSN OK (the ALLOC was reached: CONTROL LIST shows
+  `ALLOC F(CEEOPTS) DA('Z00000.PACMAN.Z4CY2.CEEOPTS') SHR`), refused with
+  `IKJ56246I DATA SET Z00000.PACMAN.Z4CY2.CEEOPTS NOT ALLOCATED, FILE IN USE`; no CALL; the original CEEOPTS DD
+  (Z4CL.T2(Z2N), KEEP) identical in LISTALC before and after - but the CLIST and its caller ended right after the
+  refusal: the ERROR routine did not regain control, no ALREADY ALLOCATED message, no Z2RC=8, and SYSIN / SYSOUT stayed
+  allocated (NULLFILE in the final LISTALC). Hypothesis (to be proven by T3): CONTROL FLUSH (the default) flushed the
+  input stack on the command error before the ERROR routine could act.
+- Post-job state as reviewed: Z4CL.T2 = Z2N Z2RUN Z2Y; Z4CY2.CEEOPTS one record; Z4CN2.CEEOPTS absent.
+Z2 not accepted. Follow-up (user, 2026-10-15): CONTROL NOFLUSH around the ERROR routine + ALLOC, attempt T3.
