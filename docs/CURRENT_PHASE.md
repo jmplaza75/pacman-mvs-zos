@@ -313,5 +313,8 @@ cases; PACZ3FS first. No PACZ2D rebuild, no source change, no CLIST install, no 
   tests/test_zos_tools.py section 9 PASS, precheck PASS (~818 spool lines).
 - PACZ3FS JOB01362 PASS (submitted once, 2026-10-15; docs/evidence/zos3-platform-layer.md, spool zos3-spool/):
   both steps RC 0, 353 lines each = own oracle block, DIE1 models and PACZ2C7 TSO2. FSON RC=4 is established from
-  the PACFSIO control flow under the no-TSB batch condition, not observed by the job. WAITING FOR THE USER'S REVIEW
-  before PACZ3HA.
+  the PACFSIO control flow under the no-TSB batch condition, not observed by the job. Accepted by the user; C3 stays
+  open (PACFSIO ESTAE / terminal services not exercised).
+- PACZ3HA JOB02091 PASS (2026-10-15; CC 0012 = HSFILL as expected): HSTEST.T1 (BAD EMPTY HS9) and HSFULL.T1
+  (M01..M20, directory full) are real PDSs FB 80/80. First checker run: one false FAIL (final IKJEFT01 END parsed as
+  a member); parser fixed 6b446cc, same evidence re-checked PASS. WAITING FOR THE USER'S REVIEW before PACZ3HS.

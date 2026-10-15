@@ -12,3 +12,15 @@ JOB01362 PACZ3FS
   archive  PACZ3FS-JOB01362.tar.gz
   sha256   f289eeb9c799a60b7b60f1c5eeeda07ff200c9c13d447d595d934aa30159759c
   z/OS     present on the z/OS spool when downloaded (2026-10-15)
+
+JOB02091 PACZ3HA
+  phase    ZOS-3: HS test PDSs of attempt T1 (Z00000.PACMAN.HSTEST.T1 / HSFULL.T1: allocate, seed, fill)
+  result   CC 0012 (expected: HSFILL RC 0012, every other step 0000); PASS after the checker fix 6b446cc - the first
+           checker run gave one false FAIL (docs/evidence/zos3-ha-check-first-run.txt); corrected run
+           docs/evidence/zos3-ha-check.txt
+  spool    8 files, 295 lines (JESMSGLG 23, JESJCL 32, JESYSMSG 104, HSSEED1..3 SYSPRINT 3 each, HSFILL SYSPRINT 86,
+           HSLIST SYSTSPRT 41); raw files read-only since the false FAIL, SHA-256 per file in
+           docs/evidence/zos3-pacz3ha-JOB02091-raw.sha256 (recorded before the checker was changed)
+  archive  PACZ3HA-JOB02091.tar.gz
+  sha256   34d885d31f8c9f0e5b5f43a30e3499e2801849a12111b08c5288d901b8ca9c3e
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 11 raw files, 0 credential pattern hits

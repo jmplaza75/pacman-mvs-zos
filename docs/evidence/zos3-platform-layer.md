@@ -32,3 +32,45 @@ condition; this job does not directly emit or independently observe that RC.
 
 The SYSOUT alone does not prove that FSON returned 4: an FSON RC 0 in batch would lead to SENX RC 4 and the same
 fall-back, with the same transcript. No PACFSIO test driver was added (user decision 2026-10-15).
+
+## PACZ3HA JOB02091 - HS test PDSs, attempt T1: PASS (after a checker fix; see the audit note)
+
+Deck of record jcl/zos/PACZ3HA.jcl, submitted once, unchanged (deck.jcl as submitted = the reviewed rendering, SHA-256
+f620505dad30f55d3ab776d7d585267ae44ac0ef95980efa7cb175e0d7eb7e20). Read-only catalog query immediately before the
+submission: neither Z00000.PACMAN.HSTEST.T1 nor Z00000.PACMAN.HSFULL.T1 (nor any Z00000.PACMAN.HS*) existed.
+Job CC 0012 = the expected HSFILL RC; not a failure by itself.
+
+| Step | Expected | Actual |
+|---|---|---|
+| ALLOC (IEFBR14) | 0000 | 0000 |
+| HSSEED1 / HSSEED2 / HSSEED3 (IEBGENER) | 0000 | 0000 / 0000 / 0000 |
+| HSFILL (IEBUPDTE NEW) | 0012 | 0012: IEB817I stowed M01..M20, `IEB813I OUTPUT DIRECTORY FULL` right after `ADD NAME=M21`, nothing stowed after it, IEB818I highest CC 12 |
+| HSLIST (IKJEFT01 LISTDS, read-only) | 0000 | 0000 |
+
+No abend, IEA995, S722 or $HASP375; spool DDs only SYSPRINT of HSSEED1..3 / HSFILL and SYSTSPRT of HSLIST; the only
+Z00000 datasets named in JESYSMSG (besides the job's own JES datasets) are the two T1 PDSs.
+
+Actual state after the job (read-only z/OSMF queries, 2026-10-15; the datasets were not modified afterwards):
+
+| Dataset | Catalog | DSNTYPE / DSORG | RECFM / LRECL / BLKSIZE | Volume | Members |
+|---|---|---|---|---|---|
+| Z00000.PACMAN.HSTEST.T1 | CATALOG.ZOSO, created 2026/10/15, 1 extent, not migrated | PDS / PO | FB / 80 / 80 | ZXPC02 | BAD, EMPTY, HS9 |
+| Z00000.PACMAN.HSFULL.T1 | CATALOG.ZOSO, created 2026/10/15, 1 extent, not migrated | PDS / PO | FB / 80 / 80 | ZXPL01 | M01..M20 (HISCORE, M21..M30 absent) |
+
+Member contents (z/OSMF view): HS9 = `9999999 PACHS001 099` (1 record); BAD = `XYZZY NOT A SCORE`,
+`SECOND JUNK RECORD` (2 records); EMPTY = no record. TSO LISTDS in the job shows the same attributes and members.
+z/OSMF reports the space in KILOBYTES (size 103, used 1) and not the directory block count: HSFULL's single full
+directory block is established by IEB813I at M21 (20 entries + the end marker fill one 256-byte block, as in oracle
+312).
+
+Audit note (both facts kept): the FIRST checker run (docs/evidence/zos3-ha-check-first-run.txt) reported one FAIL,
+"LISTDS Z00000.PACMAN.HSFULL.T1": a false FAIL of the checker, not of the job or of the datasets. Its LISTDS parser did
+not close the member list at the READY that ends the last LISTDS command, so the final IKJEFT01 `END` control line
+was parsed as a 21st HSFULL member (the independent catalog member query in the same run gave exactly M01..M20).
+Before the checker was changed, the SHA-256 of every raw JOB02091 file was recorded
+(docs/evidence/zos3-pacz3ha-JOB02091-raw.sha256) and the files were made read-only. Fix 6b446cc: each LISTDS result is
+parsed only from its exact command echo to its READY; END is accepted only as the last record, unindented, outside
+every extent (a member named END is indented and stays a member); any other shape fails closed; regression tests on
+the real JOB02091 SYSTSPRT (tests/fixtures/zos/, same SHA-256 as the raw file). The corrected checker on the same
+spool and the same read-only queries: every criterion PASS (docs/evidence/zos3-ha-check.txt), no HS semantics changed.
+PACZ3HA / JOB02091 = PASS.
