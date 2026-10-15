@@ -124,3 +124,13 @@ catalogued also on an abnormal end, no DELETE. Then the frozen MVS setup steps, 
 HSSEED1..3 (HS9, BAD, EMPTY) and HSFILL (IEBUPDTE: M01..M20 stowed, IEB813I at M21, RC 12, = oracle 312), and a
 read-only TSO LISTDS. HSCL.DATA (CLIST block check, whose MVS step also deletes it) is not created: ZOS-4.
 Read-only catalog query before preparation (2026-10-15): no Z00000.PACMAN.HS* dataset exists.
+
+## 12. PACZ3HS preparation - blocked on a decision (2026-10-15)
+Done locally: oracle 312 HA1 known boundary (19/19, fail closed, other oracles unchanged), compare() fix for
+known-boundary steps (309 RPT1 / 312 HA1; all accepted evidence re-checked PASS), zos_hs_model (the frozen test_hs model
+with PACMAN_LATER_PHASE=G8: all 19 anchored blocks and HTSO1/2 at oracle lines 25366 / 25744 = model), the read-only
+T1 state gate (PASS on 2026-10-15). Blocker: the HS application SYSOUT is 25,175 lines (oracle 312 = model) and HA6
+alone is 5,262 lines, above the ~5,000-line site output limit of any job (LINES= not authorised). The frozen sequence
+cannot run as one spool job, and HA6 cannot run in any spool job. Options for the user: (A) spool, the frozen order
+split into 8 jobs under 4,000 lines with a read-only state gate before each, HA6 deferred (state-neutral by ref_hs);
+(B) one job with the application SYSOUT written to new project datasets (needs a new write authorisation).
