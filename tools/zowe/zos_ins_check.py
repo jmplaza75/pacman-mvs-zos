@@ -30,6 +30,7 @@ P = f'{HLQ}.PACMAN'
 STEPS = ['SAVETPL', 'CEEOPT', 'PROM1', 'PROM2'] + Z4INS_SMOKE
 PACZ2D_ATTR = {'ac': '00', 'amode': '24', 'attr': 'RN RU', 'rmode': '24', 'size': '000200B0'}   # as listed 2026-10-15
 TEMPLATE = R / 'src/clist/PACMAN.clist'
+CEE_RECORD = 'ALL31(OFF),STACK(,,BELOW)'.ljust(80).encode('cp037')     # the one record, IBM-037, fixed 80
 RENDERED = R / 'build/zos/PACMAN.zos.clist'
 
 
@@ -126,6 +127,8 @@ def state_after_job():
             (f'{P}.CEEOPTS: PS FB 80 80, one record ALL31(OFF),STACK(,,BELOW)',
              a.get('dsorg') == 'PS' and a.get('recfm') == 'FB' and a.get('lrecl') == '80' and a.get('blksz') == '80'
              and rec == ['ALL31(OFF),STACK(,,BELOW)']),
+            (f'{P}.CEEOPTS content (binary): exactly one fixed 80-byte record = ALL31(OFF),STACK(,,BELOW) in IBM-037 + '
+             'blank padding', bool(a) and binary(f'{P}.CEEOPTS') == CEE_RECORD),
             (f'LOAD(PACMAIN) attributes = PACZ2D\'s {PACZ2D_ATTR} (AMODE 24, RMODE 24, RENT REUS, same size)',
              attrs_of(load.get('PACMAIN', {})) == PACZ2D_ATTR),
             ('LOAD(PACZ2D) unchanged', attrs_of(load.get('PACZ2D', {})) == PACZ2D_ATTR)]
