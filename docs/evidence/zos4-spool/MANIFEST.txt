@@ -48,3 +48,13 @@ JOB03875 PACZ4Z3
   archive  PACZ4Z3-JOB03875.tar.gz
   sha256   42d4b5a0f4d5b1b853627d07327585563fe348fcd4f50dfa1cb89cb7e5c8f168
   z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 11 raw files, 0 credential pattern hits
+
+JOB03939 PACZ4INS
+  phase    ZOS-4: first promotion (CLIST(PACSRCT) template copy, Z00000.PACMAN.CEEOPTS, PACZ2D -> PACMAIN by IEBCOPY
+           without rebind, RUN1 / TSO2 smoke on PACMAIN); then the z/OS CLIST installed by Zowe (not a job)
+  result   CC 0000; PASS 23/23 (docs/evidence/zos4-ins-check.txt); CLIST install PASS
+           (docs/evidence/zos4-ins-clist-install.txt); raw SHA-256 docs/evidence/zos4-pacz4ins-JOB03939-raw.sha256
+  spool    12 files, 717 spool lines
+  archive  PACZ4INS-JOB03939.tar.gz
+  sha256   ac40ecdbc1869606a6642996d32864a55d5d6e817105582a16dd2e322f309ac0
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 12 raw files, 0 credential pattern hits

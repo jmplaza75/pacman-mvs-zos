@@ -1,0 +1,26 @@
+local checks PASS
+PACZ4INS JOB03939 CC 0000
+  OK   steps SAVETPL CEEOPT PROM1 PROM2 RUN1 TSO2
+  OK   SAVETPL COND CODE 0000
+  OK   CEEOPT COND CODE 0000
+  OK   PROM1 COND CODE 0000
+  OK   PROM2 COND CODE 0000
+  OK   RUN1 COND CODE 0000
+  OK   TSO2 COND CODE 0000
+  OK   no ABEND / IEA995 / $HASP375 / S722 / CEE message
+  OK   spool DDs: SYSPRINT of SAVETPL / CEEOPT / PROM1 / PROM2, SYSOUT of the two runs
+  OK   STEPLIB Z00000.PACMAN.LOAD retained once per smoke run
+  OK   datasets in JESYSMSG only CLIST, CEEOPTS, LOAD
+  OK   PROM1: IEBCOPY reports PACZ2D -> PACMAIN copied
+  OK   PROM2: IEBCOPY reports PACMAIN copied
+  OK   oracle 307 RUN1: 160 lines identical (oracle stream lines 9780-9939)
+  OK   oracle 307 TSO2: 353 lines identical (oracle stream lines 29374-29726)
+  OK   RUN1 = the independent model (tests/test_mvs8.py)
+  OK   TSO2 = the independent model (tests/test_mvs8.py)
+  OK   CLIST(PACSRCT) = the frozen raw template
+  OK   CLIST(PACMAN) still the template (not installed by the job)
+  OK   Z00000.PACMAN.CEEOPTS: PS FB 80 80, one record ALL31(OFF),STACK(,,BELOW)
+  OK   Z00000.PACMAN.CEEOPTS content (binary): exactly one fixed 80-byte record = ALL31(OFF),STACK(,,BELOW) in IBM-037 + blank padding
+  OK   LOAD(PACMAIN) attributes = PACZ2D's {'ac': '00', 'amode': '24', 'attr': 'RN RU', 'rmode': '24', 'size': '000200B0'} (AMODE 24, RMODE 24, RENT REUS, same size)
+  OK   LOAD(PACZ2D) unchanged
+PACZ4INS CHECK PASS

@@ -347,4 +347,7 @@ session, one focused postcheck; reuse ZOS-2 / ZOS-3 evidence. Waiting for the us
   Z2). History kept: PACZ4CL JOB03750 (G8 / HS PASS, Z2 case 3 inconclusive), PACZ4Z2 JOB03829 (case 3 handler did not
   regain control). NEXT (not started, waiting for the user): PACZ4INS (CEEOPTS dataset, PACMAIN by IEBCOPY, the z/OS
   CLIST; the raw CLIST template member question), then the live DIE1 / LOST0 session.
+- PACZ4INS JOB03939 PASS 23/23 + CLIST installed and verified byte for byte (2026-10-15; docs/evidence/zos4-classic.md):
+  LOAD(PACMAIN) = PACZ2D (AMODE 24 / RMODE 24 / RN RU, no rebind), CLIST(PACMAN) = src/zos rendered (Z2), CEEOPTS
+  exact, CLIST(PACSRCT) = the raw template. NEXT (waiting for the user): the live DIE1 / LOST0 session.
 

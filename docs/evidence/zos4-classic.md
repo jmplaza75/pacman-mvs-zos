@@ -75,3 +75,20 @@ The CONTROL FLUSH hypothesis of JOB03829 is confirmed: with CONTROL NOFLUSH arou
 the routine regains control. JOB03829 stays recorded as the failed T2 controlled-error experiment (cases 1-2 PASS,
 case 3 SAFE but FAIL), JOB03750 as partial / inconclusive for case 3; neither is retroactively PASS.
 **Z2 accepted for installation (user criteria, 2026-10-15).**
+
+## PACZ4INS JOB03939 + CLIST installation - first promotion: PASS
+Pre-gate PASS (6/6) immediately before; submitted once, unchanged (deck.jcl = the reviewed rendering). All six steps
+COND CODE 0000; no CEE / abend; JESYSMSG names only CLIST, CEEOPTS, LOAD; no DELETE, no rebind, no Z00000.PACMAN.DATA.
+- SAVETPL: CLIST(PACSRCT) = the frozen raw template (binary, 75 x 80; SHA-256 of the IBM-037 bytes a2e7e09d4e85660ea7230504095bcaba4195e795453bf5eff457bea28a449f54).
+- CEEOPT: Z00000.PACMAN.CEEOPTS PS FB 80/80, exactly one fixed 80-byte record = `ALL31(OFF),STACK(,,BELOW)` in IBM-037
+  plus blank padding (binary download).
+- PROM1 / PROM2: IEBCOPY copied PACZ2D as PACMAIN through the temporary PDSE and into LOAD; z/OSMF attributes of
+  PACMAIN = PACZ2D's: AC 00, AMODE 24, RMODE 24, RN RU, size 000200B0; PACZ2D unchanged.
+- Smoke on PACMAIN: RUN1 160 lines = oracle 307 RUN1 (stream 9780-9939) = test_mvs8 model; TSO2 (DIE1, TSO line mode)
+  353 lines = oracle 307 TSO2 (29374-29726) = test_mvs8 TSO model.
+- CLIST installation (tools/zowe/zos_clist_install.py): every check above re-run immediately before writing (PACMAN
+  still the template, PACSRCT the template, PACMAIN / PACZ2D attributes, CEEOPTS content) - PASS; then
+  build/zos/PACMAN.zos.clist (src/zos/PACMAN.clist for Z00000.PACMAN, Z2 included) uploaded with IBM-037 into
+  CLIST(PACMAN) and downloaded in binary: identical, 107 x 80 bytes (SHA-256 2e9895dc6f7c16a4ef159966aa6dc36cd957b11ea9e51adf3c7a3d917f6f7f33); PACSRCT still the template.
+Installed z/OS baseline: Z00000.PACMAN.LOAD(PACMAIN), Z00000.PACMAN.CLIST(PACMAN) (with Z2), Z00000.PACMAN.CEEOPTS;
+on-host template copy CLIST(PACSRCT). The live DIE1 / LOST0 session has not started.
