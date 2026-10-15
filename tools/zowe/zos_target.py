@@ -55,7 +55,11 @@ CHUNKS = {
 }
 # chunks whose steps come from more than one MVS deck: step -> (MVS deck, oracle job of that deck)
 SOURCES = {'Z3FS': {'S1S3': ('GP2', 310), 'S2L4': ('S2', 308)}}
-DECKS = ['ZCMP', 'ZHSA'] + list(CHUNKS)
+DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(CHUNKS)
+# ZOS-3 PACZ3HA (docs/zos3-design.md): the high-score test PDSs of one attempt (fresh, never deleted; a rerun uses the
+# next suffix). Only the two PDSs the batch HS runs use; HSCL.DATA belongs to the CLIST block check (ZOS-4).
+HS_ATTEMPT = 'T1'
+HS_SETS = [('HSTEST', '(TRK,(5,1,5))'), ('HSFULL', '(TRK,(5,1,1))')]
 _md = []
 ZCMP_COBOL = ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT',
               'PACQRYT', 'PACTSOT']
@@ -169,6 +173,32 @@ def zhsa_deck(pfx):
             f'//SYSLIN   DD DSN={pfx}.OBJ(PACHSIO),DISP=SHR\n' + UT.format('SYSUT1'))
 
 
+def z3ha_deck(pfx):
+    """ZOS-3 PACZ3HA: allocate <prefix>.HSTEST.<attempt> and <prefix>.HSFULL.<attempt> as real PDSs (DSNTYPE=PDS: a PDSE
+    has no directory blocks, so the HH1 full-directory case needs a PDS), FB 80 with BLKSIZE 80 coded (PACHSIO accepts
+    only F(B) 80/80; without it the system would choose a larger block size), catalogued also on an abnormal end (no
+    DELETE anywhere; an existing dataset fails the allocation, nothing is reused). Then the frozen MVS HS setup steps,
+    verbatim apart from the dataset names: HSSEED1..3 (members HS9, BAD, EMPTY) and HSFILL (IEBUPDTE: M01.. until the
+    one directory block is full, IEB813I, RC 12). Last, a read-only TSO LISTDS of both PDSs (attributes + members)."""
+    md = _md[0]
+    mvs = steps_of_deck(md.hs_steps(pfx, LOAD))
+    ren = {f'{pfx}.{n}': f'{pfx}.{n}.{HS_ATTEMPT}' for n, _ in HS_SETS}
+    out = job_card('PACZ3HA', f'PACMAN ZOS3 Z3HA')
+    out += '//ALLOC    EXEC PGM=IEFBR14\n'
+    for i, (n, sp) in enumerate(HS_SETS, 1):
+        out += (f'//D{i}       DD DSN={ren[pfx + "." + n]},DISP=(NEW,CATLG,CATLG),\n'
+                f'//            DSNTYPE=PDS,DSORG=PO,RECFM=FB,LRECL=80,BLKSIZE=80,\n'
+                f'//            SPACE={sp}\n')
+    for s in ('HSSEED1', 'HSSEED2', 'HSSEED3', 'HSFILL'):
+        text = mvs[s]
+        for old, new in ren.items():
+            text = re.sub(rf'DSN={re.escape(old)}([(,])', rf'DSN={new}\1', text)
+        out += text
+    out += ('//HSLIST   EXEC PGM=IKJEFT01,COND=EVEN\n//SYSTSPRT DD SYSOUT=A\n//SYSTSIN  DD *\n'
+            + ''.join(f"  LISTDS '{d}' MEMBERS\n" for d in ren.values()) + '/*\n')
+    return out
+
+
 def steps_of_deck(text):
     """{step: text} of a deck, split at every EXEC statement (in-stream cards never start with //)."""
     import re
@@ -207,4 +237,4 @@ import re  # noqa: E402
 def deck(name, pfx):
     if name in CHUNKS:
         return chunk_deck(name, pfx)
-    return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck}[name](pfx)
+    return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck, 'Z3HA': z3ha_deck}[name](pfx)

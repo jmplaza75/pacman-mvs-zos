@@ -114,3 +114,13 @@ assembler), PACDS (data stream buffer). Only PACPLAT calls assembler.
   tests/test_s2.py / ref_s2.
 - PACZ3FS approved as the first ZOS-3 job, prepared for review only (exactly S1S3 + S2L4): deck of record
   jcl/zos/PACZ3FS.jcl, check tools/zowe/zos_fs_check.py, tests/test_zos_tools.py section 9. Not submitted.
+
+## 11. PACZ3HA (prepared for review, not submitted)
+Deck of record jcl/zos/PACZ3HA.jcl (tools/zowe/zos_target.py z3ha_deck), check tools/zowe/zos_hs_setup_check.py
+(spool + read-only catalog), tests/test_zos_tools.py section 10. Creates only <HLQ>.PACMAN.HSTEST.T1 and
+<HLQ>.PACMAN.HSFULL.T1: real PDSs (DSNTYPE=PDS; a PDSE has no directory blocks, so HH1 needs a PDS), FB 80/80
+(PACHSIO accepts only F(B) LRECL 80 BLKSIZE 80; BLKSIZE coded so that system-determined block size cannot apply),
+catalogued also on an abnormal end, no DELETE. Then the frozen MVS setup steps, verbatim apart from the names:
+HSSEED1..3 (HS9, BAD, EMPTY) and HSFILL (IEBUPDTE: M01..M20 stowed, IEB813I at M21, RC 12, = oracle 312), and a
+read-only TSO LISTDS. HSCL.DATA (CLIST block check, whose MVS step also deletes it) is not created: ZOS-4.
+Read-only catalog query before preparation (2026-10-15): no Z00000.PACMAN.HS* dataset exists.

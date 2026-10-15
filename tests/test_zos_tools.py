@@ -394,3 +394,34 @@ assert bad >= 3 and all('S2L4' in m for m in msgs if 'FAIL' in m), msgs
 assert FS.linkage()[0]
 print('PACZ3FS: S1S3 / S2L4 verbatim from GP2 / S2, TSO + COLOR A PARM, own oracle blocks (310 / 308) = 1.0-MVS DIE1 = '
       'test_mvs8 model, the real z/OS COLOR(N) DIE1 run passes as both, a mutation fails S2L4 only, PACFSIO bound: PASS')
+
+# 10. ZOS-3 PACZ3HA (HS test PDSs, attempt T1): the deck of record is the generated one; it names only the two attempt
+#     PDSs (never <HLQ>.PACMAN.DATA), no DELETE, no game run; real PDSs (DSNTYPE=PDS) FB 80/80 with BLKSIZE coded;
+#     HSSEED1..3 / HSFILL are the frozen MVS HS steps verbatim apart from the dataset names; the HSFILL rule accepts
+#     the oracle 312 IEBUPDTE log (M01..M20 stowed, IEB813I at M21) and rejects a 21st member or a missing IEB813I
+import zos_hs_setup_check as HSC  # noqa: E402
+ha = (R / 'jcl/zos/PACZ3HA.jcl').read_text()
+with tempfile.TemporaryDirectory() as t:
+    subprocess.run([sys.executable, str(R / 'tools/make_deck.py'), '--target', 'zos', 'Z3HA', '--out',
+                    str(Path(t) / 'h.jcl')], check=True, capture_output=True)
+    assert (Path(t) / 'h.jcl').read_text() == ha, 'PACZ3HA.jcl is not the generated deck'
+has = zos_target.steps_of_deck(ha)
+assert list(has) == HSC.STEPS and 'DELETE' not in ha and 'PACMAN.DATA' not in ha and 'PACZ2D' not in ha
+assert set(re.findall(r'DSN=([\w@.]+)', ha)) == {'@@HLQ@@.PACMAN.HSTEST.T1', '@@HLQ@@.PACMAN.HSFULL.T1'}
+assert ha.count('DISP=(NEW,CATLG,CATLG),\n//            DSNTYPE=PDS,DSORG=PO,RECFM=FB,LRECL=80,BLKSIZE=80,') == 2
+mvs_hs = zos_target.steps_of_deck(md.hs_steps('@@HLQ@@.PACMAN', 'PACZ2D'))
+for s in ('HSSEED1', 'HSSEED2', 'HSSEED3', 'HSFILL'):
+    assert has[s].replace('.HSTEST.T1', '.HSTEST').replace('.HSFULL.T1', '.HSFULL') == mvs_hs[s], s
+from zoslib import audit_deck, render  # noqa: E402
+assert audit_deck(render(ha, 'Z00000'), 'Z00000') == []
+o312 = json.load(gzip.open(R / 'tests/oracle20/312-PACBLDHS.json.gz'))['stream']
+log = o312[o312.index('       ./ ADD NAME=M01') - 3:o312.index('IEB819I END OF JOB IEBUPDTE.') + 1]
+assert HSC.fill_ok(log)
+assert not HSC.fill_ok([l for l in log if 'IEB813I' not in l])
+assert not HSC.fill_ok(log[:-3] + ['IEB817I MEMBER NAME (M21     ) NOT FOUND IN NM DIRECTORY.  STOWED WITH TTR.']
+                       + log[-3:])
+lst = ['LISTDS \'Z00000.PACMAN.HSTEST.T1\' MEMBERS', 'Z00000.PACMAN.HSTEST.T1', '--RECFM-LRECL-BLKSIZE-DSORG',
+       '  FB    80    80      PO', '--VOLUMES--', '  ZXPC02', '--MEMBERS--', '  BAD', '  EMPTY', '  HS9', 'READY']
+assert HSC.listds(lst) == {'Z00000.PACMAN.HSTEST.T1': ('FB', '80', '80', 'PO', ['BAD', 'EMPTY', 'HS9'])}
+print('PACZ3HA: generated deck, only HSTEST.T1 / HSFULL.T1 (no DATA, no DELETE, no run), DSNTYPE=PDS FB 80/80, '
+      'seed / fill steps = frozen MVS HS steps, full-directory rule on the oracle 312 log, LISTDS parse: PASS')
