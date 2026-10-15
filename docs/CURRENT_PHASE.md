@@ -325,5 +325,8 @@ cases; PACZ3FS first. No PACZ2D rebuild, no source change, no CLIST install, no 
   tests/test_zos_tools.py sections 11-12.
 - PACZ3HS1..8 PASS (2026-10-15): JOB02401, 02404, 02411, 02416, 02417, 02421, 02422, 02433; every gate PASS; HS8 PASS
   after a checker fix (first check: false FAIL, MVS IEC217I continuation form assumed; 76c8852). Final T1 state =
-  ref_hs.Pds (docs/evidence/zos3-platform-layer.md). HA6 DEFERRED (ZOS-9/10). WAITING FOR THE USER'S REVIEW before
-  PACZ3TSD.
+  ref_hs.Pds (docs/evidence/zos3-platform-layer.md). HA6 DEFERRED (ZOS-9/10). Accepted by the user; ZOS-3 HS /
+  PACHSIO work complete (HA6 deferred, HSP1..9 omitted, CLIST block -> ZOS-4).
+- PACZ3TSD review package (2026-10-15): the minimum ALARM(PATTERN) TSD set = 12 S2T runs reaching all 21 D41 edges
+  (HG2 / HG3 already proved the TSD engine with ALARM SINGLE), 4 jobs PACZ3TD1..4 (docs/zos3-pacz3tsd-review.md,
+  tools/zowe/zos_tsd_check.py, test section 13). NOT SUBMITTED.

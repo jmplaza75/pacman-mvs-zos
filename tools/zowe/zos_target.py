@@ -52,6 +52,12 @@ CHUNKS = {
     'Z2S2': ('PACZ2S2', 'S2', ['S2L1', 'S2L2', 'S2L4'], None, 308),
     # ZOS-3 (docs/zos3-design.md): the PACFSIO batch contract, the only two TSO + COLOR(AUTO) runs of the oracles
     'Z3FS': ('PACZ3FS', 'GP2+S2', ['S1S3', 'S2L4'], None, '310+308'),
+    # ZOS-3 PACZ3TD1..4: the minimum ALARM(PATTERN) TSD set (docs/zos3-pacz3tsd-review.md): the 12 S2T runs that
+    # together reach every D41 edge of tests/test_s2.py (9 are the only run of an edge), in deck order, under the budget
+    'Z3TSD1': ('PACZ3TD1', 'S2', ['S2T1', 'S2T3', 'S2T5', 'S2T6', 'S2T7'], None, 308),
+    'Z3TSD2': ('PACZ3TD2', 'S2', ['S2T8', 'S2T9', 'S2T10'], None, 308),
+    'Z3TSD3': ('PACZ3TD3', 'S2', ['S2T13', 'S2T17', 'S2T25'], None, 308),
+    'Z3TSD4': ('PACZ3TD4', 'S2', ['S2T23'], None, 308),
 }
 # chunks whose steps come from more than one MVS deck: step -> (MVS deck, oracle job of that deck)
 SOURCES = {'Z3FS': {'S1S3': ('GP2', 310), 'S2L4': ('S2', 308)}}

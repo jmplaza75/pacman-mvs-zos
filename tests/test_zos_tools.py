@@ -637,3 +637,61 @@ print('PACZ3HS8 checker on a synthetic spool: PASS with B14-0C + RC 0 + NOT SAVE
 print('PACZ3HS1..8: generated decks, frozen order without HA6, steps = MVS HS steps + the approved deltas only, '
       f'LOAD + T1 only, spool estimates {est} (< 4,000), HTSO model = oracle 312 lines 25366 / 25744, state chain '
       'PACZ3HA -> test_hs final PDS, HA6 state-neutral: PASS')
+
+# 13. ZOS-3 PACZ3TD1..4 (minimum ALARM(PATTERN) TSD set): the 12 selected S2T runs reach all 21 D41 edges of test_s2
+#     (frozen coverage code, run per run); the 9 that are the only run of an edge are all in, the other 3 are the
+#     cheapest completion (fewest oracle lines); no selected run can be dropped; every one is ALARM P (PARM column 25),
+#     unlike HG2 / HG3 (no column 25: SINGLE); each oracle 308 block = the model byte for byte; the checker fails a
+#     single flipped alarm bit in one hex record, in that step only (no normalisation of WCC bytes)
+import itertools  # noqa: E402
+import zos_s2_model as S2M  # noqa: E402
+import zos_tsd_check as TDK  # noqa: E402
+cov2 = S2M.coverage()
+sel = [s for n in range(1, 5) for s in zos_target.CHUNKS[f'Z3TSD{n}'][2]]
+edges = set(S2M.model()['EDGES'])
+assert set().union(*cov2.values()) == edges and len(edges) == 21
+assert set().union(*[cov2[s] for s in sel]) == edges, 'the selection reaches every edge'
+only2 = {e: [s for s in cov2 if e in cov2[s]] for e in edges}
+mand2 = {v[0] for v in only2.values() if len(v) == 1}
+assert mand2 <= set(sel) and len(mand2) == 9
+o308 = json.load(gzip.open(R / 'tests/oracle20/308-PACBLDS2.json.gz'))
+s8, a308 = o308['stream'], anchors(o308, {'PACMAIN'})
+n8 = [x[0] for x in o308['steps'] if x[0] in a308]
+blk8 = {k: [l.rstrip() for l in s8[a308[k]:a308[n8[n8.index(k) + 1]] - 2]] for k in cov2}
+left = edges - set().union(*[cov2[s] for s in mand2])
+cands2 = [s for s in cov2 if s not in mand2 and cov2[s] & left]
+best2 = min((sum(len(blk8[s]) for s in c), sorted(c)) for r in range(1, 4) for c in itertools.combinations(cands2, r)
+            if set().union(*[cov2[s] for s in c]) >= left)
+assert sorted(set(sel) - mand2) == best2[1], best2
+for s in sel:
+    assert set().union(*[cov2[x] for x in sel if x != s]) != edges, f'{s} could be dropped'
+deck2 = {}
+for n in range(1, 5):
+    deck2.update(zos_target.steps_of_deck((R / f'jcl/zos/{zos_target.CHUNKS[f"Z3TSD{n}"][0]}.jcl').read_text()))
+for s in sel:
+    parm = re.search(r"PARM='([^']*)'", deck2[s]).group(1)
+    assert parm[:3] == 'TSD' and len(parm) == 25 and parm[24] == 'P', (s, parm)
+    pat, end, _ = S2M.expected(s)
+    st_, j = S2M.model()['tsd_streams'](blk8[s], 0)
+    assert st_ == pat and blk8[s][j:] == end and ZE.ends_ok(o308, a308, s, a308[s] + len(blk8[s])), s
+    assert max(len(l) for l in blk8[s]) <= 120, s          # one SYSOUT record per line: no hex record split
+hs7 = zos_target.steps_of_deck((R / 'jcl/zos/PACZ3HS7.jcl').read_text())
+for s in ('HG2', 'HG3'):
+    assert len(re.search(r"PARM='([^']*)'", hs7[s]).group(1)) == 21, 'HG2 / HG3 ran ALARM SINGLE (no column 25)'
+td3 = {s: blk8[s] for s in zos_target.CHUNKS['Z3TSD3'][2]}
+with tempfile.TemporaryDirectory() as t:
+    runs = zos_runs(spool(Path(t) / 'ok', [(k, None, 'PACZ2D', '0000') for k in td3], td3))[2]
+    assert compare(o308, runs, {'PACMAIN': 'PACZ2D'}, subset=True)[0] == 0
+    assert all(TDK.model_check(s, runs[s]['lines'])[0] for s in td3)
+    k = next(i for i, l in enumerate(td3['S2T13']) if l.startswith('TSD ') and not l.startswith('TSD FRAME')
+             and l[4:6] in ('C6', 'C2'))
+    w = td3['S2T13'][k]
+    flip = w[:4] + ('C2' if w[4:6] == 'C6' else 'C6') + w[6:]          # the WCC alarm bit X'04' toggled
+    mut = dict(td3, S2T13=td3['S2T13'][:k] + [flip] + td3['S2T13'][k + 1:])
+    runs = zos_runs(spool(Path(t) / 'm', [(k2, None, 'PACZ2D', '0000') for k2 in mut], mut))[2]
+    nb, msgs = compare(o308, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+    assert nb == 1 and [m.split(':')[0] for m in msgs if m.startswith('FAIL')] == ['FAIL S2T13'], msgs
+    assert [s for s in mut if not TDK.model_check(s, runs[s]['lines'])[0]] == ['S2T13']
+print(f'PACZ3TD1..4: {len(sel)} S2T runs reach all 21 D41 edges (9 sole runs + the cheapest completion '
+      f'{best2[1]}, none removable), ALARM P on each (HG2 / HG3 SINGLE), oracle 308 blocks = ref_s2 model byte for '
+      'byte, a flipped alarm bit fails its step only: PASS')
