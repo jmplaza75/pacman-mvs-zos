@@ -1,0 +1,8 @@
+  OK   deck as submitted = reviewed rendering
+  OK   CEEOPTS exactly ALL31(OFF),STACK(,,BELOW) in all 1 steps
+  OK   3381 spool lines (< 4,000)
+PACZ3TD4 JOB02516 CC 0000: 1 steps, 3381 spool lines
+  OK   steps S2T23
+  oracle 308 OK   S2T23: 3328 lines identical (oracle stream lines 15148-18475)
+  model  OK   S2T23: 184 / 184 streams = ref_s2 pattern model byte for byte (2 with the alarm bit, 1 end bell-only writes), end lines True
+PACZ3TD4 CHECK PASS
