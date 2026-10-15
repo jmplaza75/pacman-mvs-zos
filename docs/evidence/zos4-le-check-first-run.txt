@@ -1,0 +1,38 @@
+  D1: 1 record(s) filled to column 120 (a longer line would be split)
+  D2: 1 record(s) filled to column 120 (a longer line would be split)
+  D3: 1 record(s) filled to column 120 (a longer line would be split)
+  D1: PARMLEN=005, PARM=ZHARG, TAM=0000000001, BSM=0000000001, PARM1=0458306072 ABOVE, CSECT=0000036416 BELOW, SAVEA=0458174512 ABOVE
+      ALL31(ON) <- IBM-supplied default
+      STACK(131072,131072,ANYWHERE,KEEP,524288,131072) <- IBM-supplied default
+      CBLOPTS(ON) <- IBM-supplied default
+      RPTOPTS(ON) <- Invocation command
+  D2: PARMLEN=005, PARM=ZHARG, TAM=0000000000, BSM=0000000000, PARM1=0000299520 BELOW, CSECT=0000036416 BELOW, SAVEA=0000155696 BELOW
+      ALL31(OFF) <- DD:CEEOPTS
+      STACK(131072,131072,BELOW,KEEP,524288,131072) <- DD:CEEOPTS
+      CBLOPTS(ON) <- IBM-supplied default
+      RPTOPTS(ON) <- Invocation command
+  D3: PARMLEN=005, PARM=ZHARG, TAM=0000000001, BSM=0000000001, PARM1=0458306072 ABOVE, CSECT=0000036416 BELOW, SAVEA=0458174512 ABOVE
+      ALL31(ON) <- DD:CEEOPTS
+      STACK(131072,131072,ANYWHERE,KEEP,524288,131072) <- Invocation command
+      CBLOPTS(ON) <- IBM-supplied default
+      RPTOPTS(ON) <- Invocation command
+PACZ4LE JOB03693 CC 0000
+  OK   steps D1 D2 D3
+  OK   D1 COND CODE 0000
+  OK   D2 COND CODE 0000
+  OK   D3 COND CODE 0000
+  OK   only SYSOUT per step
+  OK   STEPLIB Z00000.PACMAN.LOAD retained once per step
+  OK   no CEEnnnn message, no ABEND / IEA995 / $HASP375
+  OK   D1: program argument = ZHARG (PARMLEN 005): arguments/options format
+  OK   D1: options report present, CBLOPTS ON, RPTOPTS(ON) from the invocation
+  FAIL D1: ALL31 / STACK from the installation defaults (recorded: ALL31(ON), STACK(131072,131072,ANYWHERE,KEEP,524288,131072))
+  OK   D2: program argument = ZHARG (PARMLEN 005): arguments/options format
+  OK   D2: options report present, CBLOPTS ON, RPTOPTS(ON) from the invocation
+  OK   D2: ALL31(OFF) and STACK(...,BELOW,...) from CEEOPTS
+  OK   D2: AMODE 24 (TAM = BSM = 0), PARM1 / CSECT / SAVEA BELOW 16 MB
+  OK   D3: program argument = ZHARG (PARMLEN 005): arguments/options format
+  OK   D3: options report present, CBLOPTS ON, RPTOPTS(ON) from the invocation
+  OK   D3: STACK ANYWHERE from the invocation (outranks CEEOPTS BELOW), ALL31(ON) from CEEOPTS
+  OK   D3: AMODE 31 (TAM = BSM = 1); SAVEA ABOVE recorded for information only (ANYWHERE allows either)
+PACZ4LE CHECK FAIL (1)
