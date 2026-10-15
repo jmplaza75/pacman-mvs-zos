@@ -702,10 +702,11 @@ print(f'PACZ3TD1..4: {len(sel)} S2T runs reach all 21 D41 edges (9 sole runs + t
 #     the oracle 307 / 312 shapes and fail closed on a wrong PARM, a swapped path, a missing HSCL END or an IKJ56 message
 import zos_clist_check as CLK  # noqa: E402
 cl = (R / 'jcl/zos/PACZ4CL.jcl').read_text()
-with tempfile.TemporaryDirectory() as t:
-    subprocess.run([sys.executable, str(R / 'tools/make_deck.py'), '--target', 'zos', 'Z4CL', '--out',
-                    str(Path(t) / 'c.jcl')], check=True, capture_output=True)
-    assert (Path(t) / 'c.jcl').read_text() == cl, 'PACZ4CL.jcl is not the generated deck'
+# PACZ4CL (attempt T1) is frozen as submitted (JOB03750): the deck of record = the deck the job ran (the Z2 lines have
+# since been refined for attempt T2, PACZ4Z2, section 16)
+sub = R / 'build/zos/PACZ4CL-JOB03750/deck.jcl'
+if sub.exists():
+    assert render(cl, 'Z00000') == sub.read_text(), 'PACZ4CL.jcl is not the deck JOB03750 ran'
 cst = zos_target.steps_of_deck(cl)
 assert list(cst) == CLK.STEPS and 'DELETE' not in cl and 'PACMAN.DATA' not in cl and 'PACMAIN' not in cl
 assert set(re.findall(r'DSN=([\w@.]+)', cl)) == {'@@HLQ@@.PACMAN.Z4CL.T1', '@@HLQ@@.PACMAN.Z4HSY.DATA',
@@ -715,11 +716,11 @@ assert set(re.findall(r'DSN=([\w@.]+)', cl)) == {'@@HLQ@@.PACMAN.Z4CL.T1', '@@HL
 c20, cz = (R / 'src/clist/PACMAN.clist').read_text().splitlines(), (R / 'src/zos/PACMAN.clist').read_text().splitlines()
 zi, zc = cz.index(next(l for l in cz if l.startswith('/* Z2 (ZOS-4)'))), cz.index("CALL '@@PREFIX@@.LOAD(PACMAIN)' '&P'")
 assert cz[:zi] == c20[:zi] and cz[zc] == c20[zi] and cz[zc + 1] == 'FREE F(CEEOPTS)' and cz[zc + 2:] == c20[zi + 1:]
-assert all(len(l.replace('@@PREFIX@@', 'Z00000.PACMAN')) <= 72 for l in cz) and len(cz) - len(c20) == 24
-for s, pz in (('Z2CLS1', 'Z4CEY'), ('Z2CLS2', 'Z4CEN')):
+assert all(len(l.replace('@@PREFIX@@', 'Z00000.PACMAN')) <= 72 for l in cz) and len(cz) - len(c20) == 30
+for s, pz in (('Z2CLS1', 'Z4CEY'), ('Z2CLS2', 'Z4CEN')):          # T1: the Z2 lines as they were (JOB03750)
     body = cst[s].split('DLM=ZZ\n')[1]
-    blk = [l.replace('@@PREFIX@@', f'@@HLQ@@.PACMAN.{pz}') for l in cz[zi:zc]]
-    assert '\n'.join(blk) in body and not any(x.startswith('CALL ') for x in body.splitlines()) and 'WRITE Z2 CALL REACHED\nLISTALC STATUS\nFREE F(CEEOPTS)' in body
+    assert not any(x.startswith('CALL ') for x in body.splitlines()) and \
+        'WRITE Z2 CALL REACHED\nLISTALC STATUS\nFREE F(CEEOPTS)' in body and f"&SYSDSN('@@HLQ@@.PACMAN.{pz}.CEEOPTS')" in body
 assert audit_deck(render(cl, 'Z00000'), 'Z00000') == []
 mg8 = zos_target.steps_of_deck(zos_target._mvs['g8_clist_steps']('@@HLQ@@.PACMAN'))['G8CLS']
 assert cst['G8CLS'].split('//SYSUT1   DD DATA,DLM=ZZ\n')[1] == mg8.split('//SYSUT1   DD DATA,DLM=ZZ\n')[1]
@@ -831,3 +832,51 @@ for opt in ('ALL31', 'STACK'):
 print('PACZ4LE: generated deck (ZHELLO31 / ZHELLO24 / ZHELLO31, STEPLIB only, no Pac-Man), step rules accept the '
       'designed outcomes and fail a CEEOPTS win in D3, installation values in D2, a reversed arguments/options split; '
       'real JOB03693 D1 (IBM-supplied default) accepted, CEEOPTS / invocation / other origins fail: PASS')
+
+# 16. ZOS-4 PACZ4Z2 (attempt T2): the three Z2 paths only, the current Z2 lines verbatim in the test members (CALL ->
+#     marker), CONTROL LIST, DYNAMNBR=200, fresh T2 names; the TMP-output rules accept the designed outcome and fail
+#     when case 3 leaves at SYSDSN (the JOB03750 shape), when the pre-existing DD changes, on a CHECK FAILED in case 2
+import zos_z2_check as Z2K  # noqa: E402
+z2d = (R / 'jcl/zos/PACZ4Z2.jcl').read_text()
+with tempfile.TemporaryDirectory() as t:
+    subprocess.run([sys.executable, str(R / 'tools/make_deck.py'), '--target', 'zos', 'Z4Z2', '--out',
+                    str(Path(t) / 'z.jcl')], check=True, capture_output=True)
+    assert (Path(t) / 'z.jcl').read_text() == z2d, 'PACZ4Z2.jcl is not the generated deck'
+z2s = zos_target.steps_of_deck(z2d)
+assert list(z2s) == Z2K.STEPS and 'DELETE' not in z2d and 'PACMAN.DATA' not in z2d and 'PACMAIN' not in z2d
+assert set(re.findall(r'DSN=([\w@.]+)', z2d)) == {'@@HLQ@@.PACMAN.Z4CL.T2', '@@HLQ@@.PACMAN.Z4CY2.CEEOPTS'}
+assert '//CLT      EXEC PGM=IKJEFT01,COND=(0,NE),DYNAMNBR=200' in z2d and audit_deck(render(z2d, 'Z00000'), 'Z00000') == []
+assert 'G8PARM' not in z2d and 'HSCL' not in z2d                                    # no G8 / HS repetition
+for s, pz in (('Z2CLS1', 'Z4CY2'), ('Z2CLS2', 'Z4CN2')):
+    body = z2s[s].split('DLM=ZZ\n')[1]
+    blk = [l.replace('@@PREFIX@@', f'@@HLQ@@.PACMAN.{pz}') for l in cz[zi:zc]]
+    assert body.startswith('PROC 0\nCONTROL LIST\n') and '\n'.join(blk) in body
+    assert not any(x.startswith('CALL ') for x in body.splitlines())
+Wt, CYt = Z2K.WORK, Z2K.CY
+g2 = [f"  EXEC '{Wt}(Z2RUN)' 'Z2Y'", 'ALLOC F(SYSIN) DUMMY REUSE', f"ALLOC F(CEEOPTS) DA('{CYt}') SHR",
+      'Z2 CALL REACHED', 'LISTALC STATUS', '--DDNAME---DISP--', CYt, '  CEEOPTS  KEEP', 'FREE F(CEEOPTS)',
+      'LISTALC STATUS', '--DDNAME---DISP--', 'NULLFILE  SYSIN', 'Z2 END', 'Z2RC=0', 'READY',
+      f"  EXEC '{Wt}(Z2RUN)' 'Z2N'", Z2K.MSG_MISSING, 'Z2RC=8', 'READY',
+      f"  ALLOC F(CEEOPTS) DA('{Wt}(Z2N)') SHR", 'READY', '  LISTALC STATUS', '--DDNAME---DISP--', f'{Wt}(Z2N)',
+      '  CEEOPTS  KEEP', 'READY', f"  EXEC '{Wt}(Z2RUN)' 'Z2Y'", f"ALLOC F(CEEOPTS) DA('{CYt}') SHR",
+      'IKJ56861I  FILE CEEOPTS NOT ALLOCATED, FILE IN USE', Z2K.MSG_EXISTS, 'Z2RC=8', 'READY', '  LISTALC STATUS',
+      '--DDNAME---DISP--', f'{Wt}(Z2N)', '  CEEOPTS  KEEP', 'READY', '  FREE F(CEEOPTS)', 'READY', 'END']
+assert all(v for _, v in Z2K.tmp_check(g2)), Z2K.tmp_check(g2)
+k3 = g2.index(f"  EXEC '{Wt}(Z2RUN)' 'Z2Y'", 1)
+bad_z2 = {
+    'case 3 left at SYSDSN (JOB03750 shape)': g2[:k3 + 1] + [f'PACMAN: {CYt} MISSING, GAME NOT STARTED']
+    + g2[g2.index(Z2K.MSG_EXISTS) + 1:],
+    'case 3 ALLOC not listed': [l for i, l in enumerate(g2) if not (i > k3 and l.startswith('ALLOC F(CEEOPTS)'))],
+    'case 3 DD changed': g2[:-6] + [CYt] + g2[-5:],
+    'case 2 CHECK FAILED': [l if l != Z2K.MSG_MISSING else 'PACMAN: CEEOPTS CHECK FAILED (UNAVAILABLE DATASET), GAME '
+                            'NOT STARTED' for l in g2],
+    'case 1 CEEOPTS left': g2[:g2.index('Z2 END')] + [CYt, '  CEEOPTS  KEEP'] + g2[g2.index('Z2 END'):],
+    'IKJ outside case 3': g2[:3] + ['IKJ56228I DATA SET X NOT IN CATALOG'] + g2[3:],
+    'IKJ not naming CEEOPTS in case 3': [l if not l.startswith('IKJ56861I') else 'IKJ56228I DATA SET X NOT IN CATALOG'
+                                         for l in g2],
+}
+for why, ls in bad_z2.items():
+    assert not all(v for _, v in Z2K.tmp_check(ls)), why
+print('PACZ4Z2: generated deck (Z2 only, T2 names, CONTROL LIST, DYNAMNBR=200, no G8 / HS / DATA / DELETE / PACMAIN), '
+      f'current Z2 lines verbatim; TMP rules accept the designed outcome and fail {len(bad_z2)} wrong shapes incl. the '
+      'JOB03750 case-3 exit at SYSDSN: PASS')

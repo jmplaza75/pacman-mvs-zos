@@ -68,7 +68,7 @@ HS_JOBS = {'Z3HS1': ['HA1', 'HA2', 'HA3'], 'Z3HS2': ['HA4'], 'Z3HS3': ['HA5'], '
            'Z3HS5': ['HB1', 'HC1', 'HD1'], 'Z3HS6': ['HE1', 'HE2', 'HF1', 'HF2'], 'Z3HS7': ['HG1', 'HG2', 'HG3'],
            'Z3HS8': ['HH1', 'HTSO1', 'HTSO2']}
 HS_DEFERRED = ['HA6']
-DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL', 'Z4LE'] + list(CHUNKS)
+DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL', 'Z4LE', 'Z4Z2'] + list(CHUNKS)
 # ZOS-4 PACZ4LE (docs/zos4-le-diagnostic.md): LE runtime-option diagnostic with the ZOS-1 probes (no Pac-Man):
 # (step, program, PARM, CEEOPTS records or None). ZHARG is not an LE option name: the program's PARM echo shows which
 # side of the '/' LE gave it (CBLOPTS(ON): arguments/options).
@@ -88,7 +88,10 @@ def zos_clist_text(pfx):
     return (R / 'src/zos/PACMAN.clist').read_text(encoding='ascii').replace('@@PREFIX@@', pfx)
 
 
-def z2_test_clist(prefix):
+Z4Z2_SETS = {'work': 'Z4CL.T2', 'cee_present': 'Z4CY2', 'cee_missing': 'Z4CN2'}   # ZOS-4 Z2 attempt T2
+
+
+def z2_test_clist(prefix, listing=False):
     """PACZ4CL Z2 test member: the Z2 lines of the z/OS CLIST verbatim (rendered with prefix), the CALL replaced by a
     marker and a LISTALC (nothing is called), SYSIN / SYSOUT allocated DUMMY first as the CLIST allocates them DA(*)."""
     lines = zos_clist_text(prefix).splitlines()
@@ -97,7 +100,8 @@ def z2_test_clist(prefix):
     block = [l for l in lines[i:j + 1]]
     k = next(n for n, l in enumerate(block) if l.startswith('CALL '))
     block[k:k + 1] = ['WRITE Z2 CALL REACHED', 'LISTALC STATUS']
-    return ('PROC 0\nSET &W = C\nALLOC F(SYSIN) DUMMY REUSE\nALLOC F(SYSOUT) DUMMY REUSE\n' + '\n'.join(block)
+    return ('PROC 0\n' + ('CONTROL LIST\n' if listing else '') + 'SET &W = C\nALLOC F(SYSIN) DUMMY REUSE\n'
+            'ALLOC F(SYSOUT) DUMMY REUSE\n' + '\n'.join(block)
             + '\nLISTALC STATUS\nFREE F(SYSIN SYSOUT)\nWRITE Z2 END\n')
 # ZOS-3 PACZ3HA (docs/zos3-design.md): the high-score test PDSs of one attempt (fresh, never deleted; a rerun uses the
 # next suffix). Only the two PDSs the batch HS runs use; HSCL.DATA belongs to the CLIST block check (ZOS-4).
@@ -327,6 +331,35 @@ def z4le_deck(pfx):
     return out
 
 
+def z4z2_deck(pfx):
+    """ZOS-4 PACZ4Z2 (attempt T2): the three Z2 paths only (G8 / HS proved by JOB03750). As PACZ4CL's Z2 part, with:
+    fresh T2 names; the current Z2 lines (SYSDSN result OK / DATASET NOT FOUND / anything else reported); CONTROL LIST in
+    the test members, so every TSO command the CLIST issues is listed - the ALLOC F(CEEOPTS) line in case 3 proves the
+    SYSDSN check passed and the ALLOC was reached; the IKJEFT01 step with DYNAMNBR=200 like the interactive logon proc
+    DBPROCDG; a LISTALC right before and right after case 3 (the pre-existing DD must be identical)."""
+    md = _md[0]
+    ds = f'{pfx}.{Z4Z2_SETS["work"]}'
+    cy, cn = (f'{pfx}.{Z4Z2_SETS[k]}' for k in ('cee_present', 'cee_missing'))
+    out = job_card('PACZ4Z2', 'PACMAN ZOS4 Z4Z2')
+    out += (f'//ALLOC    EXEC PGM=IEFBR14\n//D1       DD DSN={ds},DISP=(NEW,CATLG,CATLG),\n'
+            f'//            DSNTYPE=PDS,DSORG=PO,{md.DATA_DCB},\n//            SPACE=(TRK,(2,1,2))\n')
+    out += ('//Z2CEE    EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT2   DD DSN={cy}.CEEOPTS,DISP=(NEW,CATLG,CATLG),\n'
+            f'//            {md.DATA_DCB},SPACE=(TRK,(1,1))\n//SYSUT1   DD *\n' + CEEOPTS[0] + '\n/*\n')
+    for i, (m, text) in enumerate((('Z2Y', z2_test_clist(cy, True)), ('Z2N', z2_test_clist(cn, True)),
+                                   ('Z2RUN', f"PROC 1 M\nEXEC '{ds}(&M)'\nWRITE Z2RC=&LASTCC\n")), 1):
+        assert all(len(l) <= 72 for l in text.splitlines()), m
+        out += (f'//Z2CLS{i}   EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+                f'//SYSUT2   DD DSN={ds}({m}),DISP=OLD\n//SYSUT1   DD DATA,DLM=ZZ\n' + text + 'ZZ\n')
+    cmds = [f"  EXEC '{ds}(Z2RUN)' 'Z2Y'", f"  EXEC '{ds}(Z2RUN)' 'Z2N'",
+            f"  ALLOC F(CEEOPTS) DA('{ds}(Z2N)') SHR", '  LISTALC STATUS',
+            f"  EXEC '{ds}(Z2RUN)' 'Z2Y'", '  LISTALC STATUS', '  FREE F(CEEOPTS)']
+    assert all(len(c) <= 72 for c in cmds)
+    out += ('//CLT      EXEC PGM=IKJEFT01,COND=(0,NE),DYNAMNBR=200\n//SYSTSPRT DD SYSOUT=A\n//SYSTSIN  DD *\n'
+            + ''.join(c + '\n' for c in cmds) + '/*\n')
+    return out
+
+
 def steps_of_deck(text):
     """{step: text} of a deck, split at every EXEC statement (in-stream cards never start with //)."""
     import re
@@ -367,4 +400,5 @@ def deck(name, pfx):
         return chunk_deck(name, pfx)
     if name in HS_JOBS:
         return z3hs_deck(name, pfx)
-    return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck, 'Z3HA': z3ha_deck, 'Z4CL': z4cl_deck, 'Z4LE': z4le_deck}[name](pfx)
+    return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck, 'Z3HA': z3ha_deck, 'Z4CL': z4cl_deck, 'Z4LE': z4le_deck,
+            'Z4Z2': z4z2_deck}[name](pfx)

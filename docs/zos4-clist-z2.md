@@ -71,3 +71,12 @@ is otherwise byte-identical (guarded by tests/zos_c2.py z2_guard and tests/test_
 PACZ4CL now covers the three cases under the TMP (members Z2Y / Z2N with the Z2 lines verbatim, CALL -> marker +
 LISTALC, wrapper Z2RUN writing Z2RC=&LASTCC; project CEEOPTS Z4CEY.CEEOPTS written by step Z2CEE; Z4CEN never
 allocated); the G8 and HS parts of PACZ4CL are byte-identical to the previous version.
+
+## Refinement 2 (user, 2026-10-15, after PACZ4CL JOB03750 case 3 SAFE but INCONCLUSIVE)
+`&SYSDSN` result handled in three ways: `OK` -> continue; `DATASET NOT FOUND` -> the approved MISSING message, RC 8;
+anything else -> `PACMAN: CEEOPTS CHECK FAILED (<result>), GAME NOT STARTED`, RC 8; no CALL in either failure. Z2 =
+30 lines (29 before the CALL, 1 after), guarded by tests/zos_c2.py z2_guard. Z2-only attempt T2: jcl/zos/PACZ4Z2.jcl
+(tools/zowe/zos_z2_check.py, test section 16): fresh names Z4CL.T2 / Z4CY2.CEEOPTS / Z4CN2.CEEOPTS (never
+allocated), IKJEFT01 with DYNAMNBR=200 (as DBPROCDG), CONTROL LIST in the test members so case 3 must show the
+listed `ALLOC F(CEEOPTS)` (SYSDSN passed, ALLOC reached) and its refusal; the pre-existing DD (on Z4CL.T2(Z2N)) must
+be identical in LISTALC before and after case 3. PACZ4CL (T1) stays frozen as submitted.
