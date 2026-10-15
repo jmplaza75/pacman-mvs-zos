@@ -94,11 +94,14 @@ def tmp_check(lines):
                     and not any(NO in l for l in pn)))
     z2, c3 = z2_check(lines)
     res += z2
-    ok3 = [l for i, l in enumerate(lines) if c3 and c3[0] <= i <= c3[1]]
-    res.append(('no IKJ56xxx message (except the refused ALLOC of Z2 case 3: %s)'
-                % ([l.strip() for l in ok3 if re.search(r'IKJ56\d{3}', l)] or 'none'),
-                not any(re.search(r'IKJ56\d{3}', l) for i, l in enumerate(lines)
-                        if not (c3 and c3[0] <= i <= c3[1]))))
+    ikj = [(i, l.strip()) for i, l in enumerate(lines) if re.search(r'IKJ\d{5}', l)]
+    in3 = [l for i, l in ikj if c3 and c3[0] <= i <= c3[1]]
+    res.append(('IKJ diagnostics: only the refused CEEOPTS ALLOC of Z2 case 3 (%s), none elsewhere'
+                % (in3 or 'none'),
+                all('CEEOPTS' in l for l in in3) and not [l for i, l in ikj if not (c3 and c3[0] <= i <= c3[1])]))
+    fr = [i for i, l in enumerate(lines) if l.strip() == 'FREE F(CEEOPTS)']
+    res.append(('final cleanup: FREE F(CEEOPTS) issued after case 3, no diagnostic after it',
+                bool(fr) and c3 is not None and fr[-1] > c3[1] and not [i for i, _ in ikj if i > fr[-1]]))
     return res
 
 

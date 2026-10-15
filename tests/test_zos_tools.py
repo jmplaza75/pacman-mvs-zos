@@ -759,6 +759,9 @@ bad_tmp = {
     'Z2 case 3: DD lost': [l for l in good if l != f'{W}(PARMS)' and l != '  CEEOPTS  KEEP' or good.index(l) < 40],
     'IKJ56 outside case 3': good[:good.index('Z2RC=0')] + ['IKJ56228I DATA SET NOT IN CATALOG']
     + good[good.index('Z2RC=0'):],
+    'unrelated IKJ in case 3': good[:good.index(CLK.MSG_EXISTS)] + ['IKJ56228I DATA SET Z00000.X NOT IN CATALOG']
+    + good[good.index(CLK.MSG_EXISTS):],
+    'cleanup FREE failed': good[:-1] + ['IKJ56247I FILE CEEOPTS NOT FREED, IS NOT ALLOCATED'] + good[-1:],
 }
 for why, ls in bad_tmp.items():
     assert not all(v for _, v in CLK.tmp_check(ls)), why
