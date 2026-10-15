@@ -74,3 +74,48 @@ every extent (a member named END is indented and stays a member); any other shap
 the real JOB02091 SYSTSPRT (tests/fixtures/zos/, same SHA-256 as the raw file). The corrected checker on the same
 spool and the same read-only queries: every criterion PASS (docs/evidence/zos3-ha-check.txt), no HS semantics changed.
 PACZ3HA / JOB02091 = PASS.
+
+## PACZ3HS1..8 - the stateful HS sequence (option A): PASS (HS8 after a checker fix; see the audit note)
+
+Decks of record jcl/zos/PACZ3HS1..8.jcl (review package docs/zos3-pacz3hs-review.md), each submitted once, unchanged
+(deck.jcl as submitted = the reviewed rendering), each preceded by its read-only state gate (`zos_hs_check.py --gate N`,
+PASS every time) and followed by `zos_hs_check.py ... --job N` (spool, oracle 312 with the digest-bound HA1 boundary,
+the frozen test_hs model, then the read-only state the job must leave). Every step COND CODE 0000; no ABEND / CEE /
+IEA995 / S722 / $HASP375; no DELETE, no purge; writes only to HSTEST.T1 / HSFULL.T1.
+
+| Job | JOBID | Steps | Spool lines | Check | HSTEST.T1 after the job |
+|---|---|---|---|---|---|
+| PACZ3HS1 | JOB02401 | HA1, HA2, HA3 | 2259 | 23/23 PASS | + HS1 = 0001310/001 (REPL, new member) |
+| PACZ3HS2 | JOB02404 | HA4 | 2309 | 17/17 PASS | HS1 = 0001840/001 (WRIT in place) |
+| PACZ3HS3 | JOB02411 | HA5 | 2877 | 17/17 PASS | HS1 = 0002760/002 (WRIT in place) |
+| PACZ3HS4 | JOB02416 | HA7, HA8 | 3300 | 20/20 PASS | unchanged (start 99 not recorded; CLASSIC) |
+| PACZ3HS5 | JOB02417 | HB1, HC1, HD1 | 3191 | 24/24 PASS | + HS2 = 0000980/001; HS8 not created; HS9 kept |
+| PACZ3HS6 | JOB02421 | HE1, HE2, HF1, HF2 | 2951 | 27/27 PASS | BAD, EMPTY = 0000720/001 (healed: one record) |
+| PACZ3HS7 | JOB02422 | HG1, HG2, HG3 | 2994 | 27/27 PASS | + HS13 1350/002, HS14 1370/002, HS15 1350/002 |
+| PACZ3HS8 | JOB02433 | HH1, HTSO1, HTSO2 | 1628 | 30/30 PASS (2nd run) | + HS16 = 0000370/001 |
+
+HH1 (PACZ3HS8): JESYSMSG `IEC217I B14-0C,IGG0201Z,PACZ3HS8,HH1,PACHS,0D38,ZXPL01,` continued by
+`Z00000.PACMAN.HSFULL.T1(HISCORE)` - the only IEC event of the job: the STOW of the new member failed because the
+one directory block of HSFULL.T1 is full; the B14 was recovered by PACHSIO's ESTAE (no ABEND, no CEE message, no
+CEEDUMP, COND CODE 0000, HTSO1 / HTSO2 ran afterwards); the SYSOUT = oracle 312 lines 24620-25359 = model, ending
+`HIGH SCORE NOT SAVED`; HSFULL.T1 afterwards exactly M01..M20, HISCORE absent. PACHSIO's RC 16 is established from
+the PACPLAT / PACHSIO control flow (NOT SAVED = an HSWR RC other than 0 / 2, the same DD read successfully just
+before, plus the B14), not printed by the job.
+
+Audit note (both facts kept): the FIRST check of JOB02433 (docs/evidence/zos3-hs8-check-first-run.txt) reported one
+FAIL, the HH1 IEC217I criterion: a checker-format defect, not a job or state failure. The rule assumed the MVS
+continuation form (JOB 312 repeats `IEC217I` before the dataset name); z/OS continues the message on the next record
+without a message id and with the member. Before the checker was changed the SHA-256 of every raw JOB02433 file was
+recorded (docs/evidence/zos3-pacz3hs8-JOB02433-raw.sha256) and the files made read-only. Fix 76c8852 (exactly one IEC
+event, first record `IEC217I B14-0C,...,PACZ3HS8,HH1,PACHS,...,`, the next record exactly
+`Z00000.PACMAN.HSFULL.T1(HISCORE)`, fail closed; regression tests on the real JESYSMSG + 12 negative shapes). The
+corrected checker on the same raw files and the same read-only queries: 30/30 PASS. PACZ3HS8 / JOB02433 = PASS.
+
+Final read-only verification against ref_hs.Pds (docs/evidence/zos3-hs-final-state.txt): HSTEST.T1 = BAD, EMPTY
+(0000720 PACHS001 001 each), HS1 (0002760 ... 002), HS13 (0001350 ... 002), HS14 (0001370 ... 002), HS15
+(0001350 ... 002), HS16 (0000370 ... 001), HS2 (0000980 ... 001), HS9 (9999999 ... 099), one record each, HS8 absent;
+HSFULL.T1 = M01..M20, HISCORE absent; both PDS / PO / FB / 80 / 80, CATALOG.ZOSO, one extent, not migrated.
+
+Not in ZOS-3: HA6 DEFERRED to ZOS-9/10 (5,262 application lines alone, above the site output limit; state-neutral by
+ref_hs; its no-record branch is covered by HA7) - not PASS here. HSP1..9 omitted (replaced by the read-only state
+checks; kept for the ZOS-9/10 full suite). CLIST block (HSCLS1/2, HSCLT) -> ZOS-4.

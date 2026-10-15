@@ -80,3 +80,13 @@ JOB02422 PACZ3HS7
   archive  PACZ3HS7-JOB02422.tar.gz
   sha256   79fdb5cf65fa3ab9cd3b5609d24298218c67c60c55316a36c0bcc141c0937820
   z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 9 raw files, 0 credential pattern hits
+
+JOB02433 PACZ3HS8
+  phase    ZOS-3: HS stateful sequence job 8 of 8 (HH1, HTSO1, HTSO2); gate 8 PASS immediately before the submission
+  result   CC 0000; PASS after the checker fix 76c8852 - the first check (docs/evidence/zos3-hs8-check-first-run.txt) gave
+           one false FAIL: the HH1 IEC217I rule assumed the MVS continuation form; corrected run on the same raw files
+           (read-only since, SHA-256 docs/evidence/zos3-pacz3hs8-JOB02433-raw.sha256): docs/evidence/zos3-hs8-check.txt
+  spool    11 files, 1628 spool lines
+  archive  PACZ3HS8-JOB02433.tar.gz
+  sha256   de7016e0d6837a29aafd7a7182a8308d3e52d197e163ad0b5c1b32798af41fe3
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 11 raw files, 0 credential pattern hits
