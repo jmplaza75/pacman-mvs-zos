@@ -339,3 +339,7 @@ cases; PACZ3FS first. No PACZ2D rebuild, no source change, no CLIST install, no 
 ## ZOS-4 CLASSIC - DESIGN (2026-10-15; docs/zos4-design.md)
 Design / reconnaissance only: no job, no live session, no source change. Process: one precheck, one execution /
 session, one focused postcheck; reuse ZOS-2 / ZOS-3 evidence. Waiting for the user's decisions (design sec. 9).
+- PACZ4LE JOB03693 PASS (2026-10-15; first check false FAIL on the RPTOPTS origin wording, fixed a800ebf; evidence
+  docs/evidence/zos4-classic.md): no-override LE defaults = ALL31(ON), stack ANYWHERE (IBM-supplied); CEEOPTS gives
+  profile A to the AMODE 24 module; invocation options outrank CEEOPTS. NEXT: the CLIST profile-A CEEOPTS Z-entry for
+  review (not installed).

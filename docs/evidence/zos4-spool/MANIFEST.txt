@@ -1,0 +1,16 @@
+ZOS-4 raw spool evidence of the project jobs (one deterministic .tar.gz per job).
+Source: build/zos/<JOBNAME>-<JOBID>/ as downloaded by tools/zowe/zos_submit.py right after each job; archived by
+tools/zowe/zos_spool_archive.py --phase 4 byte for byte (job.json, spool.json, deck.jcl as submitted, every spool file
+NNN-<step>-<dd>.txt). Nothing was edited. This project never purges a job (D44).
+Verify: python3 tools/zowe/zos_spool_archive.py --phase 4 --verify-only  (rebuilds, compares, checks SHA256SUMS).
+
+JOB03693 PACZ4LE
+  phase    ZOS-4: LE runtime-option diagnostic (ZOS-1 probes ZHELLO31 / ZHELLO24; no Pac-Man, no dataset written)
+  result   CC 0000; PASS after the checker fix a800ebf - the first check (docs/evidence/zos4-le-check-first-run.txt) gave
+           one false FAIL: the D1 rule assumed the RPTOPTS source wording 'Installation ...' while this system reports
+           'IBM-supplied default'; corrected run on the same raw files (read-only since, SHA-256
+           docs/evidence/zos4-pacz4le-JOB03693-raw.sha256): docs/evidence/zos4-le-check.txt
+  spool    9 files, 389 spool lines
+  archive  PACZ4LE-JOB03693.tar.gz
+  sha256   31021a1bba12a682fb36147dbe7630c068752c76071a889d14b7d6ef2bda1b12
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 9 raw files, 0 credential pattern hits
