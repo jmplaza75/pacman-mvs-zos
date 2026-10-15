@@ -1,0 +1,27 @@
+PACZ3HS5 JOB02417 CC 0000 (PACZ3HS5)
+  OK   steps HB1 HC1 HD1
+  OK   HB1 COND CODE 0000
+  OK   HC1 COND CODE 0000
+  OK   HD1 COND CODE 0000
+  OK   no ABEND / IEA995 / $HASP375 / S722 / CEE message
+  OK   spool DDs: SYSOUT per run, SYSTSPRT + SYSOUT per IKJEFT01 step
+  OK   STEPLIB Z00000.PACMAN.LOAD retained once per PACZ2D step
+  OK   datasets in JESYSMSG only the load library and the T1 PDSs
+  OK   no IEC message (no data-management failure)
+  OK   oracle 312 HB1: 2014 lines identical (oracle stream lines 15851-17864)
+  OK   oracle 312 HC1: 319 lines identical (oracle stream lines 17867-18185)
+  OK   oracle 312 HD1: 739 lines identical (oracle stream lines 18188-18926)
+  OK   HB1 SYSOUT = model (2014 lines, ends 'NEW HIGH SCORE')
+  OK   HC1 SYSOUT = model (319 lines, ends 'HIGH SCORE 0000000 LEVEL 000')
+  OK   HD1 SYSOUT = model (739 lines, ends 'HIGH SCORE 9999999 LEVEL 099')
+state after PACZ3HS5 (read-only):
+  OK   catalog Z00000.PACMAN.HSTEST.T1: PDS PO FB 80 80, not migrated
+  OK   Z00000.PACMAN.HSTEST.T1 members exactly BAD EMPTY HS1 HS2 HS9
+  OK   Z00000.PACMAN.HSTEST.T1(BAD) = ['XYZZY NOT A SCORE', 'SECOND JUNK RECORD']
+  OK   Z00000.PACMAN.HSTEST.T1(EMPTY) = no record
+  OK   Z00000.PACMAN.HSTEST.T1(HS1) = ['0002760 PACHS001 002']
+  OK   Z00000.PACMAN.HSTEST.T1(HS2) = ['0000980 PACHS001 001']
+  OK   Z00000.PACMAN.HSTEST.T1(HS9) = ['9999999 PACHS001 099']
+  OK   catalog Z00000.PACMAN.HSFULL.T1: PDS PO FB 80 80, not migrated
+  OK   Z00000.PACMAN.HSFULL.T1 members exactly M01..M20, HISCORE absent
+PACZ3HS5 CHECK PASS

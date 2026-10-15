@@ -56,3 +56,11 @@ JOB02416 PACZ3HS4
   archive  PACZ3HS4-JOB02416.tar.gz
   sha256   5ab61f6ffdc075df8640cc5a265dbc1a4b90fc355f1c8793da17dd0bd38d8006
   z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 8 raw files, 0 credential pattern hits
+
+JOB02417 PACZ3HS5
+  phase    ZOS-3: HS stateful sequence job 5 of 8 (HB1, HC1, HD1); gate 5 PASS immediately before the submission
+  result   CC 0000; PASS (tools/zowe/zos_hs_check.py --job 5: spool, oracle 312, model, state after; docs/evidence/zos3-hs5-check.txt)
+  spool    9 files, 3191 spool lines
+  archive  PACZ3HS5-JOB02417.tar.gz
+  sha256   504193882b5a00ff57e4a112d013dff8cce85f4251365c419dc9fa570dee1693
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 9 raw files, 0 credential pattern hits
