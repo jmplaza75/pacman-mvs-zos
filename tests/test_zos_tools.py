@@ -708,7 +708,18 @@ with tempfile.TemporaryDirectory() as t:
     assert (Path(t) / 'c.jcl').read_text() == cl, 'PACZ4CL.jcl is not the generated deck'
 cst = zos_target.steps_of_deck(cl)
 assert list(cst) == CLK.STEPS and 'DELETE' not in cl and 'PACMAN.DATA' not in cl and 'PACMAIN' not in cl
-assert set(re.findall(r'DSN=([\w@.]+)', cl)) == {'@@HLQ@@.PACMAN.Z4CL.T1', '@@HLQ@@.PACMAN.Z4HSY.DATA'}
+assert set(re.findall(r'DSN=([\w@.]+)', cl)) == {'@@HLQ@@.PACMAN.Z4CL.T1', '@@HLQ@@.PACMAN.Z4HSY.DATA',
+                                               '@@HLQ@@.PACMAN.Z4CEY.CEEOPTS'}
+# Z2: src/zos/PACMAN.clist = the frozen 2.0 CLIST + the Z2 lines around the CALL only; the PARM lines (G8 check)
+# unchanged; each Z2 test member carries the Z2 lines verbatim (CALL -> marker)
+c20, cz = (R / 'src/clist/PACMAN.clist').read_text().splitlines(), (R / 'src/zos/PACMAN.clist').read_text().splitlines()
+zi, zc = cz.index(next(l for l in cz if l.startswith('/* Z2 (ZOS-4)'))), cz.index("CALL '@@PREFIX@@.LOAD(PACMAIN)' '&P'")
+assert cz[:zi] == c20[:zi] and cz[zc] == c20[zi] and cz[zc + 1] == 'FREE F(CEEOPTS)' and cz[zc + 2:] == c20[zi + 1:]
+assert all(len(l.replace('@@PREFIX@@', 'Z00000.PACMAN')) <= 72 for l in cz) and len(cz) - len(c20) == 24
+for s, pz in (('Z2CLS1', 'Z4CEY'), ('Z2CLS2', 'Z4CEN')):
+    body = cst[s].split('DLM=ZZ\n')[1]
+    blk = [l.replace('@@PREFIX@@', f'@@HLQ@@.PACMAN.{pz}') for l in cz[zi:zc]]
+    assert '\n'.join(blk) in body and not any(x.startswith('CALL ') for x in body.splitlines()) and 'WRITE Z2 CALL REACHED\nLISTALC STATUS\nFREE F(CEEOPTS)' in body
 assert audit_deck(render(cl, 'Z00000'), 'Z00000') == []
 mg8 = zos_target.steps_of_deck(zos_target._mvs['g8_clist_steps']('@@HLQ@@.PACMAN'))['G8CLS']
 assert cst['G8CLS'].split('//SYSUT1   DD DATA,DLM=ZZ\n')[1] == mg8.split('//SYSUT1   DD DATA,DLM=ZZ\n')[1]
@@ -722,7 +733,13 @@ assert CLK.g8_want() == ['TSO AI1 1 NAAAPAAARAA01NP', 'TSO AI1 1 NAAAPAAARAC01NP
 W, Y = CLK.WORK, CLK.YES
 good = ['READY', f"  EXEC '{W}(PARMS)'"] + [f'G8PARM={p}=' for p in CLK.g8_want()] + [
     f"  EXEC '{W}(HSCLY)'", '--DDNAME---DISP--', f'{Y}(HISCORE)', '  PACHS    KEEP', 'HSCL END',
-    f"  EXEC '{W}(HSCLN)'", '--DDNAME---DISP--', 'NULLFILE  PACHS', 'HSCL END', 'READY', 'END']
+    f"  EXEC '{W}(HSCLN)'", '--DDNAME---DISP--', 'NULLFILE  PACHS', 'HSCL END', 'READY',
+    f"  EXEC '{W}(Z2RUN)' 'Z2Y'", 'Z2 CALL REACHED', '--DDNAME---DISP--', 'NULLFILE  SYSIN', CLK.CEY,
+    '  CEEOPTS  KEEP', '--DDNAME---DISP--', 'NULLFILE  SYSIN', 'Z2 END', 'Z2RC=0', 'READY',
+    f"  EXEC '{W}(Z2RUN)' 'Z2N'", CLK.MSG_MISSING, 'Z2RC=8', 'READY',
+    f"  ALLOC F(CEEOPTS) DA('{W}(PARMS)') SHR", 'READY', f"  EXEC '{W}(Z2RUN)' 'Z2Y'",
+    'IKJ56861I  FILE CEEOPTS NOT ALLOCATED, FILE IN USE', CLK.MSG_EXISTS, 'Z2RC=8', 'READY', '  LISTALC STATUS',
+    '--DDNAME---DISP--', f'{W}(PARMS)', '  CEEOPTS  KEEP', 'READY', '  FREE F(CEEOPTS)', 'READY', 'END']
 assert all(v for _, v in CLK.tmp_check(good)), CLK.tmp_check(good)
 bad_tmp = {
     'wrong PARM': [l.replace('A01FS', 'A01NS') for l in good],
@@ -732,11 +749,22 @@ bad_tmp = {
     'IKJ56 message': good[:-1] + ['IKJ56228I DATA SET NOT IN CATALOG'] + good[-1:],
     'order swapped': [l.replace('(HSCLY)', '(TMPX)').replace('(HSCLN)', '(HSCLY)').replace('(TMPX)', '(HSCLN)')
                       for l in good],
+    'Z2 case 1: CEEOPTS left after the FREE': good[:good.index('Z2 END')] + [CLK.CEY, '  CEEOPTS  KEEP']
+    + good[good.index('Z2 END'):],
+    'Z2 case 2: RC 0': [l if l != 'Z2RC=8' else 'Z2RC=0' for l in good],
+    'Z2 case 2: CALL reached': good[:good.index(CLK.MSG_MISSING)] + ['Z2 CALL REACHED']
+    + good[good.index(CLK.MSG_MISSING):],
+    'Z2 case 3: CALL reached': good[:good.index(CLK.MSG_EXISTS)] + ['Z2 CALL REACHED'] + good[good.index(CLK.MSG_EXISTS):],
+    'Z2 case 3: DD replaced by the project dataset': [l if l != f'{W}(PARMS)' else CLK.CEY for l in good],
+    'Z2 case 3: DD lost': [l for l in good if l != f'{W}(PARMS)' and l != '  CEEOPTS  KEEP' or good.index(l) < 40],
+    'IKJ56 outside case 3': good[:good.index('Z2RC=0')] + ['IKJ56228I DATA SET NOT IN CATALOG']
+    + good[good.index('Z2RC=0'):],
 }
 for why, ls in bad_tmp.items():
     assert not all(v for _, v in CLK.tmp_check(ls)), why
-print('PACZ4CL: generated deck, only Z4CL.T1 / Z4HSY.DATA (no DATA, no DELETE, no PACMAIN), MVS test CLISTs exactly '
-      '(two prefixes instead of a DELETE), G8PARM = oracle 307, TMP-output rules pass the expected shape and fail '
+print('PACZ4CL: generated deck, only Z4CL.T1 / Z4HSY.DATA / Z4CEY.CEEOPTS (no DATA, no DELETE, no PACMAIN), MVS test '
+      'CLISTs exactly (two prefixes instead of a DELETE), Z2 = the only change to the 2.0 CLIST and verbatim in its 3 '
+      'cases, G8PARM = oracle 307, TMP-output rules pass the expected shape and fail '
       f'{len(bad_tmp)} wrong shapes: PASS')
 
 # 15. ZOS-4 PACZ4LE (LE runtime-option diagnostic, ZOS-1 probes only): the generated deck (no Pac-Man, no write, STEPLIB

@@ -59,3 +59,15 @@ DELETE; read SHR by the CLIST.
 ## Register
 docs/ZOS-DIFFS.md entry Z2 (CLIST: profile A CEEOPTS around the CALL; reason above; evidence JOB03693) - to be added
 when the Z-entry is approved.
+
+## Refinement (user, 2026-10-15) - candidate in src/zos/PACMAN.clist (not installed)
+EXIT CODE(8) on a missing project CEEOPTS approved and required. An already allocated session CEEOPTS must never be
+replaced or freed: the ALLOC is issued **without REUSE**, inside a CLIST ERROR routine; if a CEEOPTS DD exists the
+ALLOC fails, the existing DD is untouched, the CLIST writes `PACMAN: A CEEOPTS DD IS ALREADY ALLOCATED, GAME NOT
+STARTED`, frees SYSIN / SYSOUT (and PACHS for ARCADE) and exits with RC 8 without the CALL. Only when this ALLOC
+succeeded (so no CEEOPTS existed) does the CALL run, followed by `FREE F(CEEOPTS)`: the session returns to its
+original no-CEEOPTS state. No general DD-stack mechanism. Z2 = 24 lines (23 before the CALL, 1 after); the 2.0 CLIST
+is otherwise byte-identical (guarded by tests/zos_c2.py z2_guard and tests/test_zos_tools.py section 14).
+PACZ4CL now covers the three cases under the TMP (members Z2Y / Z2N with the Z2 lines verbatim, CALL -> marker +
+LISTALC, wrapper Z2RUN writing Z2RC=&LASTCC; project CEEOPTS Z4CEY.CEEOPTS written by step Z2CEE; Z4CEN never
+allocated); the G8 and HS parts of PACZ4CL are byte-identical to the previous version.

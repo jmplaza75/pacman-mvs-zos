@@ -4,6 +4,9 @@ in batch. Read-only.
 
 Usage: zos_clist_check.py --gate              before the submission: none of the attempt names exists
        zos_clist_check.py SPOOLDIR            after it: spool, the TMP output, then the datasets (read-only)
+Z2 (src/zos/PACMAN.clist): case 1 project CEEOPTS + no DD before -> allocated at the CALL, gone after, Z2RC=0; case 2
+project dataset absent -> message, no CALL, Z2RC=8; case 3 a CEEOPTS DD already there -> message, no CALL, Z2RC=8,
+the DD kept on its own dataset.
 References (frozen, no new model): the 4 `G8PARM=` lines of oracle JOB 307 (MVS G8CLT, the same 4 keyword sets of
 make_deck G8_CLIST); the HS-block assertions of tests/test_hs.py section 3 on oracle JOB 312 (present: the DATA member
 line followed by `PACHS KEEP`; missing: `NULLFILE  PACHS`; `HSCL END` after each; no IKJ56xxx message).
@@ -24,7 +27,44 @@ HLQ = 'Z00000'
 WORK = f'{HLQ}.PACMAN.{Z4_SETS["work"][0]}.{Z4_ATTEMPT}'
 YES = f'{HLQ}.PACMAN.{Z4_SETS["present"][0]}.DATA'
 NO = f'{HLQ}.PACMAN.{Z4_SETS["missing"][0]}.DATA'
-STEPS = ['ALLOC', 'G8CLS', 'HSCLS1', 'HSCLS2', 'CLT']
+CEY = f'{HLQ}.PACMAN.{Z4_SETS["cee_present"][0]}.CEEOPTS'
+CEN = f'{HLQ}.PACMAN.{Z4_SETS["cee_missing"][0]}.CEEOPTS'
+STEPS = ['ALLOC', 'G8CLS', 'HSCLS1', 'HSCLS2', 'Z2CEE', 'Z2CLS1', 'Z2CLS2', 'Z2CLS3', 'CLT']
+MSG_MISSING = f'PACMAN: {CEN} MISSING, GAME NOT STARTED'
+MSG_EXISTS = 'PACMAN: A CEEOPTS DD IS ALREADY ALLOCATED, GAME NOT STARTED'
+
+
+def dd_lines(lines, dd):
+    return [i for i, l in enumerate(lines) if l.split()[:1] == [dd]]
+
+
+def z2_check(lines):
+    """[(criterion, ok)] of the three Z2 cases in the CLT output; the extent of case 3 (where the refused ALLOC may
+    print its IKJ56 message) is returned too."""
+    run = f"EXEC '{WORK}(Z2RUN)'"
+    e = [i for i, l in enumerate(lines) if l.strip() in (f"{run} 'Z2Y'", f"{run} 'Z2N'")]
+    rc = [(i, l.strip()[5:]) for i, l in enumerate(lines) if l.strip().startswith('Z2RC=')]
+    if [lines[i].strip()[-5:] for i in e] != ["'Z2Y'", "'Z2N'", "'Z2Y'"] or len(rc) != 3 or \
+            not all(e[k] < rc[k][0] < (e[k + 1] if k < 2 else len(lines)) for k in range(3)):
+        return [('Z2: the three cases ran in order, each with its Z2RC line', False)], None
+    res = [('Z2: the three cases ran in order, each with its Z2RC line', True)]
+    c1, c2, c3 = (lines[e[k]:rc[k][0] + 1] for k in range(3))
+    call, end = (next((i for i, l in enumerate(c1) if l.strip() == w), None) for w in ('Z2 CALL REACHED', 'Z2 END'))
+    cee = dd_lines(c1, 'CEEOPTS')
+    res.append(('Z2 case 1 (project CEEOPTS, no DD before): CEEOPTS = the project dataset at the CALL, gone after the '
+                'FREE, Z2RC=0', rc[0][1] == '0' and call is not None and end is not None and len(cee) == 1
+                and call < cee[0] < end and c1[cee[0] - 1].strip() == CEY))
+    res.append(('Z2 case 2 (project dataset absent): the message, no CALL, no CEEOPTS DD, Z2RC=8',
+                rc[1][1] == '8' and any(l.strip() == MSG_MISSING for l in c2)
+                and not any(l.strip() == 'Z2 CALL REACHED' for l in c2) and not dd_lines(c2, 'CEEOPTS')))
+    after = lines[rc[2][0] + 1:]
+    kept = dd_lines(after, 'CEEOPTS')
+    res.append(('Z2 case 3 (a CEEOPTS DD already allocated): the message, no CALL, Z2RC=8, the DD still on its own '
+                'dataset afterwards',
+                rc[2][1] == '8' and any(l.strip() == MSG_EXISTS for l in c3)
+                and not any(l.strip() == 'Z2 CALL REACHED' for l in c3) and not any(l.strip() == CEY for l in c3)
+                and len(kept) == 1 and after[kept[0] - 1].strip() == f'{WORK}(PARMS)'))
+    return res, (e[2], rc[2][0])
 
 
 def g8_want():
@@ -40,10 +80,11 @@ def tmp_check(lines):
     res.append((f'G8PARM lines = oracle 307 ({len(want)}: {", ".join(want)})', got == want and len(want) == 4))
     ey = next((i for i, l in enumerate(lines) if l.strip() == f"EXEC '{WORK}(HSCLY)'"), None)
     en = next((i for i, l in enumerate(lines) if l.strip() == f"EXEC '{WORK}(HSCLN)'"), None)
-    ok = ey is not None and en is not None and ey < en
+    ez = next((i for i, l in enumerate(lines) if l.strip().startswith(f"EXEC '{WORK}(Z2RUN)'")), len(lines))
+    ok = ey is not None and en is not None and ey < en < ez
     res.append(('both HS-block CLISTs run, present first', ok))
     if ok:
-        py, pn = lines[ey:en], lines[en:]
+        py, pn = lines[ey:en], lines[en:ez]
         i = next((k for k, l in enumerate(py) if l.strip() == f'{YES}(HISCORE)'), None)
         res.append(('present path: DATA(HISCORE) allocated to PACHS (KEEP), then HSCL END',
                     i is not None and i + 1 < len(py) and py[i + 1].split() == ['PACHS', 'KEEP']
@@ -51,7 +92,13 @@ def tmp_check(lines):
         res.append(('missing path: NULLFILE PACHS (DUMMY), then HSCL END, the missing DATA never allocated',
                     any(l.split() == ['NULLFILE', 'PACHS'] for l in pn) and sum(l.strip() == 'HSCL END' for l in pn) == 1
                     and not any(NO in l for l in pn)))
-    res.append(('no IKJ56xxx message', not any(re.search(r'IKJ56\d{3}', l) for l in lines)))
+    z2, c3 = z2_check(lines)
+    res += z2
+    ok3 = [l for i, l in enumerate(lines) if c3 and c3[0] <= i <= c3[1]]
+    res.append(('no IKJ56xxx message (except the refused ALLOC of Z2 case 3: %s)'
+                % ([l.strip() for l in ok3 if re.search(r'IKJ56\d{3}', l)] or 'none'),
+                not any(re.search(r'IKJ56\d{3}', l) for i, l in enumerate(lines)
+                        if not (c3 and c3[0] <= i <= c3[1]))))
     return res
 
 
@@ -68,11 +115,11 @@ def spool_check(d):
                     bool(re.search(rf'IEF142I {job["jobname"]} {s} - STEP WAS EXECUTED - COND CODE 0000', msg))))
     res.append(('no ABEND / IEA995 / $HASP375 / S722 / CEE message', not re.search(r'ABEND|IEA995|\$HASP375|S722|CEE\d{4}', jes)))
     dd = {(f['stepname'], f['ddname']) for f in files if f['stepname'] != 'JES2'}
-    res.append(('spool DDs: SYSPRINT of G8CLS / HSCLS1 / HSCLS2, SYSTSPRT of CLT',
-                dd == {('G8CLS', 'SYSPRINT'), ('HSCLS1', 'SYSPRINT'), ('HSCLS2', 'SYSPRINT'), ('CLT', 'SYSTSPRT')}))
+    res.append(('spool DDs: SYSPRINT of every IEBGENER step, SYSTSPRT of CLT',
+                dd == {(s, 'SYSPRINT') for s in STEPS[1:-1]} | {('CLT', 'SYSTSPRT')}))
     own = f'{HLQ}.{job["jobname"]}.{job["jobid"]}.'
     named = {x.rstrip('.') for x in re.findall(rf'\b({HLQ}\.[\w.$#@]+)', msg) if not x.startswith(own)}
-    res.append((f'datasets in JESYSMSG only {WORK} and {YES}', named <= {WORK, YES}))
+    res.append((f'datasets in JESYSMSG only {WORK}, {YES}, {CEY}', named <= {WORK, YES, CEY}))
     f = next(f for f in files if (f['stepname'], f['ddname']) == ('CLT', 'SYSTSPRT'))
     raw = (d / f'{f["id"]:03d}-CLT-SYSTSPRT.txt').read_text().splitlines()
     res += tmp_check([l[1:].rstrip() for l in raw])
@@ -87,10 +134,10 @@ def catalog(after):
         return [i for i in items if i['dsname'] == ds]
     res = []
     if not after:
-        for ds in (WORK, YES, NO):
+        for ds in (WORK, YES, NO, CEY, CEN):
             res.append((f'{ds} does not exist', not exists(ds)))
         return res
-    for ds, want in ((WORK, ['HSCLN', 'HSCLY', 'PARMS']), (YES, [])):
+    for ds, want in ((WORK, ['HSCLN', 'HSCLY', 'PARMS', 'Z2N', 'Z2RUN', 'Z2Y']), (YES, [])):
         a = (exists(ds) or [{}])[0]
         res.append((f'{ds}: PDS PO FB 80 80', all(a.get(k) == v for k, v in
                                                  {'dsntp': 'PDS', 'dsorg': 'PO', 'recfm': 'FB', 'lrecl': '80', 'blksz': '80'}.items())))
@@ -98,6 +145,12 @@ def catalog(after):
                      zowe('zos-files', 'list', 'all-members', ds, json_out=True)['data']['apiResponse']['items'])
         res.append((f'{ds} members exactly {" ".join(want) or "(none: ALLOC SHR created no HISCORE)"}', mem == want))
     res.append((f'{NO} still does not exist', not exists(NO)))
+    a = (exists(CEY) or [{}])[0]
+    rec = [l.rstrip() for l in zowe('zos-files', 'view', 'data-set', CEY).stdout.splitlines() if l.strip()]
+    res.append((f'{CEY}: PS FB 80 80, one record ALL31(OFF),STACK(,,BELOW)',
+                a.get('dsorg') == 'PS' and a.get('recfm') == 'FB' and a.get('lrecl') == '80' and a.get('blksz') == '80'
+                and rec == ['ALL31(OFF),STACK(,,BELOW)']))
+    res.append((f'{CEN} still does not exist', not exists(CEN)))
     return res
 
 

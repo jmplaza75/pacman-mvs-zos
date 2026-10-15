@@ -59,6 +59,17 @@ def build_table():
     return out
 
 
+def z2_guard(text):
+    """src/zos/PACMAN.clist = the 2.0-mvs-max src/clist/PACMAN.clist with exactly 23 Z2 lines before the CALL (from the
+    '/* Z2 (ZOS-4)' comment) and 'FREE F(CEEOPTS)' right after it; every other line identical (docs/zos4-clist-z2.md)."""
+    base, now = at_tag('src/clist/PACMAN.clist').split('\n'), text.split('\n')
+    zi = next(i for i, l in enumerate(now) if l.startswith('/* Z2 (ZOS-4)'))
+    zc = now.index("CALL '@@PREFIX@@.LOAD(PACMAIN)' '&P'")
+    assert zc - zi == 23 and now[:zi] == base[:zi] and now[zc] == base[zi], 'Z2: lines before the CALL'
+    assert now[zc + 1] == 'FREE F(CEEOPTS)' and now[zc + 2:] == base[zi + 1:], 'Z2: lines after the CALL'
+    assert len(now) - len(base) == 24
+
+
 def guard():
     t = table()
     assert len(t) == COUNT, f'{len(t)} substitutions listed, {COUNT} expected'
@@ -74,6 +85,9 @@ def guard():
             continue
         rel = str(p.relative_to(R))
         if rel.startswith('src/probe/'):            # z/OS probes (ZOS-1) are not part of the release set
+            continue
+        if rel == 'src/zos/PACMAN.clist':           # Z2 (ZOS-4): the frozen 2.0 CLIST + the Z2 lines around the CALL
+            z2_guard(p.read_text(encoding='ascii'))
             continue
         now = p.read_text(encoding='ascii')
         if rel in changed:

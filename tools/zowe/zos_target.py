@@ -79,7 +79,26 @@ Z4LE_STEPS = [('D1', 'ZHELLO31', 'ZHARG/RPTOPTS(ON)', None),
 # HSCLT) under the TMP in batch, with fresh attempt datasets instead of DELETE: a work PDS for the test CLISTs, a DATA
 # PDS for the present path, a prefix whose DATA is never allocated for the missing path
 Z4_ATTEMPT = 'T1'
-Z4_SETS = {'work': ('Z4CL', '(TRK,(2,1,2))'), 'present': ('Z4HSY', None), 'missing': ('Z4HSN', None)}
+Z4_SETS = {'work': ('Z4CL', '(TRK,(2,1,2))'), 'present': ('Z4HSY', None), 'missing': ('Z4HSN', None),
+           'cee_present': ('Z4CEY', None), 'cee_missing': ('Z4CEN', None)}
+
+
+def zos_clist_text(pfx):
+    """The z/OS CLIST (src/zos/PACMAN.clist: the 2.0 CLIST + Z-entry Z2) for a prefix."""
+    return (R / 'src/zos/PACMAN.clist').read_text(encoding='ascii').replace('@@PREFIX@@', pfx)
+
+
+def z2_test_clist(prefix):
+    """PACZ4CL Z2 test member: the Z2 lines of the z/OS CLIST verbatim (rendered with prefix), the CALL replaced by a
+    marker and a LISTALC (nothing is called), SYSIN / SYSOUT allocated DUMMY first as the CLIST allocates them DA(*)."""
+    lines = zos_clist_text(prefix).splitlines()
+    i = lines.index(next(l for l in lines if l.startswith('/* Z2 (ZOS-4)')))
+    j = lines.index('FREE F(CEEOPTS)')
+    block = [l for l in lines[i:j + 1]]
+    k = next(n for n, l in enumerate(block) if l.startswith('CALL '))
+    block[k:k + 1] = ['WRITE Z2 CALL REACHED', 'LISTALC STATUS']
+    return ('PROC 0\nSET &W = C\nALLOC F(SYSIN) DUMMY REUSE\nALLOC F(SYSOUT) DUMMY REUSE\n' + '\n'.join(block)
+            + '\nLISTALC STATUS\nFREE F(SYSIN SYSOUT)\nWRITE Z2 END\n')
 # ZOS-3 PACZ3HA (docs/zos3-design.md): the high-score test PDSs of one attempt (fresh, never deleted; a rerun uses the
 # next suffix). Only the two PDSs the batch HS runs use; HSCL.DATA belongs to the CLIST block check (ZOS-4).
 HS_ATTEMPT = 'T1'
@@ -251,8 +270,9 @@ def z4cl_deck(pfx):
     """ZOS-4 PACZ4CL: ALLOC (the work PDS <prefix>.Z4CL.<attempt> and the present-path DATA <prefix>.Z4HSY.DATA, both
     real PDSs FB 80/80 like the production DATA, catalogued also on an abnormal end, no DELETE); G8CLS = the MVS step
     (the PROC and PARM lines of the CLIST + WRITE G8PARM=&P=) into the work PDS; HSCLS1 / HSCLS2 = the MVS HS-block
-    test CLISTs with the present / missing prefixes; one TMP step: the 4 G8 keyword sets, then the two HS-block
-    CLISTs. Every step COND=(0,NE)."""
+    test CLISTs with the present / missing prefixes; Z2CEE writes the present-path project CEEOPTS (the record of every
+    run's CEEOPTS); Z2CLS1..3 the Z2 test CLISTs (z2_test_clist) and the wrapper Z2RUN (writes Z2RC=&LASTCC); one TMP
+    step: the 4 G8 keyword sets, the two HS-block CLISTs, then the three Z2 cases. Every step COND=(0,NE)."""
     md = _md[0]
     ds = f'{pfx}.{Z4_SETS["work"][0]}.{Z4_ATTEMPT}'
     yes, no = (f'{pfx}.{Z4_SETS[k][0]}' for k in ('present', 'missing'))
@@ -270,11 +290,24 @@ def z4cl_deck(pfx):
         assert all(len(l) <= 72 for l in clist.splitlines()), m
         out += (f'//HSCLS{i}   EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
                 f'//SYSUT2   DD DSN={ds}({m}),DISP=OLD\n//SYSUT1   DD DATA,DLM=ZZ\n' + clist + 'ZZ\n')
+    cy, cn = (f'{pfx}.{Z4_SETS[k][0]}' for k in ('cee_present', 'cee_missing'))
+    out += ('//Z2CEE    EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT2   DD DSN={cy}.CEEOPTS,DISP=(NEW,CATLG,CATLG),\n'
+            f'//            {md.DATA_DCB},SPACE=(TRK,(1,1))\n'
+            '//SYSUT1   DD *\n' + CEEOPTS[0] + '\n/*\n')
+    for i, (m, text) in enumerate((('Z2Y', z2_test_clist(cy)), ('Z2N', z2_test_clist(cn)),
+                                   ('Z2RUN', f"PROC 1 M\nEXEC '{ds}(&M)'\nWRITE Z2RC=&LASTCC\n")), 1):
+        assert all(len(l) <= 72 for l in text.splitlines()), m
+        out += (f'//Z2CLS{i}   EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+                f'//SYSUT2   DD DSN={ds}({m}),DISP=OLD\n//SYSUT1   DD DATA,DLM=ZZ\n' + text + 'ZZ\n')
     cmds = []
     for k in md.G8_CLIST:
         c = f"  EXEC '{ds}(PARMS)'" + (f" '{k}'" if k else '')
         cmds.append(c if len(c) <= 72 else f"  EXEC '{ds}(PARMS)' +\n  '{k}'")
     cmds += [f"  EXEC '{ds}(HSCLY)'", f"  EXEC '{ds}(HSCLN)'"]
+    cmds += [f"  EXEC '{ds}(Z2RUN)' 'Z2Y'", f"  EXEC '{ds}(Z2RUN)' 'Z2N'",       # Z2 cases 1 and 2
+             f"  ALLOC F(CEEOPTS) DA('{ds}(PARMS)') SHR",                         # case 3: a CEEOPTS DD exists
+             f"  EXEC '{ds}(Z2RUN)' 'Z2Y'", '  LISTALC STATUS', '  FREE F(CEEOPTS)']
     assert all(len(x) <= 72 for c in cmds for x in c.split('\n')), 'a SYSTSIN card ends at column 72'
     out += ('//CLT      EXEC PGM=IKJEFT01,COND=(0,NE)\n//SYSTSPRT DD SYSOUT=A\n//SYSTSIN  DD *\n'
             + ''.join(c + '\n' for c in cmds) + '/*\n')
