@@ -22,7 +22,7 @@ JOB03750 PACZ4CL
            existing dataset) before the intended ALLOC-with-existing-DD conflict. Not accepted as PASS; not rerun;
            its T1 datasets are left as they are. Check: docs/evidence/zos4-cl-check.txt (raw SHA-256
            docs/evidence/zos4-pacz4cl-JOB03750-raw.sha256)
-  spool    13 files, 359 spool lines
+  spool    14 files, 359 spool lines
   archive  PACZ4CL-JOB03750.tar.gz
   sha256   64d6ca16f5c9f3c982420cdaf7faa116484c4c4261fee6166e36f789ad758ec5
-  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 13 raw files, 0 credential pattern hits
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 14 raw files, 0 credential pattern hits
