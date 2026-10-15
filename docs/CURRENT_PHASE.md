@@ -310,4 +310,8 @@ HS test datasets fresh per attempt (T1; no DELETE; a rerun uses T2; <HLQ>.PACMAN
 dry-run subset stays in ZOS-3 (live full screen = ZOS-5), S2 alarm coverage may be met there with the minimum S2T
 cases; PACZ3FS first. No PACZ2D rebuild, no source change, no CLIST install, no PACMAIN promotion, no live session.
 - PACZ3FS (PACFSIO batch contract, S1S3 + S2L4): deck of record jcl/zos/PACZ3FS.jcl, check tools/zowe/zos_fs_check.py,
-  tests/test_zos_tools.py section 9 PASS, precheck PASS (~818 spool lines). PREPARED FOR REVIEW, NOT SUBMITTED.
+  tests/test_zos_tools.py section 9 PASS, precheck PASS (~818 spool lines).
+- PACZ3FS JOB01362 PASS (submitted once, 2026-10-15; docs/evidence/zos3-platform-layer.md, spool zos3-spool/):
+  both steps RC 0, 353 lines each = own oracle block, DIE1 models and PACZ2C7 TSO2. FSON RC=4 is established from
+  the PACFSIO control flow under the no-TSB batch condition, not observed by the job. WAITING FOR THE USER'S REVIEW
+  before PACZ3HA.
