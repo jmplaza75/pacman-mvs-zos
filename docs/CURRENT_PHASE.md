@@ -331,4 +331,11 @@ cases; PACZ3FS first. No PACZ2D rebuild, no source change, no CLIST install, no 
   (HG2 / HG3 already proved the TSD engine with ALARM SINGLE), 4 jobs PACZ3TD1..4 (docs/zos3-pacz3tsd-review.md,
   tools/zowe/zos_tsd_check.py, test section 13).
 - PACZ3TD1..4 PASS (2026-10-15): JOB02506, 02511, 02512, 02516. Every ZOS-3 job PASS; coverage summary
-  docs/evidence/zos3-coverage-summary.md. WAITING FOR THE USER'S ACCEPTANCE of ZOS-3 before ZOS-4.
+  docs/evidence/zos3-coverage-summary.md.
+- ZOS-3 COMPLETE (user acceptance 2026-10-15, tag zos-3 on e624924). Carried forward: Z1 accepted; C3 open (ZOS-8 E2);
+  HA6 DEFERRED (ZOS-9/10); HSP1..9 for the full battery; HS CLIST coverage -> ZOS-4; live TPUT/TGET, terminal-mode
+  switching, c3270 interaction and audible alarm behaviour unproved.
+
+## ZOS-4 CLASSIC - DESIGN (2026-10-15; docs/zos4-design.md)
+Design / reconnaissance only: no job, no live session, no source change. Process: one precheck, one execution /
+session, one focused postcheck; reuse ZOS-2 / ZOS-3 evidence. Waiting for the user's decisions (design sec. 9).
