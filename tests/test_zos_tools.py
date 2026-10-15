@@ -901,3 +901,43 @@ for why, ls in neg3.items():
 print('Z2 attempts: PACZ4Z2 frozen as JOB03829 ran; its real output fails exactly the 3 controlled-error criteria of '
       'case 3; PACZ4Z3 generated (current Z2 with CONTROL NOFLUSH / FLUSH verbatim, T3 names, CONTROL LIST, DYNAMNBR=200, '
       f'no G8 / HS / DATA / DELETE / PACMAIN); T3 rules accept the designed outcome and fail {len(neg3)} negatives: PASS')
+
+# 17. ZOS-4 PACZ4INS (first promotion, for review): the generated deck writes only CLIST(PACSRCT), the new CEEOPTS and
+#     LOAD(PACMAIN) (via a temporary PDSE: IEBCOPY rename, no binder, no DELETE, PACZ2D read only); the two smoke steps
+#     are the REL20 RUN1 / TSO2 steps verbatim with PGM=PACMAIN; the rendered z/OS CLIST = src/zos for Z00000.PACMAN,
+#     lines <= 72; the smoke rules accept the real z/OS outputs of RUN1 (C1) and TSO2 (C7) and fail a mutation
+import zos_ins_check as INS  # noqa: E402
+ins = (R / 'jcl/zos/PACZ4INS.jcl').read_text()
+with tempfile.TemporaryDirectory() as t:
+    subprocess.run([sys.executable, str(R / 'tools/make_deck.py'), '--target', 'zos', 'Z4INS', '--out',
+                    str(Path(t) / 'i.jcl')], check=True, capture_output=True)
+    assert (Path(t) / 'i.jcl').read_text() == ins, 'PACZ4INS.jcl is not the generated deck'
+ist = zos_target.steps_of_deck(ins)
+assert list(ist) == INS.STEPS and 'DELETE' not in ins and 'PACMAN.DATA' not in ins
+assert 'IEWBLINK' not in ins and 'PGM=PACZ2D' not in ins and 'NAME ' not in ins           # no rebind, PACZ2D not run
+assert set(re.findall(r'DSN=([^,\s]+)', ins)) == {'@@HLQ@@.PACMAN.CLIST(PACMAN)', '@@HLQ@@.PACMAN.CLIST(PACSRCT)',
+                                                   '@@HLQ@@.PACMAN.CEEOPTS', '@@HLQ@@.PACMAN.LOAD', '&&PROMO'}
+assert 'SELECT MEMBER=((PACZ2D,PACMAIN))' in ist['PROM1'] and 'SELECT MEMBER=PACMAIN\n' in ist['PROM2']
+assert 'DSN=&&PROMO,DISP=(NEW,PASS),DSNTYPE=LIBRARY' in ist['PROM1'] and 'DSN=&&PROMO,DISP=(OLD,PASS)' in ist['PROM2']
+assert '\nALL31(OFF),STACK(,,BELOW)\n' in ist['CEEOPT'] and 'DISP=(NEW,CATLG,CATLG)' in ist['CEEOPT']
+assert audit_deck(render(ins, 'Z00000'), 'Z00000') == []
+rel_main = zos_target.steps_of_deck(md.build('REL20', '@@HLQ@@.PACMAN', 'PACMAIN'))
+for s in zos_target.Z4INS_SMOKE:
+    assert ist[s] == rel_main[s] and f'//{s:<8} EXEC PGM=PACMAIN,COND=(0,NE)' in ist[s], s
+    assert ist[s].replace('PGM=PACMAIN', 'PGM=PACZ2D') == zos_target.steps_of_deck(
+        md.build('REL20', '@@HLQ@@.PACMAN', 'PACZ2D'))[s], s                               # = the accepted ZOS-2 step
+rc = zos_target.zos_clist_text('Z00000.PACMAN')
+assert '@@PREFIX@@' not in rc and all(len(l) <= 72 for l in rc.splitlines())
+assert rc == (R / 'src/zos/PACMAN.clist').read_text().replace('@@PREFIX@@', 'Z00000.PACMAN')
+from zos_classic_check import model as cmodel  # noqa: E402
+o307 = json.load(gzip.open(R / 'tests/oracle20/307-PACREL20.json.gz'))
+real = {'RUN1': zos_runs(R / 'build/zos/PACZ2C1-JOB08984')[2]['RUN1'],
+        'TSO2': zos_runs(R / 'build/zos/PACZ2C7-JOB09031')[2]['TSO2']}
+smk = {s: dict(real[s], pgm='PACMAIN') for s in real}
+nb, msgs = compare(o307, smk, {'PACMAIN': 'PACMAIN'}, subset=True)
+assert nb == 0 and all(cmodel(s, smk[s]['lines']) is None for s in smk), msgs
+mut = dict(smk, TSO2=dict(smk['TSO2'], lines=smk['TSO2']['lines'][:-1] + ['LIVES 9']))
+assert compare(o307, mut, {'PACMAIN': 'PACMAIN'}, subset=True)[0] == 1 and cmodel('TSO2', mut['TSO2']['lines'])
+print('PACZ4INS: generated deck (PACSRCT copy, new CEEOPTS, PACZ2D -> PACMAIN by IEBCOPY through a temporary PDSE, no '
+      'binder / DELETE / DATA), smoke steps = REL20 RUN1 / TSO2 with PGM=PACMAIN, rendered z/OS CLIST = src/zos; '
+      'smoke rules pass the real z/OS RUN1 / TSO2 outputs and fail a mutation: PASS')

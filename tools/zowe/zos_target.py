@@ -68,7 +68,8 @@ HS_JOBS = {'Z3HS1': ['HA1', 'HA2', 'HA3'], 'Z3HS2': ['HA4'], 'Z3HS3': ['HA5'], '
            'Z3HS5': ['HB1', 'HC1', 'HD1'], 'Z3HS6': ['HE1', 'HE2', 'HF1', 'HF2'], 'Z3HS7': ['HG1', 'HG2', 'HG3'],
            'Z3HS8': ['HH1', 'HTSO1', 'HTSO2']}
 HS_DEFERRED = ['HA6']
-DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL', 'Z4LE', 'Z4Z2', 'Z4Z3'] + list(CHUNKS)
+DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL', 'Z4LE', 'Z4Z2', 'Z4Z3', 'Z4INS'] + list(CHUNKS)
+Z4INS_SMOKE = ['RUN1', 'TSO2']      # ZOS-4 PACZ4INS: the two oracle 307 smoke runs on PACMAIN (batch, TSO line mode DIE1)
 # ZOS-4 PACZ4LE (docs/zos4-le-diagnostic.md): LE runtime-option diagnostic with the ZOS-1 probes (no Pac-Man):
 # (step, program, PARM, CEEOPTS records or None). ZHARG is not an LE option name: the program's PARM echo shows which
 # side of the '/' LE gave it (CBLOPTS(ON): arguments/options).
@@ -363,6 +364,42 @@ def z4z2_deck(pfx, attempt='T2'):
     return out
 
 
+def z4ins_deck(pfx):
+    """ZOS-4 PACZ4INS (first promotion; docs/zos4-pacz4ins-review.md). Writes only <prefix>.CLIST(PACSRCT),
+    <prefix>.CEEOPTS (new) and <prefix>.LOAD(PACMAIN) (new); no DELETE, no rebind; PACZ2D only read.
+    SAVETPL  IEBGENER: CLIST(PACMAN) (the raw ZOS-1 template) -> CLIST(PACSRCT), record for record;
+    CEEOPT   IEBGENER: the one record of every run's CEEOPTS -> <prefix>.CEEOPTS (PS FB 80/80, new);
+    PROM1    IEBCOPY: LOAD(PACZ2D) -> a temporary PDSE as PACMAIN (rename on copy; program object copied as is);
+    PROM2    IEBCOPY: the temporary PACMAIN -> LOAD(PACMAIN) (no replace: the member must be new);
+    RUN1 / TSO2  the REL20 oracle 307 steps verbatim with PGM=PACMAIN (batch CLASSIC run, TSO line-mode DIE1).
+    PACMAIN's program attributes are checked read-only afterwards (z/OSMF member attributes = PACZ2D's: AMODE 24,
+    RMODE 24, RN RU, AC 00, same size); the z/OS CLIST is installed after that by Zowe upload + binary verification,
+    only if everything passed."""
+    md = _md[0]
+    out = job_card('PACZ4INS', 'PACMAN ZOS4 INS')
+    out += ('//SAVETPL  EXEC PGM=IEBGENER\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT1   DD DSN={pfx}.CLIST(PACMAN),DISP=SHR\n'
+            f'//SYSUT2   DD DSN={pfx}.CLIST(PACSRCT),DISP=SHR\n')
+    out += ('//CEEOPT   EXEC PGM=IEBGENER,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n//SYSIN    DD DUMMY\n'
+            f'//SYSUT2   DD DSN={pfx}.CEEOPTS,DISP=(NEW,CATLG,CATLG),\n'
+            f'//            {md.DATA_DCB},SPACE=(TRK,(1,1))\n//SYSUT1   DD *\n' + CEEOPTS[0] + '\n/*\n')
+    out += ('//PROM1    EXEC PGM=IEBCOPY,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n'
+            f'//I        DD DSN={pfx}.LOAD,DISP=SHR\n'
+            '//T        DD DSN=&&PROMO,DISP=(NEW,PASS),DSNTYPE=LIBRARY,\n'
+            '//            RECFM=U,BLKSIZE=32760,UNIT=SYSALLDA,SPACE=(CYL,(2,1,5))\n'
+            '//SYSIN    DD *\n  COPY OUTDD=T,INDD=I\n  SELECT MEMBER=((PACZ2D,PACMAIN))\n/*\n')
+    out += ('//PROM2    EXEC PGM=IEBCOPY,COND=(0,NE)\n//SYSPRINT DD SYSOUT=A\n'
+            '//T        DD DSN=&&PROMO,DISP=(OLD,PASS)\n'
+            f'//O        DD DSN={pfx}.LOAD,DISP=SHR\n'
+            '//SYSIN    DD *\n  COPY OUTDD=O,INDD=T\n  SELECT MEMBER=PACMAIN\n/*\n')
+    full = steps_of_deck(md.build('REL20', pfx, 'PACMAIN'))
+    for s in Z4INS_SMOKE:
+        text = full[s]
+        assert re.match(rf'//{s}\s+EXEC PGM=PACMAIN,COND=\(0,NE\)', text), s
+        out += text
+    return out
+
+
 def steps_of_deck(text):
     """{step: text} of a deck, split at every EXEC statement (in-stream cards never start with //)."""
     import re
@@ -404,4 +441,4 @@ def deck(name, pfx):
     if name in HS_JOBS:
         return z3hs_deck(name, pfx)
     return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck, 'Z3HA': z3ha_deck, 'Z4CL': z4cl_deck, 'Z4LE': z4le_deck,
-            'Z4Z2': z4z2_deck, 'Z4Z3': lambda p: z4z2_deck(p, 'T3')}[name](pfx)
+            'Z4Z2': z4z2_deck, 'Z4Z3': lambda p: z4z2_deck(p, 'T3'), 'Z4INS': z4ins_deck}[name](pfx)
