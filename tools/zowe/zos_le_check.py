@@ -40,6 +40,15 @@ def src(rep, opt, word):
     return opt in rep and word in rep[opt][0].upper()
 
 
+DEFAULT_ORIGINS = ('IBM-SUPPLIED DEFAULT', 'INSTALLATION DEFAULT')   # no runtime override (JOB03693: IBM-supplied)
+
+
+def default_origin(rep, opt):
+    """The option comes from the defaults: exactly 'IBM-supplied default' (what this system reports, JOB03693) or an
+    installation default; DD:CEEOPTS, Invocation command or any other origin is not a default."""
+    return opt in rep and rep[opt][0].upper() in DEFAULT_ORIGINS
+
+
 def step_check(step, lines):
     zh, rep = readings(lines)
     res = [(f'{step}: program argument = ZHARG (PARMLEN 005): arguments/options format',
@@ -51,9 +60,10 @@ def step_check(step, lines):
     where = stack[2] if len(stack) > 2 else ''
     sav = zh.get('SAVEA', '').split()[-1:] or ['']
     if step == 'D1':
-        res.append(('D1: ALL31 / STACK from the installation defaults (recorded: ALL31(%s), STACK(%s))'
-                    % (rep.get('ALL31', ('', '?'))[1], rep.get('STACK', ('', '?'))[1]),
-                    src(rep, 'ALL31', 'INSTALL') and src(rep, 'STACK', 'INSTALL')
+        res.append(('D1: ALL31 / STACK from the defaults, no runtime override (recorded: ALL31(%s) <- %s, STACK(%s) <- %s)'
+                    % (rep.get('ALL31', ('?', '?'))[1], rep.get('ALL31', ('?', '?'))[0],
+                       rep.get('STACK', ('?', '?'))[1], rep.get('STACK', ('?', '?'))[0]),
+                    default_origin(rep, 'ALL31') and default_origin(rep, 'STACK')
                     and zh.get('TAM') == '0000000001' and zh.get('BSM') == '0000000001'
                     and (where != 'BELOW' or sav[0] == 'BELOW')))      # ANYWHERE allows either: information only
     elif step == 'D2':

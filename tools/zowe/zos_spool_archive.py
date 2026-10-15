@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Preserve the downloaded raw spool of the project's z/OS jobs (ZOS-0..ZOS-3) as immutable archives.
+"""Preserve the downloaded raw spool of the project's z/OS jobs (ZOS-0..ZOS-4) as immutable archives.
 
 Usage: zos_spool_archive.py [--phase 2|3] [--build build/zos] [--out DIR] [--verify-only]
 --phase 2 (default): every job except the ZOS-3 ones (PACZ3*), into docs/evidence/zos2-spool;
---phase 3: the ZOS-3 jobs (PACZ3*) only, into docs/evidence/zos3-spool.
+--phase 3: the ZOS-3 jobs (PACZ3*) only, into docs/evidence/zos3-spool; --phase 4: PACZ4* into docs/evidence/zos4-spool.
 One archive per job directory build/zos/<JOBNAME>-<JOBID>/ (as tools/zowe/zos_submit.py saved it): every raw file
 (job.json, spool.json, deck.jcl, NNN-<step>-<dd>.txt) byte for byte, in name order, as <JOBNAME>-<JOBID>/<file>;
 files generated later by the analysis tools (report.txt) are not raw spool and are left out. Archives are
@@ -53,14 +53,13 @@ def verify(d, arc):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--build', type=Path, default=R / 'build/zos')
-    ap.add_argument('--phase', choices=('2', '3'), default='2')
+    ap.add_argument('--phase', choices=('2', '3', '4'), default='2')
     ap.add_argument('--out', type=Path)
     ap.add_argument('--verify-only', action='store_true')
     a = ap.parse_args()
     a.out = a.out or R / f'docs/evidence/zos{a.phase}-spool'
-    z3 = lambda d: d.name.startswith('PACZ3')
-    dirs = sorted(d for d in a.build.iterdir() if d.is_dir() and (d / 'job.json').exists()
-                  and z3(d) == (a.phase == '3'))
+    phase_of = lambda d: d.name[4] if d.name[:4] == 'PACZ' and d.name[4] in '34' else '2'   # noqa: E731
+    dirs = sorted(d for d in a.build.iterdir() if d.is_dir() and (d / 'job.json').exists() and phase_of(d) == a.phase)
     a.out.mkdir(parents=True, exist_ok=True)
     sums = []
     for d in dirs:

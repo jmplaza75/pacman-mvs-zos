@@ -1,0 +1,97 @@
+ ZH PARMLEN=005
+ ZH PARM=ZHARG
+ ZH TAM   =0000000001
+ ZH BSM   =0000000001
+ ZH PARM1 =0458306072 ABOVE
+ ZH CSECT =0000036416 BELOW
+ ZH SAVEA =0458174512 ABOVE
+ ZH RC    =0000000000
+ ZH80 012345678901234567890123456789012345678901234567890123456789012345678901234
+ ZH130 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123
+ 4567890123
+ ZH CHARS= !"#$%&'()*+,-./0123456789:<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZcdelopqru
+ ZH END
+
+ COBOL Run-time Options Report 10/15/26 10:17:28
+ This report supplements Language Environment Options Report
+
+ LAST WHERE SET                 OPTION
+ -------------------------------------------------------------------------------
+ From LE Option setting         NOAMODE3164
+ From LE Option setting           IGZUQMSG(OFF)
+ From LE Option setting           IGZRPTMSG(OFF)
+ From LE Option setting         NOSKIPDWARF
+ From LE Option setting         NOQSAMBUFATL
+ From LE Option setting           BUFFINITCHAR(DEFAULT)
+ From LE Option setting         NOVSAMDYNAMICDIR
+ From LE Option setting         NODISABLEUOPTREPORT
+
+ End of COBOL Run-time Option Report
+
+1Options Report for Enclave ZHELLOC 10/15/26 10:17:28 AM
+ Language Environment V03 R01.00
+
+ LAST WHERE SET                 OPTION
+ -------------------------------------------------------------------------------
+ IBM-supplied default             ABPERC(NONE)
+ IBM-supplied default             ABTERMENC(ABEND)
+ IBM-supplied default           NOAIXBLD
+ IBM-supplied default             ALL31(ON)
+ IBM-supplied default             ANYHEAP(16384,8192,ANYWHERE,FREE)
+ IBM-supplied default           NOAUTOTASK
+ IBM-supplied default             BELOWHEAP(8192,4096,FREE)
+ IBM-supplied default             CBLOPTS(ON)
+ IBM-supplied default             CBLPSHPOP(ON)
+ IBM-supplied default             CBLQDA(OFF)
+ IBM-supplied default             CEEDUMP(60,SYSOUT=*,FREE=END,SPIN=UNALLOC)
+ IBM-supplied default             CHECK(ON)
+ IBM-supplied default             COUNTRY(US)
+ IBM-supplied default           NODEBUG
+ IBM-supplied default             DEPTHCONDLMT(10)
+ IBM-supplied default             DYNDUMP(*USERID,NODYNAMIC,TDUMP)
+ IBM-supplied default             ENVAR("")
+ IBM-supplied default             ERRCOUNT(0)
+ IBM-supplied default             ERRUNIT(6)
+ IBM-supplied default             FILEHIST
+ IBM-supplied default             FILETAG(NOAUTOCVT,NOAUTOTAG)
+ Default setting                NOFLOW
+ IBM-supplied default             HEAP(32768,32768,ANYWHERE,KEEP,8192,4096)
+ IBM-supplied default             HEAPCHK(OFF,1,0,0,0,1024,0,1024,0)
+ IBM-supplied default             HEAPPOOLS(OFF,8,10,32,10,128,10,256,10,1024,10,2048,10,0,10,0,10,0,10,0,10,0,10,0,10)
+ IBM-supplied default             HEAPZONES(0,ABEND,0,ABEND)
+ IBM-supplied default             INFOMSGFILTER(OFF,,,,)
+ IBM-supplied default             INQPCOPN
+ IBM-supplied default             INTERRUPT(OFF)
+ IBM-supplied default             LIBSTACK(4096,4096,FREE)
+ IBM-supplied default             MSGFILE(SYSOUT,FBA,121,0,NOENQ)
+ IBM-supplied default             MSGQ(15)
+ IBM-supplied default             NATLANG(ENU)
+ Ignored                        NONONIPTSTACK(See THREADSTACK)
+ IBM-supplied default             OCSTATUS
+ IBM-supplied default             PAGEFRAMESIZE(4K,4K,4K)
+ IBM-supplied default           NOPC
+ IBM-supplied default             PLITASKCOUNT(20)
+ IBM-supplied default             POSIX(OFF)
+ IBM-supplied default             PROFILE(OFF,"")
+ IBM-supplied default             PRTUNIT(6)
+ IBM-supplied default             PUNUNIT(7)
+ IBM-supplied default             RDRUNIT(5)
+ IBM-supplied default             RECPAD(OFF)
+ Invocation command               RPTOPTS(ON)
+ IBM-supplied default             RPTSTG(OFF)
+ IBM-supplied default           NORTEREUS
+ IBM-supplied default           NOSIMVRD
+ IBM-supplied default             STACK(131072,131072,ANYWHERE,KEEP,524288,131072)
+ IBM-supplied default             STORAGE(NONE,NONE,NONE,0)
+ IBM-supplied default             TERMTHDACT(TRACE,,96)
+ IBM-supplied default           NOTEST(ALL,"*","PROMPT","INSPPREF")
+ IBM-supplied default             THREADHEAP(4096,4096,ANYWHERE,KEEP)
+ IBM-supplied default             THREADSTACK(OFF,4096,4096,ANYWHERE,KEEP,131072,131072)
+ IBM-supplied default             TRACE(OFF,4096,DUMP,LE=0)
+ IBM-supplied default             TRAP(ON,SPIE)
+ IBM-supplied default             UPSI(00000000)
+ IBM-supplied default           NOUSRHDLR(,)
+ IBM-supplied default             VCTRSAVE(OFF)
+ IBM-supplied default             XPLINK(OFF)
+ IBM-supplied default             XUFLOW(AUTO)
+

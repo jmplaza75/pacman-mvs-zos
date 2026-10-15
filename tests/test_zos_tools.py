@@ -780,5 +780,23 @@ assert not all(v for _, v in LEK.step_check('D2', [l.replace('SAVEA =0000155696 
 assert not all(v for _, v in LEK.step_check('D2', [l.replace(cee, inst) for l in d2]))
 assert not all(v for _, v in LEK.step_check('D1', [l.replace('ZH PARM=ZHARG', 'ZH PARM=RPTOPTS(ON)')
                                                    .replace('PARMLEN=005', 'PARMLEN=011') for l in d1]))
+# the real D1 SYSOUT of PACZ4LE JOB03693 (fixture = the raw file, SHA-256 in docs/evidence/
+# zos4-pacz4le-JOB03693-raw.sha256): this system reports the no-override origin as 'IBM-supplied default' (the first
+# check assumed 'Installation ...' and gave a false FAIL); CEEOPTS / invocation / any other origin still fails D1
+from zos_listing import asa  # noqa: E402
+fx = R / 'tests/fixtures/zos/JOB03693-103-D1-SYSOUT.txt'
+assert hashlib.sha256(fx.read_bytes()).hexdigest() == \
+    'b91fba786e5cef54fbe80c908f3016ea20096a4f0e2cb7d9550d5369c2c88df9', 'fixture is not the JOB03693 raw file'
+real1 = asa(fx.read_text().splitlines())
+assert all(v for _, v in LEK.step_check('D1', real1)), LEK.step_check('D1', real1)
+zh1, rep1 = LEK.readings(real1)
+assert rep1['ALL31'] == ('IBM-supplied default', 'ON') and rep1['STACK'][0] == 'IBM-supplied default'
+for opt in ('ALL31', 'STACK'):
+    for other in ('DD:CEEOPTS', 'Invocation command', 'Programmer default', 'IBM-supplied defaultX'):
+        k = next(i for i, l in enumerate(real1) if LEK.OPT.match(l) and LEK.OPT.match(l).group(2) == opt
+                 and LEK.OPT.match(l).group(1).strip() == 'IBM-supplied default' and i > 30)
+        bad1 = real1[:k] + [real1[k].replace('IBM-supplied default', other.ljust(20))] + real1[k + 1:]
+        assert not all(v for _, v in LEK.step_check('D1', bad1)), (opt, other)
 print('PACZ4LE: generated deck (ZHELLO31 / ZHELLO24 / ZHELLO31, STEPLIB only, no Pac-Man), step rules accept the '
-      'designed outcomes and fail a CEEOPTS win in D3, installation values in D2, a reversed arguments/options split: PASS')
+      'designed outcomes and fail a CEEOPTS win in D3, installation values in D2, a reversed arguments/options split; '
+      'real JOB03693 D1 (IBM-supplied default) accepted, CEEOPTS / invocation / other origins fail: PASS')
