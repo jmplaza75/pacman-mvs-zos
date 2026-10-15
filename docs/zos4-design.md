@@ -12,11 +12,12 @@ from ZOS-3, the HS CLIST block. CLIST changed only by prefix substitution unless
 (ZOS-8).
 
 ## 2. First live TSO behaviour
-From TSO READY (the 3270 logon gives READY directly, no ISPF - ZOS-0 D):
+From TSO READY (correction 2026-10-15: the logon, procedure DBPROCDG, enters ISPF; READY through ISPF option 6 or
+by leaving ISPF - ZOS-0 D had recorded READY directly):
 `EXEC 'Z00000.PACMAN.CLIST(PACMAN)' 'RULES(CLASSIC) PLAY(TURN) COLOR(NO)'` playing a frozen card sequence typed by the
 user, so the transcript has an exact reference: DIE1 (the 1.0 TSO oracle run, = PACZ2C7 TSO2 / PACZ3FS on z/OS:
 moves, a blocked move, empty-ENTER redraw, death, Q -> READY), then LOST0 (a game to LOST). Checklist of the plan:
-no `***` mid-frame; READY after each game. ISPF option 6: not applicable (no ISPF on this logon) - recorded as N/A.
+no `***` mid-frame; READY after each game; repeated from ISPF option 6 as the plan's compatibility note.
 
 ## 3. HS CLIST block
 With RULES(CLASSIC) the block (`IF &W = A`) is skipped live, so it is proved in batch under the TMP, as on MVS
@@ -101,3 +102,8 @@ live DIE1 / LOST0 acceptance come after the CEEOPTS resolution.
 Finding for PACZ4INS: `Z00000.PACMAN.CLIST(PACMAN)` already exists - it is the raw source template (@@PREFIX@@),
 uploaded by zos_sync in ZOS-1 as an identity copy, not an install. Installing the rendered CLIST into that member
 would replace the template: to be decided in the PACZ4INS review (e.g. PRV copy first, or a separate source library).
+
+## 11. CEEOPTS discovery result (user, 2026-10-15) - STOP as designed
+No CEEOPTS DD in the interactive session; the logon (DBPROCDG) enters ISPF. SHOWCEE not uploaded or used. Analysis and
+recommendation: docs/zos4-ceeopts-analysis.md (profile A is not effective interactively; diagnostic RPTOPTS job first,
+then a reviewed CLIST CEEOPTS allocation). No CLIST change, no PACMAIN promotion yet.
