@@ -57,3 +57,21 @@ abend; JESYSMSG names only Z4CL.T2 and Z4CY2.CEEOPTS; no DELETE, no PACMAIN, no 
   input stack on the command error before the ERROR routine could act.
 - Post-job state as reviewed: Z4CL.T2 = Z2N Z2RUN Z2Y; Z4CY2.CEEOPTS one record; Z4CN2.CEEOPTS absent.
 Z2 not accepted. Follow-up (user, 2026-10-15): CONTROL NOFLUSH around the ERROR routine + ALLOC, attempt T3.
+
+## PACZ4Z3 JOB03875 (Z2 attempt T3) - PASS 26/26: the definitive validation of Z2
+Name gate PASS just before; submitted once, unchanged; the six steps COND CODE 0000; IKJEFT01 with DYNAMNBR=200; no CEE
+/ abend; JESYSMSG names only Z4CL.T3 and Z4CY3.CEEOPTS; no DELETE, no PACMAIN, no Z00000.PACMAN.DATA.
+- Case 1: CEEOPTS on Z4CY3.CEEOPTS at the simulated CALL (CALL marker reached), gone after the FREE, Z2RC=0.
+- Case 2: `PACMAN: Z00000.PACMAN.Z4CN3.CEEOPTS MISSING, GAME NOT STARTED`; no CHECK FAILED, no ALLOC of CEEOPTS, no
+  CALL marker, no CEEOPTS DD; Z2RC=8.
+- Case 3 (CEEOPTS pre-allocated on Z4CL.T3(Z2N)): CONTROL LIST shows
+  `ALLOC F(CEEOPTS) DA('Z00000.PACMAN.Z4CY3.CEEOPTS') SHR` (SYSDSN OK, ALLOC reached), refused with
+  `IKJ56246I DATA SET Z00000.PACMAN.Z4CY3.CEEOPTS NOT ALLOCATED, FILE IN USE`; the ERROR routine regained control:
+  `PACMAN: A CEEOPTS DD IS ALREADY ALLOCATED, GAME NOT STARTED`, `FREE F(SYSIN SYSOUT)`, `Z2RC=8`; no MISSING / CHECK
+  FAILED / CALL marker; LISTALC before and after: `Z00000.PACMAN.Z4CL.T3(Z2N)  CEEOPTS KEEP` identical, SYSIN / SYSOUT
+  no longer allocated; the only IKJ diagnostic is that refusal; final FREE F(CEEOPTS) clean.
+- Post-job state: Z4CL.T3 = Z2N Z2RUN Z2Y; Z4CY3.CEEOPTS one record ALL31(OFF),STACK(,,BELOW); Z4CN3.CEEOPTS absent.
+The CONTROL FLUSH hypothesis of JOB03829 is confirmed: with CONTROL NOFLUSH around the ERROR routine and the ALLOC
+the routine regains control. JOB03829 stays recorded as the failed T2 controlled-error experiment (cases 1-2 PASS,
+case 3 SAFE but FAIL), JOB03750 as partial / inconclusive for case 3; neither is retroactively PASS.
+**Z2 accepted for installation (user criteria, 2026-10-15).**

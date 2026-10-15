@@ -39,3 +39,12 @@ JOB03829 PACZ4Z2
   archive  PACZ4Z2-JOB03829.tar.gz
   sha256   8dcd7d2f00b7bd8c30ff714a3485a47cbc0c4c0b940a1a7f1447e1b4aa66c3ad
   z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 11 raw files, 0 credential pattern hits
+
+JOB03875 PACZ4Z3
+  phase    ZOS-4: Z2-only attempt T3 (CONTROL NOFLUSH / FLUSH around the ERROR routine + ALLOC; DYNAMNBR=200)
+  result   CC 0000; PASS 26/26 (tools/zowe/zos_z2_check.py --attempt T3; docs/evidence/zos4-z3-check.txt) - the
+           definitive validation of Z2 (raw SHA-256 docs/evidence/zos4-pacz4z3-JOB03875-raw.sha256)
+  spool    11 files, 254 spool lines
+  archive  PACZ4Z3-JOB03875.tar.gz
+  sha256   42d4b5a0f4d5b1b853627d07327585563fe348fcd4f50dfa1cb89cb7e5c8f168
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 11 raw files, 0 credential pattern hits

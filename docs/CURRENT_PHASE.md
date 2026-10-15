@@ -343,3 +343,8 @@ session, one focused postcheck; reuse ZOS-2 / ZOS-3 evidence. Waiting for the us
   docs/evidence/zos4-classic.md): no-override LE defaults = ALL31(ON), stack ANYWHERE (IBM-supplied); CEEOPTS gives
   profile A to the AMODE 24 module; invocation options outrank CEEOPTS. NEXT: the CLIST profile-A CEEOPTS Z-entry for
   review (not installed).
+- Z2 (CLIST profile A CEEOPTS) ACCEPTED for installation 2026-10-15 on PACZ4Z3 JOB03875 (PASS 26/26, docs/ZOS-DIFFS.md
+  Z2). History kept: PACZ4CL JOB03750 (G8 / HS PASS, Z2 case 3 inconclusive), PACZ4Z2 JOB03829 (case 3 handler did not
+  regain control). NEXT (not started, waiting for the user): PACZ4INS (CEEOPTS dataset, PACMAIN by IEBCOPY, the z/OS
+  CLIST; the raw CLIST template member question), then the live DIE1 / LOST0 session.
+

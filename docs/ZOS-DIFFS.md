@@ -25,3 +25,20 @@ approval.
   only if ASMA303W is its sole diagnostic, the listing still shows `S 12,ABOFF` with base R15, and no other assembler
   warning or error appears. Technical debt to revisit with the ESTAE / recovery work; PACFSIO is not changed to
   silence it.
+
+## Z2 - CLIST: LE profile A CEEOPTS around the CALL (ZOS-4; accepted 2026-10-15)
+- File: `src/zos/PACMAN.clist` (branch zos only) = the 2.0-mvs-max `src/clist/PACMAN.clist` + 32 lines (31 before the
+  CALL, `FREE F(CEEOPTS)` after it); guarded by tests/zos_c2.py z2_guard. The MVS CLIST is unchanged.
+- Reason: the interactive TSO session (logon proc DBPROCDG) has no CEEOPTS DD and the no-override LE defaults are
+  ALL31(ON), STACK ANYWHERE (IBM-supplied; PACZ4LE JOB03693 D1), not profile A; a CEEOPTS DD gives the AMODE 24 module
+  profile A (D2); invocation options outrank CEEOPTS (D3) and the CLIST PARM carries none.
+- Behaviour: SYSDSN of `<prefix>.CEEOPTS`: OK -> ALLOC F(CEEOPTS) SHR without REUSE under CONTROL NOFLUSH + an ERROR
+  routine -> CALL -> FREE (the session returns to no CEEOPTS); DATASET NOT FOUND -> MISSING message, RC 8, no CALL;
+  any other result -> CHECK FAILED (result) message, RC 8, no CALL; a CEEOPTS DD already allocated -> the ALLOC is
+  refused, the existing DD is kept, ALREADY ALLOCATED message, RC 8, no CALL; SYSIN / SYSOUT (and PACHS) freed on
+  every failure.
+- Evidence: PACZ4Z3 JOB03875 (all three paths, 26/26); history JOB03750 (case 3 inconclusive), JOB03829 (case 3
+  handler did not regain control without NOFLUSH).
+- Needs the project dataset `<prefix>.CEEOPTS` (PS FB 80/80, one record `ALL31(OFF),STACK(,,BELOW)`), created at
+  installation (PACZ4INS).
+

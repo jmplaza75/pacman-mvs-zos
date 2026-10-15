@@ -1,0 +1,28 @@
+PACZ4Z3 JOB03875 CC 0000
+  OK   job PACZ4Z3, steps ALLOC Z2CEE Z2CLS1 Z2CLS2 Z2CLS3 CLT
+  OK   ALLOC COND CODE 0000
+  OK   Z2CEE COND CODE 0000
+  OK   Z2CLS1 COND CODE 0000
+  OK   Z2CLS2 COND CODE 0000
+  OK   Z2CLS3 COND CODE 0000
+  OK   CLT COND CODE 0000
+  OK   CLT ran with DYNAMNBR=200
+  OK   no ABEND / IEA995 / $HASP375 / S722 / CEE message
+  OK   spool DDs: SYSPRINT of the IEBGENER steps, SYSTSPRT of CLT
+  OK   datasets in JESYSMSG only Z00000.PACMAN.Z4CL.T3, Z00000.PACMAN.Z4CY3.CEEOPTS
+  OK   the three cases ran in order
+  OK   case 1: project CEEOPTS at the simulated CALL, gone after the FREE, Z2RC=0
+  OK   case 2: MISSING (DATASET NOT FOUND), no CHECK FAILED, no ALLOC of CEEOPTS, no CALL marker, no CEEOPTS DD, Z2RC=8
+  OK   case 3: SYSDSN passed, the ALLOC of the project CEEOPTS reached (listed)
+  OK   case 3: the ALLOC refused because CEEOPTS is in use (IKJ ... FILE IN USE), no other IKJ
+  OK   case 3: the ERROR routine regained control (ALREADY ALLOCATED message after the refusal)
+  OK   case 3: Z2RC=8 after the message
+  OK   case 3: no MISSING / CHECK FAILED path, no CALL marker
+  OK   case 3: the original CEEOPTS DD identical before and after (Z00000.PACMAN.Z4CL.T3(Z2N))
+  OK   case 3: SYSIN and SYSOUT not allocated after the controlled failure
+  OK   IKJ diagnostics only in case 3
+  OK   final FREE F(CEEOPTS) clean
+  OK   Z00000.PACMAN.Z4CL.T3 members exactly Z2N Z2RUN Z2Y
+  OK   Z00000.PACMAN.Z4CY3.CEEOPTS: PS FB 80 80, one record ALL31(OFF),STACK(,,BELOW)
+  OK   Z00000.PACMAN.Z4CN3.CEEOPTS still does not exist
+PACZ4Z3 CHECK PASS
