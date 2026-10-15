@@ -738,3 +738,40 @@ for why, ls in bad_tmp.items():
 print('PACZ4CL: generated deck, only Z4CL.T1 / Z4HSY.DATA (no DATA, no DELETE, no PACMAIN), MVS test CLISTs exactly '
       '(two prefixes instead of a DELETE), G8PARM = oracle 307, TMP-output rules pass the expected shape and fail '
       f'{len(bad_tmp)} wrong shapes: PASS')
+
+# 15. ZOS-4 PACZ4LE (LE runtime-option diagnostic, ZOS-1 probes only): the generated deck (no Pac-Man, no write, STEPLIB
+#     only); the step rules accept the designed outcomes and fail on the other side of each decision (a CEEOPTS win in
+#     D3, installation values in D2, the arguments/options split reversed)
+import zos_le_check as LEK  # noqa: E402
+le = (R / 'jcl/zos/PACZ4LE.jcl').read_text()
+with tempfile.TemporaryDirectory() as t:
+    subprocess.run([sys.executable, str(R / 'tools/make_deck.py'), '--target', 'zos', 'Z4LE', '--out',
+                    str(Path(t) / 'l.jcl')], check=True, capture_output=True)
+    assert (Path(t) / 'l.jcl').read_text() == le, 'PACZ4LE.jcl is not the generated deck'
+assert set(re.findall(r'DSN=([\w@.]+)', le)) == {'@@HLQ@@.PACMAN.LOAD'} and 'PACZ2D' not in le and 'PACMAIN' not in le
+assert re.findall(r'PGM=(\w+)', le) == ['ZHELLO31', 'ZHELLO24', 'ZHELLO31']
+assert audit_deck(render(le, 'Z00000'), 'Z00000') == []
+
+
+def le_out(arg, tam, where, opts):
+    z = ['ZH PARMLEN=%03d' % len(arg), 'ZH PARM=' + arg, f'ZH TAM   =000000000{tam}', f'ZH BSM   =000000000{tam}',
+         f'ZH PARM1 =0000299520 {where[0]}', 'ZH CSECT =0000036416 BELOW', f'ZH SAVEA =0000155696 {where[1]}']
+    return z + ['', 'LAST WHERE SET              OPTION'] + [f'{s:<28}{o}' for s, o in opts]
+
+
+inst, inv, cee = 'Installation default', 'Invocation command', 'DD:CEEOPTS'
+d1 = le_out('ZHARG', 1, ('ABOVE', 'ABOVE'), [(inst, 'ALL31(ON)'), (inst, 'CBLOPTS(ON)'), (inv, 'RPTOPTS(ON)'),
+                                            (inst, 'STACK(128K,128K,ANYWHERE,KEEP,512K,128K)')])
+d2 = le_out('ZHARG', 0, ('BELOW', 'BELOW'), [(cee, 'ALL31(OFF)'), (inst, 'CBLOPTS(ON)'), (inv, 'RPTOPTS(ON)'),
+                                            (cee, 'STACK(128K,128K,BELOW,KEEP,512K,128K)')])
+d3 = le_out('ZHARG', 1, ('ABOVE', 'ABOVE'), [(cee, 'ALL31(ON)'), (inst, 'CBLOPTS(ON)'), (inv, 'RPTOPTS(ON)'),
+                                            (inv, 'STACK(128K,128K,ANYWHERE,KEEP,512K,128K)')])
+for s, o in (('D1', d1), ('D2', d2), ('D3', d3)):
+    assert all(v for _, v in LEK.step_check(s, o)), (s, LEK.step_check(s, o))
+assert not all(v for _, v in LEK.step_check('D3', [l.replace(inv + ' ' * 10 + 'STACK', 'x') for l in d3]
+                                            [:-1] + [f'{cee:<28}STACK(128K,128K,BELOW,KEEP,512K,128K)']))
+assert not all(v for _, v in LEK.step_check('D2', [l.replace(cee, inst) for l in d2]))
+assert not all(v for _, v in LEK.step_check('D1', [l.replace('ZH PARM=ZHARG', 'ZH PARM=RPTOPTS(ON)')
+                                                   .replace('PARMLEN=005', 'PARMLEN=011') for l in d1]))
+print('PACZ4LE: generated deck (ZHELLO31 / ZHELLO24 / ZHELLO31, STEPLIB only, no Pac-Man), step rules accept the '
+      'designed outcomes and fail a CEEOPTS win in D3, installation values in D2, a reversed arguments/options split: PASS')

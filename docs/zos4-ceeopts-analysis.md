@@ -14,9 +14,10 @@
 
 ## 1. Precedence for an interactive TSO CALL without CEEOPTS
 Language Environment order (z/OS LE Programming Guide, "order of precedence for runtime options"), highest first:
-non-overridable installation options (CEEPRMxx / CEEDOPT NONOVR) > CEEBXITA exit > **CEEOPTS DD** > **invocation
-options** (CALL / PARM; for a COBOL main with CBLOPTS(ON) the part after the first `/`) > CEEUOPT / #pragma runopts in
-the program > region-level CEEROPT > installation defaults. For the CLIST's CALL today every source above the
+non-overridable installation options (CEEPRMxx / CEEDOPT NONOVR) > CEEBXITA exit > **invocation options** (CALL /
+PARM; for a COBOL main with CBLOPTS(ON) the part after the first `/`) > **CEEOPTS DD** > CEEUOPT / #pragma runopts in
+the program > region-level CEEROPT > installation defaults. (Corrected 2026-10-15 from IBM z/OS 3.1 documentation,
+user: invocation options outrank DD:CEEOPTS; the first version of this note had the two reversed.) For the CLIST's CALL today every source above the
 installation defaults is absent (no CEEOPTS, no `/`, no CEEUOPT, no STEPLIB CEE module), so PACMAIN would run with the
 **installation defaults - the same defaults batch gets without a CEEOPTS DD**, which PACZPRFB shows are not profile A.
 Conclusion: profile A is NOT effective interactively. (The order above is from the documentation; the RPTOPTS report
@@ -31,8 +32,7 @@ Proposed one batch job (for review, not prepared as a deck yet), each step STEPL
    source exists, section 1) -> ALL31 / STACK values and their source; SAVEA BELOW / ABOVE.
 2. `PARM='TSO/ALL31(OFF),STACK(,,BELOW),RPTOPTS(ON)'`, no CEEOPTS: invocation options take effect; the program's PARM
    echo must be exactly `TSO` (the options are stripped).
-3. CEEOPTS DD `ALL31(OFF),STACK(,,BELOW),RPTOPTS(ON)` and `PARM='TSO/ALL31(ON)'`: precedence CEEOPTS over invocation on
-   this system.
+3. (superseded by docs/zos4-le-diagnostic.md D3: invocation over CEEOPTS, on an AMODE 31 probe.)
 Effective values are proven by two independent readings per step: the RPTOPTS report (value + source) and ZHELLO24's
 own SAVEA BELOW / ABOVE and TAM / BSM. An optional interactive confirmation (one `CALL` of ZHELLO24 with
 `'/RPTOPTS(ON)'` inside the live session, SYSOUT temporarily `DA(*)` as the CLIST itself does) only adds that the
@@ -42,7 +42,7 @@ session has no hidden source; sections 1 already shows none.
 | | Diagnostic only (RPTOPTS) | Project CEEOPTS allocated by the CLIST | Invocation options in the CALL PARM |
 |---|---|---|---|
 | What | report / prove, change nothing | `ALLOC F(CEEOPTS) DA('<p>.<ceeopts ds>') SHR REUSE` before CALL, `FREE F(CEEOPTS)` after | `CALL ... '&P/ALL31(OFF),STACK(,,BELOW)'` |
-| Precedence | n/a | above invocation, CEEUOPT, defaults; below NONOVR / CEEBXITA (none found) | above CEEUOPT and defaults; below a CEEOPTS DD (none in the session) |
+| Precedence | n/a | above CEEUOPT and defaults; below invocation options (none in the CLIST PARM), NONOVR / CEEBXITA (none found) | above CEEOPTS, CEEUOPT and defaults; below NONOVR / CEEBXITA |
 | Scope | none | the CLIST's CALL only; the session had no CEEOPTS, so FREE restores it exactly (no lasting change) | that CALL only |
 | Same mechanism as the ZOS-2 / ZOS-3 evidence | - | **yes** (every batch run used a CEEOPTS DD) | no (no `/` ever used; PARM echo to be proven) |
 | Cost / risk | none | one new project dataset with one record; CLIST Z-entry (2 lines + an &SYSDSN guard so a missing dataset does not end the CLIST); lines <= 72 | CLIST Z-entry; the G8 PARM check and every PARM-based test must exclude the suffix; a stray `/` in a future PARM would be read by LE |

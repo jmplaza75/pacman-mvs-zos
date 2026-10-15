@@ -68,7 +68,13 @@ HS_JOBS = {'Z3HS1': ['HA1', 'HA2', 'HA3'], 'Z3HS2': ['HA4'], 'Z3HS3': ['HA5'], '
            'Z3HS5': ['HB1', 'HC1', 'HD1'], 'Z3HS6': ['HE1', 'HE2', 'HF1', 'HF2'], 'Z3HS7': ['HG1', 'HG2', 'HG3'],
            'Z3HS8': ['HH1', 'HTSO1', 'HTSO2']}
 HS_DEFERRED = ['HA6']
-DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL'] + list(CHUNKS)
+DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL', 'Z4LE'] + list(CHUNKS)
+# ZOS-4 PACZ4LE (docs/zos4-le-diagnostic.md): LE runtime-option diagnostic with the ZOS-1 probes (no Pac-Man):
+# (step, program, PARM, CEEOPTS records or None). ZHARG is not an LE option name: the program's PARM echo shows which
+# side of the '/' LE gave it (CBLOPTS(ON): arguments/options).
+Z4LE_STEPS = [('D1', 'ZHELLO31', 'ZHARG/RPTOPTS(ON)', None),
+              ('D2', 'ZHELLO24', 'ZHARG/RPTOPTS(ON)', 'ALL31(OFF),STACK(,,BELOW)'),
+              ('D3', 'ZHELLO31', 'ZHARG/STACK(,,ANYWHERE),RPTOPTS(ON)', 'ALL31(ON),STACK(,,BELOW)')]
 # ZOS-4 PACZ4CL (docs/zos4-design.md): the CLIST PARM lines (MVS G8CLS / G8CLT) and the HS CLIST block (MVS HSCLS1/2 +
 # HSCLT) under the TMP in batch, with fresh attempt datasets instead of DELETE: a work PDS for the test CLISTs, a DATA
 # PDS for the present path, a prefix whose DATA is never allocated for the missing path
@@ -275,6 +281,19 @@ def z4cl_deck(pfx):
     return out
 
 
+def z4le_deck(pfx):
+    """ZOS-4 PACZ4LE: three runs of the ZOS-1 probe programs (ZHELLOC + ZHELLOA, already in <prefix>.LOAD), STEPLIB
+    only, no dataset written, SYSOUT (DISPLAY and the LE MSGFILE) to the spool."""
+    out = job_card('PACZ4LE', 'PACMAN ZOS4 Z4LE')
+    for step, pgm, parm, cee in Z4LE_STEPS:
+        out += (f"//{step:<8} EXEC PGM={pgm},COND=(0,NE),\n//             PARM='{parm}'\n"
+                f'//STEPLIB  DD DSN={pfx}.LOAD,DISP=SHR\n')
+        if cee:
+            out += f'//CEEOPTS  DD *\n{cee}\n/*\n'
+        out += '//SYSOUT   DD SYSOUT=A\n//CEEDUMP  DD SYSOUT=A\n//SYSUDUMP DD DUMMY\n'
+    return out
+
+
 def steps_of_deck(text):
     """{step: text} of a deck, split at every EXEC statement (in-stream cards never start with //)."""
     import re
@@ -315,4 +334,4 @@ def deck(name, pfx):
         return chunk_deck(name, pfx)
     if name in HS_JOBS:
         return z3hs_deck(name, pfx)
-    return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck, 'Z3HA': z3ha_deck, 'Z4CL': z4cl_deck}[name](pfx)
+    return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck, 'Z3HA': z3ha_deck, 'Z4CL': z4cl_deck, 'Z4LE': z4le_deck}[name](pfx)
