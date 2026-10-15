@@ -329,4 +329,6 @@ cases; PACZ3FS first. No PACZ2D rebuild, no source change, no CLIST install, no 
   PACHSIO work complete (HA6 deferred, HSP1..9 omitted, CLIST block -> ZOS-4).
 - PACZ3TSD review package (2026-10-15): the minimum ALARM(PATTERN) TSD set = 12 S2T runs reaching all 21 D41 edges
   (HG2 / HG3 already proved the TSD engine with ALARM SINGLE), 4 jobs PACZ3TD1..4 (docs/zos3-pacz3tsd-review.md,
-  tools/zowe/zos_tsd_check.py, test section 13). NOT SUBMITTED.
+  tools/zowe/zos_tsd_check.py, test section 13).
+- PACZ3TD1..4 PASS (2026-10-15): JOB02506, 02511, 02512, 02516. Every ZOS-3 job PASS; coverage summary
+  docs/evidence/zos3-coverage-summary.md. WAITING FOR THE USER'S ACCEPTANCE of ZOS-3 before ZOS-4.

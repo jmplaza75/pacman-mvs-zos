@@ -119,3 +119,26 @@ HSFULL.T1 = M01..M20, HISCORE absent; both PDS / PO / FB / 80 / 80, CATALOG.ZOSO
 Not in ZOS-3: HA6 DEFERRED to ZOS-9/10 (5,262 application lines alone, above the site output limit; state-neutral by
 ref_hs; its no-record branch is covered by HA7) - not PASS here. HSP1..9 omitted (replaced by the read-only state
 checks; kept for the ZOS-9/10 full suite). CLIST block (HSCLS1/2, HSCLT) -> ZOS-4.
+
+## PACZ3TD1..4 - the minimum ALARM(PATTERN) TSD set: PASS
+
+Review package docs/zos3-pacz3tsd-review.md. 12 S2T runs of oracle JOB 308 that together reach all 21 D41 edges of
+tests/test_s2.py (9 are the only run of an edge; S2T1 + S2T8 + S2T25 the cheapest completion; none removable). HG2 /
+HG3 (PACZ3HS7) had already proved the TSD engine with ALARM SINGLE; every PACZ3TD step runs ALARM PATTERN (PARM column
+25 P). Each job submitted once, unchanged (deck.jcl = the reviewed rendering, CEEOPTS exactly ALL31(OFF),STACK(,,BELOW)
+in every step), checked with tools/zowe/zos_tsd_check.py: PACZ2D from Z00000.PACMAN.LOAD (STEPLIB retained once per
+step), COND CODE 0000, only SYSOUT, no CEE / abend / IEA995 / $HASP375, each step anchored at its own oracle 308 block
+and identical to it (hexadecimal stream lines exact: only the ASA column and the record padding removed), the parsed
+streams = the ref_s2 pattern model byte for byte (WCC, alarm bits X'04', end bell-only writes C6 28 00 00), the end
+lines = the model's, nothing after them.
+
+| Job | JOBID | Steps | Spool lines | Alarm-bit writes / end bell-only writes per step |
+|---|---|---|---|---|
+| PACZ3TD1 | JOB02506 | S2T1, S2T3, S2T5, S2T6, S2T7 | 3395 | 8/0, 6/0, 4/0, 4/0, 4/0 |
+| PACZ3TD2 | JOB02511 | S2T8, S2T9, S2T10 | 3062 | 3/0, 7/0, 4/0 |
+| PACZ3TD3 | JOB02512 | S2T13, S2T17, S2T25 | 2140 | 7/3, 8/2, 0/0 (SOUND N) |
+| PACZ3TD4 | JOB02516 | S2T23 | 3381 | 2/1 (not scaled: the S1 bell-only write) |
+
+What the TSD dry run does NOT prove (later live 3270 phases): no live TPUT / TGET (SEND prints the stream in hex), no
+real terminal-mode switching (STFSMODE / STTMPMD), no c3270 interaction (Query Reply, inputs, AIDs), no audible bell or
+its perception, no real timing (dry-run waits are skipped: the end-pause WDLN / DLWT spacing is not exercised).
