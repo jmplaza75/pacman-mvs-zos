@@ -420,8 +420,37 @@ assert HSC.fill_ok(log)
 assert not HSC.fill_ok([l for l in log if 'IEB813I' not in l])
 assert not HSC.fill_ok(log[:-3] + ['IEB817I MEMBER NAME (M21     ) NOT FOUND IN NM DIRECTORY.  STOWED WITH TTR.']
                        + log[-3:])
-lst = ['LISTDS \'Z00000.PACMAN.HSTEST.T1\' MEMBERS', 'Z00000.PACMAN.HSTEST.T1', '--RECFM-LRECL-BLKSIZE-DSORG',
-       '  FB    80    80      PO', '--VOLUMES--', '  ZXPC02', '--MEMBERS--', '  BAD', '  EMPTY', '  HS9', 'READY']
-assert HSC.listds(lst) == {'Z00000.PACMAN.HSTEST.T1': ('FB', '80', '80', 'PO', ['BAD', 'EMPTY', 'HS9'])}
+# the LISTDS parser on the real SYSTSPRT of PACZ3HA JOB02091 (fixture = the raw spool file, SHA-256 recorded in
+# docs/evidence/zos3-pacz3ha-JOB02091-raw.sha256): the first checker run took the final IKJEFT01 END as a 21st
+# HSFULL member (the member list was not closed at READY); each extent now runs from its LISTDS echo to its READY
+import hashlib  # noqa: E402
+fx = R / 'tests/fixtures/zos/JOB02091-109-HSLIST-SYSTSPRT.txt'
+assert hashlib.sha256(fx.read_bytes()).hexdigest() == \
+    '5a53d7a2cd633d0999660c0f8c441d467c6c0a88480b06022d8c2c30de4f6210', 'fixture is not the JOB02091 raw file'
+raw = fx.read_text().splitlines()
+got = HSC.listds(raw)
+assert got == {'Z00000.PACMAN.HSTEST.T1': ('FB', '80', '80', 'PO', ['BAD', 'EMPTY', 'HS9']),
+               'Z00000.PACMAN.HSFULL.T1': ('FB', '80', '80', 'PO', [f'M{i:02}' for i in range(1, 21)])}, got
+assert all('END' not in v[4] for v in got.values()) and raw[-2:] == [' READY', ' END']
+k20 = raw.index('   M20')
+legit = raw[:k20 + 1] + ['   END'] + raw[k20 + 1:]          # a real member named END is indented: kept as a member
+assert HSC.listds(legit)['Z00000.PACMAN.HSFULL.T1'][4][-1] == 'END'
+k1 = raw.index(" Z00000.PACMAN.HSFULL.T1")
+bad_shapes = {
+    'no READY after HSFULL': raw[:-2] + [' END'],
+    'no final END': raw[:-1],
+    'END inside the HSFULL extent': raw[:k20] + [' END'] + raw[k20:],
+    'unexpected line among the members': raw[:k20] + ['   M20 EXTRA'] + raw[k20:],
+    'second echo before READY': raw[:k20] + ["   LISTDS 'Z00000.PACMAN.HSTEST.T1' MEMBERS"] + raw[k20:],
+    'dataset line differs from the echo': raw[:k1] + [' Z00000.PACMAN.HSFULL.T2'] + raw[k1 + 1:],
+    'no MEMBERS header': [l for l in raw if l != ' --MEMBERS--'],
+    'no TMP prompt first': raw[1:],
+    'duplicated extent': raw[:-1] + raw[1:raw.index(' READY', 2) + 1] + [' END'],
+    'no ASA column': [l[1:] for l in raw],
+}
+for why, shape in bad_shapes.items():
+    assert HSC.listds(shape) is None, why
 print('PACZ3HA: generated deck, only HSTEST.T1 / HSFULL.T1 (no DATA, no DELETE, no run), DSNTYPE=PDS FB 80/80, '
-      'seed / fill steps = frozen MVS HS steps, full-directory rule on the oracle 312 log, LISTDS parse: PASS')
+      'seed / fill steps = frozen MVS HS steps, full-directory rule on the oracle 312 log; LISTDS parser on the real '
+      f'JOB02091 output (final END not a member, a member named END kept, {len(bad_shapes)} malformed shapes fail '
+      'closed): PASS')

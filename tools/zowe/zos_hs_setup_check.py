@@ -46,23 +46,58 @@ def fill_ok(lines):
             and any('IEB818I HIGHEST CONDITION CODE WAS 00000012' in l for l in lines))
 
 
+ECHO = re.compile(r"^  LISTDS '([A-Z0-9$#@.]+)' MEMBERS$")
+ATTR = re.compile(r'^  (\S+) +(\d+) +(\d+) +(\S+)$')
+VOL = re.compile(r'^  [A-Z0-9$#@]{1,6}$')
+MEMBER = re.compile(r'^  ([A-Z$#@][A-Z0-9$#@]{0,7})$')
+
+
 def listds(lines):
-    """{dsname: (recfm, lrecl, blksize, dsorg, [members])} from TSO LISTDS ... MEMBERS output."""
-    out, cur, sect = {}, None, None
-    for i, l in enumerate(lines):
-        s = l.strip()
-        if s in DSN.values():
-            cur, sect = s, None
-            out[cur] = [None, None, None, None, []]
-        elif cur and s.startswith('--RECFM-LRECL-BLKSIZE-DSORG'):
-            out[cur][:4] = lines[i + 1].split()[:4]
-        elif cur and s.startswith('--MEMBERS--'):
-            sect = 'M'
-        elif cur and s.startswith('--'):
-            sect = None
-        elif cur and sect == 'M' and s and not s.startswith('READY') and not s.startswith('LISTDS'):
-            out[cur][4].append(s.split()[0])
-    return {k: tuple(v[:4]) + (v[4],) for k, v in out.items()}
+    """{dsname: (recfm, lrecl, blksize, dsorg, [members])} from the SYSTSPRT of IKJEFT01 running LISTDS ... MEMBERS
+    (VBA: column 1 is the ASA control character; record padding removed). The exact shape of JOB02091:
+      READY                                   TMP prompt (first record, ASA '1')
+        LISTDS '<dsn>' MEMBERS                the command echo starts one extent
+      <dsn>
+      --RECFM-LRECL-BLKSIZE-DSORG
+        <recfm> <lrecl> <blksize> <dsorg>
+      --VOLUMES--
+        <volser>                              one or more
+      --MEMBERS--
+        <member>                              zero or more, indented 2 (a member named END is '  END')
+      READY                                   unindented: ends the extent
+      END                                     unindented, only as the very last record: end of SYSTSIN
+    Anything else (another line inside an extent, a missing READY, a second echo before READY, END elsewhere, a
+    duplicated dataset) returns None: the output is not interpreted at all (fail closed)."""
+    body = [l.rstrip() for l in lines]
+    while body and body[-1] == '':
+        body.pop()
+    if not body or any(l[:1] not in (' ', '1', '0', '-', '+') for l in body):
+        return None
+    body = [l[1:] for l in body]
+    if body[0] != 'READY' or body[-1] != 'END':
+        return None
+    out, i, n = {}, 1, len(body) - 1        # body[n] is the final END: never inside an extent
+    while i < n:
+        m = ECHO.match(body[i])
+        if not m or m.group(1) in out:
+            return None
+        ds = m.group(1)
+        try:
+            j = body.index('READY', i + 1)
+        except ValueError:
+            return None
+        ext = body[i + 1:j]
+        if j >= n or any(ECHO.match(l) for l in ext):
+            return None
+        if len(ext) < 7 or ext[0] != ds or ext[1] != '--RECFM-LRECL-BLKSIZE-DSORG' or not ATTR.match(ext[2]) \
+                or ext[3] != '--VOLUMES--' or '--MEMBERS--' not in ext:
+            return None
+        k = ext.index('--MEMBERS--')
+        if k < 5 or not all(VOL.match(l) for l in ext[4:k]) or not all(MEMBER.match(l) for l in ext[k + 1:]):
+            return None
+        out[ds] = ATTR.match(ext[2]).groups() + ([MEMBER.match(l).group(1) for l in ext[k + 1:]],)
+        i = j + 1
+    return out
 
 
 def spool_check(d):
@@ -89,6 +124,8 @@ def spool_check(d):
     lst = (d / next(f'{f["id"]:03d}-HSLIST-SYSTSPRT.txt' for f in files
                     if (f['stepname'], f['ddname']) == ('HSLIST', 'SYSTSPRT'))).read_text().splitlines()
     got = listds(lst)
+    res.append(('HSLIST: LISTDS output parsed within each command extent (echo .. READY, final END)', got is not None))
+    got = got or {}
     for n, ds in DSN.items():
         res.append((f'LISTDS {ds}: FB 80 80 PO, members {" ".join(MEMBERS[n][:3])}{" ..." if n == "HSFULL" else ""}',
                     got.get(ds) == ('FB', '80', '80', 'PO', MEMBERS[n])))
@@ -105,7 +142,11 @@ def catalog_check():
         res.append((f'catalog {ds}: ' + ', '.join(f'{k} {v}' for k, v in want.items())
                     + f' (vol {a.get("vol")}, {a.get("spacu")})', all(a.get(k) == v for k, v in want.items())))
         mem = zowe('zos-files', 'list', 'all-members', ds, json_out=True)['data']['apiResponse']['items']
-        res.append((f'members {ds}', sorted(m['member'] for m in mem) == MEMBERS[n]))
+        names = sorted(m['member'] for m in mem)
+        res.append((f'members {ds} = {" ".join(MEMBERS[n]) if n == "HSTEST" else "M01..M20"}', names == MEMBERS[n]))
+        if n == 'HSFULL':
+            gone = ['HISCORE'] + [f'M{i}' for i in range(21, 31)]
+            res.append((f'{ds}: HISCORE and M21..M30 absent', not set(gone) & set(names)))
     for m, want in CONTENT.items():
         r = zowe('zos-files', 'view', 'data-set', f"{DSN['HSTEST']}({m})")
         got = [l.rstrip() for l in r.stdout.splitlines() if l.strip()]
