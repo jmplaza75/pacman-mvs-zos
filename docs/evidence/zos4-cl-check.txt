@@ -1,0 +1,32 @@
+PACZ4CL JOB03750 CC 0000
+  OK   steps ALLOC G8CLS HSCLS1 HSCLS2 Z2CEE Z2CLS1 Z2CLS2 Z2CLS3 CLT
+  OK   ALLOC COND CODE 0000
+  OK   G8CLS COND CODE 0000
+  OK   HSCLS1 COND CODE 0000
+  OK   HSCLS2 COND CODE 0000
+  OK   Z2CEE COND CODE 0000
+  OK   Z2CLS1 COND CODE 0000
+  OK   Z2CLS2 COND CODE 0000
+  OK   Z2CLS3 COND CODE 0000
+  OK   CLT COND CODE 0000
+  OK   no ABEND / IEA995 / $HASP375 / S722 / CEE message
+  OK   spool DDs: SYSPRINT of every IEBGENER step, SYSTSPRT of CLT
+  OK   datasets in JESYSMSG only Z00000.PACMAN.Z4CL.T1, Z00000.PACMAN.Z4HSY.DATA, Z00000.PACMAN.Z4CEY.CEEOPTS
+  OK   G8PARM lines = oracle 307 (4: TSO AI1 1 NAAAPAAARAA01NP, TSO AI1 1 NAAAPAAARAC01NP, TSO AI1 1 NAAAPAAARAA01FS, TSO AI1 1 NAAAPAAATAX05NP)
+  OK   both HS-block CLISTs run, present first
+  OK   present path: DATA(HISCORE) allocated to PACHS (KEEP), then HSCL END
+  OK   missing path: NULLFILE PACHS (DUMMY), then HSCL END, the missing DATA never allocated
+  OK   Z2: the three cases ran in order, each with its Z2RC line
+  OK   Z2 case 1 (project CEEOPTS, no DD before): CEEOPTS = the project dataset at the CALL, gone after the FREE, Z2RC=0
+  OK   Z2 case 2 (project dataset absent): the message, no CALL, no CEEOPTS DD, Z2RC=8
+  FAIL Z2 case 3 (a CEEOPTS DD already allocated): the message, no CALL, Z2RC=8, the DD still on its own dataset afterwards
+  OK   IKJ diagnostics: only the refused CEEOPTS ALLOC of Z2 case 3 (none), none elsewhere
+  OK   final cleanup: FREE F(CEEOPTS) issued after case 3, no diagnostic after it
+  OK   Z00000.PACMAN.Z4CL.T1: PDS PO FB 80 80
+  OK   Z00000.PACMAN.Z4CL.T1 members exactly HSCLN HSCLY PARMS Z2N Z2RUN Z2Y
+  OK   Z00000.PACMAN.Z4HSY.DATA: PDS PO FB 80 80
+  OK   Z00000.PACMAN.Z4HSY.DATA members exactly (none: ALLOC SHR created no HISCORE)
+  OK   Z00000.PACMAN.Z4HSN.DATA still does not exist
+  OK   Z00000.PACMAN.Z4CEY.CEEOPTS: PS FB 80 80, one record ALL31(OFF),STACK(,,BELOW)
+  OK   Z00000.PACMAN.Z4CEN.CEEOPTS still does not exist
+PACZ4CL CHECK FAIL (1)

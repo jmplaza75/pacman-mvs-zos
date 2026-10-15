@@ -25,3 +25,20 @@ The raw files were frozen first (SHA-256 docs/evidence/zos4-pacz4le-JOB03693-raw
 D1 accepts exactly 'IBM-supplied default' or 'Installation default' and still fails DD:CEEOPTS, Invocation command
 or any other origin (regression on the real D1 SYSOUT + negative origins). The corrected checker on the same raw
 files: 18/18 PASS. PACZ4LE / JOB03693 = PASS. Archive docs/evidence/zos4-spool/PACZ4LE-JOB03693.tar.gz.
+
+## PACZ4CL JOB03750 (attempt T1) - G8 PASS, HS CLIST PASS, Z2 1-2 PASS, Z2 case 3 SAFE but INCONCLUSIVE
+Deck jcl/zos/PACZ4CL.jcl, name gate PASS just before, submitted once, unchanged; every step COND CODE 0000; no CEE /
+abend; JESYSMSG names only Z4CL.T1, Z4HSY.DATA, Z4CEY.CEEOPTS; no DELETE, no PACMAIN, no Z00000.PACMAN.DATA.
+- G8: the 4 `G8PARM=` lines = oracle 307. HS CLIST block: present path `PACHS KEEP`, missing path `NULLFILE PACHS`,
+  `HSCL END` after each, as oracle 312.
+- Z2 case 1 (project CEEOPTS, no DD before): CEEOPTS on Z4CEY.CEEOPTS at the simulated CALL, gone after the FREE,
+  Z2RC=0. Z2 case 2 (project dataset absent): the missing message, no CALL marker, no CEEOPTS DD, Z2RC=8.
+- Z2 case 3 (a CEEOPTS DD pre-allocated on Z4CL.T1(PARMS)): no CALL, Z2RC=8, the DD still on Z4CL.T1(PARMS) after
+  the test (not replaced, not lost), final FREE clean - SAFE; but `&SYSDSN` of the existing Z4CEY.CEEOPTS returned
+  not-OK, so the CLIST left through the "MISSING" branch and never reached the ALLOC without REUSE: the intended
+  ALLOC-conflict branch is NOT proven - INCONCLUSIVE (probable cause, unverified: the IKJEFT01 step had no DYNAMNBR;
+  the interactive DBPROCDG has DYNAMNBR=200). Not accepted as PASS; not rerun.
+- Post-job state as reviewed: Z4CL.T1 = HSCLN HSCLY PARMS Z2N Z2RUN Z2Y; Z4HSY.DATA no member; Z4CEY.CEEOPTS one
+  record; Z4CEN.CEEOPTS and Z4HSN.DATA absent.
+Follow-up (user, 2026-10-15): Z2 SYSDSN handling refined (OK / not found / any other result reported) and a Z2-only
+attempt T2 (DYNAMNBR=200) prepared for review.

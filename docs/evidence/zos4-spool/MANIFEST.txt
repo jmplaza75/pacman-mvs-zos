@@ -14,3 +14,15 @@ JOB03693 PACZ4LE
   archive  PACZ4LE-JOB03693.tar.gz
   sha256   31021a1bba12a682fb36147dbe7630c068752c76071a889d14b7d6ef2bda1b12
   z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 9 raw files, 0 credential pattern hits
+
+JOB03750 PACZ4CL
+  phase    ZOS-4: CLIST PARM lines (G8), HS CLIST block, Z2 CEEOPTS cases under the TMP (attempt T1)
+  result   CC 0000 (every step 0000). G8 PASS; HS CLIST PASS; Z2 cases 1 and 2 PASS; Z2 case 3 SAFE but INCONCLUSIVE:
+           no CALL, RC 8, the pre-existing CEEOPTS DD kept, but execution left at the &SYSDSN check ("MISSING" for an
+           existing dataset) before the intended ALLOC-with-existing-DD conflict. Not accepted as PASS; not rerun;
+           its T1 datasets are left as they are. Check: docs/evidence/zos4-cl-check.txt (raw SHA-256
+           docs/evidence/zos4-pacz4cl-JOB03750-raw.sha256)
+  spool    13 files, 359 spool lines
+  archive  PACZ4CL-JOB03750.tar.gz
+  sha256   64d6ca16f5c9f3c982420cdaf7faa116484c4c4261fee6166e36f789ad758ec5
+  z/OS     present on the z/OS spool when downloaded (2026-10-15); audit: 13 raw files, 0 credential pattern hits
