@@ -12,8 +12,8 @@ order without HA6: HSTEST.T1 members and their exact records; HSFULL.T1 always e
 PDS / PO / FB / 80 / 80, catalogued, not migrated.
 Job checks: every step COND CODE 0000; no ABEND / IEA995 / $HASP375 / S722 / CEE text; spool DDs = SYSOUT per PACZ2D
 step, SYSTSPRT + SYSOUT per IKJEFT01 step; STEPLIB Z00000.PACMAN.LOAD retained once per PACZ2D step; datasets in
-JESYSMSG only the load library and the two T1 PDSs (besides the job's own JES datasets); IEC217I only in HH1 and there
-exactly B14-0C on PACHS for Z00000.PACMAN.HSFULL.T1; PACZ2D steps = their own oracle 312 block (zos_equiv --subset,
+JESYSMSG only the load library and the two T1 PDSs (besides the job's own JES datasets); no IEC message except in
+PACZ3HS8, and there exactly one: IEC217I B14-0C on HH1 / PACHS continued by Z00000.PACMAN.HSFULL.T1(HISCORE) (hh1_b14); PACZ2D steps = their own oracle 312 block (zos_equiv --subset,
 the digest-bound HA1 boundary) and = the model (text: base + HS lines; TSD: rp_streams + end lines); HTSO<i> SYSOUT =
 the model exactly (tests prove model = oracle 312 lines 25366 / 25744 for the frozen digest; no runtime search) and
 SYSTSPRT without any IKJ message.
@@ -74,6 +74,22 @@ def catalog_state(want):
     return res
 
 
+def hh1_b14(msg, jobname):
+    """The z/OS form of the HH1 failure in JESYSMSG (JOB02433): one IEC message in the whole job log,
+      IEC217I B14-0C,<module>,<job>,HH1,PACHS,<device>,<volser>,
+      <HLQ>.PACMAN.HSFULL.T1(HISCORE)
+    the continuation being the very next record, without a message id (MVS repeated 'IEC217I' on it: JOB 312). Any other
+    shape - no continuation, another dataset / member, another step / DD / code, a second IEC message - is False."""
+    lines = [l.strip() for l in msg.splitlines()]
+    at = [i for i, l in enumerate(lines) if re.search(r'IEC\d{3}I', l)]
+    if len(at) != 1:
+        return False
+    i = at[0]
+    return (bool(re.fullmatch(rf'IEC217I B14-0C,[A-Z0-9]+,{re.escape(jobname)},HH1,PACHS,[0-9A-F]{{3,4}},[A-Z0-9$#@]{{1,6}},',
+                              lines[i]))
+            and i + 1 < len(lines) and lines[i + 1] == f'{DSN["HSFULL"]}(HISCORE)')
+
+
 def spool_check(d, n):
     d = Path(d)
     job = json.loads((d / 'job.json').read_text())
@@ -99,11 +115,10 @@ def spool_check(d, n):
     named = {x.rstrip('.') for x in re.findall(rf'\b({HLQ}\.[\w.$#@]+)', msg) if not x.startswith(own)}
     res.append(('datasets in JESYSMSG only the load library and the T1 PDSs',
                 named <= {LOAD} | set(DSN.values())))
-    iec = [l.strip() for l in msg.splitlines() if 'IEC' in l and re.search(r'IEC\d{3}I', l)]
+    iec = [l.strip() for l in msg.splitlines() if re.search(r'IEC\d{3}I', l)]
     if 'HH1' in want_steps:
-        b14 = [l for l in iec if re.search(rf'IEC217I B14-0C,\w+,{job["jobname"]},HH1,PACHS,', l)]
-        res.append(('HH1: IEC217I B14-0C on PACHS (directory full) for Z00000.PACMAN.HSFULL.T1, no other IEC message',
-                    len(b14) == 1 and DSN['HSFULL'] in ' '.join(iec) and all(l.startswith('IEC217I') for l in iec)))
+        res.append(('HH1: exactly one IEC event, IEC217I B14-0C on HH1 / PACHS (directory full), continued by '
+                    f'{DSN["HSFULL"]}(HISCORE)', hh1_b14(msg, job['jobname'])))
     else:
         res.append(('no IEC message (no data-management failure)', not iec))
     oracle = json.load(gzip.open(ORACLE))

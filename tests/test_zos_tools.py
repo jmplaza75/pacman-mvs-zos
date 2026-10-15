@@ -587,7 +587,7 @@ def hs8(t, iec=True, rc='0000', hh1=None):
         f.write_text('1READY\n   ALLOC F(PACHS) DA(...) SHR REUSE\n READY\n END\n')
     m = d / '003-JES2-JESYSMSG.txt'
     m.write_text(m.read_text() + ' IGD104I Z00000.PACMAN.LOAD                           RETAINED,  DDNAME=STEPLIB\n'
-                 + (f' IEC217I B14-0C,IGG0201Z,{JOB},HH1,PACHS,0A23,ZXPL01,\n IEC217I Z00000.PACMAN.HSFULL.T1\n'
+                 + (f' IEC217I B14-0C,IGG0201Z,{JOB},HH1,PACHS,0D38,ZXPL01,\n Z00000.PACMAN.HSFULL.T1(HISCORE)\n'
                     if iec else ''))
     return d
 
@@ -596,7 +596,7 @@ with tempfile.TemporaryDirectory() as t:
     _, res = HSK.spool_check(hs8(Path(t) / 'ok'), 8)
     assert all(v for _, v in res), [k for k, v in res if not v]
     _, res = HSK.spool_check(hs8(Path(t) / 'noiec', iec=False), 8)
-    assert [k for k, v in res if not v] == [k for k, _ in res if k.startswith('HH1: IEC217I')], res
+    assert [k for k, v in res if not v] == [k for k, _ in res if k.startswith('HH1: exactly one IEC event')], res
     _, res = HSK.spool_check(hs8(Path(t) / 'rc', rc='0016'), 8)
     assert [k for k, v in res if not v] == ['HH1 COND CODE 0000', 'oracle 312 HH1: z/OS PACZ2D RC 0016 extra [] / '
                                            'oracle PACMAIN RC 0000'], res
@@ -604,8 +604,36 @@ with tempfile.TemporaryDirectory() as t:
     _, res = HSK.spool_check(hs8(Path(t) / 'saved', hh1=w[:-1] + ['NEW HIGH SCORE']), 8)
     assert {k.split(':')[0] for k, v in res if not v} == {'oracle 312 HH1', 'HH1 SYSOUT = model (740 lines, ends '
                                                           "'HIGH SCORE NOT SAVED')"}, [k for k, v in res if not v]
+# the real JESYSMSG of PACZ3HS8 JOB02433 (fixture = the raw file, SHA-256 in docs/evidence/
+# zos3-pacz3hs8-JOB02433-raw.sha256): the first checker run expected the MVS form (a second 'IEC217I <dsname>' line);
+# z/OS continues the message on the next record without a message id, with the member
+fx = R / 'tests/fixtures/zos/JOB02433-004-JES2-JESYSMSG.txt'
+assert hashlib.sha256(fx.read_bytes()).hexdigest() == \
+    'c21900d8b5cb40ed39a3c4714637c831792bf424d0b86b13946a939e70c0c37a', 'fixture is not the JOB02433 raw file'
+real = fx.read_text().splitlines()
+assert HSK.hh1_b14('\n'.join(real), 'PACZ3HS8')
+k = next(i for i, l in enumerate(real) if 'IEC217I' in l)
+first, cont = real[k], real[k + 1]
+assert cont == ' Z00000.PACMAN.HSFULL.T1(HISCORE)'
+neg = {
+    'no continuation': real[:k + 1] + real[k + 2:],
+    'continuation not next': real[:k + 1] + [real[k + 2]] + [cont] + real[k + 3:],
+    'other dataset': real[:k + 1] + [' Z00000.PACMAN.HSTEST.T1(HISCORE)'] + real[k + 2:],
+    'other member': real[:k + 1] + [' Z00000.PACMAN.HSFULL.T1(M01)'] + real[k + 2:],
+    'no member': real[:k + 1] + [' Z00000.PACMAN.HSFULL.T1'] + real[k + 2:],
+    'other step': real[:k] + [first.replace(',HH1,', ',HA1,')] + real[k + 1:],
+    'other DD': real[:k] + [first.replace(',PACHS,', ',SYSUT2,')] + real[k + 1:],
+    'other code': real[:k] + [first.replace('B14-0C', 'B37-04')] + real[k + 1:],
+    'other job': real[:k] + [first.replace(',PACZ3HS8,', ',PACZ3HS7,')] + real[k + 1:],
+    'MVS continuation form': real[:k + 1] + [' IEC217I Z00000.PACMAN.HSFULL.T1(HISCORE)'] + real[k + 2:],
+    'a second IEC message': real + [' IEC161I 056-084,IGG0CLF2,PACZ3HS8,HTSO1,PACHS'],
+    'the event twice': real[:k + 2] + [first, cont] + real[k + 2:],
+}
+for why, shape in neg.items():
+    assert not HSK.hh1_b14('\n'.join(shape), 'PACZ3HS8'), why
 print('PACZ3HS8 checker on a synthetic spool: PASS with B14-0C + RC 0 + NOT SAVED; missing B14, step RC 16, a '
-      '"NEW HIGH SCORE" HH1 each fail exactly their criteria: PASS')
+      '"NEW HIGH SCORE" HH1 each fail exactly their criteria; the real JOB02433 IEC217I (z/OS continuation form) '
+      f'accepted, {len(neg)} malformed / other events fail closed: PASS')
 print('PACZ3HS1..8: generated decks, frozen order without HA6, steps = MVS HS steps + the approved deltas only, '
       f'LOAD + T1 only, spool estimates {est} (< 4,000), HTSO model = oracle 312 lines 25366 / 25744, state chain '
       'PACZ3HA -> test_hs final PDS, HA6 state-neutral: PASS')
