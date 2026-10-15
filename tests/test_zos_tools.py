@@ -454,3 +454,70 @@ print('PACZ3HA: generated deck, only HSTEST.T1 / HSFULL.T1 (no DATA, no DELETE, 
       'seed / fill steps = frozen MVS HS steps, full-directory rule on the oracle 312 log; LISTDS parser on the real '
       f'JOB02091 output (final END not a member, a member named END kept, {len(bad_shapes)} malformed shapes fail '
       'closed): PASS')
+
+# 11. oracle 312 (HS): the known boundary of HA1 (after the HSFILL IEBUPDTE listing, ONE empty line), bound to the
+#     frozen stream digest: 19/19 PACMAIN run steps anchored by ordinal; without the entry, with another digest or with
+#     any recorded fact changed nothing is anchored; every other oracle anchors exactly as without the entry; each
+#     anchored block = the frozen test_hs model (ref_hs + ref_gp2, PACMAN_LATER_PHASE=G8 as test_g8 ran it)
+import zos_hs_model as HSM  # noqa: E402
+o312 = json.load(gzip.open(R / 'tests/oracle20/312-PACBLDHS.json.gz'))
+s12 = o312['stream']
+d312 = hashlib.sha256('\n'.join(s12).encode()).hexdigest()
+assert d312 == '46fdb3368babf2eb1f220dbe03f5af8f0fd7ac27b53c090634a2756390d0b9ca' and d312 in ZE.KNOWN_BOUNDARIES
+a312 = anchors(o312, {'PACMAIN'})
+runs312 = [x[0] for x in o312['steps'] if x[1] == 'PACMAIN']
+assert len(runs312) == 19 and list(a312) == runs312 and a312['HA1'] == 149, a312
+seps12 = [p + 2 for p in range(len(s12) - 2) if s12[p] == '' and s12[p + 1] == '' and s12[p + 2] != ''
+          and (p == 0 or s12[p - 1] != '')]
+assert all(a312[st] in seps12 for st in runs312[1:]) and 149 not in seps12
+o312x = dict(o312, stream=s12[:-1] + [s12[-1] + ' '])
+assert anchors(o312x, {'PACMAIN'}) == {}, 'other digest: 18 run datasets for 19 run steps -> nothing anchored'
+saved = dict(ZE.KNOWN_BOUNDARIES)
+ZE.KNOWN_BOUNDARIES.pop(d312)
+assert anchors(o312, {'PACMAIN'}) == {}, 'without the entry nothing of 312 is anchored'
+others = {}
+for name in ('307-PACREL20', '308-PACBLDS2', '309-PACBLDRP', '310-PACBLGP2', '311-PACBLG23', '315-PACREL10',
+             '316-PACBLDS2'):
+    o = json.load(gzip.open(R / f'tests/oracle20/{name}.json.gz'))
+    others[name] = (o, {k: anchors(o, k) for k in ({'PACMAIN'}, {'PACMAIN', 'PACQRYT', 'PACTSOT'})} if False else
+                    [anchors(o, p) for p in ({'PACMAIN'}, {'PACMAIN', 'PACQRYT', 'PACTSOT'})])
+ZE.KNOWN_BOUNDARIES.update(saved)
+for name, (o, before) in others.items():
+    assert [anchors(o, p) for p in ({'PACMAIN'}, {'PACMAIN', 'PACQRYT', 'PACTSOT'})] == before, name
+for bad in ({'line': 148}, {'line': 150}, {'step': 'HA2'}, {'prev': 'IEB818I HIGHEST CONDITION CODE WAS 00000012'},
+            {'head': 'PACMAN MVS-6 SMART GHOSTX'}, {'head': 'TSX SWITCH '}):
+    ZE.KNOWN_BOUNDARIES[d312] = [dict(saved[d312][0], **bad)]
+    got = anchors(o312, {'PACMAIN'})
+    ZE.KNOWN_BOUNDARIES.update(saved)
+    assert got == {}, (bad, len(got))
+ns = HSM.model()
+for st, kind, base, hs in ns['RUNS']:
+    if st.startswith('HTSO'):
+        continue
+    b = a312[st]
+    if base is not None:
+        w = HSM.expected_text(st)
+        assert s12[b:b + len(w)] == w and ZE.ends_ok(o312, a312, st, b + len(w)), st
+    else:
+        streams, ends, j = ns['tsd_run'](s12, b, (7 if kind == 'T' else 8) + len(hs))
+        assert streams == ns['rp_streams'](kind) and ends[-len(hs):] == hs and ZE.ends_ok(o312, a312, st, j), st
+with tempfile.TemporaryDirectory() as t:
+    ha = {st: HSM.expected_text(st) for st in ('HA1', 'HA2')}
+    _, _, runs = zos_runs(spool(Path(t) / 's', [(k, None, 'PACZ2D', '0000') for k in ha], ha))
+    bad, msgs = compare(o312, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+    assert bad == 0 and sum(m.startswith('OK') for m in msgs) == 2, msgs
+    mut = dict(ha, HA1=ha['HA1'][:-1] + [ha['HA1'][-1] + 'X'])
+    _, _, runs = zos_runs(spool(Path(t) / 'm', [(k, None, 'PACZ2D', '0000') for k in mut], mut))
+    bad, msgs = compare(o312, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+    assert bad == 1 and [m.split(':')[0] for m in msgs if m.startswith('FAIL')] == ['FAIL HA1'], msgs
+# the 309 known boundary through compare() too (RPT1 was not in PACZ2RP): its own oracle block as the z/OS output
+names9 = [x[0] for x in o309['steps']]
+e9 = a309[names9[names9.index('RPT1') + 1]] - 2
+rpt1 = {'RPT1': s9[a309['RPT1']:e9]}
+with tempfile.TemporaryDirectory() as t:
+    _, _, runs = zos_runs(spool(Path(t) / 's', [('RPT1', None, 'PACZ2D', '0000')], rpt1))
+    bad, msgs = compare(o309, runs, {'PACMAIN': 'PACZ2D'}, subset=True)
+assert bad == 0 and msgs[0].startswith('OK   RPT1') and 'stream lines 662-' in msgs[0], msgs
+print('oracle 312 HS anchoring: 19/19 with the digest-bound HA1 boundary, nothing without it / with another digest / '
+      'with any fact changed, 7 other oracles unchanged, 19 blocks = test_hs model (17 text, 2 TSD), compare: '
+      'HA1/HA2 PASS, a mutation fails HA1 only; 309 RPT1 compared at its known boundary: PASS')

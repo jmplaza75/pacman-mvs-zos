@@ -3,6 +3,7 @@
 z3ha_deck). Read-only.
 
 Usage: zos_hs_setup_check.py SPOOLDIR [--catalog]
+       zos_hs_setup_check.py --gate      (read-only: the --catalog checks alone, before PACZ3HS is submitted)
 Spool (the job as tools/zowe/zos_submit.py saved it):
 1. steps ALLOC, HSSEED1, HSSEED2, HSSEED3, HSFILL, HSLIST in this order; COND CODE 0000 each, HSFILL 0012;
    no abend / IEA995 / $HASP375 / S722 text; spool DDs = the JES files + SYSPRINT of HSSEED1..3 / HSFILL + SYSTSPRT of
@@ -155,6 +156,13 @@ def catalog_check():
 
 
 def main():
+    if sys.argv[1:] == ['--gate']:            # ZOS-3 PACZ3HS pre-submit gate: the accepted PACZ3HA state, read-only
+        res = catalog_check()
+        for k, v in res:
+            print(f'  {"OK  " if v else "FAIL"} {k}')
+        bad = sum(not v for _, v in res)
+        print('HS T1 STATE GATE ' + ('PASS: the accepted PACZ3HA state' if not bad else f'FAIL ({bad}): STOP, do not submit'))
+        sys.exit(1 if bad else 0)
     args = [a for a in sys.argv[1:] if a != '--catalog']
     job, res = spool_check(args[0])
     if '--catalog' in sys.argv:

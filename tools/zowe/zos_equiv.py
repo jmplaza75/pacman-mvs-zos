@@ -98,10 +98,13 @@ DECKS = Path(__file__).resolve().parent.parent.parent / 'releases/2.0-MVS-MAX/de
 # '\n'.join(stream)). Oracle 309 (RP): RPT1's SYSOUT follows the RPSEED IEBUPDTE listing after ONE empty line. An entry
 # is used only if the oracle stream has exactly this digest and every recorded fact holds (empty line before, the
 # preceding text line, the run header, not already a separator boundary, the anchored step name); otherwise nothing of
-# that oracle is anchored. Other oracles never consult the table.
+# that oracle is anchored. Oracle 312 (HS, user approval 2026-10-15): the same case for HA1 after HSFILL. Other oracles never consult the table.
 KNOWN_BOUNDARIES = {
     'a549c3f181981b9d4b52cb6517f664469490d5e0e9b57539f5a360e636b25621': [
         {'line': 662, 'step': 'RPT1', 'prev': 'IEB819I END OF JOB IEBUPDTE.', 'head': 'TSX SWITCH '}],
+    # Oracle 312 (HS): HA1's SYSOUT follows the HSFILL IEBUPDTE listing (directory full, RC 12) after ONE empty line
+    '46fdb3368babf2eb1f220dbe03f5af8f0fd7ac27b53c090634a2756390d0b9ca': [
+        {'line': 149, 'step': 'HA1', 'prev': 'IEB819I END OF JOB IEBUPDTE.', 'head': 'PACMAN MVS-6 SMART GHOSTS'}],
 }
 
 
@@ -224,13 +227,15 @@ def compare(oracle, runs, pmap, skip=(), subset=False, clock=()):
                 msgs.append(f'FAIL {step}: its oracle block cannot be anchored from the oracle metadata')
                 bad += 1
                 continue
-            cands = [anc[step] - 2]
+            if stream[anc[step] - 2:anc[step]] != SEP:
+                want = [''] + block    # a KNOWN_BOUNDARIES step: the one empty line anchors() verified, then the block
+            cands = [anc[step] - (len(want) - len(block))]
         else:
             cands = [cur] if not gap_ok else [p for p in range(cur, len(stream) - len(want) + 1)
                                               if stream[p:p + 2] == SEP and stream[p + 2] == block[0]]
         hit = next((p for p in cands if stream[p:p + len(want)] == want), None)
         if hit is not None and subset and not ends_ok(oracle, anc, step, hit + len(want)):
-            msgs.append(f'FAIL {step}: {len(block)} lines match the start of its oracle block (stream line {hit + 2}) '
+            msgs.append(f'FAIL {step}: {len(block)} lines match the start of its oracle block (stream line {hit + len(want) - len(block)}) '
                         f'but the oracle block does not end there')
             bad += 1
             continue
@@ -238,11 +243,12 @@ def compare(oracle, runs, pmap, skip=(), subset=False, clock=()):
             p = cands[0] if cands else cur
             d = first_diff(want, stream[p:p + len(want)])
             msgs.append(f'FAIL {step}: {len(block)} lines; vs oracle at stream line {p}: first difference at block '
-                        f'line {d[0] - 2}: z/OS {d[1]!r} / oracle {d[2]!r}')
+                        f'line {d[0] - (len(want) - len(block))}: z/OS {d[1]!r} / oracle {d[2]!r}')
             bad += 1
             gap_ok = True              # resynchronise on the next run
             continue
-        msgs.append(f'OK   {step}: {len(block)} lines identical (oracle stream lines {hit + 2}-{hit + len(want) - 1})')
+        pre = len(want) - len(block)
+        msgs.append(f'OK   {step}: {len(block)} lines identical (oracle stream lines {hit + pre}-{hit + len(want) - 1})')
         cur, gap_ok = hit + len(want), False
     if subset:
         msgs.append(f'SUBSET {nsub} oracle run steps not in this job (not compared)')
