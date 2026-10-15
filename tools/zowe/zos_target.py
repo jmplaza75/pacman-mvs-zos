@@ -55,7 +55,14 @@ CHUNKS = {
 }
 # chunks whose steps come from more than one MVS deck: step -> (MVS deck, oracle job of that deck)
 SOURCES = {'Z3FS': {'S1S3': ('GP2', 310), 'S2L4': ('S2', 308)}}
-DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(CHUNKS)
+# ZOS-3 PACZ3HS1..8 (user decision 2026-10-15, option A): the frozen HS runs in their frozen order, split under the spool
+# budget; HA6 (5,262 lines alone) deferred to ZOS-9/10; HSCLS1/2 + HSCLT (CLIST block) -> ZOS-4; HSP1..9 replaced by
+# read-only catalog / member / content checks; HSDEL9 is a DELETE (never).
+HS_JOBS = {'Z3HS1': ['HA1', 'HA2', 'HA3'], 'Z3HS2': ['HA4'], 'Z3HS3': ['HA5'], 'Z3HS4': ['HA7', 'HA8'],
+           'Z3HS5': ['HB1', 'HC1', 'HD1'], 'Z3HS6': ['HE1', 'HE2', 'HF1', 'HF2'], 'Z3HS7': ['HG1', 'HG2', 'HG3'],
+           'Z3HS8': ['HH1', 'HTSO1', 'HTSO2']}
+HS_DEFERRED = ['HA6']
+DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + list(CHUNKS)
 # ZOS-3 PACZ3HA (docs/zos3-design.md): the high-score test PDSs of one attempt (fresh, never deleted; a rerun uses the
 # next suffix). Only the two PDSs the batch HS runs use; HSCL.DATA belongs to the CLIST block check (ZOS-4).
 HS_ATTEMPT = 'T1'
@@ -199,6 +206,30 @@ def z3ha_deck(pfx):
     return out
 
 
+def z3hs_deck(name, pfx):
+    """ZOS-3 PACZ3HS<n>: steps of the z/OS rendering of the frozen MVS HS deck, verbatim except: the two test PDSs are
+    the attempt's (<prefix>.HSTEST.<attempt>, HSFULL.<attempt>); COND=(0,NE,LINK) -> COND=(0,NE) (no LINK step here: any
+    non-zero RC flushes the rest of the job); the IKJEFT01 steps get the profile A CEEOPTS (LE reads the step's
+    CEEOPTS DD for the CALLed program), CEEDUMP and SYSUDUMP DUMMY like every run step."""
+    md = _md[0]
+    mvs = steps_of_deck(md.hs_steps(pfx, LOAD))
+    ren = {f'{pfx}.{n}': f'{pfx}.{n}.{HS_ATTEMPT}' for n, _ in HS_SETS}
+    out = job_card(f'PACZ3HS{name[-1]}', f'PACMAN ZOS3 {name}')
+    for s in HS_JOBS[name]:
+        text = mvs[s]
+        for old, new in ren.items():
+            text = re.sub(rf"(DSN=|DA\('){re.escape(old)}([(,'])", rf'\g<1>{new}\2', text)
+        assert text.count('COND=(0,NE,LINK)') == 1, s
+        text = text.replace('COND=(0,NE,LINK)', 'COND=(0,NE)')
+        if s.startswith('HTSO'):
+            sysout = '//SYSOUT   DD SYSOUT=A\n'
+            assert text.count(sysout) == 1 and 'CEEOPTS' not in text, s
+            text = text.replace(sysout, sysout + '//CEEOPTS  DD *\n' + ''.join(c + '\n' for c in CEEOPTS) + '/*\n'
+                                '//CEEDUMP  DD SYSOUT=A\n//SYSUDUMP DD DUMMY\n')
+        out += text
+    return out
+
+
 def steps_of_deck(text):
     """{step: text} of a deck, split at every EXEC statement (in-stream cards never start with //)."""
     import re
@@ -237,4 +268,6 @@ import re  # noqa: E402
 def deck(name, pfx):
     if name in CHUNKS:
         return chunk_deck(name, pfx)
+    if name in HS_JOBS:
+        return z3hs_deck(name, pfx)
     return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck, 'Z3HA': z3ha_deck}[name](pfx)

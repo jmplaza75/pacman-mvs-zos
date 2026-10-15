@@ -1,0 +1,2349 @@
+# PACZ3HS1..8 review package (ZOS-3, not submitted)
+
+Generated from the decks of record jcl/zos/PACZ3HS<n>.jcl rendered for HLQ Z00000 (build/zos/PACZ3HS<n>.rendered.jcl).
+Every job: one submission; read-only gate `python3 tools/zowe/zos_hs_check.py --gate <n>` immediately before (STOP if it
+fails); after: `python3 tools/zowe/zos_hs_check.py build/zos/PACZ3HS<n>-<JOBID> --job <n>` (spool, oracle 312, model,
+then the read-only state the job must leave). Any FAIL stops the whole sequence: no repair or reuse of T1, no next
+job, no T2 without approval. HA6 is DEFERRED to ZOS-9/10 (5,262 lines alone), not PASS in ZOS-3. HSP1..9 and the CLIST
+block (HSCLS1/2, HSCLT) are not run; HSDEL9 (DELETE) never.
+
+Profile A in every run step and every IKJEFT01 step: `//CEEOPTS DD *` `ALL31(OFF),STACK(,,BELOW)`; STEPLIB
+Z00000.PACMAN.LOAD (PACZ2D of JOB08888, not rebuilt) in every PACZ2D step; HTSO CALLs Z00000.PACMAN.LOAD(PACZ2D).
+Every step COND=(0,NE): a non-zero RC flushes the rest of the job. Expected RC: 0000 for every step; no non-zero RC
+is expected anywhere.
+
+## PACZ3HS1 (HA1, HA2, HA3)
+
+Rendered JCL SHA-256 `7b65b418b7b472b243e90fa5a392d8f15acfc3b328f2bc0ebcd07686b9492e79`, 195 lines.
+
+Gate before (read-only, `--gate 1`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE; both PDS PO FB 80 80.
+
+| Step | PARM | PACHS DD | SYSIN cards | RC | SYSOUT | Oracle 312 | Model | HS lines | State operation |
+|---|---|---|---|---|---|---|---|---|---|
+| HA1 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD` | 53 | 0000 | 740 lines | anchored 149-888 (known boundary) | ref_gp2 simulate + ref_hs | HIGH SCORE 0001310 LEVEL 001 / NEW HIGH SCORE | REPL: new member (STOW add) |
+| HA2 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD` | 51 | 0000 | 661 lines | anchored 891-1551 | ref_gp2 simulate + ref_hs | HIGH SCORE 0001310 LEVEL 001 | read only (lower) |
+| HA3 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD` | 53 | 0000 | 739 lines | anchored 1554-2292 | ref_gp2 simulate + ref_hs | HIGH SCORE 0001310 LEVEL 001 | read only (equal) |
+
+State after (verified read-only with `--job 1`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0001310 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE.
+
+```
+//PACZ3HS1 JOB 1,'PACMAN ZOS3 Z3HS1',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HA1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI0 3
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HA2      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI2 1
+D
+D
+R
+R
+R
+R
+L
+D
+D
+D
+D
+R
+R
+R
+R
+R
+L
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+L
+L
+L
+U
+U
+U
+U
+U
+U
+L
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+D
+D
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HA3      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI0 3
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+```
+
+## PACZ3HS2 (HA4)
+
+Rendered JCL SHA-256 `571ac20c287e838ea0a09458ce13606299c5163ec7f0818e92a1360488561c90`, 175 lines.
+
+Gate before (read-only, `--gate 2`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0001310 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE; both PDS PO FB 80 80.
+
+| Step | PARM | PACHS DD | SYSIN cards | RC | SYSOUT | Oracle 312 | Model | HS lines | State operation |
+|---|---|---|---|---|---|---|---|---|---|
+| HA4 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD` | 161 | 0000 | 2252 lines | anchored 2295-4546 | ref_gp2 simulate + ref_hs | HIGH SCORE 0001840 LEVEL 001 / NEW HIGH SCORE | WRIT in place (QSAM UPDAT, no STOW) |
+
+State after (verified read-only with `--job 2`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0001840 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE.
+
+```
+//PACZ3HS2 JOB 1,'PACMAN ZOS3 Z3HS2',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HA4      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI1 3
+D
+D
+D
+D
+D
+D
+R
+L
+R
+D
+R
+R
+R
+R
+R
+U
+R
+R
+R
+R
+R
+R
+R
+D
+R
+R
+U
+L
+U
+U
+U
+U
+D
+D
+D
+D
+L
+L
+L
+L
+L
+L
+D
+L
+U
+U
+U
+L
+L
+U
+U
+L
+L
+U
+U
+R
+R
+R
+R
+R
+R
+R
+D
+D
+L
+R
+R
+R
+R
+U
+U
+R
+R
+R
+R
+D
+U
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+U
+L
+L
+L
+L
+L
+R
+L
+L
+R
+R
+U
+U
+U
+U
+L
+L
+L
+D
+D
+R
+R
+R
+U
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+D
+D
+L
+L
+D
+U
+R
+R
+U
+U
+R
+R
+R
+R
+R
+D
+D
+L
+L
+L
+D
+D
+R
+R
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+```
+
+## PACZ3HS3 (HA5)
+
+Rendered JCL SHA-256 `4552654ed19162d7896886d45ed7345803873fb0c4e0c7f75e9461511975455f`, 231 lines.
+
+Gate before (read-only, `--gate 3`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0001840 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE; both PDS PO FB 80 80.
+
+| Step | PARM | PACHS DD | SYSIN cards | RC | SYSOUT | Oracle 312 | Model | HS lines | State operation |
+|---|---|---|---|---|---|---|---|---|---|
+| HA5 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD` | 217 | 0000 | 2820 lines | anchored 4549-7368 | ref_gp2 simulate + ref_hs | HIGH SCORE 0002760 LEVEL 002 / NEW HIGH SCORE | WRIT in place |
+
+State after (verified read-only with `--job 3`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0002760 PACHS001 002, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE.
+
+```
+//PACZ3HS3 JOB 1,'PACMAN ZOS3 Z3HS3',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HA5      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI0 1
+D
+D
+D
+D
+D
+D
+D
+R
+U
+R
+R
+U
+U
+U
+U
+U
+U
+L
+L
+L
+R
+R
+R
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+R
+R
+D
+D
+R
+D
+L
+L
+U
+L
+D
+L
+U
+D
+L
+L
+U
+R
+U
+U
+L
+L
+L
+U
+D
+D
+U
+U
+U
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+U
+L
+D
+L
+U
+L
+L
+L
+D
+R
+R
+U
+U
+U
+R
+R
+U
+U
+L
+R
+R
+R
+R
+R
+R
+U
+U
+L
+L
+R
+R
+D
+D
+D
+D
+D
+D
+L
+L
+L
+D
+R
+R
+U
+R
+U
+U
+L
+L
+D
+D
+D
+D
+D
+D
+D
+R
+U
+R
+D
+R
+U
+U
+U
+L
+R
+U
+U
+U
+U
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+R
+R
+D
+D
+D
+L
+U
+R
+R
+D
+R
+U
+R
+U
+U
+R
+R
+U
+U
+L
+L
+U
+U
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+U
+L
+D
+L
+U
+L
+D
+U
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+```
+
+## PACZ3HS4 (HA7, HA8)
+
+Rendered JCL SHA-256 `5452f43ebc92175160af708006c674a11c9f7f26ce8efc559e68aa11f7306374`, 292 lines.
+
+Gate before (read-only, `--gate 4`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0002760 PACHS001 002, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE; both PDS PO FB 80 80.
+
+| Step | PARM | PACHS DD | SYSIN cards | RC | SYSOUT | Oracle 312 | Model | HS lines | State operation |
+|---|---|---|---|---|---|---|---|---|---|
+| HA7 | `BAT                 A99` | `DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD` | 192 | 0000 | 2404 lines | anchored 12635-15038 | ref_gp2 simulate + ref_hs | HIGH SCORE 0006160 LEVEL 099 / START LEVEL 99: HIGH SCORE NOT RECORDED | none (start level 99: not recorded) |
+| HA8 | `BAT                 C` | `DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD` | 74 | 0000 | 808 lines | anchored 15041-15848 | 1.0-MVS oracle LOST0 | - | none (CLASSIC: no HS read/write) |
+
+State after (verified read-only with `--job 4`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0002760 PACHS001 002, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE.
+
+```
+//PACZ3HS4 JOB 1,'PACMAN ZOS3 Z3HS4',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HA7      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A99'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI0
+D
+D
+D
+D
+D
+D
+D
+R
+U
+R
+D
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+R
+R
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+R
+U
+U
+U
+R
+R
+U
+U
+L
+L
+U
+U
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+U
+R
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+D
+L
+U
+U
+U
+U
+U
+L
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+D
+L
+U
+L
+D
+L
+U
+U
+U
+L
+L
+U
+U
+L
+R
+R
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+D
+D
+R
+R
+R
+R
+R
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HA8      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 C'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI0
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+```
+
+## PACZ3HS5 (HB1, HC1, HD1)
+
+Rendered JCL SHA-256 `bdf7045ee678409494eda8938f2526397dc0ef9be77d6db16ff1b1d812b08dfc`, 275 lines.
+
+Gate before (read-only, `--gate 5`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0002760 PACHS001 002, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE; both PDS PO FB 80 80.
+
+| Step | PARM | PACHS DD | SYSIN cards | RC | SYSOUT | Oracle 312 | Model | HS lines | State operation |
+|---|---|---|---|---|---|---|---|---|---|
+| HB1 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(HS2),DISP=OLD` | 153 | 0000 | 2014 lines | anchored 15851-17864 | ref_gp2 simulate + ref_hs | HIGH SCORE 0000980 LEVEL 001 / NEW HIGH SCORE | REPL: new member |
+| HC1 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(HS8),DISP=OLD` | 31 | 0000 | 319 lines | anchored 17867-18185 | ref_gp2 simulate + ref_hs | HIGH SCORE 0000000 LEVEL 000 | none (score 0: missing member not created) |
+| HD1 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(HS9),DISP=OLD` | 53 | 0000 | 739 lines | anchored 18188-18926 | ref_gp2 simulate + ref_hs | HIGH SCORE 9999999 LEVEL 099 | read only (9999999) |
+
+State after (verified read-only with `--job 5`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0002760 PACHS001 002, HS2 = 0000980 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE.
+
+```
+//PACZ3HS5 JOB 1,'PACMAN ZOS3 Z3HS5',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HB1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS2),DISP=OLD
+//SYSIN    DD *
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+U
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+R
+R
+R
+D
+D
+D
+D
+D
+D
+L
+L
+R
+R
+R
+R
+R
+R
+U
+U
+L
+L
+U
+U
+L
+L
+L
+L
+L
+D
+D
+R
+R
+R
+U
+U
+U
+U
+R
+R
+R
+R
+D
+D
+L
+R
+R
+R
+R
+U
+U
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+L
+L
+L
+L
+L
+U
+R
+R
+U
+U
+R
+R
+U
+U
+L
+R
+R
+R
+R
+R
+R
+U
+U
+L
+L
+R
+R
+D
+D
+D
+D
+L
+L
+L
+D
+D
+R
+D
+R
+U
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+R
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HC1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS8),DISP=OLD
+//SYSIN    DD *
+AI3 2
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HD1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS9),DISP=OLD
+//SYSIN    DD *
+AI0 3
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+```
+
+## PACZ3HS6 (HE1, HE2, HF1, HF2)
+
+Rendered JCL SHA-256 `1e7032e9796c9e0370035bd85c48d690a2fc34618fe75e5c7219d6bbf342ee39`, 258 lines.
+
+Gate before (read-only, `--gate 6`): HSTEST.T1 = BAD = XYZZY NOT A SCORE/SECOND JUNK RECORD, EMPTY = (no record), HS1 = 0002760 PACHS001 002, HS2 = 0000980 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE; both PDS PO FB 80 80.
+
+| Step | PARM | PACHS DD | SYSIN cards | RC | SYSOUT | Oracle 312 | Model | HS lines | State operation |
+|---|---|---|---|---|---|---|---|---|---|
+| HE1 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(BAD),DISP=OLD` | 51 | 0000 | 662 lines | anchored 18929-19590 | ref_gp2 simulate + ref_hs | HIGH SCORE 0000720 LEVEL 001 / NEW HIGH SCORE | REPL replaces malformed member (STOW replace) |
+| HE2 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1(EMPTY),DISP=OLD` | 51 | 0000 | 662 lines | anchored 19593-20254 | ref_gp2 simulate + ref_hs | HIGH SCORE 0000720 LEVEL 001 / NEW HIGH SCORE | REPL replaces empty member (STOW replace) |
+| HF1 | `BAT                 A` | `DSN=Z00000.PACMAN.HSTEST.T1,DISP=SHR` | 53 | 0000 | 739 lines | anchored 20257-20995 | ref_gp2 simulate + ref_hs | HIGH SCORE UNAVAILABLE | none (DD without member: RC 8, unavailable) |
+| HF2 | `BAT                 A` | `DUMMY` | 53 | 0000 | 739 lines | anchored 20998-21736 | ref_gp2 simulate + ref_hs | HIGH SCORE UNAVAILABLE | none (DD DUMMY: unavailable) |
+
+State after (verified read-only with `--job 6`): HSTEST.T1 = BAD = 0000720 PACHS001 001, EMPTY = 0000720 PACHS001 001, HS1 = 0002760 PACHS001 002, HS2 = 0000980 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE.
+
+```
+//PACZ3HS6 JOB 1,'PACMAN ZOS3 Z3HS6',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HE1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(BAD),DISP=OLD
+//SYSIN    DD *
+AI2 1
+D
+D
+R
+R
+R
+R
+L
+D
+D
+D
+D
+R
+R
+R
+R
+R
+L
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+L
+L
+L
+U
+U
+U
+U
+U
+U
+L
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+D
+D
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HE2      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(EMPTY),DISP=OLD
+//SYSIN    DD *
+AI2 1
+D
+D
+R
+R
+R
+R
+L
+D
+D
+D
+D
+R
+R
+R
+R
+R
+L
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+L
+L
+L
+U
+U
+U
+U
+U
+U
+L
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+D
+D
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HF1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1,DISP=SHR
+//SYSIN    DD *
+AI0 3
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HF2      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DUMMY
+//SYSIN    DD *
+AI0 3
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+```
+
+## PACZ3HS7 (HG1, HG2, HG3)
+
+Rendered JCL SHA-256 `6e1bf9c3ef7ed84c790028c0c8ac11d811bd66718aa98b0ee9cdb8804fb1f2b4`, 632 lines.
+
+Gate before (read-only, `--gate 7`): HSTEST.T1 = BAD = 0000720 PACHS001 001, EMPTY = 0000720 PACHS001 001, HS1 = 0002760 PACHS001 002, HS2 = 0000980 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE; both PDS PO FB 80 80.
+
+| Step | PARM | PACHS DD | SYSIN cards | RC | SYSOUT | Oracle 312 | Model | HS lines | State operation |
+|---|---|---|---|---|---|---|---|---|---|
+| HG1 | `BAT               R A` | `DSN=Z00000.PACMAN.HSTEST.T1(HS13),DISP=OLD` | 202 | 0000 | 826 lines | anchored 21739-22564 | ref_gp2 rt_simulate + ref_hs | HIGH SCORE 0001350 LEVEL 002 / NEW HIGH SCORE | REPL: new member (REALTIME) |
+| HG2 | `TSD AI0    NYYPG4WTYA` | `DSN=Z00000.PACMAN.HSTEST.T1(HS14),DISP=OLD` | 191 | 0000 | 1108 lines | anchored 22567-23674 | rp_streams(T) + end lines | HIGH SCORE 0001370 LEVEL 002 / NEW HIGH SCORE | REPL: new member (TSD TURN) |
+| HG3 | `TSD AI0    NYYPG4WRYA` | `DSN=Z00000.PACMAN.HSTEST.T1(HS15),DISP=OLD` | 201 | 0000 | 941 lines | anchored 23677-24617 | rp_streams(Q) + end lines | HIGH SCORE 0001350 LEVEL 002 / NEW HIGH SCORE | REPL: new member (TSD REALTIME) |
+
+State after (verified read-only with `--job 7`): HSTEST.T1 = BAD = 0000720 PACHS001 001, EMPTY = 0000720 PACHS001 001, HS1 = 0002760 PACHS001 002, HS13 = 0001350 PACHS001 002, HS14 = 0001370 PACHS001 002, HS15 = 0001350 PACHS001 002, HS2 = 0000980 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE.
+
+```
+//PACZ3HS7 JOB 1,'PACMAN ZOS3 Z3HS7',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HG1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT               R A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS13),DISP=OLD
+//SYSIN    DD *
+AI0
+D
+D
+D
+D
+D
+D
+D
+R
+U
+R
+D
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+R
+R
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+R
+U
+U
+U
+R
+R
+U
+U
+L
+L
+U
+U
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+U
+R
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+D
+L
+U
+U
+U
+U
+U
+L
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+D
+L
+U
+L
+D
+L
+U
+U
+U
+L
+L
+U
+U
+L
+R
+R
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+D
+.
+R
+.
+.
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HG2      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='TSD AI0    NYYPG4WTYA'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS14),DISP=OLD
+//SYSIN    DD *
+D
+D
+D
+D
+D
+D
+D
+R
+U
+R
+D
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+R
+R
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+R
+U
+U
+U
+R
+R
+U
+U
+L
+L
+U
+U
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+U
+R
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+D
+L
+U
+U
+U
+U
+U
+L
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+D
+L
+U
+L
+D
+L
+U
+U
+U
+L
+L
+U
+U
+L
+R
+R
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+D
+D
+R
+R
+R
+R
+R
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HG3      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='TSD AI0    NYYPG4WRYA'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSTEST.T1(HS15),DISP=OLD
+//SYSIN    DD *
+D
+D
+D
+D
+D
+D
+D
+R
+U
+R
+D
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+R
+R
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+R
+U
+U
+U
+R
+R
+U
+U
+L
+L
+U
+U
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+U
+L
+D
+L
+U
+D
+R
+U
+R
+D
+R
+R
+U
+R
+D
+U
+R
+U
+U
+U
+U
+U
+U
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+D
+L
+U
+U
+U
+U
+U
+L
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+R
+R
+D
+D
+L
+L
+D
+D
+D
+L
+U
+L
+D
+L
+U
+U
+U
+L
+L
+U
+U
+L
+R
+R
+R
+U
+U
+L
+L
+L
+L
+D
+D
+L
+L
+R
+R
+D
+D
+L
+L
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+D
+.
+R
+.
+.
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+```
+
+## PACZ3HS8 (HH1, HTSO1, HTSO2)
+
+Rendered JCL SHA-256 `2f05c384c9afaec4d6dd24c9fab9b2d6e3abef1828fbf97a9dcf069c2ffe06be`, 145 lines.
+
+Gate before (read-only, `--gate 8`): HSTEST.T1 = BAD = 0000720 PACHS001 001, EMPTY = 0000720 PACHS001 001, HS1 = 0002760 PACHS001 002, HS13 = 0001350 PACHS001 002, HS14 = 0001370 PACHS001 002, HS15 = 0001350 PACHS001 002, HS2 = 0000980 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE; both PDS PO FB 80 80.
+
+| Step | PARM | PACHS DD | SYSIN cards | RC | SYSOUT | Oracle 312 | Model | HS lines | State operation |
+|---|---|---|---|---|---|---|---|---|---|
+| HH1 | `BAT                 A` | `DSN=Z00000.PACMAN.HSFULL.T1(HISCORE),DISP=OLD` | 53 | 0000 | 740 lines | anchored 24620-25359 | ref_gp2 simulate + ref_hs | HIGH SCORE 0001310 LEVEL 001 / HIGH SCORE NOT SAVED | REPL: STOW fails B14-0C (directory full), ESTAE retry, PACHSIO RC 16; nothing written |
+| HTSO1 | `TSO AI0 2           A` | `Z00000.PACMAN.HSTEST.T1(HS16) (TSO ALLOC SHR)` | 24 | 0000 | 372 lines | fixed lines 25366-25737 (= model, digest-pinned test) | test_hs model (ref_gp2 TSO + ref_hs) | HIGH SCORE 0000370 LEVEL 001 / NEW HIGH SCORE | REPL: new member (TMP ALLOC SHR + CALL) |
+| HTSO2 | `TSO AI0 2           A` | `Z00000.PACMAN.HSTEST.T1(HS16) (TSO ALLOC SHR)` | 24 | 0000 | 371 lines | fixed lines 25744-26114 (= model, digest-pinned test) | test_hs model (ref_gp2 TSO + ref_hs) | HIGH SCORE 0000370 LEVEL 001 | read only (equal) |
+
+State after (verified read-only with `--job 8`): HSTEST.T1 = BAD = 0000720 PACHS001 001, EMPTY = 0000720 PACHS001 001, HS1 = 0002760 PACHS001 002, HS13 = 0001350 PACHS001 002, HS14 = 0001370 PACHS001 002, HS15 = 0001350 PACHS001 002, HS16 = 0000370 PACHS001 001, HS2 = 0000980 PACHS001 001, HS9 = 9999999 PACHS001 099; HSFULL.T1 = M01..M20, no HISCORE.
+
+```
+//PACZ3HS8 JOB 1,'PACMAN ZOS3 Z3HS8',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HH1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=Z00000.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=Z00000.PACMAN.HSFULL.T1(HISCORE),DISP=OLD
+//SYSIN    DD *
+AI0 3
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HTSO1    EXEC PGM=IKJEFT01,COND=(0,NE)
+//SYSTSPRT DD SYSOUT=A
+//SYSOUT   DD SYSOUT=A
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//SYSIN    DD *
+D
+D
+D
+
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+R
+L
+R
+R
+U
+Q
+/*
+//SYSTSIN  DD *
+  ALLOC F(PACHS) DA('Z00000.PACMAN.HSTEST.T1(HS16)') SHR REUSE
+  CALL 'Z00000.PACMAN.LOAD(PACZ2D)' 'TSO AI0 2           A'
+  FREE F(PACHS)
+/*
+//HTSO2    EXEC PGM=IKJEFT01,COND=(0,NE)
+//SYSTSPRT DD SYSOUT=A
+//SYSOUT   DD SYSOUT=A
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//SYSIN    DD *
+D
+D
+D
+
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+D
+R
+L
+R
+R
+U
+Q
+/*
+//SYSTSIN  DD *
+  ALLOC F(PACHS) DA('Z00000.PACMAN.HSTEST.T1(HS16)') SHR REUSE
+  CALL 'Z00000.PACMAN.LOAD(PACZ2D)' 'TSO AI0 2           A'
+  FREE F(PACHS)
+/*
+```
+

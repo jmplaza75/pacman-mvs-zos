@@ -317,4 +317,9 @@ cases; PACZ3FS first. No PACZ2D rebuild, no source change, no CLIST install, no 
   open (PACFSIO ESTAE / terminal services not exercised).
 - PACZ3HA JOB02091 PASS (2026-10-15; CC 0012 = HSFILL as expected): HSTEST.T1 (BAD EMPTY HS9) and HSFULL.T1
   (M01..M20, directory full) are real PDSs FB 80/80. First checker run: one false FAIL (final IKJEFT01 END parsed as
-  a member); parser fixed 6b446cc, same evidence re-checked PASS. WAITING FOR THE USER'S REVIEW before PACZ3HS.
+  a member); parser fixed 6b446cc, same evidence re-checked PASS. Accepted by the user.
+- PACZ3HS (option A, user 2026-10-15): 8 sequential one-shot jobs PACZ3HS1..8 in the frozen order; HA6 DEFERRED to
+  ZOS-9/10 (5,262 lines alone; not PASS in ZOS-3; its no-record branch covered by HA7); HSP1..9 replaced by read-only
+  state checks; CLIST block -> ZOS-4. Oracle 312 HA1 boundary + compare() fix (c3a1b0e). Package for review:
+  docs/zos3-pacz3hs-review.md, decks jcl/zos/PACZ3HS1..8.jcl, tools/zowe/zos_hs_check.py (gates + job checks),
+  tests/test_zos_tools.py sections 11-12. Gate 1 PASS (2026-10-15). NOT SUBMITTED.

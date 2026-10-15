@@ -50,8 +50,12 @@ def expected_text(step):
     raise KeyError(step)
 
 
-def states():
-    """Replay ref_hs step by step: (step, HSTEST before, HSTEST after, HSFULL after, hs lines)."""
+def states(skip=()):
+    """Replay ref_hs step by step: (step, HSTEST before, HSTEST after, HSFULL after, hs lines). Steps in skip (the
+    deferred HA6) are not run; each must leave both PDSs unchanged in the full replay, else the skip is refused."""
+    if skip:
+        full_run = {st: (b, a) for st, b, a, _, _ in states()}
+        assert all(full_run[s][0] == full_run[s][1] for s in skip), f'{skip}: a skipped step changes the state'
     ns = model()
     H, L = ns['H'], ns['L']
     pds = H.Pds({'HS9': [H.record(9999999, 99)], 'BAD': ['XYZZY NOT A SCORE', 'SECOND JUNK RECORD'], 'EMPTY': []})
@@ -59,6 +63,8 @@ def states():
     out = []
     finals = {st: (kind, base) for st, kind, base, _ in ns['RUNS']}
     for step, kind, d, c, st, ddk in ns['HS_RUNS']:
+        if step in skip:
+            continue
         before = {k: list(v) for k, v in pds.members.items()}
         start = L.parse_start(st)
         base = finals[step][1]
@@ -75,7 +81,7 @@ def states():
         base = finals[f'HTSO{i}'][1]
         hs = H.end_lines(pds, ('M', m), *H.final(base), L.parse_start(st))
         out.append((f'HTSO{i}', before, {k: list(v) for k, v in pds.members.items()}, sorted(full.members), hs))
-    assert {k: v for k, v in pds.members.items()} == ns['PDS'].members, 'replay differs from test_hs model_runs'
+    assert pds.members == ns['PDS'].members, 'replay differs from test_hs model_runs'
     return out
 
 

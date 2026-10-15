@@ -521,3 +521,91 @@ assert bad == 0 and msgs[0].startswith('OK   RPT1') and 'stream lines 662-' in m
 print('oracle 312 HS anchoring: 19/19 with the digest-bound HA1 boundary, nothing without it / with another digest / '
       'with any fact changed, 7 other oracles unchanged, 19 blocks = test_hs model (17 text, 2 TSD), compare: '
       'HA1/HA2 PASS, a mutation fails HA1 only; 309 RPT1 compared at its known boundary: PASS')
+
+# 12. ZOS-3 PACZ3HS1..8 (option A): the frozen HS runs in the frozen order without HA6, each job's steps = the z/OS
+#     rendering of the frozen MVS HS steps with only the approved deltas (T1 names, COND=(0,NE), profile A CEEOPTS /
+#     CEEDUMP / SYSUDUMP DUMMY in the IKJEFT01 steps); only LOAD + the two T1 PDSs; no DELETE / DATA / CLIST / HSP;
+#     estimates under 4,000; HTSO1/2 model = the fixed oracle 312 ranges (frozen digest); the state chain starts at the
+#     accepted PACZ3HA state and ends at test_hs's final PDS; HA6 changes nothing
+import zos_hs_check as HSK  # noqa: E402
+order = [s for steps in zos_target.HS_JOBS.values() for s in steps]
+assert order == [r[0] for r in ns['HS_RUNS'] if r[0] not in zos_target.HS_DEFERRED] + ['HTSO1', 'HTSO2']
+assert zos_target.HS_DEFERRED == ['HA6']
+mvs_hs = zos_target.steps_of_deck(md.hs_steps('@@HLQ@@.PACMAN', 'PACZ2D'))
+cee = '//CEEOPTS  DD *\nALL31(OFF),STACK(,,BELOW)\n/*\n'
+est = {}
+for n, (name, steps) in enumerate(zos_target.HS_JOBS.items(), 1):
+    deck = (R / f'jcl/zos/PACZ3HS{n}.jcl').read_text()
+    with tempfile.TemporaryDirectory() as t:
+        subprocess.run([sys.executable, str(R / 'tools/make_deck.py'), '--target', 'zos', name, '--out',
+                        str(Path(t) / 'h.jcl')], check=True, capture_output=True)
+        assert (Path(t) / 'h.jcl').read_text() == deck, f'PACZ3HS{n}.jcl is not the generated deck'
+    st = zos_target.steps_of_deck(deck)
+    assert list(st) == steps, (n, list(st))
+    assert 'DELETE' not in deck and 'PACMAN.DATA' not in deck and 'HSCL' not in deck and '//HSP' not in deck
+    assert set(re.findall(r"(?:DSN=|DA\(')([\w@.]+)", deck)) <= {'@@HLQ@@.PACMAN.LOAD', '@@HLQ@@.PACMAN.HSTEST.T1',
+                                                                 '@@HLQ@@.PACMAN.HSFULL.T1'}, n
+    assert audit_deck(render(deck, 'Z00000'), 'Z00000') == []
+    lines = 60
+    for s in steps:
+        assert re.match(rf'//{s}\s+EXEC PGM=(PACZ2D|IKJEFT01),COND=\(0,NE\)', st[s]) and st[s].count(cee) == 1, s
+        back = st[s].replace('.HSTEST.T1', '.HSTEST').replace('.HSFULL.T1', '.HSFULL').replace(
+            'COND=(0,NE)', 'COND=(0,NE,LINK)')
+        if s.startswith('HTSO'):
+            back = back.replace(cee + '//CEEDUMP  DD SYSOUT=A\n//SYSUDUMP DD DUMMY\n', '')
+        own = mvs_hs[s]
+        assert back == own, s
+        kind = next((r[1] for r in ns['HS_RUNS'] if r[0] == s), 'S')
+        if kind in ('T', 'Q'):
+            lines += a312[order[order.index(s) + 1]] - 2 - a312[s] if s != 'HG3' else 941
+        else:
+            lines += len(HSM.expected_text(s)) + (12 if s.startswith('HTSO') else 0)
+        lines += 30
+    est[n] = lines
+    assert lines < 4000, (n, lines)
+for i, at in ((1, 25366), (2, 25744)):          # HTSO model = the fixed oracle 312 ranges of the frozen digest
+    w = HSM.expected_text(f'HTSO{i}')
+    assert d312 == '46fdb3368babf2eb1f220dbe03f5af8f0fd7ac27b53c090634a2756390d0b9ca'
+    assert s12[at:at + len(w)] == w and s12[at - 2:at] == ['END', ''], i
+    assert s12[at + len(w)] in ('', ) and s12[at + len(w) + 1] != 'HIGH SCORE', i
+sts = HSK.expected_states()
+assert len(sts) == 9 and sts[0] == {'HS9': ['9999999 PACHS001 099'], 'BAD': ['XYZZY NOT A SCORE', 'SECOND JUNK RECORD'],
+                                    'EMPTY': []}
+assert sts[-1] == {k: [r.rstrip() for r in v] for k, v in ns['PDS'].members.items()} and 'HS8' not in sts[-1]
+assert sts[3] == sts[4], 'PACZ3HS4 (HA7, HA8) changes nothing'
+full = {s: (b, a) for s, b, a, _, _ in HSM.states()}
+assert full['HA6'][0] == full['HA6'][1], 'HA6 is state-neutral'
+
+
+def hs8(t, iec=True, rc='0000', hh1=None):
+    outs = {s: HSM.expected_text(s) for s in ('HH1', 'HTSO1', 'HTSO2')}
+    if hh1:
+        outs['HH1'] = hh1
+    d = spool(Path(t), [('HH1', None, 'PACZ2D', rc), ('HTSO1', None, 'IKJEFT01', '0000'),
+                        ('HTSO2', None, 'IKJEFT01', '0000')], outs, [('HTSO1', 'SYSTSPRT'), ('HTSO2', 'SYSTSPRT')])
+    for f in d.glob('*-SYSTSPRT.txt'):
+        f.write_text('1READY\n   ALLOC F(PACHS) DA(...) SHR REUSE\n READY\n END\n')
+    m = d / '003-JES2-JESYSMSG.txt'
+    m.write_text(m.read_text() + ' IGD104I Z00000.PACMAN.LOAD                           RETAINED,  DDNAME=STEPLIB\n'
+                 + (f' IEC217I B14-0C,IGG0201Z,{JOB},HH1,PACHS,0A23,ZXPL01,\n IEC217I Z00000.PACMAN.HSFULL.T1\n'
+                    if iec else ''))
+    return d
+
+
+with tempfile.TemporaryDirectory() as t:
+    _, res = HSK.spool_check(hs8(Path(t) / 'ok'), 8)
+    assert all(v for _, v in res), [k for k, v in res if not v]
+    _, res = HSK.spool_check(hs8(Path(t) / 'noiec', iec=False), 8)
+    assert [k for k, v in res if not v] == [k for k, _ in res if k.startswith('HH1: IEC217I')], res
+    _, res = HSK.spool_check(hs8(Path(t) / 'rc', rc='0016'), 8)
+    assert [k for k, v in res if not v] == ['HH1 COND CODE 0000', 'oracle 312 HH1: z/OS PACZ2D RC 0016 extra [] / '
+                                           'oracle PACMAIN RC 0000'], res
+    w = HSM.expected_text('HH1')
+    _, res = HSK.spool_check(hs8(Path(t) / 'saved', hh1=w[:-1] + ['NEW HIGH SCORE']), 8)
+    assert {k.split(':')[0] for k, v in res if not v} == {'oracle 312 HH1', 'HH1 SYSOUT = model (740 lines, ends '
+                                                          "'HIGH SCORE NOT SAVED')"}, [k for k, v in res if not v]
+print('PACZ3HS8 checker on a synthetic spool: PASS with B14-0C + RC 0 + NOT SAVED; missing B14, step RC 16, a '
+      '"NEW HIGH SCORE" HH1 each fail exactly their criteria: PASS')
+print('PACZ3HS1..8: generated decks, frozen order without HA6, steps = MVS HS steps + the approved deltas only, '
+      f'LOAD + T1 only, spool estimates {est} (< 4,000), HTSO model = oracle 312 lines 25366 / 25744, state chain '
+      'PACZ3HA -> test_hs final PDS, HA6 state-neutral: PASS')

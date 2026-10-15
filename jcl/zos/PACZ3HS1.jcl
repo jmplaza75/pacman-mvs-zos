@@ -1,0 +1,195 @@
+//PACZ3HS1 JOB 1,'PACMAN ZOS3 Z3HS1',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HA1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=@@HLQ@@.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI0 3
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HA2      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=@@HLQ@@.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI2 1
+D
+D
+R
+R
+R
+R
+L
+D
+D
+D
+D
+R
+R
+R
+R
+R
+L
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+L
+L
+L
+U
+U
+U
+U
+U
+U
+L
+L
+L
+R
+R
+R
+R
+R
+R
+D
+D
+D
+D
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HA3      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=@@HLQ@@.PACMAN.HSTEST.T1(HS1),DISP=OLD
+//SYSIN    DD *
+AI0 3
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY

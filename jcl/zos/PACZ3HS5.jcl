@@ -1,0 +1,275 @@
+//PACZ3HS5 JOB 1,'PACMAN ZOS3 Z3HS5',CLASS=7,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID
+//HB1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=@@HLQ@@.PACMAN.HSTEST.T1(HS2),DISP=OLD
+//SYSIN    DD *
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+U
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+R
+R
+R
+D
+D
+D
+D
+D
+D
+L
+L
+R
+R
+R
+R
+R
+R
+U
+U
+L
+L
+U
+U
+L
+L
+L
+L
+L
+D
+D
+R
+R
+R
+U
+U
+U
+U
+R
+R
+R
+R
+D
+D
+L
+R
+R
+R
+R
+U
+U
+R
+R
+R
+R
+D
+D
+D
+D
+D
+D
+D
+L
+L
+L
+L
+L
+L
+U
+R
+R
+U
+U
+R
+R
+U
+U
+L
+R
+R
+R
+R
+R
+R
+U
+U
+L
+L
+R
+R
+D
+D
+D
+D
+L
+L
+L
+D
+D
+R
+D
+R
+U
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+R
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HC1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=@@HLQ@@.PACMAN.HSTEST.T1(HS8),DISP=OLD
+//SYSIN    DD *
+AI3 2
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
+//HD1      EXEC PGM=PACZ2D,COND=(0,NE),
+//         PARM='BAT                 A'
+//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,DISP=SHR
+//CEEOPTS  DD *
+ALL31(OFF),STACK(,,BELOW)
+/*
+//PACHS    DD DSN=@@HLQ@@.PACMAN.HSTEST.T1(HS9),DISP=OLD
+//SYSIN    DD *
+AI0 3
+D
+D
+D
+D
+D
+D
+D
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+R
+U
+U
+U
+U
+U
+U
+U
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+L
+Q
+/*
+//SYSOUT   DD SYSOUT=A
+//CEEDUMP  DD SYSOUT=A
+//SYSUDUMP DD DUMMY
