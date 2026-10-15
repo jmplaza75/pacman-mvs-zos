@@ -12,8 +12,8 @@ The MVS generator is reused unchanged; only its step builders are replaced for t
 - job card: CLASS=7, NOTIFY=&SYSUID (site rules), no MSGCLASS.
 The default prefix is @@HLQ@@.PACMAN (rendered by tools/zowe/zos_submit.py; no HLQ literal in the repository).
 Extra decks: ZCMP (Z2-1, diagnostic compile inventory: every release COBOL and assembler module, no bind, no run);
-ZHSA (Z2-1b, PACHSIO assembled alone, compact listing); the ZOS-2 jobs of CHUNKS (Z2-2..Z2-4): a build job, or a
-deterministic subset of the run steps of an MVS deck, each step taken verbatim from that deck's z/OS rendering, each job
+ZHSA (Z2-1b, PACHSIO assembled alone, compact listing); the ZOS-2 / ZOS-3 jobs of CHUNKS: a build job, or a
+deterministic subset of the run steps of an MVS deck (or of several, SOURCES), each step taken verbatim from that deck's z/OS rendering, each job
 kept well under the site limit of ~5,000 spool lines (docs/ZOS-ENVIRONMENT.md).
 Listing options (no effect on the object code): COBOL NOSOURCE,NOXREF; HLASM PCONTROL(NOGEN) and no cross-reference
 tables; binder LIST (no MAP). Build steps run with COND=(4,LT): RC 4 is accepted by the JCL only so that the known PACFSIO
@@ -50,7 +50,11 @@ CHUNKS = {
     'Z2G3': ('PACZ2G3', 'GP2', ['G2B19', 'G2T3'], None, 310),
     'Z2RP': ('PACZ2RP', 'RP', ['R3B1', 'R3B2', 'R3B4', 'R3B5', 'R3B6', 'R3B7', 'R3B9'], None, 309),
     'Z2S2': ('PACZ2S2', 'S2', ['S2L1', 'S2L2', 'S2L4'], None, 308),
+    # ZOS-3 (docs/zos3-design.md): the PACFSIO batch contract, the only two TSO + COLOR(AUTO) runs of the oracles
+    'Z3FS': ('PACZ3FS', 'GP2+S2', ['S1S3', 'S2L4'], None, '310+308'),
 }
+# chunks whose steps come from more than one MVS deck: step -> (MVS deck, oracle job of that deck)
+SOURCES = {'Z3FS': {'S1S3': ('GP2', 310), 'S2L4': ('S2', 308)}}
 DECKS = ['ZCMP', 'ZHSA'] + list(CHUNKS)
 _md = []
 ZCMP_COBOL = ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACQRY', 'PACRT',
@@ -177,11 +181,18 @@ def chunk_deck(name, pfx):
     md = _md[0]
     if extra:
         CEEOPTS[:] = [CEEOPTS[0] + ',' + extra]
-    full = steps_of_deck(md.build(base, pfx, LOAD))
+    if name in SOURCES:            # each step verbatim from its own deck; the step names are unique across them
+        src = SOURCES[name]
+        assert list(src) == steps and '+'.join(dict.fromkeys(d for d, _ in src.values())) == base, name
+        decks = {d: steps_of_deck(md.build(d, pfx, LOAD)) for d in dict.fromkeys(d for d, _ in src.values())}
+        assert all(sum(s in f for f in decks.values()) == 1 for s in steps), f'{name}: a step name is not unique'
+        full = {s: decks[src[s][0]][s] for s in steps}
+    else:
+        full = steps_of_deck(md.build(base, pfx, LOAD))
     order = list(full)
     assert all(s in full for s in steps), [s for s in steps if s not in full]
     assert [s for s in order if s in steps] == steps, f'{name}: steps not in deck order'
-    out = job_card(job, f'PACMAN ZOS2 {name}')
+    out = job_card(job, f'PACMAN ZOS{name[1]} {name}')
     for s in steps:
         t = full[s].replace('\n//\n', '\n') if full[s].endswith('\n//\n') else full[s]
         head = t.split('\n', 1)[0]

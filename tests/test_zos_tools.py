@@ -362,3 +362,35 @@ assert bad == 1 and [m.split(':')[0] for m in msgs if m.startswith('FAIL')] == [
 print('oracle 309 RP anchoring: 81/81 with the digest-bound RPT1 boundary (R3B = the 9 text blocks), other oracles '
       'unchanged, wrong line / step / preceding line / header / digest fail closed, 7 RP3 BAT models = own blocks, '
       'a mutation fails R3B5 only: PASS')
+
+# 9. ZOS-3 PACZ3FS (PACFSIO batch contract): S1S3 / S2L4 come verbatim from their own MVS decks (GP2 / S2), PARM column 12
+#    is COLOR A on a TSO PARM (PACPLAT TRY-COLOUR -> CALL 'PACFSIO' FSON); each anchors at its own block of its own
+#    oracle (310 / 308) and equals the 1.0-MVS TSO DIE1 run; the real z/OS COLOR(N) run of DIE1 (PACZ2C7 TSO2, JOB09031)
+#    passes every check for both steps; a mutation fails that step only; the bind of record includes PACFSIO
+import zos_fs_check as FS  # noqa: E402
+import make_deck as md  # noqa: E402  (last section: apply() swaps its builders for this process)
+fs = (R / 'jcl/zos/PACZ3FS.jcl').read_text()
+fst = zos_target.steps_of_deck(fs)
+assert list(fst) == ['S1S3', 'S2L4'] and 'DELETE' not in fs and fs.count('//STEPLIB  DD DSN=@@HLQ@@.PACMAN.LOAD,') == 2
+zos_target.apply(md, zos_target.PREFIX)
+for s, (base, _) in zos_target.SOURCES['Z3FS'].items():
+    own = zos_target.steps_of_deck(md.build(base, zos_target.PREFIX, zos_target.LOAD))[s]
+    assert fst[s] == (own[:-3] if own.endswith('\n//\n') else own), s     # S2L4 ends the S2 deck: null statement off
+    parm = re.search(r"PARM='([^']*)'", fst[s].split('\n', 1)[0]).group(1)
+    assert parm[:3] == 'TSO' and parm[11] == 'A' and parm[18] == 'A' and (len(parm) < 21 or parm[20] == 'C'), parm
+    assert '//CEEOPTS  DD *\nALL31(OFF),STACK(,,BELOW)\n/*\n' in fst[s] and 'PACHS' not in fst[s]
+c7 = zos_runs(R / 'build/zos/PACZ2C7-JOB09031')[2]['TSO2']
+with tempfile.TemporaryDirectory() as t:
+    runs = zos_runs(spool(Path(t) / 's', [(k, None, 'PACZ2D', '0000') for k in FS.STEPS],
+                          {k: c7['lines'] for k in FS.STEPS}))[2]
+    bad, msgs = FS.check_runs(runs)
+assert bad == 0 and sum(m.startswith(('oracle 310 OK', 'oracle 308 OK')) for m in msgs) == 2, msgs
+mut = c7['lines'][:40] + [c7['lines'][40] + 'X'] + c7['lines'][41:]
+with tempfile.TemporaryDirectory() as t:
+    runs = zos_runs(spool(Path(t) / 's', [(k, None, 'PACZ2D', '0000') for k in FS.STEPS],
+                          {'S1S3': c7['lines'], 'S2L4': mut}))[2]
+    bad, msgs = FS.check_runs(runs)
+assert bad >= 3 and all('S2L4' in m for m in msgs if 'FAIL' in m), msgs
+assert FS.linkage()[0]
+print('PACZ3FS: S1S3 / S2L4 verbatim from GP2 / S2, TSO + COLOR A PARM, own oracle blocks (310 / 308) = 1.0-MVS DIE1 = '
+      'test_mvs8 model, the real z/OS COLOR(N) DIE1 run passes as both, a mutation fails S2L4 only, PACFSIO bound: PASS')

@@ -102,3 +102,15 @@ assembler), PACDS (data stream buffer). Only PACPLAT calls assembler.
   password is entered only by the user in their own terminal, never by the assistant, never stored, never in a trace;
   traces and screenshots are reviewed and redacted before they enter the repository; no ISPF / system settings
   changed; one session at a time; logoff after each check; STOP on any unexpected panel, message or security prompt.
+
+## 10. User decisions (design approved)
+- Oracle 312: one exact-content KNOWN_BOUNDARIES entry for HA1 (line 149), bound to the frozen 312 stream digest and
+  the exact local boundary context, same fail-closed rules as oracle 309, 19/19 ordinal blocks, no content-search
+  fallback, every other oracle unchanged. (To implement with the HS preparation; not done yet.)
+- HS datasets: fresh project test datasets per attempt (suffix T1); PACZ3HA creates them, PACZ3HS uses the same
+  stateful pair. No DELETE. A later approved rerun allocates T2. <HLQ>.PACMAN.DATA is never touched.
+- TSD: the minimum dry-run TSD subset stays in ZOS-3 (no live full-screen: ZOS-5). The S2 alarm coverage deferred
+  from ZOS-2 may be met inside PACZ3TSD with the minimum existing S2T cases covering the distinct alarm behaviours of
+  tests/test_s2.py / ref_s2.
+- PACZ3FS approved as the first ZOS-3 job, prepared for review only (exactly S1S3 + S2L4): deck of record
+  jcl/zos/PACZ3FS.jcl, check tools/zowe/zos_fs_check.py, tests/test_zos_tools.py section 9. Not submitted.

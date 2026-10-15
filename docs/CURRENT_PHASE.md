@@ -244,7 +244,7 @@ DISPLAY SYSOUT FBA 121 (safe line limit 120 = oracle maximum); tools/zowe listin
 Evidence docs/evidence/zos1-toolchain.md. No job purged.
 Carried into ZOS-2: candidate C1 (PACQRY paragraph VALIDATE), AMODE 24 of the full module, full-size listing checks.
 
-## ZOS-2 Portable core - IN PROGRESS
+## ZOS-2 Portable core - COMPLETE (tag zos-2 on f426858, 2026-10-14; user acceptance)
 Approved (2026-10-14): local tooling and Z2-1 (PACZ2CMP, diagnostic compile inventory: no bind, no run, no source
 change, no COND between modules); Z2-2 / Z2-3 / Z2-4 approved in architecture only, each needs the full rendered JCL
 and its expected step/result matrix reviewed before submission. SSRANGE: optional diagnostic only, never automatic,
@@ -300,3 +300,14 @@ the user approves it. main and the MVS release are not touched.
   80 run datasets for 81 PACMAIN run steps (RPT1's TSD output follows the IEBUPDTE listing after one empty line, not
   the TK4- two-line separator), so no 309 step is anchorable and PACZ2RP would fail "cannot be anchored". Oracle 309
   is not modified, the anchoring rules are not weakened, no generic content-search fallback is added.
+- ZOS-2 COMPLETE: every job PASS (docs/evidence/zos2-portable-core.md; spool archives docs/evidence/zos2-spool/).
+  Carried forward: Z1 (zos-only COPY delta + guards), C3 (PACFSIO ASMA303W, provisional, dynamic check in ZOS-8 E2),
+  S2 alarm coverage (now in PACZ3TSD), oracle 309 RPT1 known boundary.
+
+## ZOS-3 Platform layer - IN PROGRESS (design approved 2026-10-15; docs/zos3-design.md)
+Decisions (user, 2026-10-15): oracle 312 HA1 known boundary (digest + exact context, fail closed, 19/19, no fallback);
+HS test datasets fresh per attempt (T1; no DELETE; a rerun uses T2; <HLQ>.PACMAN.DATA never touched); minimum TSD
+dry-run subset stays in ZOS-3 (live full screen = ZOS-5), S2 alarm coverage may be met there with the minimum S2T
+cases; PACZ3FS first. No PACZ2D rebuild, no source change, no CLIST install, no PACMAIN promotion, no live session.
+- PACZ3FS (PACFSIO batch contract, S1S3 + S2L4): deck of record jcl/zos/PACZ3FS.jcl, check tools/zowe/zos_fs_check.py,
+  tests/test_zos_tools.py section 9 PASS, precheck PASS (~818 spool lines). PREPARED FOR REVIEW, NOT SUBMITTED.

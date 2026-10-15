@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ZOS-2 job / step / result matrix (Z2-2..Z2-4) for review before any submission.
+"""ZOS-2 / ZOS-3 job / step / result matrix for review before any submission.
 
 Usage: zos_plan.py [CHUNK ...] [--budget 4000]
 For every job of tools/zowe/zos_target.py CHUNKS: the steps, program, expected RC, the expected output of each run
@@ -58,13 +58,19 @@ def plan(names, budget):
     cache = {}
     for name in names:
         job, base, steps, extra, ojob = Z.CHUNKS[name]
-        full = Z.steps_of_deck(md.build(base, Z.PREFIX, Z.LOAD))
-        if ojob and ojob not in cache:
-            cache[ojob] = blocks(ojob)
-        sizes, oprog = cache.get(ojob, ({}, {}))
+        if name in Z.SOURCES:          # steps of several MVS decks, each compared with its own deck's oracle job
+            src = Z.SOURCES[name]
+            full = {s: Z.steps_of_deck(md.build(d, Z.PREFIX, Z.LOAD))[s] for s, (d, _) in src.items()}
+            sjob = {s: o for s, (_, o) in src.items()}
+        else:
+            full = Z.steps_of_deck(md.build(base, Z.PREFIX, Z.LOAD))
+            sjob = {s: ojob for s in steps}
         total = JOB_FIXED
         rows = []
         for s in steps:
+            if sjob[s] and sjob[s] not in cache:
+                cache[sjob[s]] = blocks(sjob[s])
+            sizes, oprog = cache.get(sjob[s], ({}, {}))
             head = full[s].split('\n', 1)[0]
             pgm = head.split('PGM=')[1].split(',')[0].strip()
             if pgm == 'IGYCRCTL':
@@ -82,7 +88,7 @@ def plan(names, budget):
             else:
                 assert oprog.get(s) in ('PACMAIN', 'PACQRYT', 'PACTSOT'), (name, s)
                 lines, rc = sizes[s], '0000'
-                how = 'RT3 timing rules' if oprog[s] == 'PACTSOT' else f'= oracle JOB {ojob} {s}'
+                how = 'RT3 timing rules' if oprog[s] == 'PACTSOT' else f'= oracle JOB {sjob[s]} {s}'
             total += lines + JES.get(pgm, JES['run'])
             parm = head.split("PARM='")[1].rstrip("'") if "PARM='" in head else ''
             rows.append((s, pgm, rc, lines, how, parm))
