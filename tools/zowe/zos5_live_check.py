@@ -2,8 +2,8 @@
 """ZOS-5 live full-screen acceptance postcheck (docs/zos5-design.md, docs/zos5-live-session.md). Local, read-only.
 
 Usage: zos5_live_check.py TRACE [--reply-out FILE]
-TRACE = the c3270 trace started at native TSO READY (x3270if Trace(On,...)) and stopped after game C. Nothing earlier
-exists in it; inbound typed text is used only inside the games (the game commands).
+TRACE = the c3270 trace started in the ISPF Command Shell (option 6; x3270if Trace(On,...)) and stopped there after
+game C. Nothing earlier exists in it; inbound typed text is used only inside the games (the game commands).
 
 1. Framing (fail closed): the host->terminal and terminal->host bytes of the `< 0x..` / `> 0x..` hex lines are
    reassembled per direction into telnet records (IAC EOR ends a record, IAC IAC = one X'FF'). Between records only
@@ -28,8 +28,10 @@ exists in it; inbound typed text is used only inside the games (the game command
 4. Model: tests/ref_gx_screen.py frames for the rebuilt cards and the resolved profile (= oracle 310 TSD45 / TSD48 /
    TSD28 when no tick was seen); write 0 = X'F1' or X'F5' + WCC + PACFSIO's clear prefix + the rest; a redraw and the
    end screen = the canvas command (X'7E' A / B, X'F5' C) + frame; moves / invalid / ticks = X'F1' + frame; byte for
-   byte. Then line mode: the frozen block's end lines in order, READY after them; no IKJ / IEC / IGZ / CEE / ABEND /
-   PACMAN: / *** text in any host record of the game.
+   byte. Then line mode: the frozen block's end lines in order, then the ISPF Command Shell panel (the shell boundary,
+   docs/zos5-live-session.md: the games run from ISPF option 6, as in ZOS-4). `***` is accepted only after the end
+   lines (ISPF's own prompt once the program has ended), never in the game stream or before the end lines; IKJ / IEC /
+   IGZ / CEE / ABEND / PACMAN: text in any host record of the data stream = FAIL.
 5. Report: SHA-256 of the trace, framing summary, per game the reply (also written with --reply-out), the profile and
    canvas, writes / ticks / AIDs, D28 (ticks before the first AID or not), the end pause (end screen -> first
    line-mode record), and an audit: no LOGON / PASSWORD text in the trace's host records, and inbound records outside
@@ -60,6 +62,7 @@ GAMES = [('A', 'MOVES', 0x7E, 'TSD45'), ('B', 'TSORDR', 0x7E, 'TSD48'), ('C', 'T
 END_LINES = {'MOVES': ['QUIT', 'TURNS 013', 'SCORE 0080', 'LIVES 3'],
              'TSORDR': ['QUIT', 'TURNS 002', 'SCORE 0010', 'LIVES 3']}     # oracle 310 TSD45 / TSD48 / TSD28
 BAD_TEXT = re.compile(r'IKJ\d{5}|IEC\d{3}|IGZ\d{4}|CEE\d{4}|ABEND|PACMAN:|\*\*\*')
+SHELL = 'ISPF Command Shell'           # the option 6 panel title: the boundary after each game
 AIDN = {0x7D: 'ENTER', 0x6E: 'PA2', 0x6D: 'CLEAR', 0x6C: 'PA1', 0x88: 'QREPLY'}
 
 
@@ -314,19 +317,26 @@ def game(name, case, cmd, ev, res):
             raise Fail(f'{name}: write {j} differs from the model ({len(p) - 1} / {len(f)} bytes)')
     end_t = game_w[-1][2]
     rest = ev[ev.index(game_w[-1]) + 1:]
-    seen = [s for e in rest if e[1] == '<' for s in texts(e[3])]
-    exp, k = END_LINES[case], 0
-    for s in seen:
-        if k < len(exp) and s == exp[k]:
-            k += 1
-        elif k == len(exp) and s.startswith('READY'):
-            k += 1
+    for e in ev[:ev.index(game_w[-1]) + 1]:
+        m = e[1] == '<' and BAD_TEXT.search(' '.join(texts(e[3])))
+        if m:
+            raise Fail(f'{name}: error / *** text in the game stream: {m.group(0)}')
+    exp, k, shell = END_LINES[case], 0, False
+    for e in rest:
+        if e[1] != '<':
+            continue
+        segs = texts(e[3])
+        for s in segs:
+            m = BAD_TEXT.search(s)
+            if m and not (m.group(0) == '***' and k == len(exp)):
+                raise Fail(f'{name}: error / *** text after the end screen: {m.group(0)}')
+            if k < len(exp) and s == exp[k]:
+                k += 1
+        if k == len(exp) and any(SHELL in s for s in segs):
+            shell = True
             break
-    if k != len(exp) + 1:
-        raise Fail(f'{name}: end lines {exp} + READY not found in line mode after the end screen')
-    for e in ev:
-        if e[1] == '<' and BAD_TEXT.search(' '.join(texts(e[3]))):
-            raise Fail(f'{name}: error / *** text in a host record: {BAD_TEXT.search(" ".join(texts(e[3]))).group(0)}')
+    if not shell:
+        raise Fail(f'{name}: end lines {exp} + the {SHELL} panel not found in line mode after the end screen')
     line_t = next((e[2] for e in rest if e[1] == '<'), '')
     res.update(name=name, profile=prof, size=size, canvas=canvas, writes=len(game_w), ticks=cards.count('+'),
                aids=aids, d28=('ticks before the first input' if ticks_before_aid else
@@ -359,6 +369,10 @@ def check(text):
         if cmd == 0x7E and (prof != (1, 1, 1) or size != (120, 27)):
             verdict = 'MODEL-IDENTICAL-OTHER-PROFILE'
         results.append(r)
+    for e in ev:                                         # shell traffic outside the games: errors still fail
+        m = e[1] == '<' and BAD_TEXT.search(' '.join(texts(e[3])))
+        if m and m.group(0) != '***':
+            raise Fail(f'error text in a host record outside the game stream: {m.group(0)}')
     return {'records': len(recs), 'keepalive': keep, 'seq': rule, 'games': results, 'outside': outside,
             'snapshot': len(snap), 'snap_flags': snap_flags, 'verdict': verdict}
 

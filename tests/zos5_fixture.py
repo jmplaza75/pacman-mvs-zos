@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """ZOS-5: a synthetic c3270 trace of the designed live session (docs/zos5-design.md) for tools/zowe/zos5_live_check.py:
+run from the ISPF Command Shell (option 6: each game ends with the end lines, ISPF's ***, ENTER and the shell panel);
 games A (MOVES, 120 x 27 from the IBM-DYNAMIC reply), B (TSORDR, CLEAR + PA2 redraw), C (TSORDR, COLOR(YES), 80 x 24),
 the game writes = tests/ref_gx_screen.py for the cards (with idle ticks), every record framed as TN3270E 3270-DATA
 (5-byte header, IAC doubling, IAC EOR) and written as c3270 trace lines (`< 0x..` / `> 0x..`, 32 bytes per line, large
@@ -25,6 +26,9 @@ CARDS_BC = ['R', '', 'D', 'Q']
 EXEC = "EXEC 'Z00000.PACMAN.CLIST(PACMAN)' '{}'"
 KW_AB = 'RULES(CLASSIC) PLAY(TURN) SOUND(NO)'
 KW_C = 'COLOR(YES) HILITE(YES) GLYPHS(GRAPHIC) RULES(CLASSIC) PLAY(TURN) SOUND(NO)'
+SHELL_PANEL = (bytes([0x7E, 0xC3, 0x11, 0x40, 0x40]) + 'Menu  List  Mode  Functions  Utilities  Help'.encode('cp037')
+               + bytes([0x11, 0xC1, 0x5D]) + 'ISPF Command Shell'.encode('cp037') + bytes([0x11, 0xC2, 0x60])
+               + 'Enter TSO or Workstation commands below:'.encode('cp037') + bytes([0x11, 0x4A, 0x40]) + b'\x7e\x7e\x7e\x6e')
 
 
 def e(s):
@@ -84,8 +88,10 @@ def session(reply=None, canvas='W', cards_a=None, b_redraw='CLEAR+PA2', c_redraw
             host(bytes([full if c == '' or c.upper() == 'Q' else 0xF1]) + f)
         host(line('QUIT'), 3000)
         end = {'MOVES': ['TURNS 013', 'SCORE 0080'], 'TSORDR': ['TURNS 002', 'SCORE 0010']}
-        for s in end['MOVES' if len(cards) > 6 else 'TSORDR'] + ['LIVES 3', 'READY']:
+        for s in end['MOVES' if len(cards) > 6 else 'TSORDR'] + ['LIVES 3', '***']:
             host(line(s), 5)
+        term(enter(''), 1500)                                         # ENTER at ISPF's ***
+        host(SHELL_PANEL, 60)                                         # back in the ISPF Command Shell (option 6)
 
     play(KW_AB, 0x7E, cards_a or CARDS_A, canvas, None)
     play(KW_AB, 0x7E, CARDS_BC, canvas, b_redraw)
@@ -117,7 +123,7 @@ def render(recs, raw=None):
     """Trace text; raw: optional list of (direction, ms, bytes) blocks used instead of the framed records."""
     out = ['20261017.095959.000 infra  Trace started (synthetic ZOS-5 fixture)', ' TELNET state:',
            '< 0x0   fffd28fffa2802044942' + '4d2d44594e414d4943fff0', ' Screen contents (TN3270E-3270) unformatted:']
-    out += dump('<', bytes(5) + b'\x05\x02' + e('READY') + bytes(40))
+    out += dump('<', bytes(5) + b'\x05\x02' + e('ISPF Command Shell') + bytes(40))
     out.append(' Data stream:')
     blocks = raw
     if blocks is None:

@@ -1090,6 +1090,7 @@ fxt = FX.render(FX.session())
 assert fxt == (R / 'tests/fixtures/zos5/session.trace').read_text(), 'fixture not regenerated identically'
 rep = Z5.check(fxt)
 assert rep['verdict'] == 'PASS' and [g['ticks'] for g in rep['games']] == [4, 0, 0] and rep['seq'] == '+1'
+assert sum(r[3] == FX.line('***') for r in FX.session()) == 3      # ISPF's *** after the end lines: accepted
 assert rep['games'][0]['reply'] == Z5.Q.rec('dyn') and rep['games'][2]['reply'] is None
 
 
@@ -1130,13 +1131,16 @@ neg5 = {
     'extra startup read before the first screen': (mut(lambda r: r.insert(hidx(r, lambda x: x[3][:1] == b'\x88') + 1,
                                                                           ['>', 0, bytes(5), FX.enter('')])),
                                                    'inbound records between the query'),
-    '*** in line mode': (mut(lambda r: r.insert(hidx(r, lambda x: x[3] == FX.line('READY')),
-                                                ['<', 0, bytes(5), FX.line('***')])), 'error / *** text'),
-    'IKJ message in line mode': (mut(lambda r: r.insert(hidx(r, lambda x: x[3] == FX.line('READY')),
-                                                        ['<', 0, bytes(5), FX.line('IKJ56500I COMMAND NOT FOUND')])),
-                                 'error / *** text'),
-    'no READY after game A': (mut(lambda r: r.__delitem__(hidx(r, lambda x: x[3] == FX.line('READY')))),
-                              'READY not found'),
+    '*** before the end lines': (mut(lambda r: r.insert(hidx(r, lambda x: x[3] == FX.line('QUIT')),
+                                                        ['<', 0, bytes(5), FX.line('***')])), 'after the end screen'),
+    'IKJ message after the end lines': (mut(lambda r: r.insert(hidx(r, lambda x: x[3] == FX.line('***')),
+                                                               ['<', 0, bytes(5), FX.line('IKJ56500I COMMAND NOT FOUND')])),
+                                        'after the end screen'),
+    'IKJ message in the shell between games': (mut(lambda r: r.insert(hidx(r, lambda x: x[3] == FX.SHELL_PANEL) + 1,
+                                                                      ['<', 0, bytes(5), FX.line('IKJ56500I X')])),
+                                               'outside the game stream'),
+    'no ISPF Command Shell after game A': (mut(lambda r: r.__delitem__(hidx(r, lambda x: x[3] == FX.SHELL_PANEL))),
+                                           'ISPF Command Shell panel not found'),
     'LOGON text (audit)': (mut(lambda r: r.insert(1, ['<', 0, bytes(5), FX.line('LOGON Z00000')])), 'audit'),
 }
 for why, (recs, want) in neg5.items():
@@ -1177,8 +1181,8 @@ assert 'Data stream' in z5(text=hd.replace(' Data stream:', '') + tl)           
 nr1 = re.search(r'nr=(\d+)', tl).group(1)
 assert 'socket read nr=' in z5(text=hd + ' Data stream:\n' + tl.replace(f'nr={nr1}', f'nr={int(nr1) + 1}', 1))
 assert 'without a socket read' in z5(text=hd + ' Data stream:\n' + tl.replace('socket Host socket read complete', 'x', 1))
-rsnap = Z5.check(txt.replace('d9c5c1c4e8', '40d3d6c7d6d5', 1))        # 'READY' -> ' LOGON' in the start dump only
-assert rsnap['verdict'] == 'PASS' and rsnap['snap_flags'] == ['LOGON'], rsnap['snap_flags']
+rsnap = Z5.check(txt.replace('c9e2d7c640', 'd3d6c7d6d5', 1))    # 'ISPF ' -> 'LOGON' in the start dump only
+assert rsnap['verdict'] == 'PASS' and any('LOGON' in w for w in rsnap['snap_flags']), rsnap['snap_flags']
 # the real x3270 4.5 output of a mid-session Trace(On) (s3270 against the local fake TN3270E host
 # tests/fixtures/zos5/fake_tn3270e.py, 2026-10-16): start dumps skipped, records framed and validated, the reply = the
 # TK4- IBM-DYNAMIC reply byte for byte
