@@ -1,0 +1,8 @@
+  OK   CLIST(PACMAN) SHA-256 = the zos-4 member f8989cfa... (130 x 80)
+  OK   CLIST(PACMAN) = the rendered src/zos/PACMAN.clist (IBM-037, fixed 80) byte for byte
+  OK   CLIST(PACSRCT) still the frozen raw template
+  OK   Z00000.PACMAN.CEEOPTS: PS FB 80 80, one record ALL31(OFF),STACK(,,BELOW)
+  OK   Z00000.PACMAN.CEEOPTS content (binary): exactly one fixed 80-byte record = ALL31(OFF),STACK(,,BELOW) in IBM-037 + blank padding
+  OK   LOAD(PACMAIN) attributes = PACZ2D's {'ac': '00', 'amode': '24', 'attr': 'RN RU', 'rmode': '24', 'size': '000200B0'} (AMODE 24, RMODE 24, RENT REUS, same size)
+  OK   LOAD(PACZ2D) unchanged
+ZOS-5 PRECHECK PASS
