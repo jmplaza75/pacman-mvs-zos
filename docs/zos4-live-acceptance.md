@@ -1,4 +1,4 @@
-# ZOS-4 live TSO acceptance - DIE1 and LOST0 (for review; nothing executed)
+# ZOS-4 live TSO acceptance - DIE1 and LOST0 (session 1 FAIL, session 2 PASS 2026-10-16: docs/evidence/zos4-live.md)
 
 Installed baseline (PACZ4INS JOB03939, accepted): Z00000.PACMAN.LOAD(PACMAIN), Z00000.PACMAN.CLIST(PACMAN) (src/zos,
 Z2), Z00000.PACMAN.CEEOPTS. References: the frozen cases tests/cases/DIE1.txt and LOST0.txt, their independent model

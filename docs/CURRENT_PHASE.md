@@ -357,3 +357,9 @@ session, one focused postcheck; reuse ZOS-2 / ZOS-3 evidence. Waiting for the us
   in the same 120-column geometry.
 - Z3 INSTALLED 2026-10-16 (zos_z3_install --install PASS; CLIST(PACMAN) 130 x 80, SHA-256 f8989cfa...; PACSRCT /
   CEEOPTS / PACMAIN / PACZ2D unchanged). NEXT: live session 2 (manual).
+- ZOS-4 COMPLETE (2026-10-16, tag zos-4): live session 2 DIE1 PASS / LOST0 PASS, clean return to ISPF after both, Z3
+  validated on the 120-column geometry of session 1 (user attestation; docs/evidence/zos4-live.md); read-only closure
+  check PASS. Session 1 = permanent FAIL evidence. Installed z/OS baseline: LOAD(PACMAIN) (= PACZ2D), CLIST(PACMAN)
+  (Z3 + Z2, SHA-256 f8989cfa...), CEEOPTS; template copy CLIST(PACSRCT). Carried forward: C3 (ZOS-8 E2), HA6
+  (ZOS-9/10), HSP1-9 (full battery), HS CLIST live path (ZOS-8), full-screen / colour / TPUT-TGET (ZOS-5).
+  NEXT: ZOS-5 design / review only (not started).

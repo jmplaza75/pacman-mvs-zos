@@ -113,3 +113,8 @@ zos_z3_install --gate PASS 7/7 (2026-10-16); not installed.
 - Read-only state after the write: PACSRCT, CEEOPTS (attributes + binary), PACMAIN attributes, PACZ2D - PASS.
 Installed: CLIST(PACMAN) with Z3 + Z2. Next: live session 2 (manual, user at the keyboard, 120-column geometry).
 Live session 1 remains FAIL evidence.
+
+## Live acceptance session 2 (2026-10-16): PASS - ZOS-4 COMPLETE
+DIE1 PASS, LOST0 PASS, clean return to ISPF after both, logged off; Z3 validated on the same 120-column geometry that
+failed in session 1 (user attestation; captures not provided, zos_live_check not run): docs/evidence/zos4-live.md.
+Read-only closure check PASS (docs/evidence/zos4-closure-check.txt). Session 1 stays FAIL evidence.

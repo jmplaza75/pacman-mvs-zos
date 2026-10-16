@@ -1,0 +1,19 @@
+  OK   CLIST(PACMAN) = the installed Z2 member (SHA-256 2e9895dc..., 107 x 80)
+  OK   rendered Z3 member differs from it (something to install)
+  OK   CLIST(PACSRCT) = the frozen raw template
+  OK   Z00000.PACMAN.CEEOPTS: PS FB 80 80, one record ALL31(OFF),STACK(,,BELOW)
+  OK   Z00000.PACMAN.CEEOPTS content (binary): exactly one fixed 80-byte record = ALL31(OFF),STACK(,,BELOW) in IBM-037 + blank padding
+  OK   LOAD(PACMAIN) attributes = PACZ2D's {'ac': '00', 'amode': '24', 'attr': 'RN RU', 'rmode': '24', 'size': '000200B0'} (AMODE 24, RMODE 24, RENT REUS, same size)
+  OK   LOAD(PACZ2D) unchanged
+Z3 INSTALL GATE PASS
+Z00000.PACMAN.CLIST(PACMAN): identical (130 records x 80)
+  OK   CLIST(PACMAN) = the rendered src/zos/PACMAN.clist (IBM-037, fixed 80) byte for byte
+  OK   CLIST(PACSRCT) still the frozen raw template
+Z3 CLIST CHECK PASS
+installed CLIST(PACMAN) SHA-256 f8989cfada7a862992af1c079572792eb72752aadb50e45281a81dd7447620cc 130 x 80; equals rendered Z3: True
+  OK   CLIST(PACSRCT) = the frozen raw template
+  OK   Z00000.PACMAN.CEEOPTS: PS FB 80 80, one record ALL31(OFF),STACK(,,BELOW)
+  OK   Z00000.PACMAN.CEEOPTS content (binary): exactly one fixed 80-byte record = ALL31(OFF),STACK(,,BELOW) in IBM-037 + blank padding
+  OK   LOAD(PACMAIN) attributes = PACZ2D's {'ac': '00', 'amode': '24', 'attr': 'RN RU', 'rmode': '24', 'size': '000200B0'} (AMODE 24, RMODE 24, RENT REUS, same size)
+  OK   LOAD(PACZ2D) unchanged
+POST-INSTALL STATE (read-only) PASS

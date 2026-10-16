@@ -43,11 +43,12 @@ approval.
   installation (PACZ4INS).
 
 
-## Z3 - CLIST: terminal SYSIN fixed 80 through ATTRIB + USING (ZOS-4; installed 2026-10-16, live acceptance pending)
+## Z3 - CLIST: terminal SYSIN fixed 80 through ATTRIB + USING (ZOS-4; accepted 2026-10-16)
 - File: `src/zos/PACMAN.clist` (branch zos only): the 2.0 line `ALLOC F(SYSIN) DA(*) REUSE` replaced by the 24-line
   block of docs/zos4-sysin-fix.md ("Revision"); guarded by tests/zos_c2.py (Z3_BLOCK, z3_strip + z2_guard).
 - Reason: live session 1 (2026-10-16): the terminal SYSIN took the 120-column line size; Enterprise COBOL checks the
   fixed 80 record length of PACINPT COMMAND-FILE at OPEN (IGZ0201W, IGZ0035S status 39, U4038). For `DA(*)` TSO/E
   processes only FILE, BLOCK / BLKSIZE and USING, so the DCB comes from an attribute list (ATTRIB Z3SIATTR RECFM(F)
   LRECL(80) BLKSIZE(80)), freed right after the ALLOC and only if created there; any failure -> RC 8, no CALL.
-- SYSOUT, Z2, CEEOPTS, PACMAIN and the COBOL sources unchanged. Evidence pending: live session 2 (same geometry).
+- SYSOUT, Z2, CEEOPTS, PACMAIN and the COBOL sources unchanged. Evidence: live session 2 (2026-10-16, same 120-column geometry): DIE1 / LOST0 PASS
+  (docs/evidence/zos4-live.md); installed CLIST 130 x 80, SHA-256 f8989cfa....
