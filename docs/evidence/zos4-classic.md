@@ -92,3 +92,11 @@ COND CODE 0000; no CEE / abend; JESYSMSG names only CLIST, CEEOPTS, LOAD; no DEL
   CLIST(PACMAN) and downloaded in binary: identical, 107 x 80 bytes (SHA-256 2e9895dc6f7c16a4ef159966aa6dc36cd957b11ea9e51adf3c7a3d917f6f7f33); PACSRCT still the template.
 Installed z/OS baseline: Z00000.PACMAN.LOAD(PACMAIN), Z00000.PACMAN.CLIST(PACMAN) (with Z2), Z00000.PACMAN.CEEOPTS;
 on-host template copy CLIST(PACSRCT). The live DIE1 / LOST0 session has not started.
+
+## Live acceptance session 1 (2026-10-16): STOPPED - DIE1 FAIL before the first frame, LOST0 NOT RUN
+Reported by the user: `EXEC 'Z00000.PACMAN.CLIST(PACMAN)' 'AI(0) RULES(CLASSIC) PLAY(TURN) COLOR(NO)'` from ISPF
+option 6 reached PACMAIN, then `IGZ0201W` (PACINPT COMMAND-FILE record length 80, SYSIN 120), `IGZ0035S` (OPEN of SYSIN
+unsuccessful, file status 39), user abend 4038, EXEC terminated abnormally. Not retried. Cause analysis and fix
+proposal: docs/zos4-sysin-fix.md (terminal SYSIN takes the 120-column line size; Enterprise COBOL checks the fixed
+record length). The failure screen text is to be added as evidence (docs/evidence/zos4-live-fail-1.txt) from the
+user's capture.
