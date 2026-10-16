@@ -370,3 +370,7 @@ one live session (READY, `c3270 -model 2 -oversize auto`, 120 x 30) with three f
 live - A MOVES (COLOR AUTO: query, 120 x 27 wide), B TSORDR (second query, CLEAR + PA2), C TSORDR (COLOR(YES) override,
 80 x 24) - trace after READY, postcheck = byte identity with ref_gx_screen (= TSD1-61 of oracle 310, re-checked).
 NEXT (waiting for the user): decisions 1-5 of the design.
+- Design APPROVED (user, 2026-10-16, decisions in docs/zos5-design.md 12). Prepared for final review, not executed:
+  checker tools/zowe/zos5_live_check.py (TN3270E framing fail-closed, model = oracle 310 TSD45 / TSD48 / TSD28), read-only
+  precheck tools/zowe/zos5_precheck.py, fixtures, test section 19 PASS, procedure docs/zos5-live-session.md. NEXT
+  (waiting for the user): final review -> precheck -> the live session.

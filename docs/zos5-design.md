@@ -130,3 +130,19 @@ wide-layout acceptance then stays open for review); D28 holding.
 3. The three games A / B / C as above (SOUND(NO); CLEAR + PA2 in B).
 4. Trace on / off and optional PrintText by the user through the script port (`x3270if -t 4001`), after READY only.
 5. The postcheck tool of section 8 written and self-tested before the session.
+
+## 12. Decisions (user, 2026-10-16) and preparation
+Approved: (1) native TSO READY via `=X` (ISPF log disposition option 3 if asked), trace only from READY; (2) one session,
+no PACQRYT batch, STOP after game A on a query / parser / terminal problem; (3) A MOVES / TSD45, B TSORDR / TSD48
+(CLEAR + PA2), C TSORDR / TSD28 forced, in this order, no other game; (4) the trace is the primary evidence (on at
+READY, off after C's clean READY, raw kept immutable with SHA-256, audited, never committed), PrintText only at
+milestones; (5) the checker before the session, with explicit TN3270E header validation that fails closed; (6) 120 x 30
+is the window, the reply decides the canvas, 120 x 27 is the expected result; (7) no batch, rebuild, source / CLIST
+change or z/OS write.
+Prepared (not executed): tools/zowe/zos5_live_check.py, tools/zowe/zos5_precheck.py (read-only), tests/zos5_fixture.py
++ tests/fixtures/zos5/ (synthetic session trace; the real x3270 4.5 output of a mid-session Trace(On) recorded against a
+local fake TN3270E host, fake_tn3270e.py), test section 19; the procedure docs/zos5-live-session.md.
+Finding from the local x3270 run: Trace(On) during a session writes a telnet-state replay and a dump of the current
+screen as `<` lines before ` Data stream:` (no framing, no EOR); the checker reads data only after that marker, requires
+each host block to follow `Host socket read complete nr=N` with N bytes, and audits the dump separately. x3270 4.5 with
+a 120 x 27 oversize sends exactly tests/qreply_dyn.hex as its Query Reply (the expected-profile prediction).
