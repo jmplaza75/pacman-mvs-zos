@@ -374,3 +374,11 @@ NEXT (waiting for the user): decisions 1-5 of the design.
   checker tools/zowe/zos5_live_check.py (TN3270E framing fail-closed, model = oracle 310 TSD45 / TSD48 / TSD28), read-only
   precheck tools/zowe/zos5_precheck.py, fixtures, test section 19 PASS, procedure docs/zos5-live-session.md. NEXT
   (waiting for the user): final review -> precheck -> the live session.
+- ZOS-5 CLOSED / PASS (2026-10-16; docs/evidence/zos5-fullscreen.md): live 3270 full-screen on the installed zos-4 baseline,
+  no build / install / source / CLIST change. Composite acceptance: A / TSD45 from trace T5, B / TSD48 and C / TSD28
+  from trace T2 (zos5_live_check composite run PASS, docs/evidence/zos5-live-check.txt); real Query Reply = qreply_dyn
+  (colour, highlight, GE, 120 x 27); TN3270E RESPONSES + CONTENTION-RESOLUTION; the z/OS TSO / VTAM CLEAR record;
+  attempts T1 (invalid capture), T3 (two L), T4 (closure not captured), T4-close (auxiliary, not analysed) recorded,
+  raw traces outside git. MVS (2.0-mvs-max) stays frozen.
+  Carried forward: C3 PACFSIO recovery warning (ZOS-8 E2), HA6 (ZOS-9/10), HSP1-9 (full battery), the HS CLIST block
+  live path (ZOS-8), sound / alarm (ZOS-8). NEXT: ZOS-6 REALTIME (not started).

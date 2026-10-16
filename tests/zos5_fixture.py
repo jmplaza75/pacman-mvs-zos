@@ -19,6 +19,7 @@ import qry_cases as Q  # noqa: E402
 import ref_gx_screen as gx  # noqa: E402
 
 CLRPFX = bytes.fromhex('1140403C404000')
+TSO_CLEAR = bytes.fromhex('7EC111F2E71D4011404013')
 QUERY = bytes.fromhex('F3000501FF02')
 OUT = R / 'tests/fixtures/zos5/session.trace'
 CARDS_A = ['+', '+', 'R', 'R', 'U', '+', 'L', 'L', 'L', 'D', 'D', 'R', 'X', 'r', 'R', 'R', '+', 'D', 'Q']
@@ -50,7 +51,7 @@ def line(text):
     return bytes([0xF1, 0xC3, 0x11, 0x40, 0x40]) + e(text)
 
 
-def session(reply=None, canvas='W', cards_a=None, b_redraw='CLEAR+PA2', c_redraw='ENTER'):
+def session(reply=None, canvas='W', cards_a=None, b_redraw='CLEAR+PA2', c_redraw='ENTER', games='ABC', tso_clear=False):
     reply = reply if reply is not None else Q.rec('dyn')
     recs, t = [], [36000000]
 
@@ -78,6 +79,8 @@ def session(reply=None, canvas='W', cards_a=None, b_redraw='CLEAR+PA2', c_redraw
             if c == '':
                 if redraw == 'CLEAR+PA2':
                     term(b'\x6D')
+                    if tso_clear:
+                        host(TSO_CLEAR)                                 # z/OS TSO / VTAM answer to CLEAR (live T2)
                     term(b'\x6E')
                 elif redraw == 'PA2':
                     term(b'\x6E')
@@ -93,9 +96,12 @@ def session(reply=None, canvas='W', cards_a=None, b_redraw='CLEAR+PA2', c_redraw
         term(enter(''), 1500)                                         # ENTER at ISPF's ***
         host(SHELL_PANEL, 60)                                         # back in the ISPF Command Shell (option 6)
 
-    play(KW_AB, 0x7E, cards_a or CARDS_A, canvas, None)
-    play(KW_AB, 0x7E, CARDS_BC, canvas, b_redraw)
-    play(KW_C, 0xF5, CARDS_BC, 'D', c_redraw)
+    if 'A' in games:
+        play(KW_AB, 0x7E, cards_a or CARDS_A, canvas, None)
+    if 'B' in games:
+        play(KW_AB, 0x7E, CARDS_BC, canvas, b_redraw)
+    if 'C' in games:
+        play(KW_C, 0xF5, CARDS_BC, 'D', c_redraw)
     seq = 0
     for r in recs:
         if r[0] == '<':
@@ -119,10 +125,14 @@ def dump(d, b):
     return [f'{d} 0x{k:<4x}{b[k:k + 32].hex()}' for k in range(0, len(b), 32)]
 
 
-def render(recs, raw=None):
-    """Trace text; raw: optional list of (direction, ms, bytes) blocks used instead of the framed records."""
+def render(recs, raw=None, funcs=None):
+    """Trace text; raw: optional list of (direction, ms, bytes) blocks used instead of the framed records; funcs: the
+    TN3270E functions to show as negotiated (FUNCTIONS IS) in the TELNET state replay (default: none, as before)."""
     out = ['20261017.095959.000 infra  Trace started (synthetic ZOS-5 fixture)', ' TELNET state:',
-           '< 0x0   fffd28fffa2802044942' + '4d2d44594e414d4943fff0', ' Screen contents (TN3270E-3270) unformatted:']
+           '< 0x0   fffd28fffa2802044942' + '4d2d44594e414d4943fff0']
+    if funcs is not None:
+        out.append('< 0x0   fffa280304' + bytes(funcs).hex() + 'fff0')
+    out.append(' Screen contents (TN3270E-3270) unformatted:')
     out += dump('<', bytes(5) + b'\x05\x02' + e('ISPF Command Shell') + bytes(40))
     out.append(' Data stream:')
     blocks = raw

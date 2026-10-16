@@ -1114,8 +1114,8 @@ def hidx(r, pred, n=0):
 neg5 = {
     'host DATA-TYPE SSCP-LU (07)': (mut(lambda r: r[hidx(r, lambda x: x[0] == '<', 5)].__setitem__(
         2, bytes([7, 0, 0]) + r[hidx(r, lambda x: x[0] == '<', 5)][2][3:])), 'not 3270-DATA'),
-    'host REQUEST-FLAG 01': (mut(lambda r: r[hidx(r, lambda x: x[0] == '<', 3)].__setitem__(
-        2, bytes([0, 1, 0]) + r[hidx(r, lambda x: x[0] == '<', 3)][2][3:])), 'not 3270-DATA'),
+    'host RESPONSE-FLAG 03': (mut(lambda r: r[hidx(r, lambda x: x[0] == '<', 3)].__setitem__(
+        2, bytes([0, 0, 3]) + r[hidx(r, lambda x: x[0] == '<', 3)][2][3:])), 'not 3270-DATA'),
     'record shorter than the header': (mut(lambda r: r[hidx(r, lambda x: x[0] == '<', 4)].__setitem__(
         slice(2, 4), [b'\x00\x00', b'\xf1'])), 'no TN3270E header'),
     'empty 3270-DATA payload': (mut(lambda r: r[hidx(r, lambda x: x[0] == '<', 4)].__setitem__(3, b'')),
@@ -1170,6 +1170,140 @@ ok_resp = mut(lambda r: (r[hidx(r, lambda x: x[0] == '<', 6)].__setitem__(
     2, b'\x00\x00\x02' + r[hidx(r, lambda x: x[0] == '<', 6)][2][3:]),
     r.insert(hidx(r, lambda x: x[0] == '<', 6) + 1, ['>', 0, b'\x02\x00\x00' + bytes([0, 6]), b'\x00'])))
 assert z5(ok_resp) == 'PASS', z5(ok_resp)
+# RFC 2355 8.1.2: REQUEST-FLAG is ignored outside DATA-TYPE REQUEST - the exact header z/OS sent (live trace T2),
+# 00 01 02 00 1e on a host 3270-DATA record with a payload, answered by a positive RESPONSE: accepted
+rq_ok = Z5.tn3270e([(0, '<', 't', bytes.fromhex('000102001e') + bytes.fromhex('f1c3114040')),
+                    (1, '>', 't', bytes.fromhex('020100001e') + b'\x00')])
+assert rq_ok[0] == [(0, '<', 't', bytes.fromhex('f1c3114040'))], rq_ok
+for bad_rq in (bytes.fromhex('020100001e') + b'\x01', bytes.fromhex('020101001e') + b'\x00',
+               bytes.fromhex('020100001f') + b'\x00'):                        # negative / flag / wrong SEQ: still FAIL
+    try:
+        Z5.tn3270e([(0, '<', 't', bytes.fromhex('000102001e') + b'\xf1\xc3'), (1, '>', 't', bad_rq)])
+        raise AssertionError(bad_rq.hex())
+    except Z5.Fail:
+        pass
+# negotiated CONTENTION-RESOLUTION (05, as z/OS in live trace T2): REQUEST-FLAG on host 3270-DATA = SDI (01) / KRI
+# (02) only; normal BID 09 / 00 / 02, no payload, answered by exactly 02 00 00 SEQ 00; nothing else accepted
+CRF = {0x00, 0x02, 0x04, 0x05}
+D = bytes.fromhex('f1c3114040')
+
+
+def tn(rs_, f=CRF):
+    try:
+        return Z5.tn3270e([(k, d_, 't', b) for k, (d_, b) in enumerate(rs_)], f)
+    except Z5.Fail as ex:
+        return 'FAIL: ' + str(ex)
+
+
+def H(dt, rq, rsf, sq, p=D):
+    return ('<', bytes([dt, rq, rsf]) + sq.to_bytes(2, 'big') + p)
+
+
+def A(sq, rq=0, rsf=0, p=b'\x00'):
+    return ('>', bytes([2, rq, rsf]) + sq.to_bytes(2, 'big') + p)
+
+
+assert not isinstance(tn([H(0, 1, 2, 0x1e), A(0x1e)]), str)                      # SDI
+assert not isinstance(tn([H(0, 3, 2, 0x1e), A(0x1e)]), str)                      # SDI + KRI
+assert 'not 3270-DATA' in tn([H(0, 4, 2, 0x1e), A(0x1e)])                       # bit 04 on 3270-DATA
+bid_ok = tn([H(0, 3, 2, 0x22), A(0x22), H(9, 0, 2, 0x23, b''), A(0x23), H(0, 3, 2, 0x24), A(0x24)])
+assert not isinstance(bid_ok, str) and [x[3] for x in bid_ok[0]] == [D, D] and bid_ok[1] == '+1', bid_ok
+for why, rs_, want in (
+        ('BID with payload', [H(9, 0, 2, 0x23, b'\x00'), A(0x23)], 'BID'),
+        ('BID RESPONSE-FLAG 01', [H(9, 0, 1, 0x23, b''), A(0x23)], 'BID'),
+        ('BID RESPONSE-FLAG 00', [H(9, 0, 0, 0x23, b'')], 'BID'),
+        ('SIGNAL BID (04)', [H(9, 4, 2, 0x23, b''), A(0x23)], 'BID'),
+        ('BID never answered', [H(9, 0, 2, 0x23, b'')], 'never answered'),
+        ('BID answered with another SEQ', [H(9, 0, 2, 0x23, b''), A(0x24)], 'RESPONSE'),
+        ('BID answered negatively', [H(9, 0, 2, 0x23, b''), A(0x23, rsf=1, p=b'\x01')], 'RESPONSE'),
+        ('BID answered with REQUEST-FLAG 01', [H(9, 0, 2, 0x23, b''), A(0x23, rq=1)], 'RESPONSE'),
+        ('BID without CONTENTION-RESOLUTION', [H(9, 0, 2, 0x23, b''), A(0x23)], 'BID'),
+        ('unknown host DATA-TYPE 01', [H(1, 0, 2, 0x23), A(0x23)], 'not 3270-DATA'),
+        ('unknown host DATA-TYPE 0A', [H(0x0A, 0, 2, 0x23, b''), A(0x23)], 'not 3270-DATA'),
+        ('BID out of the +1 host sequence', [H(0, 3, 2, 0x22), A(0x22), H(9, 0, 2, 0x25, b''), A(0x25),
+                                             H(0, 3, 2, 0x23), A(0x23)], 'SEQ-NUMBER'),
+        ('terminal 3270-DATA REQUEST-FLAG 01', [('>', bytes([0, 1, 0, 0, 0]) + b'\x7d')], 'plain 3270-DATA')):
+    got = tn(rs_, CRF - {0x05} if why == 'BID without CONTENTION-RESOLUTION' else CRF)
+    assert isinstance(got, str) and want in got, (why, got)
+# z/OS TSO / VTAM answers CLEAR with one external write (live trace T2): accepted only exactly, once, in B between
+# CLEAR and PA2; it is no PACMAN write (B still = TSD48 / the model); zero stays valid; everything else fails
+def renum(r):
+    k = 0
+    for x in r:
+        if x[0] == '<':
+            x[2] = bytes(3) + k.to_bytes(2, 'big')
+            k += 1
+    return r
+
+
+def put(at, rec=None, n=1):
+    r = [list(x) for x in FX.session()]
+    i = at(r)
+    for _ in range(n):
+        r.insert(i, ['<', 0, bytes(5), rec or Z5.TSO_CLEAR])
+    return renum(r)
+
+
+clr_i = lambda r: hidx(r, lambda x: x[3] == b'\x6d')                        # noqa: E731  B's CLEAR
+pa2_i = lambda r: hidx(r, lambda x: x[3] == b'\x6e')                        # noqa: E731  B's PA2
+ok_clr = Z5.check(FX.render(put(lambda r: clr_i(r) + 1)))
+assert ok_clr['verdict'] == 'PASS' and ok_clr['games'][1]['tso_clear'] == 1, ok_clr['verdict']
+assert ok_clr['games'][1]['writes'] == rep['games'][1]['writes'] and rep['games'][1]['tso_clear'] == 0
+for why, recs, want in (
+        ('before the CLEAR', put(clr_i), 'no pending input'),
+        ('after the PA2', put(lambda r: pa2_i(r) + 1), 'no pending input'),     # takes PA2's place
+        ('in game A', put(lambda r: hidx(r, lambda x: x[0] == '>' and x[3][6:] == b'\xd9') + 1), 'no pending input'),
+        ('in game C', put(lambda r: hidx(r, lambda x: x[0] == '>' and x[3][6:] == b'\xd9', 2) + 1), 'no pending input'),
+        ('twice', put(lambda r: clr_i(r) + 1, n=2), 'no pending input'),
+        ('WCC C3', put(lambda r: clr_i(r) + 1, bytes.fromhex('7EC311F2E71D4011404013')), 'no pending input'),
+        ('another address', put(lambda r: clr_i(r) + 1, bytes.fromhex('7EC111F2E81D4011404013')), 'no pending input'),
+        ('orders reordered', put(lambda r: clr_i(r) + 1, bytes.fromhex('7EC11D4011F2E711404013')), 'no pending input'),
+        ('Erase/Write instead', put(lambda r: clr_i(r) + 1, bytes.fromhex('F5C111F2E71D4011404013')), 'no pending input'),
+        ('unrelated write after CLEAR', put(lambda r: clr_i(r) + 1, bytes.fromhex('F1C3114040')), 'no pending input')):
+    got = z5(recs)
+    assert got.startswith('FAIL') and want in got, (why, got)
+# composite acceptance (ZOS-5 final: A from one trace, B / C from the A / B / C session trace with
+# CONTENTION-RESOLUTION): the synthetic T5-like (A only) + T2-like (A / B / C, CR, TSO CLEAR in B) evidence passes;
+# a wrong or missing A source, a wrong B / C source, swapped roles and no CR fail; the first game of the B / C source
+# never counts as A (a B / C source whose A misses an L still passes, an A source with that A fails)
+CRS = [0x00, 0x02, 0x04, 0x05]
+ta = FX.render(FX.session(games='A'), funcs=CRS)
+tbc = FX.render(FX.session(tso_clear=True), funcs=CRS)
+two_l = ['+', 'R', 'R', 'U', 'L', 'L', 'D', 'D', 'R', 'X', 'r', 'R', 'R', 'D', 'Q']
+
+
+def zc(a_, bc_):
+    try:
+        return Z5.check_composite(a_, bc_, 'TA', 'TBC')
+    except Z5.Fail as ex:
+        return 'FAIL: ' + str(ex)
+
+
+cp = zc(ta, tbc)
+assert cp['verdict'] == 'PASS' and [(g['name'], g['source']) for g in cp['games']] == [('A', 'TA'), ('B', 'TBC'),
+                                                                                         ('C', 'TBC')], cp
+assert [g['tso_clear'] for g in cp['games']] == [0, 1, 0] and cp['games'][0]['cards'] == 15
+assert zc(ta, FX.render(FX.session(tso_clear=True, cards_a=two_l), funcs=CRS))['verdict'] == 'PASS'   # T2-like A
+for why, a_, bc_, want in (
+        ('A source = the A / B / C session', tbc, tbc, 'exactly one A game'),
+        ('A source with two L', FX.render(FX.session(games='A', cards_a=two_l), funcs=CRS), tbc, 'not the frozen MOVES'),
+        ('A source empty of games', FX.render(FX.session(games=''), funcs=CRS), tbc, 'exactly one A game'),
+        ('A source holds C only', FX.render(FX.session(games='C'), funcs=CRS), tbc, 'size switch'),
+        ('B / C source with B redraw by PA2 only', ta, FX.render(FX.session(b_redraw='PA2'), funcs=CRS), 'CLEAR then PA2'),
+        ('B / C source with C redraw by PA2', ta, FX.render(FX.session(c_redraw='PA2'), funcs=CRS), 'empty ENTER'),
+        ('B / C source without CONTENTION-RESOLUTION', ta, FX.render(FX.session(tso_clear=True)), 'not negotiated'),
+        ('B / C source = A only', ta, ta, 'games found'),
+        ('roles swapped', tbc, ta, 'exactly one A game')):
+    got = zc(a_, bc_)
+    assert isinstance(got, str) and want in got, (why, got)
+# --reply-out serialisation = the tests/qreply_*.hex convention (upper-case hex, one line, final newline): the dyn
+# reply serialised by the checker is the file tests/qreply_dyn.hex byte for byte
+assert Z5.reply_hex(Z5.Q.rec('dyn')).encode() == (R / 'tests/qreply_dyn.hex').read_bytes()
+# the negotiated functions come from the TELNET state replay (T2: FUNCTIONS IS 00 02 04 05); the synthetic fixture and
+# the local x3270 run negotiated none
+tstate = ('x\n TELNET state:\n< 0x0   fffa28030400020405fff0\n Screen contents (TN3270E-3270) formatted:\n')
+assert Z5.functions(tstate) == {0, 2, 4, 5} and Z5.functions(fxt) == set()
+assert Z5.functions((R / 'tests/fixtures/zos5/x3270-midsession.trace').read_text()) == set()
 neg_resp = [list(x) for x in ok_resp]
 neg_resp[hidx(neg_resp, lambda x: x[2][:1] == b'\x02')][2] = b'\x02\x00\x01\x00\x06'
 assert z5(neg_resp).startswith('FAIL') and 'RESPONSE' in z5(neg_resp)

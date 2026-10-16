@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """ZOS-5 live full-screen acceptance postcheck (docs/zos5-design.md, docs/zos5-live-session.md). Local, read-only.
 
-Usage: zos5_live_check.py TRACE [--reply-out FILE]
+Usage: zos5_live_check.py TRACE [--reply-out FILE]                    one trace holding games A, B and C
+       zos5_live_check.py --a LABEL=TRACE --bc LABEL=TRACE [--reply-out FILE]
+                          composite acceptance (ZOS-5 final, docs/evidence/zos5-fullscreen.md): A from the --a trace
+                          (exactly one game), B and C from the --bc A / B / C session (CONTENTION-RESOLUTION
+                          negotiated); the first game of the --bc trace is never counted as A
 TRACE = the c3270 trace started in the ISPF Command Shell (option 6; x3270if Trace(On,...)) and stopped there after
 game C. Nothing earlier exists in it; inbound typed text is used only inside the games (the game commands).
 
@@ -10,12 +14,21 @@ game C. Nothing earlier exists in it; inbound typed text is used only inside the
    the keep-alive IAC DO / WILL / WONT TIMING-MARK and IAC NOP are accepted (reported); any other telnet command, a
    record split by one, bytes after the last EOR, or bytes before the first record = FAIL.
    Every record carries the 5-byte TN3270E header (RFC 2355): DATA-TYPE, REQUEST-FLAG, RESPONSE-FLAG, SEQ-NUMBER.
-   Host: DATA-TYPE X'00' (3270-DATA) only, REQUEST-FLAG X'00', RESPONSE-FLAG X'00' / X'01' / X'02', a non-empty
-   payload, SEQ-NUMBER all zero or +1 per record (mod 65536). Terminal: 3270-DATA (flags X'00', SEQ-NUMBER all zero or
-   +1 per record) or RESPONSE (X'02', REQUEST-FLAG X'00', RESPONSE-FLAG X'00' with payload X'00' = positive, answering
-   an outstanding host record that asked for a response; X'01' negative = FAIL); every host record with
-   ALWAYS-RESPONSE (X'02') must be answered. Shorter than 5 bytes, any other value = FAIL. Only then the 3270 payload
-   is passed on.
+   In RFC 2355 core, REQUEST-FLAG has meaning only for DATA-TYPE REQUEST (8.1.2: ignored otherwise, senders SHOULD set
+   X'00'). The TN3270E CONTENTION-RESOLUTION function (05) redefines it as a bit mask: on host 3270-DATA X'01' SDI,
+   X'02' KRI; on BID X'04' SIGNAL. ZOS-5 validates the negotiated subset actually observed (live trace T2, z/OS
+   FUNCTIONS IS 00 02 04 05), nothing more. The negotiated functions are read from the ' TELNET state:' replay at the
+   start of the trace (the last FUNCTIONS IS).
+   Host: DATA-TYPE X'00' (3270-DATA): RESPONSE-FLAG X'00' / X'01' / X'02', a non-empty payload; with
+   CONTENTION-RESOLUTION negotiated REQUEST-FLAG only X'00' / X'01' SDI / X'02' KRI / X'03' SDI + KRI (any other bit =
+   FAIL), without it REQUEST-FLAG ignored (RFC 2355 core). DATA-TYPE X'09' (BID, a TN3270E control record, never
+   3270 data): only with CONTENTION-RESOLUTION negotiated and exactly REQUEST-FLAG X'00' (SIGNAL BID X'04' not
+   accepted: not observed), RESPONSE-FLAG X'02', no payload; it must be answered by exactly X'02' X'00' X'00' + its
+   SEQ-NUMBER + payload X'00'. Any other host DATA-TYPE = FAIL. Host SEQ-NUMBER all zero or +1 per record (mod
+   65536), BIDs included. Terminal: 3270-DATA (REQUEST-FLAG X'00', RESPONSE-FLAG X'00', SEQ-NUMBER all zero or +1 per
+   record) or RESPONSE (X'02', RESPONSE-FLAG X'00' with payload X'00' = positive, answering an outstanding host record
+   that asked for a response; X'01' negative = FAIL); every host record with ALWAYS-RESPONSE (X'02') must be answered.
+   Shorter than 5 bytes, any other value = FAIL. Only then the 3270 payload is passed on.
 2. Games: a game starts at the host record `7E C3` or `F5 C3` (PACPLAT's data-free size switch) and ends at the next one
    / the end of the trace. Exactly three, in order: A and B `7E C3` then the Read Partition Query `F3 00 05 01 FF 02`
    then exactly one inbound record before the first screen: the Query Reply (AID X'88', tests/qry_cases.valid); C
@@ -23,7 +36,11 @@ game C. Nothing earlier exists in it; inbound typed text is used only inside the
    (qry_cases.expect_size), resolved as PACPLAT does (HILITE / GLYPHS / SCALE AUTO); nothing is assumed.
 3. Cards: after the first screen every host write is either an idle tick (X'F1' + WCC X'C2': card `+`) or the answer
    to the oldest pending AID: ENTER = its typed command (empty = redraw), PA2 = redraw; CLEAR is not delivered to the
-   program (recorded; B's redraw must be CLEAR then PA2, C's an empty ENTER); any other AID = FAIL. The cards without
+   program (recorded; B's redraw must be CLEAR then PA2, C's an empty ENTER); any other AID = FAIL. z/OS TSO / VTAM
+   answers CLEAR itself with one write (live trace T2: `7E C1 11 F2 E7 1D 40 11 40 40 13`, Erase/Write Alternate,
+   WCC C1, SBA(27,120), SF, SBA(1,1), IC): exactly that record, at most once, only in game B between its CLEAR and
+   the following PA2, is classified as external CLEAR handling - not a PACMAN write, no card, no model frame; zero is
+   also valid; anywhere else, twice or any other bytes = the usual FAIL. The cards without
    `+` and redraws must equal the frozen case (MOVES / TSORDR / TSORDR) up to its Q, the redraws where the case has them.
 4. Model: tests/ref_gx_screen.py frames for the rebuilt cards and the resolved profile (= oracle 310 TSD45 / TSD48 /
    TSD28 when no tick was seen); write 0 = X'F1' or X'F5' + WCC + PACFSIO's clear prefix + the rest; a redraw and the
@@ -63,6 +80,7 @@ END_LINES = {'MOVES': ['QUIT', 'TURNS 013', 'SCORE 0080', 'LIVES 3'],
              'TSORDR': ['QUIT', 'TURNS 002', 'SCORE 0010', 'LIVES 3']}     # oracle 310 TSD45 / TSD48 / TSD28
 BAD_TEXT = re.compile(r'IKJ\d{5}|IEC\d{3}|IGZ\d{4}|CEE\d{4}|ABEND|PACMAN:|\*\*\*')
 SHELL = 'ISPF Command Shell'           # the option 6 panel title: the boundary after each game
+TSO_CLEAR = bytes.fromhex('7EC111F2E71D4011404013')   # z/OS TSO / VTAM write answering CLEAR (live trace T2)
 AIDN = {0x7D: 'ENTER', 0x6E: 'PA2', 0x6D: 'CLEAR', 0x6C: 'PA1', 0x88: 'QREPLY'}
 
 
@@ -152,15 +170,34 @@ def seq_ok(seqs):
     return all(s == 0 for s in seqs) or all(b == (a + 1) % 65536 for a, b in zip(seqs, seqs[1:]))
 
 
-def tn3270e(recs):
+def functions(text):
+    """The TN3270E functions negotiated (the last FUNCTIONS IS in the ' TELNET state:' replay), as a set of codes."""
+    if ' TELNET state:' not in text or ' Screen contents' not in text:
+        return set()
+    part = text[text.index(' TELNET state:'):text.index(' Screen contents')]
+    b = bytes.fromhex(''.join(re.findall(r'^< 0x[0-9a-f]+\s+([0-9a-f]+)\s*$', part, re.M)))
+    fis = re.findall(rb'\xff\xfa\x28\x03\x04(.*?)\xff\xf0', b, re.S)
+    return set(fis[-1]) if fis else set()
+
+
+CR = 0x05                                # TN3270E function CONTENTION-RESOLUTION
+
+
+def tn3270e(recs, funcs=frozenset()):
     """Validate the TN3270E headers; [(order, direction, time, payload)] of the 3270-DATA records."""
     out, hseq, iseq, pending = [], [], [], {}
+    cr = CR in funcs
     for n, d, ts, r in recs:
         if len(r) < 5:
             raise Fail(f'record of {len(r)} bytes: no TN3270E header ({d} {ts})')
         dt, rq, rs, sq, p = r[0], r[1], r[2], int.from_bytes(r[3:5], 'big'), r[5:]
-        if d == '<':
-            if dt != 0x00 or rq != 0x00 or rs not in (0x00, 0x01, 0x02) or not p:
+        if d == '<' and dt == 0x09:
+            if not cr or rq != 0x00 or rs != 0x02 or p:
+                raise Fail(f'host BID {r.hex()} not a normal BID under negotiated CONTENTION-RESOLUTION ({ts})')
+            hseq.append(sq)
+            pending[sq] = 'BID'
+        elif d == '<':
+            if dt != 0x00 or rs not in (0x00, 0x01, 0x02) or not p or (cr and rq & ~0x03):
                 raise Fail(f'host record header {r[:5].hex()} not 3270-DATA with valid flags ({ts})')
             hseq.append(sq)
             if rs:
@@ -172,15 +209,15 @@ def tn3270e(recs):
             iseq.append(sq)
             out.append((n, d, ts, p))
         elif dt == 0x02:
-            if rq or rs != 0x00 or p != b'\x00' or sq not in pending:
+            if rs != 0x00 or p != b'\x00' or sq not in pending or (pending[sq] == 'BID' and rq):
                 raise Fail(f'terminal RESPONSE {r.hex()} not a positive answer to an outstanding request ({ts})')
             del pending[sq]
         else:
             raise Fail(f'terminal record DATA-TYPE {dt:02X} ({ts})')
     if not seq_ok(hseq) or not seq_ok(iseq):
         raise Fail('SEQ-NUMBER neither all zero nor +1 per record')
-    if any(v == 0x02 for v in pending.values()):
-        raise Fail('host record with ALWAYS-RESPONSE never answered')
+    if any(v in (0x02, 'BID') for v in pending.values()):
+        raise Fail('host record with ALWAYS-RESPONSE (or a BID) never answered')
     return out, ('+1' if any(hseq) else 'zero')
 
 
@@ -259,7 +296,7 @@ def game(name, case, cmd, ev, res):
         raise Fail(f'{name}: canvas {size} has no model layout')
     first = ev.index(host[i])
     writes, pend, cards, kinds, aids, clear_before, ticks_before_aid = [], [], [], [], [], False, None
-    n_first = None
+    n_first, tso_clear = None, 0
     for e in ev[first:]:
         if e[1] == '>':
             aid = e[3][0]
@@ -273,6 +310,9 @@ def game(name, case, cmd, ev, res):
                     ticks_before_aid = cards.count('+')
             else:
                 raise Fail(f'{name}: unexpected AID {aid:02X}')
+            continue
+        if name == 'B' and clear_before and e[3] == TSO_CLEAR and not tso_clear:
+            tso_clear += 1                               # external CLEAR handling (CLEAR -> PA2 in B only)
             continue
         writes.append(e)
         if n_first is None:
@@ -341,7 +381,8 @@ def game(name, case, cmd, ev, res):
     res.update(name=name, profile=prof, size=size, canvas=canvas, writes=len(game_w), ticks=cards.count('+'),
                aids=aids, d28=('ticks before the first input' if ticks_before_aid else
                                'no tick before the first input (held or none)'),
-               pause=ms(line_t) - ms(end_t) if line_t else None, reply=reply)
+               pause=ms(line_t) - ms(end_t) if line_t else None, reply=reply, tso_clear=tso_clear,
+               cards=len([c for c in cards if c != '+']))
     return prof, size
 
 
@@ -350,59 +391,136 @@ def ms(ts):
     return round((h * 3600 + m * 60 + s) * 1000)
 
 
-def check(text):
+def parse(text):
+    """Framing, negotiated functions, game starts and the audit of one trace (fail closed)."""
     bl, snap = blocks(text)
     recs, keep = telnet(bl)
-    ev, rule = tn3270e(recs)
+    funcs = functions(text)
+    ev, rule = tn3270e(recs, funcs)
     starts = [k for k, e in enumerate(ev) if e[1] == '<' and len(e[3]) == 2 and e[3][0] in (0x7E, 0xF5) and e[3][1] == 0xC3]
-    if len(starts) != 3:
-        raise Fail(f'{len(starts)} games found (A, B, C expected)')
     if any(re.search(r'LOGON|PASSW', ' '.join(texts(e[3]))) for e in ev if e[1] == '<'):
         raise Fail('audit: LOGON / PASSWORD text in a host record of the data stream')
     words = re.findall(r'[A-Z0-9#@$.]{4,}', snap.replace(b'\x00', b'\x40').decode('cp037', 'replace'))
     snap_flags = sorted({w for w in words if re.search(r'LOGON|PASSW|IKJ567', w)})
-    outside = [(AIDN.get(e[3][0], f'{e[3][0]:02X}'), len(e[3])) for e in ev[:starts[0]] if e[1] == '>']
-    results, verdict = [], 'PASS'
-    for (name, case, cmd, block), a, b in zip(GAMES, starts, starts[1:] + [len(ev)]):
-        r = {'block': block}
-        prof, size = game(name, case, cmd, ev[a:b], r)
-        if cmd == 0x7E and (prof != (1, 1, 1) or size != (120, 27)):
-            verdict = 'MODEL-IDENTICAL-OTHER-PROFILE'
-        results.append(r)
+    return {'records': len(recs), 'keepalive': keep, 'seq': rule, 'funcs': sorted(funcs), 'ev': ev, 'starts': starts,
+            'snapshot': len(snap), 'snap_flags': snap_flags}
+
+
+def outside_errors(ev):
     for e in ev:                                         # shell traffic outside the games: errors still fail
         m = e[1] == '<' and BAD_TEXT.search(' '.join(texts(e[3])))
         if m and m.group(0) != '***':
             raise Fail(f'error text in a host record outside the game stream: {m.group(0)}')
-    return {'records': len(recs), 'keepalive': keep, 'seq': rule, 'games': results, 'outside': outside,
-            'snapshot': len(snap), 'snap_flags': snap_flags, 'verdict': verdict}
+
+
+def designed(r):
+    return r['cmd'] != 0x7E or (r['profile'] == (1, 1, 1) and r['size'] == (120, 27))
+
+
+def run_game(g, ev, a, b, source):
+    name, case, cmd, block = g
+    r = {'block': block, 'source': source, 'cmd': cmd}
+    game(name, case, cmd, ev[a:b], r)
+    return r
+
+
+def check(text):
+    t = parse(text)
+    ev, starts = t['ev'], t['starts']
+    if len(starts) != 3:
+        raise Fail(f'{len(starts)} games found (A, B, C expected)')
+    outside = [(AIDN.get(e[3][0], f'{e[3][0]:02X}'), len(e[3])) for e in ev[:starts[0]] if e[1] == '>']
+    results = [run_game(g, ev, a, b, 'trace') for g, a, b in zip(GAMES, starts, starts[1:] + [len(ev)])]
+    outside_errors(ev)
+    return {'records': t['records'], 'keepalive': t['keepalive'], 'seq': t['seq'], 'games': results, 'outside': outside,
+            'snapshot': t['snapshot'], 'snap_flags': t['snap_flags'],
+            'verdict': 'PASS' if all(designed(r) for r in results) else 'MODEL-IDENTICAL-OTHER-PROFILE'}
+
+
+def check_composite(text_a, text_bc, la='A source', lbc='B/C source'):
+    """Composite acceptance (ZOS-5 final): game A from a trace holding exactly one game (A, frozen MOVES / TSD45, closed
+    through the ISPF Command Shell); games B and C from one trace holding the whole A / B / C session with
+    CONTENTION-RESOLUTION negotiated - B the second game (TSD48, the scoped TSO CLEAR write), C the third (TSD28). The
+    first game of the B/C source is NOT validated and never counts as A."""
+    ta = parse(text_a)
+    if len(ta['starts']) != 1:
+        raise Fail(f'{la}: {len(ta["starts"])} games found (exactly one A game expected)')
+    ra = run_game(GAMES[0], ta['ev'], ta['starts'][0], len(ta['ev']), la)
+    outside_errors(ta['ev'])
+    tb = parse(text_bc)
+    if CR not in tb['funcs']:
+        raise Fail(f'{lbc}: CONTENTION-RESOLUTION not negotiated')
+    if len(tb['starts']) != 3:
+        raise Fail(f'{lbc}: {len(tb["starts"])} games found (the A / B / C session expected)')
+    s = tb['starts']
+    rb = run_game(GAMES[1], tb['ev'], s[1], s[2], lbc)
+    rc = run_game(GAMES[2], tb['ev'], s[2], len(tb['ev']), lbc)
+    outside_errors(tb['ev'])
+    res = [ra, rb, rc]
+    return {'sources': {la: ta, lbc: tb}, 'games': res,
+            'verdict': 'PASS' if all(designed(r) for r in res) else 'MODEL-IDENTICAL-OTHER-PROFILE'}
+
+
+def reply_hex(rp):
+    """A recorded Query Reply as stored in tests/qreply_*.hex: upper-case hexadecimal, one line, final newline."""
+    return rp.hex().upper() + '\n'
+
+
+def game_line(g):
+    rp = g['reply']
+    return (f'game {g["name"]} ({g["block"]}) from {g["source"]}: profile colour/highlight/GE {g["profile"]}, canvas '
+            f'{g["size"]} ({g["canvas"]}), {g["writes"]} writes = model, {g["ticks"]} ticks, {g["cards"]} commands, AIDs '
+            f'{g["aids"]}, TSO CLEAR writes {g["tso_clear"]}, D28: {g["d28"]}, end pause {g["pause"]} ms'
+            + (f', reply {len(rp)} bytes{" = tests/qreply_dyn.hex" if rp == Q.rec("dyn") else " (differs from qreply_dyn)"}'
+               if rp else ', no query (forced)'))
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('trace')
+    ap.add_argument('trace', nargs='?')
+    ap.add_argument('--a', metavar='LABEL=TRACE', help='composite: the trace holding the accepted game A')
+    ap.add_argument('--bc', metavar='LABEL=TRACE', help='composite: the A / B / C session trace for B and C')
     ap.add_argument('--reply-out')
     a = ap.parse_args()
-    raw = Path(a.trace).read_bytes()
-    print(f'trace {a.trace} SHA-256 {hashlib.sha256(raw).hexdigest()} ({len(raw)} bytes)')
-    try:
-        rep = check(raw.decode('utf-8', 'replace'))
-    except Fail as e:
-        print(f'ZOS-5 LIVE CHECK FAIL: {e}')
-        sys.exit(1)
-    print(f'framing: {rep["records"]} TN3270E records, SEQ-NUMBER {rep["seq"]}, keep-alives {rep["keepalive"]}; '
-          f'inbound before game A: {rep["outside"]}')
-    print(f'audit: start-of-trace dumps {rep["snapshot"]} bytes (not data), words to review there: '
-          f'{rep["snap_flags"] or "none"}; the raw trace is never committed')
-    for g in rep['games']:
-        rp = g['reply']
-        print(f'game {g["name"]} ({g["block"]}): profile colour/highlight/GE {g["profile"]}, canvas {g["size"]} '
-              f'({g["canvas"]}), {g["writes"]} writes = model, {g["ticks"]} ticks, AIDs {g["aids"]}, D28: {g["d28"]}, '
-              f'end pause {g["pause"]} ms' + (f', reply {len(rp)} bytes'
-                                              f'{" = tests/qreply_dyn.hex" if rp == Q.rec("dyn") else ""}' if rp else ''))
+    if a.trace and not (a.a or a.bc):
+        raw = Path(a.trace).read_bytes()
+        print(f'trace {a.trace} SHA-256 {hashlib.sha256(raw).hexdigest()} ({len(raw)} bytes)')
+        try:
+            rep = check(raw.decode('utf-8', 'replace'))
+        except Fail as e:
+            print(f'ZOS-5 LIVE CHECK FAIL: {e}')
+            sys.exit(1)
+        print(f'framing: {rep["records"]} TN3270E records, SEQ-NUMBER {rep["seq"]}, keep-alives {rep["keepalive"]}; '
+              f'inbound before game A: {rep["outside"]}')
+        print(f'audit: start-of-trace dumps {rep["snapshot"]} bytes (not data), words to review there: '
+              f'{rep["snap_flags"] or "none"}; the raw trace is never committed')
+        for g in rep['games']:
+            print(game_line(g))
+    elif a.a and a.bc and not a.trace:
+        (la, pa), (lb, pb) = (x.split('=', 1) for x in (a.a, a.bc))
+        raws = {la: Path(pa).read_bytes(), lb: Path(pb).read_bytes()}
+        for lab, role in ((la, 'A'), (lb, 'B and C')):
+            print(f'{lab} (source of {role}): SHA-256 {hashlib.sha256(raws[lab]).hexdigest()} ({len(raws[lab])} bytes)')
+        try:
+            rep = check_composite(raws[la].decode('utf-8', 'replace'), raws[lb].decode('utf-8', 'replace'), la, lb)
+        except Fail as e:
+            print(f'ZOS-5 LIVE CHECK FAIL: {e}')
+            sys.exit(1)
+        names = {0: 'BIND-IMAGE', 2: 'RESPONSES', 4: 'SYSREQ', 5: 'CONTENTION-RESOLUTION'}
+        for lab, s in rep['sources'].items():
+            print(f'{lab} framing: {s["records"]} TN3270E records, host SEQ-NUMBER {s["seq"]}, keep-alives '
+                  f'{s["keepalive"]}, functions ' + ', '.join(f'{f:02X} {names.get(f, "?")}' for f in s['funcs'])
+                  + f'; {len(s["starts"])} game(s); start-of-trace dump {s["snapshot"]} bytes, words to review: '
+                  f'{s["snap_flags"] or "none"}')
+        print(f'{lb}: its first game is not validated here and is not acceptance evidence for A')
+        for g in rep['games']:
+            print(game_line(g))
+    else:
+        ap.error('either TRACE, or --a LABEL=TRACE and --bc LABEL=TRACE')
     if a.reply_out:
         rp = next(g['reply'] for g in rep['games'] if g['reply'])
-        Path(a.reply_out).write_text(rp.hex() + '\n')
-        print(f'reply written to {a.reply_out}')
+        Path(a.reply_out).write_text(reply_hex(rp))
+        print(f'reply of game A written to {a.reply_out} (SHA-256 {hashlib.sha256(Path(a.reply_out).read_bytes()).hexdigest()})')
     print(f'ZOS-5 LIVE CHECK {rep["verdict"]}')
     sys.exit(0 if rep['verdict'] == 'PASS' else 2)
 

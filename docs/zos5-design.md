@@ -146,3 +146,8 @@ Finding from the local x3270 run: Trace(On) during a session writes a telnet-sta
 screen as `<` lines before ` Data stream:` (no framing, no EOR); the checker reads data only after that marker, requires
 each host block to follow `Host socket read complete nr=N` with N bytes, and audits the dump separately. x3270 4.5 with
 a 120 x 27 oversize sends exactly tests/qreply_dyn.hex as its Query Reply (the expected-profile prediction).
+
+## 13. Outcome (2026-10-16): ZOS-5 ACCEPTED (composite)
+A / TSD45 PASS from live trace T5, B / TSD48 and C / TSD28 PASS from live trace T2; no source / CLIST / z/OS change.
+Evidence, the five live attempts and the transport findings (TN3270E RESPONSES and CONTENTION-RESOLUTION, the z/OS
+TSO / VTAM CLEAR record, the ISPF option-6 handshakes): docs/evidence/zos5-fullscreen.md.

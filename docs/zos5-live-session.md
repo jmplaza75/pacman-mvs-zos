@@ -22,12 +22,14 @@ Installed baseline under test (tag zos-4): Z00000.PACMAN.LOAD(PACMAIN), CLIST(PA
   so it is not a ZOS-5 live attempt.)
 
 ## 2. Trace on (in the ISPF Command Shell only)
+`<raw-trace-dir>` = an absolute directory outside the repository chosen by the operator (raw traces never enter
+git); substitute it in every command below.
 In a second Terminal tab:
 ```
-mkdir -p ~/zos5-live
+mkdir -p <raw-trace-dir>
 ```
 ```
-x3270if -t 4001 'Trace(On,/Users/usuario/zos5-live/zos5-live.trace)'
+x3270if -t 4001 'Trace(On,<raw-trace-dir>/zos5-live.trace)'
 ```
 c3270 starts the file with its settings, a replay of the telnet state and a dump of the current (option 6) screen,
 then ` Data stream:`; the logon is not in it (it happened before). The checker treats everything before that marker as
@@ -58,15 +60,15 @@ x3270if -t 4001 'Trace(Off)'
 ```
 Then leave ISPF normally (`=X`, log disposition as usual) - this ends the session on this logon procedure. Preserve the raw trace immutably (it stays outside git):
 ```
-shasum -a 256 ~/zos5-live/zos5-live.trace > ~/zos5-live/zos5-live.trace.sha256
+shasum -a 256 <raw-trace-dir>/zos5-live.trace > <raw-trace-dir>/zos5-live.trace.sha256
 ```
 ```
-chmod a-w ~/zos5-live/zos5-live.trace ~/zos5-live/zos5-live.trace.sha256
+chmod a-w <raw-trace-dir>/zos5-live.trace <raw-trace-dir>/zos5-live.trace.sha256
 ```
 Optional (secondary) screen captures at the milestones only - A first screen, A after `X`, B after PA2, C first
 screen, each while it is shown:
 ```
-x3270if -t 4001 'PrintText(html,file,/Users/usuario/zos5-live/A1.html)'
+x3270if -t 4001 'PrintText(html,file,<raw-trace-dir>/A1.html)'
 ```
 (names A1, A2, B1, C1).
 
@@ -120,7 +122,7 @@ first input: D28, recorded, not a failure).
 Not a STOP: animation held until the first input (D28); a slower response; ISPF's `***` after the end lines.
 
 ## 7. After the session (local, read-only)
-1. `python3 tools/zowe/zos5_live_check.py ~/zos5-live/zos5-live.trace --reply-out tests/qreply_zos_dyn.hex`
+1. `python3 tools/zowe/zos5_live_check.py <raw-trace-dir>/zos5-live.trace --reply-out tests/qreply_zos_dyn.hex`
    - exit 0 PASS: as designed (A / B profile colour, highlight, GE = (1, 1, 1), canvas 120 x 27 from the reply; every
      game write = the model; end lines; the ISPF Command Shell);
    - exit 2 MODEL-IDENTICAL-OTHER-PROFILE: the writes match the model of the profile / canvas the reply announced, but

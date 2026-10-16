@@ -1,0 +1,11 @@
+T5 (source of A): SHA-256 7d26ff6e5d4a3a216bdaed6e122a8b840251b8d45d4fea6a6c6c115c1b98e75c (428988 bytes)
+T2 (source of B and C): SHA-256 64aa4bc7fdb0fc9b45f51e939ca659d8676c9927424dea4123b2413708cc0b5f (1023723 bytes)
+T5 framing: 394 TN3270E records, host SEQ-NUMBER +1, keep-alives 0, functions 00 BIND-IMAGE, 02 RESPONSES, 04 SYSREQ, 05 CONTENTION-RESOLUTION; 1 game(s); start-of-trace dump 2429 bytes, words to review: none
+T2 framing: 958 TN3270E records, host SEQ-NUMBER +1, keep-alives 0, functions 00 BIND-IMAGE, 02 RESPONSES, 04 SYSREQ, 05 CONTENTION-RESOLUTION; 3 game(s); start-of-trace dump 2429 bytes, words to review: none
+T2: its first game is not validated here and is not acceptance evidence for A
+game A (TSD45) from T5: profile colour/highlight/GE (1, 1, 1), canvas (120, 27) (W), 103 writes = model, 87 ticks, 15 commands, AIDs ['ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER', 'ENTER'], TSO CLEAR writes 0, D28: ticks before the first input, end pause 2821 ms, reply 180 bytes = tests/qreply_dyn.hex
+game B (TSD48) from T2: profile colour/highlight/GE (1, 1, 1), canvas (120, 27) (W), 56 writes = model, 51 ticks, 4 commands, AIDs ['ENTER', 'CLEAR', 'PA2', 'ENTER', 'ENTER'], TSO CLEAR writes 1, D28: ticks before the first input, end pause 2973 ms, reply 180 bytes = tests/qreply_dyn.hex
+game C (TSD28) from T2: profile colour/highlight/GE (1, 1, 1), canvas (80, 24) (D), 44 writes = model, 39 ticks, 4 commands, AIDs ['ENTER', 'ENTER', 'ENTER', 'ENTER'], TSO CLEAR writes 0, D28: ticks before the first input, end pause 2752 ms, no query (forced)
+reply of game A written to tests/qreply_zos_dyn.hex (SHA-256 371d5a7ec83edb469a4024dd91ff6add4fed156103e64dc76f9bf693154d8745)
+ZOS-5 LIVE CHECK PASS
+exit=0
