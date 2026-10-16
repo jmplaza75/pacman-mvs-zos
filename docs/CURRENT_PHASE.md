@@ -363,3 +363,10 @@ session, one focused postcheck; reuse ZOS-2 / ZOS-3 evidence. Waiting for the us
   (Z3 + Z2, SHA-256 f8989cfa...), CEEOPTS; template copy CLIST(PACSRCT). Carried forward: C3 (ZOS-8 E2), HA6
   (ZOS-9/10), HSP1-9 (full battery), HS CLIST live path (ZOS-8), full-screen / colour / TPUT-TGET (ZOS-5).
   NEXT: ZOS-5 design / review only (not started).
+
+## ZOS-5 FULL-SCREEN / GRAPHICS - DESIGN FOR REVIEW (2026-10-16; docs/zos5-design.md)
+Not started beyond the design: no source / CLIST / JCL / dataset change, no session. Proposal: no build / no install;
+one live session (READY, `c3270 -model 2 -oversize auto`, 120 x 30) with three frozen 2.0 TSD runs of oracle 310 played
+live - A MOVES (COLOR AUTO: query, 120 x 27 wide), B TSORDR (second query, CLEAR + PA2), C TSORDR (COLOR(YES) override,
+80 x 24) - trace after READY, postcheck = byte identity with ref_gx_screen (= TSD1-61 of oracle 310, re-checked).
+NEXT (waiting for the user): decisions 1-5 of the design.
