@@ -85,7 +85,7 @@ Z4_SETS = {'work': ('Z4CL', '(TRK,(2,1,2))'), 'present': ('Z4HSY', None), 'missi
 
 
 def zos_clist_text(pfx):
-    """The z/OS CLIST (src/zos/PACMAN.clist: the 2.0 CLIST + Z-entry Z2) for a prefix."""
+    """The z/OS CLIST (src/zos/PACMAN.clist: the 2.0 CLIST + Z-entries Z3 (SYSIN) and Z2) for a prefix."""
     return (R / 'src/zos/PACMAN.clist').read_text(encoding='ascii').replace('@@PREFIX@@', pfx)
 
 

@@ -350,4 +350,8 @@ session, one focused postcheck; reuse ZOS-2 / ZOS-3 evidence. Waiting for the us
 - PACZ4INS JOB03939 PASS 23/23 + CLIST installed and verified byte for byte (2026-10-15; docs/evidence/zos4-classic.md):
   LOAD(PACMAIN) = PACZ2D (AMODE 24 / RMODE 24 / RN RU, no rebind), CLIST(PACMAN) = src/zos rendered (Z2), CEEOPTS
   exact, CLIST(PACSRCT) = the raw template. NEXT (waiting for the user): the live DIE1 / LOST0 session.
-
+- Live session 1 (2026-10-16) STOPPED: DIE1 FAIL before the first frame (terminal SYSIN LRECL 120 vs COMMAND-FILE 80:
+  IGZ0201W / IGZ0035S / U4038), LOST0 NOT RUN; final FAIL evidence, never reclassified. Z3 (ATTRIB + USING for the
+  terminal SYSIN) approved in principle; review package prepared (docs/zos4-sysin-fix.md "Revision", ZOS-DIFFS Z3,
+  install gate PASS); NOT installed. NEXT (waiting for the user): approval of the package -> install -> live session 2
+  in the same 120-column geometry.

@@ -59,6 +59,47 @@ def build_table():
     return out
 
 
+# Z3 (ZOS-4, proposed 2026-10-16, docs/zos4-sysin-fix.md): the 2.0 line `ALLOC F(SYSIN) DA(*) REUSE` becomes exactly these
+# lines (terminal SYSIN fixed 80 through ATTRIB + USING; the attribute list freed at once, only if created here)
+Z3_OLD = 'ALLOC F(SYSIN) DA(*) REUSE'
+Z3_BLOCK = [
+    '/* Z3 (ZOS-4): SYSIN FIXED 80 (PACINPT COMMAND-FILE) WHATEVER THE  */',
+    '/* TERMINAL WIDTH: ON DA(*) ONLY ATTRIB + USING SET THE DCB. THE   */',
+    '/* LIST IS FREED AT ONCE (ONLY IF CREATED HERE). FAILURE: RC 8.    */',
+    'SET &Z = 0',
+    'SET &T = 0',
+    'CONTROL NOFLUSH',
+    'ERROR DO',
+    '  SET &Z = &LASTCC',
+    '  RETURN',
+    'END',
+    'ATTRIB Z3SIATTR RECFM(F) LRECL(80) BLKSIZE(80)',
+    'IF &Z = 0 THEN DO',
+    '  SET &T = 1',
+    '  ALLOC F(SYSIN) DA(*) REUSE USING(Z3SIATTR)',
+    'END',
+    'SET &I = &Z',
+    'IF &T = 1 THEN FREE ATTRLIST(Z3SIATTR)',
+    'ERROR OFF',
+    'CONTROL FLUSH',
+    'IF &Z NE 0 THEN DO',
+    '  WRITE PACMAN: SYSIN NOT ALLOCATED (Z3, RC &Z), GAME NOT STARTED',
+    '  IF &T = 1 AND &I = 0 THEN FREE F(SYSIN)',
+    '  EXIT CODE(8)',
+    'END',
+]
+
+
+def z3_strip(text):
+    """The Z2-only text of src/zos/PACMAN.clist: the Z3 block (exactly Z3_BLOCK, once, in place of the 2.0 SYSIN line)
+    put back to that one line; z2_guard then proves every other line (the position included: lines before Z2 = 2.0)."""
+    now = text.split('\n')
+    i = now.index(Z3_BLOCK[0])
+    assert now[i:i + len(Z3_BLOCK)] == Z3_BLOCK, 'Z3: block not exact'
+    assert Z3_OLD not in now and sum(l.startswith('/* Z3 (ZOS-4)') for l in now) == 1, 'Z3: once, replacing the line'
+    return '\n'.join(now[:i] + [Z3_OLD] + now[i + len(Z3_BLOCK):])
+
+
 def z2_guard(text):
     """src/zos/PACMAN.clist = the 2.0-mvs-max src/clist/PACMAN.clist with exactly 31 Z2 lines before the CALL (from the
     '/* Z2 (ZOS-4)' comment) and 'FREE F(CEEOPTS)' right after it; every other line identical (docs/zos4-clist-z2.md)."""
@@ -86,8 +127,8 @@ def guard():
         rel = str(p.relative_to(R))
         if rel.startswith('src/probe/'):            # z/OS probes (ZOS-1) are not part of the release set
             continue
-        if rel == 'src/zos/PACMAN.clist':           # Z2 (ZOS-4): the frozen 2.0 CLIST + the Z2 lines around the CALL
-            z2_guard(p.read_text(encoding='ascii'))
+        if rel == 'src/zos/PACMAN.clist':           # Z2 + Z3 (ZOS-4): the frozen 2.0 CLIST + the Z3 SYSIN lines + Z2
+            z2_guard(z3_strip(p.read_text(encoding='ascii')))
             continue
         now = p.read_text(encoding='ascii')
         if rel in changed:

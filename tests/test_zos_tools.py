@@ -713,7 +713,10 @@ assert set(re.findall(r'DSN=([\w@.]+)', cl)) == {'@@HLQ@@.PACMAN.Z4CL.T1', '@@HL
                                                '@@HLQ@@.PACMAN.Z4CEY.CEEOPTS'}
 # Z2: src/zos/PACMAN.clist = the frozen 2.0 CLIST + the Z2 lines around the CALL only; the PARM lines (G8 check)
 # unchanged; each Z2 test member carries the Z2 lines verbatim (CALL -> marker)
-c20, cz = (R / 'src/clist/PACMAN.clist').read_text().splitlines(), (R / 'src/zos/PACMAN.clist').read_text().splitlines()
+sys.path.insert(0, str(R / 'tests'))
+import zos_c2  # noqa: E402
+c20 = (R / 'src/clist/PACMAN.clist').read_text().splitlines()
+cz = zos_c2.z3_strip((R / 'src/zos/PACMAN.clist').read_text()).splitlines()     # Z3 (section 18) put back: Z2 only
 zi, zc = cz.index(next(l for l in cz if l.startswith('/* Z2 (ZOS-4)'))), cz.index("CALL '@@PREFIX@@.LOAD(PACMAIN)' '&P'")
 assert cz[:zi] == c20[:zi] and cz[zc] == c20[zi] and cz[zc + 1] == 'FREE F(CEEOPTS)' and cz[zc + 2:] == c20[zi + 1:]
 assert all(len(l.replace('@@PREFIX@@', 'Z00000.PACMAN')) <= 72 for l in cz) and len(cz) - len(c20) == 32
@@ -941,3 +944,114 @@ assert compare(o307, mut, {'PACMAIN': 'PACMAIN'}, subset=True)[0] == 1 and cmode
 print('PACZ4INS: generated deck (PACSRCT copy, new CEEOPTS, PACZ2D -> PACMAIN by IEBCOPY through a temporary PDSE, no '
       'binder / DELETE / DATA), smoke steps = REL20 RUN1 / TSO2 with PGM=PACMAIN, rendered z/OS CLIST = src/zos; '
       'smoke rules pass the real z/OS RUN1 / TSO2 outputs and fail a mutation: PASS')
+
+
+# 18. ZOS-4 Z3 (proposed, not installed): src/zos/PACMAN.clist = the installed Z2 source (8724464, rendered = the member
+#     PACZ4INS installed, SHA-256 2e9895dc...) with only the 2.0 SYSIN line replaced by the frozen Z3 block (ATTRIB +
+#     USING, SYSOUT / Z2 / CEEOPTS untouched); an independent model of the block's control flow: every outcome of
+#     ATTRIB / ALLOC / FREE ATTRLIST either continues with SYSIN allocated and no attribute list left, or ends RC 8 before
+#     any CALL, freeing only what this CLIST created (a list it did not create is never freed)
+import difflib  # noqa: E402
+import zos_z3_install as Z3I  # noqa: E402
+z3src = (R / 'src/zos/PACMAN.clist').read_text()
+z2src = subprocess.run(['git', 'show', f'{Z3I.Z2_REF}:./src/zos/PACMAN.clist'], cwd=R, capture_output=True,
+                       check=True).stdout.decode()
+assert zos_c2.z3_strip(z3src) == z2src, 'Z3 changes more than the SYSIN line'
+assert hashlib.sha256(Z3I.z2_installed_bytes()).hexdigest() == Z3I.Z2_SHA
+d = [l for l in difflib.unified_diff(z2src.splitlines(), z3src.splitlines(), lineterm='', n=0)
+     if l[:1] in '+-' and l[:3] not in ('---', '+++')]
+assert d == ['-' + zos_c2.Z3_OLD] + ['+' + l for l in zos_c2.Z3_BLOCK], d
+assert all(len(l.replace('@@PREFIX@@', 'Z00000.PACMAN')) <= 72 for l in z3src.splitlines())
+assert 'ALLOC F(SYSOUT) DA(*) REUSE' in z3src.splitlines() and z3src.count('Z3SIATTR') == 3
+assert 'LRECL' not in ''.join(l for l in z3src.splitlines() if l.startswith('ALLOC') or l.startswith('  ALLOC'))
+ddn = set(re.findall(r'\bF\(([A-Z0-9@#$ ]+)\)', z3src)) | {'STEPLIB', 'SYSTSPRT', 'SYSTSIN', 'SYSPRINT'}
+assert not any('Z3SIATTR' in x.split() for x in ddn) and not 'Z3SIATTR'.startswith('PAC')
+zb = zos_c2.Z3_BLOCK
+
+
+def run_z3(rc):
+    """Interpret the Z3 block (exactly its statement forms) with command return codes rc {ATTRIB, ALLOC, FREEA, FREES}
+    (missing = 0); returns (commands issued, exit code or None = falls through to SYSOUT / Z2 / CALL)."""
+    v, out, prog, i, handler, flush = {}, [], zb, 0, None, True
+
+    def val(x):
+        return v[x] if x.startswith('&') else x
+
+    def cond(c):
+        terms = c.split(' AND ')
+        return all((val(a) == val(b)) if op == '=' else (val(a) != val(b))
+                   for a, op, b in (t.split() for t in terms))
+
+    def cmd(c):
+        out.append(c)
+        k = {'ATTRIB': 'ATTRIB', 'ALLOC': 'ALLOC'}.get(c.split()[0]) or ('FREEA' if 'ATTRLIST' in c else
+                                                                         'FREES' if c.startswith('FREE') else None)
+        r = rc.get(k, 0) if k else 0
+        if r and handler:
+            v['&LASTCC'] = str(r)
+            for h in handler:
+                stmt(h)
+
+    def stmt(s):
+        s = s.strip()
+        m, f = re.match(r'SET (&\w+) = (\S+)$', s), re.match(r'IF (.+) THEN (?!DO$)(.+)$', s)
+        if m:
+            v[m.group(1)] = val(m.group(2))
+        elif f:
+            if cond(f.group(1)):
+                stmt(f.group(2))
+        elif s in ('RETURN',) or s.startswith('/*') or s.startswith('CONTROL'):
+            pass
+        elif s.startswith('EXIT CODE('):
+            raise SystemExit(int(s[10:-1]))
+        else:
+            cmd(s)
+
+    while i < len(prog):
+        s = prog[i].strip()
+        if s == 'ERROR DO':
+            j = prog.index('END', i)
+            handler, i = prog[i + 1:j], j + 1
+            continue
+        if s == 'ERROR OFF':
+            handler, i = None, i + 1
+            continue
+        m = re.match(r'IF (.+) THEN (.+)$', s)
+        if m:
+            if m.group(2) == 'DO':
+                j = prog.index('END', i)
+                body, i = prog[i + 1:j], j + 1
+            else:
+                body, i = [m.group(2)], i + 1
+            if cond(m.group(1)):
+                try:
+                    for b in body:
+                        stmt(b)
+                except SystemExit as e:
+                    return out, e.code
+            continue
+        stmt(s)
+        i += 1
+    return out, None
+
+
+ATTR = 'ATTRIB Z3SIATTR RECFM(F) LRECL(80) BLKSIZE(80)'
+ALLO = 'ALLOC F(SYSIN) DA(*) REUSE USING(Z3SIATTR)'
+FRA, FRS = 'FREE ATTRLIST(Z3SIATTR)', 'FREE F(SYSIN)'
+MSG = 'WRITE PACMAN: SYSIN NOT ALLOCATED (Z3, RC &Z), GAME NOT STARTED'
+z3cases = {     # outcome -> (commands issued, exit)
+    'all succeed: SYSIN fixed 80, list freed, continue': ({}, [ATTR, ALLO, FRA], None),
+    'ATTRIB fails (e.g. the name in use): nothing freed, RC 8': ({'ATTRIB': 12}, [ATTR, MSG], 8),
+    'ALLOC fails: only the list freed, RC 8': ({'ALLOC': 12}, [ATTR, ALLO, FRA, MSG], 8),
+    'FREE ATTRLIST fails: SYSIN freed, RC 8': ({'FREEA': 12}, [ATTR, ALLO, FRA, MSG, FRS], 8),
+    'ALLOC and FREE ATTRLIST fail: RC 8, SYSIN not freed': ({'ALLOC': 12, 'FREEA': 12}, [ATTR, ALLO, FRA, MSG], 8),
+}
+for why, (rcs, want, ex) in z3cases.items():
+    got = run_z3(rcs)
+    assert got == (want, ex), (why, got)
+    assert (FRA in got[0]) == ('ATTRIB' not in rcs), why                   # the list freed iff this CLIST created it
+assert ''.join(zb[:3]).count('/*') == 3 and z3src.index('\n'.join(zb)) < z3src.index('ALLOC F(SYSOUT) DA(*) REUSE') \
+    < z3src.index('/* Z2 (ZOS-4)') < z3src.index("CALL '")
+print(f'Z3: src/zos = installed Z2 source (8724464 / 2e9895dc) with only the SYSIN line -> the frozen ATTRIB + USING '
+      f'block; SYSOUT / Z2 untouched; control-flow model: {len(z3cases)} outcomes, list freed only if created, RC 8 '
+      'before SYSOUT / Z2 / CALL on any failure: PASS')

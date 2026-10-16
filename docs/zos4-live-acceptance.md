@@ -309,3 +309,15 @@ through the last expected nonblank character of each line (missing or extra trai
 internal spaces, case, values, line order and frame content must be exact; no other normalisation. `***` inside a
 Pac-Man frame is a FAIL; a normal TSO / ISPF `***` after the program has ended is allowed (ENTER). Postcheck tool:
 tools/zowe/zos_live_check.py DIR (captures E1.txt .. E10.txt).
+
+## Session 2 (after the Z3 installation is approved and verified; not started)
+Session 1 (2026-10-16) is FAIL evidence (DIE1 FAIL before the first frame, LOST0 NOT RUN) and is never reclassified;
+session 2 is a new session with the same procedure and inputs, on CLIST(PACMAN) with Z3 + Z2.
+- Geometry: exactly the one that failed - `c3270 -model 2 -oversize auto 198.51.100.200:623` in the same 120 x 30
+  window (120-column line size). Not 80 columns.
+- First required proof (the discriminator): after the EXEC, DIE1 reaches its initial frame with
+  `T000   START   X=02 Y=02 S=0000 L=100 G=19,09 V=3 ST=READY` and no `IGZ0201W`, `IGZ0035S`, `U4038` / abend,
+  `PACMAN: SYSIN NOT ALLOCATED` or IKJ message. Capture E2 at that point.
+- Then DIE1 and LOST0 exactly as above (inputs, milestones, E1-E10, evidence rule, STOP criteria) - the STOP list also
+  includes `PACMAN: SYSIN NOT ALLOCATED (Z3, ...)` and any message from ATTRIB / ALLOC / FREE.
+- Closure as above, with CLIST(PACMAN) = the rendered Z3 member and docs/ZOS-DIFFS.md listing Z1, Z2, Z3.

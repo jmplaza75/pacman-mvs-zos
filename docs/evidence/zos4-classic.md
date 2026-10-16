@@ -100,3 +100,6 @@ unsuccessful, file status 39), user abend 4038, EXEC terminated abnormally. Not 
 proposal: docs/zos4-sysin-fix.md (terminal SYSIN takes the 120-column line size; Enterprise COBOL checks the fixed
 record length). The failure screen text is to be added as evidence (docs/evidence/zos4-live-fail-1.txt) from the
 user's capture.
+Classification is final (user, 2026-10-16): session 1 stays FAIL evidence and is never reclassified, whatever a later
+session shows. Fix in review: Z3 as ATTRIB + USING (docs/zos4-sysin-fix.md, "Revision"); read-only install gate
+zos_z3_install --gate PASS 7/7 (2026-10-16); not installed.
