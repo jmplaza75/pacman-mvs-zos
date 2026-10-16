@@ -382,3 +382,10 @@ NEXT (waiting for the user): decisions 1-5 of the design.
   raw traces outside git. MVS (2.0-mvs-max) stays frozen.
   Carried forward: C3 PACFSIO recovery warning (ZOS-8 E2), HA6 (ZOS-9/10), HSP1-9 (full battery), the HS CLIST block
   live path (ZOS-8), sound / alarm (ZOS-8). NEXT: ZOS-6 REALTIME (not started).
+
+## ZOS-6 REALTIME - DESIGN APPROVED (2026-10-16; docs/zos6-design.md), NOT IMPLEMENTED
+Two live cases in one session (R1 NORMAL 150 ms, R2 FAST 125 ms; AI(0) RULES(CLASSIC) PLAY(REALTIME) SOUND(NO)),
+scripted x3270if input, two immutable traces with a local R1 -> R2 gate, model acceptance on the actual cards anchored to
+oracle 310 RTT / RTB, results PASS / FUNCTIONAL FAIL / ENVIRONMENT-TIMING BLOCKED; 60 s pause (approved deviation from
+the plan's 10-minute soak). No build / install / job / z/OS write; no remote precheck. NEXT (waiting for the user):
+approval to implement the checker, driver and tests.
