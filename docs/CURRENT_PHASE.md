@@ -355,3 +355,5 @@ session, one focused postcheck; reuse ZOS-2 / ZOS-3 evidence. Waiting for the us
   terminal SYSIN) approved in principle; review package prepared (docs/zos4-sysin-fix.md "Revision", ZOS-DIFFS Z3,
   install gate PASS); NOT installed. NEXT (waiting for the user): approval of the package -> install -> live session 2
   in the same 120-column geometry.
+- Z3 INSTALLED 2026-10-16 (zos_z3_install --install PASS; CLIST(PACMAN) 130 x 80, SHA-256 f8989cfa...; PACSRCT /
+  CEEOPTS / PACMAIN / PACZ2D unchanged). NEXT: live session 2 (manual).

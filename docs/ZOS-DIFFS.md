@@ -43,7 +43,7 @@ approval.
   installation (PACZ4INS).
 
 
-## Z3 - CLIST: terminal SYSIN fixed 80 through ATTRIB + USING (ZOS-4; PROPOSED 2026-10-16, not installed)
+## Z3 - CLIST: terminal SYSIN fixed 80 through ATTRIB + USING (ZOS-4; installed 2026-10-16, live acceptance pending)
 - File: `src/zos/PACMAN.clist` (branch zos only): the 2.0 line `ALLOC F(SYSIN) DA(*) REUSE` replaced by the 24-line
   block of docs/zos4-sysin-fix.md ("Revision"); guarded by tests/zos_c2.py (Z3_BLOCK, z3_strip + z2_guard).
 - Reason: live session 1 (2026-10-16): the terminal SYSIN took the 120-column line size; Enterprise COBOL checks the

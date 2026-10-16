@@ -103,3 +103,13 @@ user's capture.
 Classification is final (user, 2026-10-16): session 1 stays FAIL evidence and is never reclassified, whatever a later
 session shows. Fix in review: Z3 as ATTRIB + USING (docs/zos4-sysin-fix.md, "Revision"); read-only install gate
 zos_z3_install --gate PASS 7/7 (2026-10-16); not installed.
+
+## Z3 installation (2026-10-16, approved; tools/zowe/zos_z3_install.py --install, run once)
+- Gate (read-only, repeated by the tool): PASS 7/7 - CLIST(PACMAN) = the installed Z2 member (2e9895dc..., 107 x 80),
+  PACSRCT = template, CEEOPTS exact (attributes + binary), PACMAIN attributes = PACZ2D's, PACZ2D unchanged.
+- Upload of src/zos/PACMAN.clist rendered for Z00000.PACMAN (Z3 + Z2) with IBM-037 into CLIST(PACMAN) only; binary
+  download identical: 130 x 80 bytes, SHA-256 f8989cfada7a862992af1c079572792eb72752aadb50e45281a81dd7447620cc;
+  zos_ins_check --clist PASS (PACSRCT still the template).
+- Read-only state after the write: PACSRCT, CEEOPTS (attributes + binary), PACMAIN attributes, PACZ2D - PASS.
+Installed: CLIST(PACMAN) with Z3 + Z2. Next: live session 2 (manual, user at the keyboard, 120-column geometry).
+Live session 1 remains FAIL evidence.
