@@ -302,3 +302,10 @@ Postcheck (local, read-only): each captured frame compared character for charact
 - Commit `ZOS-4 CLASSIC complete: live TSO line-mode acceptance DIE1 / LOST0 PASS on the installed PACMAIN + CLIST (Z2)`
   and annotated tag `zos-4` on it, carrying forward: C3 (ZOS-8 E2), HA6 (ZOS-9/10), HSP1-9 (full battery), the HS
   CLIST block live path (ZOS-8), full-screen / colour / TPUT-TGET (ZOS-5).
+
+## Approval (user, 2026-10-16) and evidence rule
+Approved for one interactive session; no functional change. Evidence rule: clipboard captures are compared exactly
+through the last expected nonblank character of each line (missing or extra trailing blanks are not a failure);
+internal spaces, case, values, line order and frame content must be exact; no other normalisation. `***` inside a
+Pac-Man frame is a FAIL; a normal TSO / ISPF `***` after the program has ended is allowed (ENTER). Postcheck tool:
+tools/zowe/zos_live_check.py DIR (captures E1.txt .. E10.txt).
