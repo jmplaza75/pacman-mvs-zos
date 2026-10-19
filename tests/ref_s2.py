@@ -51,8 +51,11 @@ def event(last, snap, won_seen):
     return ev
 
 
-def patterns(frames, log, sound, play, per):
-    """-> (streams, trace); trace = [(write index, event name or 'STEP', bell number)] of every ring."""
+def patterns(frames, log, sound, play, per, skips=None):
+    """-> (streams, trace); trace = [(write index, event name or 'STEP', bell number)] of every ring.
+    skips (ZOS-6 PRESENT(COALESCED), additive; None = every quantum written, unchanged): the coalesced quanta just
+    before each write (ref_rt frames.skips). Each one is a logical quantum for a running pattern (PACDISP SCR-RTQS):
+    its countdown goes down, never below 1 - a step due on a skipped quantum rings on the next quantum write."""
     if sound != 'Y':
         return list(frames), []
     kinds = log.kinds
@@ -61,6 +64,9 @@ def patterns(frames, log, sound, play, per):
     out, trace = [], []
     last, won_seen, act = None, False, None
     for k, (f, snap, kind) in enumerate(zip(frames, log, kinds)):
+        for _ in range(skips[k] if skips else 0):
+            if act is not None and act['next'] > 1:
+                act['next'] -= 1
         ev = event(last, snap, won_seen)
         last, won_seen = snap, won_seen or bool(snap[1])
         ring = False

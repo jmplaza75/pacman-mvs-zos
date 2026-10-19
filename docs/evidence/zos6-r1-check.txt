@@ -1,0 +1,17 @@
+R1 trace SHA-256 e358d933b9906cad127f89e13df6b2297f9184386ee2381c1db2e98197761593 (745665 bytes); driver log SHA-256 5f36aa351084f631dbca25255f286745cffd9081a9e5ba1d49fe9941b45fb502
+R1: T 150 ms; functions [0, 2, 4, 5]; profile (1, 1, 1) canvas (120, 27); reply = qreply_dyn: True; 298 game writes = model, 589 quanta; death-stop runs [10]; end lines ['QUIT', 'TURNS 024', 'SCORE 0230', 'LIVES 2', 'QUANTA 0000589']; *** True; shell yes
+  directional PF8: sent 63188149, AID F8, write 1, model D
+  directional PF11: sent 63326068, AID 7B, write 521, model R
+  principal segment: {"quanta": 401, "frames": 201, "first": 63188631, "last": 63248693, "elapsed": 60062, "ideal": 60000, "mean": 150.155, "gaps": {"n": 200, "min": 114, "median": 302.0, "p95": 413, "max": 447}, "endpoint_drift": 62, "trend_per_100": -0.106, "envelope_rise": 100, "long_gaps": 0, "backlog_delta": -1.0}
+  post-resume: [{"writes": [204, 205, 206, 207, 208], "gaps": [119.0, 122.5, 168.0, 133.0], "suspicious": false}]
+  present C; frame quanta [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23] ...; freeze mutants {9: 'matches', 11: 'matches'}
+  live freeze discrimination: NOT OBSERVABLE; logical freeze proof: canonical model exactly quanta(10) frozen quanta; offline: PACRT unchanged (Z1 text, guarded) + RTSTILL batch / TSD / model
+  freeze-span proxy: 1363 ms between the writes of quanta (536, 546) (10 logical quanta = 1500 ms nominal; the logical freeze is proved by the model and the mutants)
+  input reaction (wire AID -> first answering frame): [{"action": "PF8", "card": 1, "write": 1, "ms": 366}, {"action": "PF9", "card": 404, "write": 203, "ms": 473}, {"action": "PF9", "card": 405, "write": 204, "ms": 344}, {"action": "x", "card": 474, "write": 239, "ms": 561}, {"action": "PA2", "card": 498, "write": 251, "ms": 732}, {"action": "PF11", "card": 521, "write": 262, "ms": 478}, {"action": "Q", "card": 591, "write": 297, "ms": 606}]
+  candidate gates: {"physical": {"n": 200, "min": 114, "median": 302.0, "p95": 413, "max": 447}, "running_max": 520, "reaction": {"n": 7, "min": 344, "median": 478, "p95": 732, "max": 732}, "backlog_delta": -1.0}
+  diagnostics: {"kri_records": 178, "kri_controls": 20, "kri_max_gap": 462, "bids": 178, "bid_latency": {"n": 178, "min": 112, "median": 114.5, "p95": 193, "max": 241}, "locked_fraction": 0.47, "long_gaps_with_bid_latency_over_T": 0}
+  TSO blocking-read CONTROL records (F1 C3, not game writes): 2 [('F8', 1), ('F9', 405)]
+  diagnostic: probable skipped period(s): lateness lower envelope rose 100 ms (diagnostic, COALESCED)
+  note: terminal timestamps include host scheduling + TN3270E contention resolution + network; endpoint drift and trend are a live proxy, not the host-side drift
+R1: PASS
+NEXT CASE ALLOWED: yes

@@ -1,0 +1,17 @@
+R2 trace SHA-256 c72da2db1c0b0765e1dbf0e5f14fe7e3a722a5e653a660473c49087dd88d5109 (454958 bytes); driver log SHA-256 4875c73450a4aece3b8a3efc9e213deba9e864d1bc3e407e1b8475db39c4f52c
+R2: T 125 ms; functions [0, 2, 4, 5]; profile (1, 1, 1) canvas (120, 27); reply = qreply_dyn: True; 112 game writes = model, 329 quanta; death-stop runs []; end lines ['QUIT', 'TURNS 018', 'SCORE 0090', 'LIVES 3', 'QUANTA 0000329']; *** True; shell yes
+  directional PF11: sent 64197109, AID 7B, write 1, model R
+  directional PF8: sent 64202327, AID F8, write 44, model D
+  directional PF7: sent 64204948, AID F7, write 65, model U
+  directional PF10: sent 64207412, AID 7A, write 85, model L
+  principal segment: {"quanta": 241, "frames": 81, "first": 64208106, "last": 64238245, "elapsed": 30139, "ideal": 30000, "mean": 125.579, "gaps": {"n": 80, "min": 118, "median": 379.5, "p95": 520, "max": 577}, "endpoint_drift": 139, "trend_per_100": -10.866, "envelope_rise": 139, "long_gaps": 1, "backlog_delta": -16.5}
+  post-resume: []
+  present C; frame quanta [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34] ...; freeze mutants {}
+  input reaction (wire AID -> first answering frame): [{"action": "PF11", "card": 1, "write": 1, "ms": 393}, {"action": "PF8", "card": 44, "write": 16, "ms": 647}, {"action": "PF7", "card": 65, "write": 23, "ms": 644}, {"action": "PF10", "card": 85, "write": 29, "ms": 574}, {"action": "Q", "card": 330, "write": 111, "ms": 558}]
+  candidate gates: {"physical": {"n": 80, "min": 118, "median": 379.5, "p95": 520, "max": 577}, "running_max": 584, "reaction": {"n": 5, "min": 393, "median": 574, "p95": 647, "max": 647}, "backlog_delta": -16.5}
+  diagnostics: {"kri_records": 79, "kri_controls": 13, "kri_max_gap": 577, "bids": 78, "bid_latency": {"n": 78, "min": 112, "median": 115.0, "p95": 197, "max": 292}, "locked_fraction": 0.408, "long_gaps_with_bid_latency_over_T": 0}
+  TSO blocking-read CONTROL records (F1 C3, not game writes): 1 [('7B', 1)]
+  diagnostic: probable skipped period(s): lateness lower envelope rose 139 ms (diagnostic, COALESCED)
+  note: terminal timestamps include host scheduling + TN3270E contention resolution + network; endpoint drift and trend are a live proxy, not the host-side drift
+R2: PASS
+NEXT CASE ALLOWED: yes

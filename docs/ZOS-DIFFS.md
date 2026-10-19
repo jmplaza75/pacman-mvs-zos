@@ -52,3 +52,49 @@ approval.
   LRECL(80) BLKSIZE(80)), freed right after the ALLOC and only if created there; any failure -> RC 8, no CALL.
 - SYSOUT, Z2, CEEOPTS, PACMAIN and the COBOL sources unchanged. Evidence: live session 2 (2026-10-16, same 120-column geometry): DIE1 / LOST0 PASS
   (docs/evidence/zos4-live.md); installed CLIST 130 x 80, SHA-256 f8989cfa....
+
+
+## Z4 - ZOS-6 presentation decoupling, sources (ZV-D33; implemented locally 2026-10-19, NOT built, NOT installed)
+- Approval: production design docs/zos6-production-design.md approved for local implementation (user, 2026-10-19).
+  Branch zos only; the MVS sources of record, main, 2.0-mvs-max and the MVS release are untouched.
+- Cause: on z/OS TSO / VTAM / TN3270E with CONTENTION-RESOLUTION one TPUT NOHOLD per 150 ms quantum grows the output
+  queue without bound and AIDs never reach TGET (R1-T3, probe P0); writing every second quantum keeps it bounded with
+  input delivered (probe PR2-A; PR2I-C2: AIDs became readable right after a write). Evidence:
+  docs/zos6-protocol-probe.md, docs/zos6-io-architecture-memo.md.
+- Change (hunks exact: tests/zos_z4.json, guard tests/zos_c2.py z4_guard; z4_reverse gives back the Z1 text):
+  - src/copy/PACREQ.cpy: REQ-PMODE, REQ-PRES appended (no existing offset moves).
+  - src/cobol/PACMAIN.cob: PARM column 26 (C = COALESCED); RT-PBASE (start / resume = presentation base); per running
+    quantum PACPLAT PSLT after PACRT RQ; RT-FRAME (prompt frame) kept until a presented quantum; COALESCED TSC only,
+    after a presented write: RT-POST-READ = exactly one RTRD (one PACPLAT POLL = one TGET ASIS,NOWAIT), its event for
+    the next quantum; RT-OVER tested before the deadline.
+  - src/cobol/PACPLAT.cob: op PSLT in logical time (PS-TP 300, PS-ACC reset on a slot: NORMAL every 2nd, FAST every 3rd
+    quantum; Y always unless REQ-PMODE C and TSC / TSD).
+  - src/cobol/PACDISP.cob: RTQF with REQ-PRES N = SCR-RTQS (PACSCR RTQS, the S2 pattern countdown, no screen, no send).
+  - src/cobol/PACSCR.cob: op RTQS = RP-STATE + SET-FACE + (ANIM Y) VIS = REQ-VIS (popup, facing and the animation
+    frame the end screen draws follow the logical quantum; VIS added after PACZ6DR1 JOB09418), no image / diff.
+- Unchanged: PACFSIO, PACTSO, PACRT, PACGAME, PACMAP, PACAI, PACINPT, every other copybook (tests section 22).
+- PRESENT(EVERY) (no column 26) = the D33 loop: PSLT always Y, no RTQS, no post-write read, RT-FRAME cleared every
+  quantum; same TGET / TPUT / STIMER sequence (tests section 22: the PSLT paragraph interpreted from its source).
+- Guards: tests/zos_c2.py (Z4 hunks exact), tests/test_g8.py (changed sources within Z1 + Z4), tools/zowe/r3_gate.py
+  (MVS decks from the zos tree differ only by Z1 / Z4 lines), tests/test_core_frozen.py (core untouched).
+- Not yet proven on z/OS: compile / bind, the TSD dry runs, live R1 / R2.
+- Status 2026-10-19 (ZOS-6 closure): built PACZ6BLD JOB09460 RC 0, dry runs JOB09466 / JOB09470 PASS, promoted to
+  LOAD(PACMAIN) by PACZ6INS JOB09499, live R1-T4 / R2 PASS (docs/evidence/zos6-realtime.md). Installed.
+
+## Z5 - ZOS-6 CLIST keyword PRESENT(EVERY|COALESCED) (implemented locally 2026-10-19, NOT installed)
+- File src/zos/PACMAN.clist (the MVS CLIST unchanged): PROC default `PRESENT(EVERY)`; two help lines; the 2.0 PARM
+  line unchanged, then two comment lines, `SET &E = &SUBSTR(1:1,&PRESENT)` and `IF &E = C THEN SET &P = &STR(&P&E)`:
+  EVERY leaves the 25-column 2.0 PARM byte for byte, COALESCED appends column 26 = C. Only statement forms the 2.0
+  CLIST already runs (no null assignment). Exact lines: tests/zos_c2.py Z5_* (z5_strip before the Z3 / Z2 checks).
+  Default during ZOS-6 development = EVERY; R1 / R2 request PRESENT(COALESCED) explicitly; the release default is not
+  chosen. Not yet executed on this system.
+- Status 2026-10-19 (ZOS-6 closure): test copy PACZ6CL JOB09382 PASS; installed as CLIST(PACMAN) (136 records,
+  byte for byte); live R1-T4 / R2 PASS with PRESENT(COALESCED). Default stays PRESENT(EVERY).
+
+## Model / checker for Z4 (tests and tools only, not z/OS differences in the product)
+- tests/ref_rt.py: additive present='C' filter (every quantum runs; writes at the PSLT slots; skipped quanta advance the
+  facing and the RP tracker; pending prompt frame), frame tags (qs, cards, imgs, skips) and the frt freeze hook (checker
+  mutants only); default output = oracle 310 unchanged. tests/ref_s2.py: skips (the pattern clock on skipped quanta).
+- tools/zowe/zos6_live_check.py: logical quanta vs physical frames, bounded backtracking placement, the 9 / 10 / 11
+  freeze discrimination, freeze-span proxy, trace-clock input reaction, the predeclared candidate gates.
+  zos5_live_check.py frozen.

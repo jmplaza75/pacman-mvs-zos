@@ -389,3 +389,18 @@ scripted x3270if input, two immutable traces with a local R1 -> R2 gate, model a
 oracle 310 RTT / RTB, results PASS / FUNCTIONAL FAIL / ENVIRONMENT-TIMING BLOCKED; 60 s pause (approved deviation from
 the plan's 10-minute soak). No build / install / job / z/OS write; no remote precheck. NEXT (waiting for the user):
 approval to implement the checker, driver and tests.
+- ZOS-6 COMPLETE / PASS (2026-10-19; docs/evidence/zos6-realtime.md). The D33 design above was executed under the
+  approved z/OS variance ZV-D33 (docs/zos6-production-design.md): PRESENT(COALESCED), logical quantum 150 / 125 ms,
+  physical write every 2nd / 3rd quantum (300 ms minimum interval in logical time), no replay, no catch-up.
+  Z4 (PACREQ, PACMAIN, PACPLAT, PACDISP, PACSCR) + Z5 (CLIST PRESENT(EVERY|COALESCED), default EVERY = D33).
+  Build PACZ6BLD JOB09460 RC 0, dry runs PACZ6DR1 JOB09466 / PACZ6DR2 JOB09470 PASS, promotion PACZ6INS JOB09499
+  (PACMAIN = ZOS-6 program, CLIST(PACMAN) = ZOS-6 CLIST, PACZ2D = rollback source, PACZ6D = test / build member).
+  Live: R1-T4 NORMAL PASS (298 writes = model, 589 quanta, 10-quantum death, median 302 / p95 413 ms, reaction
+  median 478 ms), R2 FAST PASS (112 writes = model, 329 quanta, median 379.5 / p95 520 ms, reaction median 574 ms).
+  Exact freeze proved offline (acceptance split; live discrimination NOT OBSERVABLE). TSO `F1 C3` CONTROL records and
+  the COALESCED envelope rule: checker decisions of 2026-10-19. Earlier attempts R1, R1-T2, R1-T3 recorded, not
+  evidence. Carried forward: ARCADE live (ZOS-7), sound / HS / ESTAE (ZOS-8), HA6 (ZOS-9/10), the release default of
+  PRESENT. NEXT: ZOS-7 (not started).
+  PRESENT default (user, 2026-10-19): EVERY stays the compatibility default (CLIST unchanged); ZOS-6 acceptance and
+  R1 / R2 used COALESCED explicitly; release default deferred; ZOS-7 REALTIME / ARCADE live work must request
+  PRESENT(COALESCED) explicitly.

@@ -716,7 +716,8 @@ assert set(re.findall(r'DSN=([\w@.]+)', cl)) == {'@@HLQ@@.PACMAN.Z4CL.T1', '@@HL
 sys.path.insert(0, str(R / 'tests'))
 import zos_c2  # noqa: E402
 c20 = (R / 'src/clist/PACMAN.clist').read_text().splitlines()
-cz = zos_c2.z3_strip((R / 'src/zos/PACMAN.clist').read_text()).splitlines()     # Z3 (section 18) put back: Z2 only
+cz = zos_c2.z3_strip(zos_c2.z5_strip((R / 'src/zos/PACMAN.clist').read_text())).splitlines()   # Z5 (ZOS-6, section
+#                                                                       22) and Z3 (section 18) put back: Z2 only
 zi, zc = cz.index(next(l for l in cz if l.startswith('/* Z2 (ZOS-4)'))), cz.index("CALL '@@PREFIX@@.LOAD(PACMAIN)' '&P'")
 assert cz[:zi] == c20[:zi] and cz[zc] == c20[zi] and cz[zc + 1] == 'FREE F(CEEOPTS)' and cz[zc + 2:] == c20[zi + 1:]
 assert all(len(l.replace('@@PREFIX@@', 'Z00000.PACMAN')) <= 72 for l in cz) and len(cz) - len(c20) == 32
@@ -953,7 +954,7 @@ print('PACZ4INS: generated deck (PACSRCT copy, new CEEOPTS, PACZ2D -> PACMAIN by
 #     any CALL, freeing only what this CLIST created (a list it did not create is never freed)
 import difflib  # noqa: E402
 import zos_z3_install as Z3I  # noqa: E402
-z3src = (R / 'src/zos/PACMAN.clist').read_text()
+z3src = zos_c2.z5_strip((R / 'src/zos/PACMAN.clist').read_text())      # the Z5 lines (ZOS-6, section 22) put back
 z2src = subprocess.run(['git', 'show', f'{Z3I.Z2_REF}:./src/zos/PACMAN.clist'], cwd=R, capture_output=True,
                        check=True).stdout.decode()
 assert zos_c2.z3_strip(z3src) == z2src, 'Z3 changes more than the SYSIN line'
@@ -1334,3 +1335,1091 @@ print(f'ZOS-5 live postcheck: model = oracle 310 TSD45 / TSD48 / TSD28 (frozen c
       f'PASS (fixture regenerated identically); {len(neg5) + 3} game / framing negatives fail closed, byte-level '
       'framing rules (IAC IAC, timing mark, other commands, trailing bytes, responses), 132 x 27 reply = '
       'MODEL-IDENTICAL-OTHER-PROFILE: PASS')
+
+# 20. ZOS-6 REALTIME live postcheck (docs/zos6-design.md; nothing executed live). tools/zowe/zos6_live_check.py on
+#     synthetic traces of the approved R1 / R2 plans (tests/zos6_fixture.py: a host / network / BID time simulation,
+#     the PACMAN writes = tests/ref_rt.py); the model anchored to the frozen oracle 310 RTB1-12 / RTT1-6 blocks; valid R1
+#     / R2 PASS with PF7 / PF8 / PF10 / PF11 mapped through all four layers; every FUNCTIONAL FAIL rule and every
+#     ENVIRONMENT / TIMING BLOCKED class; BLOCKED is neither PASS nor FAIL; R2 only after an R1 PASS
+import zos6_fixture as F6  # noqa: E402
+import zos6_live_check as C6  # noqa: E402
+import zos_equiv as ZE6  # noqa: E402
+from make_deck import RT_BAT, RT_TSD, rt_parm_and_cards  # noqa: E402
+import ref_rt  # noqa: E402
+o310b = json.load(gzip.open(R / 'tests/oracle20/310-PACBLGP2.json.gz'))
+anc6 = ZE6.anchors(o310b, {'PACMAIN'})
+s310, ord6 = o310b['stream'], sorted(anc6.values())
+
+
+def blk6(st):
+    b = anc6[st]
+    x = s310[b:min([v for v in ord6 if v > b], default=len(s310))]
+    while x and x[-1] == '':
+        x.pop()
+    return x
+
+
+for i, c in enumerate(RT_BAT, 1):                       # RTB1-12: the batch REALTIME output = ref_rt.simulate
+    assert blk6(f'RTB{i}') == [x.rstrip() for x in ref_rt.simulate((R / f'tests/rtcases/{c}.txt').read_text()
+                                                                     .splitlines())], c    # oracle lines right-stripped
+for i, (c, cv) in enumerate(RT_TSD, 1):                 # RTT1-6: the TSD REALTIME streams + end lines = ref_rt.tsd
+    bl, fr, j = blk6(f'RTT{i}'), [], 0
+    while j < len(bl):
+        m = re.match(r'TSD FRAME LEN(\d{4})$', bl[j])
+        j += 1
+        if m:
+            h = ''
+            while j < len(bl) and bl[j].startswith('TSD ') and not bl[j].startswith('TSD FRAME'):
+                h += bl[j][4:].strip()
+                j += 1
+            fr.append(bytes.fromhex(h))
+    parm, cards6 = rt_parm_and_cards(c)
+    cfg = (R / f'tests/rtcases/{c}.txt').read_text().splitlines()[0]
+    cfg = cfg if cfg[:1] == 'A' else 'AI1 1'
+    out6, fr6 = ref_rt.tsd([cfg] + cards6.splitlines(), cv)
+    e6 = next(k for k in range(len(bl)) if bl[k] in ('QUIT', 'LOST', 'WIN', 'EOF') and k > 0
+              and bl[k - 1].startswith('TSD '))
+    assert list(fr6) == fr and bl[e6:e6 + 5] == out6[-5:], c
+
+
+def run6(case, present='E', plan=None, **kw):
+    """The D33 checker rules (EVERY: one write per quantum) keep their regression here; PRESENT(COALESCED), the R1 / R2
+    mode, is section 22."""
+    text, lg = F6.build(case, present=present, plan=plan, **kw)
+    try:
+        return C6.check(text, lg, case, present=present, plan=plan)
+    except C6.Fail as ex:
+        return {'state': C6.FAILED, 'why': str(ex)}
+
+
+r1 = run6('R1')       # the approved R1 plan: AI(0), still ghost, Pac-Man stationary after the respawn - the freeze
+assert r1['state'] == C6.PASS, r1.get('blocked', r1.get('why'))        # length leaves no trace: NOT OBSERVABLE, which
+assert r1['live_freeze_discrimination'] == 'NOT OBSERVABLE' and r1['freeze_mutants'] == {9: 'matches', 11: 'matches'}
+assert r1['death_runs'] == [10] and r1['death_ms'] == 1500 and r1['principal']['quanta'] >= 200
+assert r1['writes'] == r1['quanta'] + 3 and r1['diag']['bids'] > 0       # BIDs / RESPONSEs are no game writes
+r2 = run6('R2')
+assert r2['state'] == C6.PASS and r2['death_runs'] == [] and r2['principal']['quanta'] >= 200, r2.get('why')
+assert [(d['action'], d['aid'], d['model']) for d in r2['directional']] == [
+    ('PF11', '7B', 'R'), ('PF8', 'F8', 'D'), ('PF7', 'F7', 'U'), ('PF10', '7A', 'L')]
+assert [(d['action'], d['aid'], d['model']) for d in r1['directional']] == [('PF8', 'F8', 'D'), ('PF11', '7B', 'R')]
+assert r2['principal']['first'] > max(d['sent'] for d in r2['directional'])   # the R2 timing segment follows PF10
+SH1 = [1, 3, 2, 2, 1, 1, 6]                              # R1 with short waits (functional negatives)
+SH2 = [1, 1, 1, 1, 2]
+rs1 = run6('R1', waits=SH1)                             # the short plan itself is functionally exact (only too short)
+assert rs1['state'] == C6.BLOCKED and any('< 200' in b for b in rs1['blocked']), rs1.get('blocked', rs1.get('why'))
+fails6 = {
+    'game write before the start': ('R1', dict(waits=SH1, extra_write='start'),
+                                   ('differs from the model', 'permitted quantum')),
+    'game write while PAUSED': ('R1', dict(waits=SH1, extra_write='pause'),
+                               ('differs from the model', 'permitted quantum')),
+    'lost AID': ('R1', dict(waits=SH1, lose=2), 'differ'),
+    'duplicated AID': ('R1', dict(waits=SH1, dup=3), 'differ'),
+    'substituted directional AID': ('R2', dict(waits=SH2, subst=2), 'differ'),
+    'driver log != trace': ('R2', dict(waits=SH2, log_mismatch=True), 'plan'),
+    'model byte changed': ('R1', dict(waits=SH1, mutate=6), ('differs from the model', 'permitted quantum')),
+    'death stop one quantum short': ('R1', dict(waits=SH1, drop_write=rs1['death_writes'][0] + 3),
+                                     ('differs from the model', 'permitted quantum')),
+    'wrong QUANTA': ('R2', dict(waits=SH2, end_lines=['QUIT', 'TURNS 007', 'SCORE 0070', 'LIVES 3', 'QUANTA 9999999']),
+                     'end lines'),
+    'wrong closure (score)': ('R2', dict(waits=SH2, end_lines=['QUIT', 'TURNS 007', 'SCORE 0000', 'LIVES 3',
+                                                                 'QUANTA 0000001']), 'end lines'),
+    'missing shell': ('R2', dict(waits=SH2, no_shell=True), 'ISPF Command Shell'),
+    'unknown DATA-TYPE': ('R2', dict(waits=SH2, dt0a=True), 'not 3270-DATA'),
+    'cadence faster than 0.99 T': ('R2', dict(scale=0.97), 'earliest deadline'),
+    'host burst after the resume (causality)': ('R1', dict(waits=SH1, resume_burst=True), 'earliest deadline'),
+    'AID matching only beyond its permitted window': ('R2', dict(waits=SH2, late={1: 420}), 'permitted quantum'),
+    'unexpected TSO line-mode (C1) record mid-game': ('R2', dict(waits=SH2, midc1=True), 'differ'),
+    'driver-log action missing': ('R2', dict(waits=SH2, log_drop=4), 'driver log'),
+}
+for why, (c, kw, want) in fails6.items():
+    r = run6(c, **kw)
+    assert r['state'] == C6.FAILED and any(w in r['why'] for w in ((want,) if isinstance(want, str) else want)), \
+        (why, r.get('why'), r['state'])
+dw = r1['death_writes'][1]
+blocked6 = {
+    'mean 1.05 T': ('R2', dict(scale=1.05), '> 1.02 T', False),
+    'mean 1.15 T (STOP)': ('R2', dict(scale=1.15), '> 1.10 T', True),
+    'median outside T +/- 10 ms': ('R2', dict(gaps=[0, 15, 30]), 'median gap', False),
+    'probable skipped period': ('R2', dict(skip_at=120), 'skipped period', False),
+    'death stop outside 1350..1650 ms': ('R1', dict(delay={dw: 300}), 'death stop', False),
+}
+for why, (c, kw, want, stop) in blocked6.items():
+    r = run6(c, **kw)
+    assert r['state'] == C6.BLOCKED and any(want in b for b in r['blocked']) and r['stop'] == stop, \
+        (why, r.get('blocked'), r.get('why'))
+    assert r['state'] not in (C6.PASS, C6.FAILED)
+rr = r1['post_resume'][0]['writes'][0]                  # the resume quantum write
+r = run6('R1', delay={rr + 1: 250, rr + 2: 150})        # bunched after the resume, causality respected
+assert r['state'] == C6.BLOCKED and any('post-resume' in b for b in r['blocked']), r.get('blocked', r.get('why'))
+text6, lg6 = F6.build('R2', waits=SH2)                  # a well-formed but hand-edited driver log (send before unlock)
+x6 = json.loads(lg6[3])
+x6['sent'] = x6['unlocked'] - 1
+try:
+    C6.check(text6, lg6[:3] + [json.dumps(x6)] + lg6[4:], 'R2')
+    raise AssertionError('edited driver log accepted')
+except C6.Fail as ex:
+    assert 'inconsistent timestamps' in str(ex), ex
+assert all(w[1] - w[0] <= 2 for _, _, w in r1['placements'] + r2['placements'])     # bounded placement windows
+assert [s - w[0] for _, s, w in r2['placements']] == [0, 1, 1, 1, 1]                # start at lo, in-run AIDs at lo + 1
+assert C6.r2_eligible(C6.PASS) and not C6.r2_eligible(C6.BLOCKED) and not C6.r2_eligible(C6.FAILED)
+import zos6_drive as D6  # noqa: E402
+assert [a for _, a in D6.planned('R1', 'gameplay')] == ['PF8', 'PF9', 'PF9', 'x', 'PA2', 'PF11', 'Q']
+assert [a for _, a in D6.planned('R2', 'gameplay')] == ['PF11', 'PF8', 'PF7', 'PF10', 'Q']
+assert [a for _, a in D6.planned('R1')][:2] == ['EXEC', 'ENTER'] and D6.planned('R2', 'closure') == [('closure', 'ENTER')]
+assert {c for cs in D6.CALLS.values() for c in cs} <= {'PF(7)', 'PF(8)', 'PF(9)', 'PF(10)', 'PF(11)', 'PA(2)',
+                                                     'Enter()',
+                                                     'String("x")', 'String("Q")'}
+assert D6.command('R2', 'Z00000.PACMAN') == ("EXEC 'Z00000.PACMAN.CLIST(PACMAN)' "
+                                             "'AI(0) RULES(CLASSIC) PLAY(REALTIME) SOUND(NO) PRESENT(COALESCED) "
+                                             "SPEED(FAST)'")
+assert D6.PLANS['R1']['present'] == D6.PLANS['R2']['present'] == 'C'      # R1 / R2 request COALESCED explicitly
+assert [w for k, w in D6.PLANS['R2']['steps'] if k == 'wait'][-1] == 30
+assert D6.PLANS['R1']['steps'][7] == ('gameplay', 'PF9')
+# empty 3270-DATA SEND-DATA / KEYBOARD-RESTORE control records (REQUEST-FLAG X'03', z/OS TN3270E with
+# CONTENTION-RESOLUTION, live R1-T3): validated, never game writes, never compared with the model, visible in the
+# send-state diagnostics; any other empty 3270-DATA (REQUEST-FLAG 00 / 01 / 02) or a truncated record fails
+rk = run6('R2', kri=12)
+assert rk['state'] == C6.PASS and rk['writes'] == r2['writes'] and len(rk['controls']) > 0, rk.get('why')
+assert rk['diag']['kri_controls'] > 0 and rk['diag']['kri_max_gap'] is not None and r2['controls'] == []
+for why, kw, want in (('empty 3270-DATA, REQUEST-FLAG 00', dict(kri_rq=0x00), 'not 3270-DATA'),
+                      ('empty 3270-DATA, SEND-DATA only (01)', dict(kri_rq=0x01), 'not 3270-DATA'),
+                      ('empty 3270-DATA, KRI only (02)', dict(kri_rq=0x02), 'not 3270-DATA'),
+                      ('truncated control record', dict(kri_short=True), 'no TN3270E header')):
+    r = run6('R2', waits=SH2, kri=6, **kw)
+    assert r['state'] == C6.FAILED and want in r['why'], (why, r.get('why'))
+# the driver against the REAL `x3270if -t PORT ACTION` contract (observed live on the idle ISPF shell, 2026-10-16):
+# exit status 0 = success, stdout = raw text (Ascii(): the screen rows; Wait / PF / PA / Enter / String: nothing);
+# no `data:` prefix, no `ok` line; nonzero status or a timeout = STOP. A fake x3270if replaces subprocess.run.
+import subprocess as SP6  # noqa: E402
+import io as IO6  # noqa: E402
+REAL_RUN6 = SP6.run
+SCREEN6 = ('   Menu  List  Mode  Functions  Utilities  Help\n' + ' ' + '\u2500' * 78 + '\n'
+           '                             ISPF Command Shell\n Enter TSO commands below:\n\n ===>\n'
+           + '\n' * 16 + '  F1=Help      F2=Split     F3=Exit\n F10=Actions  F12=Cancel\n')
+GAME6 = SCREEN6.replace('ISPF Command Shell', 'P A C - M A N  ***')       # the pre-game ***, the game, the closing ***
+SEQ6 = [SCREEN6, GAME6, GAME6, GAME6, SCREEN6]      # Ascii() answers: startup, ***, game, ***, back in the shell
+
+
+class FakeX:
+    def __init__(self, screens, fail=None, hang=None):
+        self.screens, self.fail, self.hang, self.calls = list(screens), fail, hang, []
+
+    def __call__(self, cmd, capture_output, text, timeout):
+        action = cmd[3]
+        self.calls.append(action)
+        if self.hang and action.startswith(self.hang):
+            raise SP6.TimeoutExpired(cmd, timeout)
+        if self.fail and action.startswith(self.fail):
+            return SP6.CompletedProcess(cmd, 1, '', 'x3270if: error')
+        out = (self.screens.pop(0) if len(self.screens) > 1 else self.screens[0]) if action == 'Ascii()' else ''
+        return SP6.CompletedProcess(cmd, 0, out, '')
+
+
+def drive6(fake, case='R2'):
+    real_run, real_sleep = REAL_RUN6, D6.time.sleep
+    D6.subprocess.run, D6.time.sleep = fake, lambda s: None
+    log = IO6.StringIO()
+    try:
+        D6.run(case, 4005, log, 'Z00000.PACMAN')
+        return 'ok', log.getvalue().splitlines()
+    except D6.Stop as ex:
+        return f'STOP: {ex}', log.getvalue().splitlines()
+    finally:
+        D6.subprocess.run, D6.time.sleep = real_run, real_sleep
+
+
+dx = D6.Driver(4005, IO6.StringIO())
+D6.subprocess.run = FakeX([SCREEN6])
+try:
+    assert dx.screen() == SCREEN6 and 'ISPF Command Shell' in dx.screen()       # raw multiline screen, complete
+    assert dx.x('Wait(5,Unlock)') == '' and dx.x('PF(8)') == '' and dx.x('Enter()') == '' and dx.x('String("x")') == ''
+    D6.subprocess.run = FakeX([SCREEN6], fail='PF(')
+    try:
+        dx.x('PF(8)')
+        raise AssertionError('nonzero rc accepted')
+    except D6.Stop as ex:
+        assert 'rc 1' in str(ex)
+    D6.subprocess.run = FakeX([SCREEN6], hang='Wait(')
+    try:
+        dx.x('Wait(5,Unlock)', timeout=15)
+        raise AssertionError('timeout accepted')
+    except D6.Stop as ex:
+        assert 'no answer within 15 s' in str(ex)
+finally:
+    D6.subprocess.run = REAL_RUN6
+res, lines = drive6(FakeX(SEQ6), 'R2')       # startup sees the shell; every planned action sent, logged ok
+assert res == 'ok' and [(json.loads(x)['category'], json.loads(x)['action']) for x in lines] == D6.planned('R2')
+assert all(json.loads(x)['result'] == 'ok' for x in lines)
+res, lines = drive6(FakeX([SCREEN6.replace('ISPF Command Shell', 'ISPF Primary Option Menu')]), 'R1')
+assert res.startswith('STOP') and 'not on the screen' in res and lines == []         # no shell: nothing sent
+fk = FakeX(SEQ6, fail='PF(7)')
+res, lines = drive6(fk, 'R2')                                    # a failing action: STOP, logged as error, nothing after
+assert res.startswith('STOP') and json.loads(lines[-1])['action'] == 'PF7' and 'error' in json.loads(lines[-1])['result']
+assert fk.calls[-1] == 'PF(7)'
+res, lines = drive6(FakeX(SEQ6, hang='Wait('), 'R1')
+assert res.startswith('STOP') and 'no answer' in res and len(lines) == 1 and 'error' in json.loads(lines[0])['result']
+print(f'ZOS-6 live postcheck (EVERY rules): ref_rt = oracle 310 RTB1-12 / RTT1-6; synthetic R1 PASS (live freeze '
+      'discrimination NOT OBSERVABLE, reported), R2 PASS (PF7 / PF8 / PF10 / PF11 -> '
+      f'F7 / F8 / 7A / 7B -> U / D / L / R); {len(fails6)} FUNCTIONAL FAIL rules, {len(blocked6) + 2} BLOCKED classes '
+      '(BLOCKED != PASS / FAIL); R2 only after an R1 PASS: PASS')
+
+# 21. ZOS-6 protocol probe (docs/zos6-protocol-probe.md; local / static only, nothing uploaded or run): the assembler
+#     probe src/probe/zos/PACZ6P.asm (P0 = TPUT NOEDIT, PT = TPG NOEDIT,WAIT,NOHOLD, then TGET ASIS,NOWAIT on an
+#     absolute 150 ms schedule; no ATTACH / STAX / ESTAE / LE; AMODE / RMODE 24; TPG buffer address / size in R2 / R3,
+#     never R0 / R1: IHB300, JOB04217), the generated build deck (ASM + LKED into the existing probe PDSE DISP=SHR, no
+#     allocation, no DELETE), the analyzer on synthetic P0 / PT traces (inventory, order, AIDs wire vs driver vs host),
+#     the input controller on a fake x3270if (a 5 s keyboard-locked wait is an observation, not a retry, not a STOP);
+#     PN = the P0 loop with the TGET ASIS,NOWAIT before the TPUT NOEDIT (no TPG, no TGET WAIT, no subtask);
+#     PH = the P0 loop with TPUT NOEDIT,WAIT,HOLD (output written before control returns); PB4 = the P0 loop with
+#     the PH HOLD output on every 4th quantum only (a periodic output barrier); PR2 = 150 ms logical quanta with a
+#     poll each, but a NOHOLD write of the current state only on even quanta (66 of 133), never replayed; PR2I =
+#     PR2 plus a host table (one record per quantum: clock reads and stores only, printed after ENDLOOP)
+import zos6_probe_check as PC  # noqa: E402
+import zos6_probe_fixture as PF  # noqa: E402
+import zos6_probe_drive as PD  # noqa: E402
+psrc = (R / 'src/probe/zos/PACZ6P.asm').read_text().splitlines()
+pcode = [x for x in psrc if x[:1] != '*']
+assert all(len(x) <= 71 for x in psrc) and not any(x.startswith(('/*', '//')) for x in psrc)
+assert [x.split()[0:2] for x in pcode if ' TPG ' in x] == [['TPG', '(2),(3),NOEDIT,WAIT,NOHOLD']]
+ktpg = next(i for i, x in enumerate(pcode) if ' TPG ' in x)
+assert [x.split()[:2] for x in pcode[ktpg - 2:ktpg]] == [['LA', '2,FRAME'], ['LA', '3,FRAMEL']]
+assert [x.split()[1] for x in pcode if x.split()[:1] == ['TPUT'] and 'NOEDIT' in x] == [
+    '(1),(0),NOEDIT', '(1),(0),NOEDIT', '(1),(0),NOEDIT,WAIT,HOLD'] and sum(' TGET ' in x for x in pcode) == 1
+assert any('TGET  (1),(0),ASIS,NOWAIT' in x for x in pcode) and 'PACZ6P   AMODE 24' in psrc and 'PACZ6P   RMODE 24' in psrc
+pops = [(x.split()[0] if x[:1] == ' ' else x.split()[1]) for x in pcode if x.strip()]      # the operation field
+assert not {'ATTACH', 'DETACH', 'STAX', 'ESTAE', 'ESPIE', 'SPIE', 'CALL', 'LINK', 'XCTL', 'LOAD'} & set(pops), pops
+# PN (poll before output): accepted PARM; the one TGET (NOWAIT, never WAIT) lives in POLL; in the loop PN calls POLL
+# before the TPUT NOEDIT and skips the post-output POLL, which P0 / PT keep after the output
+assert [x.split()[:2] for x in pcode if '=C\'P' in x and 'CLC' in x] == [['CLC', "2(2,2),=C'P0'"],
+                                                                     ['CLC', "2(2,2),=C'PT'"], ['CLC', "2(2,2),=C'PN'"],
+                                                                     ['CLC', "2(2,2),=C'PH'"], ['CLC', "2(2,2),=C'PB'"],
+                                                                     ['CLC', "2(2,2),=C'PR'"]]
+tgets = [x.split()[1] for x in pcode if x.split()[:1] == ['TGET'] or ' TGET ' in x]
+assert tgets == ['(1),(0),ASIS,NOWAIT'] and not any('WAIT' in x.split()[1].replace('NOWAIT', '') for x in pcode
+                                                    if ' TGET ' in x)
+ops = [' '.join(x.split()[:2]) if x[:1] == ' ' else ' '.join(x.split()[:3]) for x in pcode if x.strip()]
+lp, el, pl = ops.index('LOOP DS 0H'), ops.index('ENDLOOP DS 0H'), ops.index('POLL DS 0H')
+body = ops[lp:el]
+k1, kt, k2 = body.index('BAL 11,POLL'), body.index('TPUT (1),(0),NOEDIT'), len(body) - 1 - body[::-1].index('BAL 11,POLL')
+assert body[k1 - 2:k1] == ["CLI MODE,C'N'", 'BNE FRAMEB'] and k1 < kt < k2 and body.count('BAL 11,POLL') == 2
+assert body[k2 - 2:k2] == ["CLI MODE,C'N'", 'BE NOAID'] and ops.index('TGET (1),(0),ASIS,NOWAIT') > pl > el
+assert not any(x.startswith(('WAIT ', 'TGET')) and 'NOWAIT' not in x for x in body)    # nothing blocks on input
+# PH (TPUT HOLD): the only change from P0 is the output call: one HOLD TPUT, reached only for MODE H, then the common
+# OUTDONE; PH polls AFTER the output (the P0 order: only MODE N skips the post-output POLL)
+kh = body.index('USEHOLD DS 0H')
+assert body[kh + 1:kh + 4] == ['MVI HOLDQ,1', 'TPUT (1),(0),NOEDIT,WAIT,HOLD', 'B OUTDONE']
+assert body.count("CLI MODE,C'H'") == 1
+assert body[body.index("CLI MODE,C'H'") + 1] == 'BE USEHOLD'
+assert body.index('USEHOLD DS 0H') < body.index('OUTDONE DS 0H')
+assert body.index("CLI MODE,C'H'") < body.index('TPUT (1),(0),NOEDIT') < kh and "CLI MODE,C'H'" not in ops[el:]
+# PB4 (periodic HOLD barrier): PARM 'PB4' (3 characters, length checked); in the output selection MODE B takes the
+# PH HOLD call when q mod 4 = 0 (R4 = R8 AND 3, R4 used nowhere else) and the P0 NOHOLD TPUT otherwise; the poll
+# stays after the output (only MODE N skips it); HOLDQ marks a HOLD quantum for HOLDS / MAXHOLD / MAXNOHOLD
+kb = ops.index("CLC 2(2,2),=C'PB'")
+assert ops[kb + 1:kb + 9] == ['BNE PARMR', "CLC 0(2,2),=H'3'", 'BL EXIT', "CLI 4(2),C'4'", 'BNE EXIT',
+                             "MVI FMODE+2,C'4'", "MVI S1MODE+2,C'4'", 'B PARMOK']
+kr = ops.index('PARMR DS 0H')
+assert ops[kr + 1:kr + 17] == ["CLC 2(2,2),=C'PR'", 'BNE EXIT', "CLC 0(2,2),=H'3'", 'BL EXIT', "CLI 4(2),C'2'",
+                              'BNE EXIT', "MVI FMODE+2,C'2'", "MVI S1MODE+2,C'2'", "CLC 0(2,2),=H'4'", 'BL PARMOK',
+                              "CLI 5(2),C'I'", 'BNE EXIT', 'MVI INSTR,1', "MVI S1MODE+3,C'I'", 'PARMOK DS 0H',
+                              "MVC MODE,3(2)"]                 # PR2I = MODE R (PR2) + INSTR; FMODE (title) as PR2
+kc = body.index("CLI MODE,C'B'")
+assert body[kc:kc + 7] == ["CLI MODE,C'B'", 'BNE USENOH', 'LR 4,8', "N 4,=F'3'", 'BZ USEHOLD', 'USENOH DS 0H',
+                          'TPUT (1),(0),NOEDIT'] and body.index("CLI MODE,C'H'") < kc < kh
+assert [o for o in body if re.search(r'(^|\s)4,|,4\)', o)] == ['LR 4,8', "N 4,=F'1'", 'LR 4,8', "N 4,=F'3'"]
+# PR2 (render every 2nd logical quantum): the quantum itself is unchanged (133 x 150 ms: NQUANTA, PERIOD, the lateness
+# and deadline code run for every q before / after the branch); at FRAMEB MODE R with an odd q counts a skip and jumps
+# to PUTOK, i.e. no frame is built, no TPUT, but the same POLL and the same absolute deadline; even q builds the frame
+# from the CURRENT q / AIDCNT and writes it with the P0 NOHOLD TPUT; nothing is kept for a later write
+kf = body.index('FRAMEB DS 0H')
+assert body[kf:kf + 11] == ['FRAMEB DS 0H', "CLI MODE,C'R'", 'BNE FRAMEC', 'LR 4,8', "N 4,=F'1'", 'BZ FRAMEC',
+                            'L 2,SKIPCNT', 'LA 2,1(2)', 'ST 2,SKIPCNT', 'B PUTOK', 'FRAMEC DS 0H']
+assert body[kf + 11:kf + 13] == ['CVD 8,DW', 'UNPK FQ(4),DW']                        # the frame shows the current q
+assert body.index('LOOP DS 0H') < body.index('ST 1,TISSUE') < kf < body.index('PUTOK DS 0H') < body.index('NOAID DS 0H')
+kn = body.index('NOAID DS 0H')
+assert body[kn + 1:kn + 3] == ['LR 0,8', 'MH 0,PERIOD'] and 'BL LOOP' in body[kn:]
+assert any("NQUANTA DC F'133'" in ' '.join(x.split()[:3]) for x in pcode)
+assert any("PERIOD DC H'150'" == ' '.join(x.split()[:3]) for x in pcode)
+ko = body.index('OUTDONE DS 0H')
+assert body[ko + 4:ko + 7] == ['L 2,WRCNT', 'LA 2,1(2)', 'ST 2,WRCNT']                # counted after RC 0 only
+pr2_writes = [q for q in range(1, 134) if q % 2 == 0]
+assert len(pr2_writes) == 66 and pr2_writes[0] == 2 and pr2_writes[-1] == 132 and 133 - len(pr2_writes) == 67
+assert any("C'PACZ6P WRITES '" in x for x in pcode) and any("C' SKIPPED '" in x for x in pcode)
+# PR2I (instrumentation only): every added step in the loop and in POLL sits in a block `CLI INSTR,1` / `BNE NOINSn`
+# (skipped by every other mode, PR2 included) and uses only the clock (BAL 14,NOWMS) and stores into the record at
+# 0(R6) (R6 used nowhere else); no SVC / macro / I/O inside; one record per quantum, (q - 1) x 32 from ITAB, initialised
+# from IINIT at the top of the quantum; the table (133 x 32) is printed by IDUMP, called only at SUMEND (after
+# ENDLOOP's STTMPMD / STFSMODE OFF / STLINENO and the summary), with line-mode TPUTs
+allowed = re.compile(r"^(CLI INSTR,1|BNE NOINS\d|BNZ NOINS\d|BZ NOINS\d|BAL 14,NOWMS|LR 6,8|BCTR 6,0|SLL 6,5|"
+                     r"LA 6,ITAB\(6\)|MVC 0\(32,6\),IINIT|STH 8,0\(6\)|ST 1,(12|16|20|24)\(6\)|MVI 2\(6\),1|"
+                     r"L 2,AIDCNT|STH 2,(8|10)\(6\)|LR 5,1|STC 15,3\(6\)|LTR 15,15|STH 5,4\(6\)|LTR 5,5|"
+                     r"MVC 6\(1,6\),INBUF|LR 1,5|NOINS\d DS 0H)$")
+blocks = []
+for k, o in enumerate(ops):
+    if o == 'CLI INSTR,1' and ops[k + 1].startswith('BNE NOINS'):
+        end = ops.index(ops[k + 1].split()[1] + ' DS 0H', k)
+        blocks.append((k, end))
+        assert all(allowed.match(x) for x in ops[k:end + 1]), ops[k:end + 1]
+assert len(blocks) == 6 and [b for b in blocks if lp < b[0] < el].__len__() == 3 and all(b[0] > pl for b in blocks[3:])
+ki = blocks[0][0]
+assert ops[ki - 1] == 'LA 8,1(8)' and ops[ki - 2] == 'LOOP DS 0H' and ops[ki + 2:ki + 8] == [
+    'LR 6,8', 'BCTR 6,0', 'SLL 6,5', 'LA 6,ITAB(6)', 'MVC 0(32,6),IINIT', 'STH 8,0(6)']
+r6 = [o for o in ops[:ops.index('IDUMP DS 0H')] if re.search(r'(^|\s)6,|\(6\)', o)]
+assert all(allowed.match(o) for o in r6), r6                                       # R6: the record pointer only
+assert "ITAB DS 0F" in ops and 'DS 133XL32' in ops and ops.index('LTORG') < ops.index('ITAB DS 0F')
+assert ops.count('BAL 11,IDUMP') == 1 and ops.index('BAL 11,IDUMP') > ops.index('STFSMODE OFF') > el
+ks = ops.index('SUMEND DS 0H')
+assert ops[ks + 1:ks + 5] == ['CLI INSTR,1', 'BNE SUMX', 'BAL 11,IDUMP', 'SUMX DS 0H']
+idump = ops[ops.index('IDUMP DS 0H'):ops.index('DEC6 DS 0H')]
+assert [o for o in idump if o.startswith(('TPUT', 'TGET', 'TPG', 'STIMER', 'WTO'))] == ['TPUT (1),(0)'] * 3
+loop_io = [o for o in body if o.split()[0] in ('TPUT', 'TPG', 'TGET', 'WTO', 'STIMER')]
+assert loop_io == ['TPUT (1),(0),NOEDIT', 'TPUT (1),(0),NOEDIT,WAIT,HOLD', 'TPG (2),(3),NOEDIT,WAIT,NOHOLD',
+                   'STIMER WAIT,MICVL=MICDW']                                        # unchanged by PR2I
+assert [o for o in ops[pl:ops.index('NOWMS DS 0H')] if o.split()[0] in ('TPUT', 'TPG', 'TGET', 'WTO')] == [
+    'TGET (1),(0),ASIS,NOWAIT']                                                    # POLL: still the one TGET
+assert any(' '.join(x.split()[:2]) == "IINIT DC" and "X'FF',X'FFFF'" in x for x in pcode)
+assert body.index('MVI HOLDQ,0') < body.index("CLI MODE,C'T'") and 'MVI HOLDQ,1' in body
+kq = body.index('CLI HOLDQ,1')
+assert body[kq:kq + 5] == ['CLI HOLDQ,1', 'BNE PUTNH', 'L 2,HOLDCNT', 'LA 2,1(2)', 'ST 2,HOLDCNT']
+assert body.index('OUTDONE DS 0H') < kq < body.index('PUTALL DS 0H') < body.index('PUTOK DS 0H')
+assert [q for q in range(1, 134) if q & 3 == 0][:2] == [4, 8] and sum(q & 3 == 0 for q in range(1, 134)) == 33
+assert any("C'PACZ6P HOLDS '" in x for x in pcode) and any("C' MAXNOHOLD-MS '" in x for x in pcode)
+assert not any(re.search(r'PACMAIN|PACFSIO|PACTSO|CLIST|DATA\(', x) for x in pcode)
+assert subprocess.run([sys.executable, str(R / 'tools/zowe/zos6_probe_deck.py'), '--check']).returncode == 0
+pdeck = (R / 'jcl/zos/PACZ6PRB.jcl').read_text()
+assert audit_deck(render(pdeck, 'Z00000'), 'Z00000') == [] and 'DELETE' not in pdeck
+assert re.findall(r'DSN=(@@HLQ@@[\w.()]+)', pdeck) == ['@@HLQ@@.PACMAN.Z6PRB.LOAD(PACZ6P)']
+assert '\n'.join(psrc) + '\n' in pdeck and "PARM='LIST,AMODE=24,RMODE=24'" in pdeck
+assert 'IEFBR14' not in pdeck and 'CATLG' not in pdeck and re.findall(r'^//(\w+) +EXEC', pdeck, re.M) == ['ASM', 'LKED']
+assert '//SYSLMOD  DD DSN=@@HLQ@@.PACMAN.Z6PRB.LOAD(PACZ6P),DISP=SHR\n' in pdeck
+assert not re.search(r'PACMAN\.(LOAD|ASM|OBJ|CLIST|DATA|COBOL|CEEOPTS)\b', pdeck)
+pt = PC.analyse(*PF.build('PT'), 'PT')
+assert pt['frames'] == 133 and pt['quanta_in_order'] and pt['frames_sdi'] == 133 and pt['bids'] == 133
+assert pt['after_sdi'] == {'BID': 132} and pt['driver_sent_match_wire'] and pt['host_received_match_wire']
+assert [a for _, a in pt['wire_aids']] == ['F4', 'F5', 'F6'] and pt['host_summary']['QUANTA'] == '000133'
+p0 = PC.analyse(*PF.build('P0', (False, True, False)), 'P0')
+assert p0['frames_sdi'] == 0 and p0['empty_controls'] == {'03': 9} and p0['bids'] == 10
+assert [r for _, r in p0['driver_attempts']].count('not sent: keyboard locked 5 s') == 2
+assert p0['driver_sent_match_wire'] and p0['host_received_match_wire'] and [a for _, a in p0['wire_aids']] == ['F5']
+tx, lgx = PF.build('PT')
+assert PC.analyse(*PF.build('PT', swap=(10, 11)), 'PT')['quanta_in_order'] is False       # output order checked
+bad_host = PC.analyse(tx, lgx, 'PT')
+bad_host['host_aids'][1] = ('F7', 67, 10160)
+assert [a for a, _, _ in bad_host['host_aids']] != [a for _, a in bad_host['wire_aids']]
+lg_mis = [json.dumps(dict(json.loads(x), action='PF6')) if json.loads(x).get('action') == 'PF5' else x for x in lgx]
+assert not PC.analyse(tx, lg_mis, 'PT')['driver_sent_match_wire']
+pn = PC.analyse(*PF.build('PN'), 'PN')          # PN: 133 frames, the three AIDs on the wire and received by the host
+assert pn['frames'] == 133 and pn['quanta_in_order'] and pn['driver_sent_match_wire'] and pn['host_received_match_wire']
+assert [a for _, a in pn['wire_aids']] == ['F4', 'F5', 'F6'] == [a for a, _, _ in pn['host_aids']]
+assert pn['host_summary']['MODE'] == 'PN' and pn['host_summary']['AIDS'] == '000003' and pn['mean_period'] == 150.0
+assert pn['lag_vs_first_frame_schedule']['max'] == 0 and pn['arrival_gaps']['median'] == 150
+pn_miss = PC.analyse(*PF.build('PN', host_drop=1), 'PN')                          # one host AID missing: reported
+assert [a for a, _, _ in pn_miss['host_aids']] == ['F4', 'F6'] and not pn_miss['host_received_match_wire']
+assert pn_miss['driver_sent_match_wire']                                          # ... independently of the driver
+tn, lgn = PF.build('PN')
+lgn_mis = [json.dumps(dict(json.loads(x), action='PF4')) if json.loads(x).get('action') == 'PF6' else x for x in lgn]
+pn_dm = PC.analyse(tn, lgn_mis, 'PN')                                             # driver / wire mismatch: reported
+assert not pn_dm['driver_sent_match_wire'] and pn_dm['host_received_match_wire']
+assert PC.analyse(*PF.build('PN', swap=(40, 41)), 'PN')['quanta_in_order'] is False
+assert PC.analyse(*PF.build('PN', quanta=100), 'PN')['frames'] == 100              # a short run is visible
+assert pn['aid_test_exercised'] and (pn['aids_planned'], pn['aids_attempted'], pn['aids_sent']) == (3, 3, 3)
+# an experiment in which no planned AID was sent proves nothing about delivery, although both equalities hold on
+# empty lists: (a) every attempt timed out; (b) no attempt at all (the PN-T2 shape: the driver stopped at the
+# transition ENTER, the probe ran its 133 quanta)
+nx = PC.analyse(*PF.build('PN', delivered=(False, False, False)), 'PN')
+assert nx['driver_sent_match_wire'] and nx['host_received_match_wire'] and nx['wire_aids'] == nx['host_aids'] == []
+assert nx['aid_test_exercised'] is False and (nx['aids_attempted'], nx['aids_sent']) == (3, 0)
+tn0, lg0 = PF.build('PN', delivered=(False, False, False))
+lg0 = [x for x in lg0 if json.loads(x)['category'] != 'probe']
+n0 = PC.analyse(tn0, lg0, 'PN')
+assert n0['driver_attempts'] == [] and n0['wire_aids'] == [] and n0['host_aids'] == [] and n0['frames'] == 133
+assert n0['driver_sent_match_wire'] and n0['host_received_match_wire'] and n0['aid_test_exercised'] is False
+ph = PC.analyse(*PF.build('PH'), 'PH')            # PH: the same diagnostic report shape
+assert ph['host_summary']['HOLDS'] == '000133' and ph['host_summary']['MAXHOLD-MS'] == '000509'
+assert ph['lag_by_q_mod4'] is None and len(ph['lag_by_third']) == 3
+pb = PC.analyse(*PF.build('PB4', lagstep=40), 'PB4')   # PB4: lag building up between barriers, drained at them
+assert pb['frames'] == 133 and pb['quanta_in_order'] and pb['host_summary']['MODE'] == 'PB4'
+assert pb['host_summary']['HOLDS'] == '000033' and pb['host_summary']['MAXNOHOLD-MS'] == '000001'
+assert {k: v['max'] for k, v in pb['lag_by_q_mod4'].items()} == {'1': 0, '2': 40, '3': 80, '0': 120}
+assert [t['max'] for t in pb['lag_by_third']] == [120, 120, 120]                 # bounded, not growing
+assert pb['aid_test_exercised'] and pb['driver_sent_match_wire'] and pb['host_received_match_wire']
+assert (pb['aids_planned'], pb['aids_attempted'], pb['aids_sent']) == (3, 3, 3)
+pr = PC.analyse(*PF.build('PR2'), 'PR2')         # PR2: 66 writes of the even quanta, 133 logical quanta
+assert pr['frames'] == pr['frames_on_wire'] == 66 and pr['frame_step'] == 2 and pr['quanta_in_order']
+assert (pr['logical_quanta'], pr['physical_writes'], pr['skipped_writes']) == (133, 66, 67)
+assert pr['mean_period'] == 300.0 and pr['lag_vs_first_frame_schedule']['max'] == 0     # vs the logical schedule
+assert pr['aid_test_exercised'] and pr['driver_sent_match_wire'] and pr['host_received_match_wire']
+assert [t['max'] for t in pr['lag_by_third']] == [0, 0, 0] and pr['lag_by_q_mod4'] is None
+prr = PC.analyse(*PF.build('PR2', replay=40), 'PR2')    # a skipped quantum written late (burst): detected
+assert prr['frames'] == 67 and not prr['quanta_in_order']
+assert PC.analyse(*PF.build('P0'), 'P0')['frame_step'] == 1                       # the other modes: step 1
+assert PC.analyse(*PF.build('P0'), 'P0')['physical_writes'] == 133
+pi = PC.analyse(*PF.build('PR2I'), 'PR2I')          # PR2I: the PR2 wire shape + the host table
+assert pi['frames'] == 66 and pi['quanta_in_order'] and pi['frame_step'] == 2 and pi['host_received_match_wire']
+assert pi['instr']['quanta'] == 133 and pi['instr']['writes_even_only'] and pi['instr']['odd_hits'] == []
+assert pi['instr']['host_pattern'] == 'write-poll-only' and len(pi['instr']['detail']) == 12
+d0 = pi['instr']['deliveries'][0]
+assert d0['write'] and any(c == '.' for _, c in d0['before'])                       # odd no-data, then the write poll
+assert [x['tput'] for x in pi['instr']['detail'] if not x['write']][0] == [None, None]
+po = PC.analyse(*PF.build('PR2I', odd_hit=True), 'PR2I')                         # an odd no-write poll succeeds
+assert po['instr']['odd_hits'] and po['instr']['host_pattern'] == 'odd-poll-success'
+assert pr['instr'] is None and PC.analyse(*PF.build('P0'), 'P0')['instr'] is None    # other modes: no table
+pbx = PC.analyse(*PF.build('PB4', delivered=(True, False, True), host_drop=0), 'PB4')
+assert pbx['aid_test_exercised'] and pbx['driver_sent_match_wire'] and not pbx['host_received_match_wire']
+assert [a for _, a in pbx['wire_aids']] == ['F4', 'F6'] and [a for a, _, _ in pbx['host_aids']] == ['F6']
+assert ph['host_summary']['MODE'] == 'PH' and ph['aid_test_exercised'] and ph['host_received_match_wire']
+
+
+class FakeP:
+    def __init__(self, screens, timeout_waits=(), fail=None):
+        self.screens, self.tw, self.fail, self.calls, self.nw = list(screens), set(timeout_waits), fail, [], 0
+
+    def __call__(self, cmd, capture_output, text, timeout):
+        a = cmd[3]
+        self.calls.append(a)
+        if a.startswith('Wait('):
+            self.nw += 1
+            if self.nw in self.tw:
+                return SP6.CompletedProcess(cmd, 1, '', 'Wait(unlock): Timed out')
+        if self.fail and a.startswith(self.fail):
+            return SP6.CompletedProcess(cmd, 1, '', 'x3270if: error')
+        out = (self.screens.pop(0) if len(self.screens) > 1 else self.screens[0]) if a == 'Ascii()' else ''
+        return SP6.CompletedProcess(cmd, 0, out, '')
+
+
+PTITLE = SCREEN6.replace('ISPF Command Shell', PD.TITLE)
+STAR6 = SCREEN6.replace('ISPF Command Shell', '***')
+
+
+def pdrive(fake, mode='PT'):
+    real_sleep = PD.time.sleep
+    D6.subprocess.run, PD.time.sleep = fake, lambda s: None
+    log = IO6.StringIO()
+    try:
+        PD.run(mode, 4005, log, 'Z00000.PACMAN.Z6PRB.LOAD')
+        return 'ok', [json.loads(x) for x in log.getvalue().splitlines()]
+    except D6.Stop as ex:
+        return f'STOP: {ex}', [json.loads(x) for x in log.getvalue().splitlines()]
+    finally:
+        D6.subprocess.run, PD.time.sleep = REAL_RUN6, real_sleep
+
+
+fk = FakeP([SCREEN6, STAR6, PTITLE, STAR6, SCREEN6], timeout_waits={3, 5})   # waits: CALL, ENTER, PF4, PF5, PF6, ...
+res, lg = pdrive(fk, 'P0')
+assert res == 'ok' and [(x['category'], x['action']) for x in lg] == [
+    ('transition', 'CALL'), ('transition', 'ENTER'), ('probe', 'PF4'), ('probe', 'PF5'), ('probe', 'PF6'),
+    ('closure', 'ENTER')], lg
+assert [x['result'] for x in lg if x['category'] == 'probe'] == ['not sent: keyboard locked 5 s', 'ok',
+                                                                  'not sent: keyboard locked 5 s']
+assert 'PF(4)' not in fk.calls and fk.calls.count('PF(5)') == 1 and 'PF(6)' not in fk.calls       # never retried
+assert "String(\"CALL 'Z00000.PACMAN.Z6PRB.LOAD(PACZ6P)' 'P0'\")" in fk.calls
+res, lg = pdrive(FakeP([SCREEN6, PTITLE, STAR6, SCREEN6]), 'PT')     # no *** before the probe screen: no ENTER
+assert res == 'ok' and [x['action'] for x in lg] == ['CALL', 'PF4', 'PF5', 'PF6', 'ENTER']
+res, lg = pdrive(FakeP([SCREEN6, PTITLE, STAR6, SCREEN6], fail='PF(5)'), 'PT')   # any other error: STOP
+assert res.startswith('STOP') and lg[-1]['action'] == 'PF5' and lg[-1]['result'].startswith('error')
+res, lg = pdrive(FakeP([STAR6]), 'PT')
+assert res.startswith('STOP') and lg == []
+fk = FakeP([SCREEN6, PTITLE, STAR6, SCREEN6])
+res, lg = pdrive(fk, 'PN')                       # PN: same CALL form, same three timed attempts, no other key
+assert res == 'ok' and [x['action'] for x in lg] == ['CALL', 'PF4', 'PF5', 'PF6', 'ENTER']
+assert "String(\"CALL 'Z00000.PACMAN.Z6PRB.LOAD(PACZ6P)' 'PN'\")" in fk.calls
+fk = FakeP([SCREEN6, PTITLE, STAR6, SCREEN6])
+res, lg = pdrive(fk, 'PH')
+assert res == 'ok' and "String(\"CALL 'Z00000.PACMAN.Z6PRB.LOAD(PACZ6P)' 'PH'\")" in fk.calls
+fk = FakeP([SCREEN6, PTITLE, STAR6, SCREEN6])
+res, lg = pdrive(fk, 'PB4')
+assert res == 'ok' and "String(\"CALL 'Z00000.PACMAN.Z6PRB.LOAD(PACZ6P)' 'PB4'\")" in fk.calls
+assert [x['action'] for x in lg] == ['CALL', 'PF4', 'PF5', 'PF6', 'ENTER']
+fk = FakeP([SCREEN6, PTITLE, STAR6, SCREEN6])
+res, lg = pdrive(fk, 'PR2')
+assert res == 'ok' and "String(\"CALL 'Z00000.PACMAN.Z6PRB.LOAD(PACZ6P)' 'PR2'\")" in fk.calls
+fk = FakeP([SCREEN6, PTITLE, STAR6, SCREEN6])
+res, lg = pdrive(fk, 'PR2I')                     # same plan; only the CALL operand differs
+assert res == 'ok' and "String(\"CALL 'Z00000.PACMAN.Z6PRB.LOAD(PACZ6P)' 'PR2I'\")" in fk.calls
+assert [x['action'] for x in lg] == ['CALL', 'PF4', 'PF5', 'PF6', 'ENTER']
+print('ZOS-6 protocol probe (local): PACZ6P source (P0 TPUT NOEDIT / PT TPG NOEDIT,WAIT,NOHOLD + TGET ASIS,NOWAIT / PN TGET ASIS,NOWAIT before TPUT / PH TPUT NOEDIT,WAIT,HOLD / PB4 HOLD every 4th quantum / PR2 write every 2nd quantum / PR2I + host table, '
+      'AMODE / RMODE 24, no ATTACH / STAX / ESTAE / LE), generated deck (ASM + LKED into the existing Z6PRB.LOAD, no allocation, no DELETE), analyzer on '
+      'synthetic P0 / PT / PN / PH / PB4 / PR2 traces (aid_test_exercised, lag by phase, write coalescing, PR2I table), input controller on a fake x3270if: PASS')
+
+# 22. ZOS-6 production implementation (docs/zos6-production-design.md, ZV-D33; local only: nothing built, uploaded or
+#     run live). PRESENT(EVERY|COALESCED): the CLIST PARM (EVERY = the 2.0 PARM byte for byte), the COBOL control flow
+#     (PACMAIN phases A S D R W B T, PACPLAT PSLT interpreted from its source, PACDISP / PACSCR RTQS), the filtered model
+#     (tests/ref_rt.py present='C': grid, no replay / catch-up, logical identity with EVERY, the image invariant, the
+#     skipped-quantum display state, the S2 pattern clock) and the checker (logical quanta vs physical frames, the
+#     9 / 10 / 11-quantum freeze discrimination, trace-clock input reaction, the predeclared candidate gates)
+import copy  # noqa: E402
+import ref_rt  # noqa: E402
+import zos6_fixture as F6  # noqa: E402
+import zos6_live_check as C6  # noqa: E402
+import zos6_drive as D6  # noqa: E402
+from make_deck import RT_TSD  # noqa: E402
+import ref_rp as RP22  # noqa: E402
+import ref_s2 as S22  # noqa: E402
+import ref_gp2 as L22  # noqa: E402
+from ref_snap import Log as Log22  # noqa: E402
+TAG22 = zos_c2.TAG
+
+
+def tag22(rel):
+    return zos_c2.at_tag(rel)
+
+
+# --- 26 / 27 / 28: PACFSIO and zos5_live_check.py byte-identical; the portable game modules = their Z1 text only
+assert (R / 'src/asm/PACFSIO.asm').read_text() == tag22('src/asm/PACFSIO.asm')
+assert (R / 'src/asm/PACTSO.asm').read_text() == tag22('src/asm/PACTSO.asm')
+assert subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', 'tools/zowe/zos5_live_check.py'], cwd=R).returncode == 0
+assert subprocess.run(['git', 'ls-files', '--error-unmatch', 'tools/zowe/zos5_live_check.py'], cwd=R,
+                      capture_output=True).returncode == 0
+for rel in ('src/cobol/PACRT.cob', 'src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob',
+            'src/cobol/PACINPT.cob', 'src/copy/PACSTATE.cpy', 'src/copy/PACARC.cpy', 'src/copy/PACDS.cpy'):
+    assert (R / rel).read_text() == zos_c2.z1_text(rel), rel
+zos_c2.guard()
+assert sorted(zos_c2.z4_table()) == sorted(zos_c2.Z4_FILES) and 'src/asm/PACFSIO.asm' not in zos_c2.Z4_FILES
+for rel in zos_c2.Z4_FILES:                               # Z4 is pure addition except two replaced lines (listed)
+    for i1, i2, old, new in zos_c2.z4_table()[rel]:
+        assert len(old) <= 1 and len(new) >= len(old), (rel, i1, old)
+old22 = tag22('src/copy/PACREQ.cpy').split('\n')
+new22 = (R / 'src/copy/PACREQ.cpy').read_text().split('\n')
+assert new22[:len(old22) - 1] == old22[:-1] and [l for l in new22[len(old22) - 1:] if l.strip() and l[6] != '*'] == [
+    '           05  REQ-PMODE             PIC X.', '           05  REQ-PRES              PIC X.']   # appended: no offset moves
+
+
+# --- 1 / 2: the z/OS CLIST PARM (an independent evaluator of the PARM statements) - absent PRESENT == EVERY == the 2.0
+#     PARM byte for byte; COALESCED adds column 26 = C; the MVS CLIST untouched
+def clist_parm22(text, kw):
+    lines = text.split('\n')
+    proc = ' '.join(l.rstrip('+ ') for l in lines[:lines.index(next(l for l in lines if l.startswith('/*')))])
+    v = {k: d for k, d in re.findall(r'(\w+)\((\w*)\)', proc)}
+    v.update(re.findall(r'(\w+)\((\w*)\)', kw))
+    env = {'&' + k: x for k, x in v.items()}
+
+    def val(x):
+        x = x.strip()
+        m = re.fullmatch(r'&SUBSTR\(1:1,(&\w+)\)', x)
+        if m:
+            return env[m.group(1)][:1]
+        m = re.fullmatch(r'&STR\((.*)\)', x)
+        if m:
+            return re.sub(r'&\w+', lambda g: env[g.group(0)], m.group(1)) if m.group(1) else ''
+        m = re.fullmatch(r'&LENGTH\(&STR\((&\w+)\)\)', x)
+        if m:
+            return str(len(env[m.group(1)]))
+        return env[x] if x.startswith('&') else x
+    after = False                             # after the 2.0 PARM line only &E / &P statements (Z2 lines ignored)
+    for l in lines:
+        m = re.fullmatch(r'SET (&[A-Z]) = (.*)', l)
+        f = re.fullmatch(r'IF (.+?) (=|NE) (\S+) THEN SET (&[A-Z]) = (.*)', l)
+        skip = ('&Z', '&T', '&I') if not after else tuple('&' + c for c in 'ABCDFGHIJKLMNOQRSTUVWXYZ')
+        after = after or l.startswith('SET &P =')
+        if m and m.group(1) not in skip:
+            env[m.group(1)] = val(m.group(2))
+        elif f and f.group(4) not in skip:
+            a, b = val(f.group(1)), val(f.group(3))
+            if (a == b) == (f.group(2) == '='):
+                env[f.group(4)] = val(f.group(5))
+        if l.startswith("CALL '"):
+            return env['&P']
+
+
+zcl = (R / 'src/zos/PACMAN.clist').read_text()
+mcl = tag22('src/clist/PACMAN.clist')
+assert (R / 'src/clist/PACMAN.clist').read_text() == mcl                               # MVS CLIST untouched
+for kw in ('', 'AI(0) RULES(CLASSIC) PLAY(REALTIME) SOUND(NO)', 'AI(0) RULES(CLASSIC) PLAY(REALTIME) SOUND(NO) '
+           'SPEED(FAST)', 'AI(3) GHOSTS(2) COLOR(NO) LEVEL(7)', 'METRICS(YES) ALARM(SINGLE) LEVEL(12)'):
+    legacy = clist_parm22(mcl, kw)
+    assert len(legacy) == 25 and clist_parm22(zcl, kw) == legacy and clist_parm22(zcl, kw + ' PRESENT(EVERY)') == legacy
+    assert clist_parm22(zcl, kw + ' PRESENT(COALESCED)') == legacy + 'C', kw
+assert clist_parm22(zcl, 'AI(0) RULES(CLASSIC) PLAY(REALTIME) SOUND(NO) PRESENT(COALESCED)') == \
+    'TSO AI0 1 NAAAPAAARNC01NPC'
+assert zos_c2.z5_strip(zcl).count('PRESENT') == 0 and '  ALARM(PATTERN) PRESENT(EVERY)' in zcl.split('\n')
+assert zos_c2.Z5_SET_AFTER in zcl.split('\n') and zos_c2.Z5_SET_AFTER in mcl.split('\n')   # the 2.0 PARM line as is
+# the Z5 statements reuse only forms the 2.0 CLIST already runs (no null SET: the one &STR() in the repository is a
+# comparison, src/probe/RTPROBE.clist): SET &v = &SUBSTR(1:1,&kw), IF &v = literal THEN SET ..., &STR(.. &v&w ..)
+assert zos_c2.Z5_SET[2:] == ['SET &E = &SUBSTR(1:1,&PRESENT)', 'IF &E = C THEN SET &P = &STR(&P&E)']
+assert 'SET &K = &SUBSTR(1:1,&ALARM)' in mcl and 'IF &METRICS = YES THEN SET &M = M' in mcl and '&F&K)' in mcl
+assert not re.search(r'SET &\w+ = (&STR\(\))?$', zcl, re.M)
+
+
+# --- the COBOL sources: a minimal interpreter for the PSLT / pattern-clock paragraphs (MOVE / ADD / SUBTRACT / GO TO
+#     / IF with = / NOT = / NOT < / > joined by AND; CALL ignored), so the slot rule is checked on the source itself
+def para22(rel, name):
+    ls = (R / rel).read_text().split('\n')
+    i = ls.index(f'       {name}.')
+    out = []
+    for l in ls[i + 1:]:
+        if re.fullmatch(r'       [A-Z0-9-]+\.', l):
+            break
+        if len(l) > 6 and l[6] == '*':
+            continue
+        out.append(l[7:72].strip())
+    return out
+
+
+def cobol22(lines, env):
+    text = ' '.join(lines)
+    sents = [x.strip() for x in re.split(r"\.(?=\s|$)", text) if x.strip()]
+    verbs = ('MOVE', 'ADD', 'SUBTRACT', 'GO', 'CALL', 'PERFORM')
+
+    def val(t):
+        return t[1:-1] if t.startswith("'") else int(t) if t.isdigit() else env[t]
+
+    def cond(ts):
+        for c in ' '.join(ts).split(' AND '):
+            c = c.split()
+            a, op, b = c[0], ' '.join(c[1:-1]), c[-1]
+            x, y = val(a), val(b)
+            ok = {'=': x == y, 'NOT =': x != y, 'NOT <': x >= y, '>': x > y}[op]
+            if not ok:
+                return False
+        return True
+
+    def stmts(ts):
+        k = 0
+        while k < len(ts):
+            j = next((n for n in range(k + 1, len(ts)) if ts[n] in verbs), len(ts))
+            st = ts[k:j]
+            k = j
+            if st[0] == 'MOVE':
+                env[st[3]] = val(st[1])
+            elif st[0] == 'ADD':
+                env[st[3]] = env[st[3]] + val(st[1])
+            elif st[0] == 'SUBTRACT':
+                env[st[3]] = env[st[3]] - val(st[1])
+            elif st[0] == 'GO':
+                return 'exit'
+    for se in sents:
+        ts = re.findall(r"'[^']*'|\S+", se)
+        if ts[0] == 'IF':
+            j = next(n for n in range(1, len(ts)) if ts[n] in verbs)
+            if cond(ts[1:j]) and stmts(ts[j:]) == 'exit':
+                return env
+        elif stmts(ts) == 'exit':
+            return env
+    return env
+
+
+PSLT22 = para22('src/cobol/PACPLAT.cob', 'DO-PSLT')
+PSTP22 = int(re.search(r'01  PS-TP\s+PIC 9\(4\) VALUE (\d+)\.', (R / 'src/cobol/PACPLAT.cob').read_text()).group(1))
+assert PSTP22 == ref_rt.PRES_TP == 300
+
+
+def cobol_slots22(pmode, mode, per, seq):
+    """Drive the COBOL DO-PSLT over seq ('B' base / 'Q' quantum) -> the Y / N answers."""
+    env, out = {'PS-ACC': 0, 'PS-TP': PSTP22, 'REQ-PMODE': pmode, 'REQ-MODE': mode, 'REQ-RTPER': per}, ''
+    for x in seq:
+        env['REQ-PRES'] = x
+        out += cobol22(PSLT22, env)['REQ-PRES']
+    return out
+
+
+SEQ22 = 'B' + 'Q' * 11 + 'B' + 'Q' * 5 + 'B' + 'Q' * 400
+for per, stride in ((150, 2), (125, 3)):                  # 4 / 5 / 7 / 8: the slot grid, anchored at every base
+    cy = cobol_slots22('C', 'TSC', per, SEQ22)
+    assert cy == cobol_slots22('C', 'TSD', per, SEQ22)
+    exp, acc = '', 0
+    for x in SEQ22:
+        if x == 'B':
+            exp, acc = exp + 'Y', 0
+            continue
+        acc += 1
+        exp += 'Y' if acc % stride == 0 else 'N'
+    assert cy == exp, (per, cy[:40])
+    assert all(SEQ22[i + 1] == 'B' for i in range(len(cy) - 1) if cy[i:i + 2] == 'YY')   # two in a row: a base only
+    assert cy.count('Y') == SEQ22.count('B') + sum(len(r) // stride for r in SEQ22.split('B') if r)
+for pmode, mode in ((' ', 'TSC'), (' ', 'TSD'), ('C', 'BAT'), ('C', 'TSO'), ('X', 'TSC')):   # 3: EVERY / non-screen
+    assert set(cobol_slots22(pmode, mode, 150, SEQ22)) == {'Y'}, (pmode, mode)
+
+
+# --- 3 / 9 / 10 / 11: PACMAIN phase order and the EVERY path (no post-write poll, RT-FRAME cleared every quantum)
+RTQ22 = para22('src/cobol/PACMAIN.cob', 'RT-QUANTUM')
+J22 = ' | '.join(RTQ22)
+order22 = [J22.rindex(x) for x in ('PERFORM RT-COLLECT', "MOVE 'RQ  ' TO REQ-OP", "MOVE 'PSLT' TO REQ-OP",
+                                   "MOVE 'RTQF' TO REQ-OP", 'IF F-WON = 1', 'PERFORM RT-POST-READ',
+                                   'IF RT-OVER = 1 | GO TO RT-QUANTUM-EXIT', "MOVE 'WDLN' TO REQ-OP")]
+assert order22 == sorted(order22), order22                 # A S D R (W inside R) B T
+assert "IF REQ-PMODE = 'C' AND REQ-PRES = 'Y' | AND REQ-MODE = 'TSC' | PERFORM RT-POST-READ THRU RT-POST-READ-EXIT" \
+    in J22                                                   # B: COALESCED, presented, live terminal only
+assert "IF REQ-PRES = 'Y' | MOVE SPACE TO RT-FRAME" in J22  # a prompt frame waits for the next presented quantum
+assert para22('src/cobol/PACMAIN.cob', 'RT-POST-READ') == ['PERFORM RT-READ.', 'PERFORM RT-EVENT THRU RT-EVENT-EXIT.']
+assert para22('src/cobol/PACMAIN.cob', 'RT-READ') == ['MOVE SPACE TO REQ-INKEY.', "MOVE 'RTRD' TO REQ-OP.",
+                                                       "CALL 'PACINPT' USING PAC-REQ."]
+rtsc22 = ' '.join(para22('src/cobol/PACINPT.cob', 'RT-TSC'))  # one RTRD = one PACPLAT POLL = one PACFSIO POLL = 1 TGET
+assert rtsc22.count("CALL 'PACPLAT'") == 1 and ' '.join(para22('src/cobol/PACPLAT.cob', 'DO-POLL')).count(
+    "CALL 'PACFSIO'") == 1
+assert re.findall(r'TGET .*', ' '.join(l for l in (R / 'src/asm/PACFSIO.asm').read_text().split('\n')
+                                       if 'POLL' in l or 'TGET' in l)).count('TGET  (1),(0),ASIS,NOWAIT') <= 2
+mm22 = ' | '.join(para22('src/cobol/PACMAIN.cob', 'MAIN-PARA'))
+assert "MOVE SPACE TO REQ-PMODE. | IF PARM-LEN > 25 AND PARM-PRES = 'C' | MOVE 'C' TO REQ-PMODE. | MOVE 'Y' TO " \
+    "REQ-PRES." in mm22
+assert "MOVE 1 TO RT-PBASE." in ' | '.join(para22('src/cobol/PACMAIN.cob', 'RT-GAME')) and \
+    ' | '.join(para22('src/cobol/PACMAIN.cob', 'RT-PAUSED')).index('MOVE 1 TO RT-PBASE.') < \
+    ' | '.join(para22('src/cobol/PACMAIN.cob', 'RT-PAUSED')).index('PERFORM RT-COLLECT')       # 8: resume = base
+assert "MOVE 'Q' TO REQ-PRES. | IF RT-PBASE = 1 | MOVE 'B' TO REQ-PRES. | MOVE 0 TO RT-PBASE." in J22
+assert C6.cards_for(6, [3, 3], ['L', 'R']) == ['.', '.', 'LR', '.', '.', '.']          # 10: B(k) before A(k + 1)
+
+# --- 12 / 13 / 14 / 15: RTQS = display state of logical time only; the pattern clock; the diff baseline untouched
+assert para22('src/cobol/PACSCR.cob', 'DO-RTQS') == ['MOVE 0 TO DS-LEN.', 'PERFORM RP-STATE THRU RP-STATE-EXIT.',
+                                                     'PERFORM SET-FACE.', "IF REQ-ANIM = 'Y'", 'MOVE REQ-VIS TO VIS.']
+assert "IF REQ-ANIM = 'Y' MOVE REQ-VIS TO VIS." in ' '.join(para22('src/cobol/PACSCR.cob', 'DO-RTQF')) or \
+    'MOVE REQ-VIS TO VIS.' in ' '.join(para22('src/cobol/PACSCR.cob', 'DO-RTQF'))      # the same update as DO-RTQF
+assert 'VIS' not in ' '.join(para22('src/cobol/PACSCR.cob', 'DO-ENDS')) and \
+    'SET-FACE' in ' '.join(para22('src/cobol/PACSCR.cob', 'DO-ENDS'))     # DO-ENDS draws the saved VIS (unchanged)
+scr22 = (R / 'src/cobol/PACSCR.cob').read_text()
+
+
+def closure22(rel, names):
+    seen, todo = set(), list(names)
+    while todo:
+        n = todo.pop()
+        if n in seen:
+            continue
+        seen.add(n)
+        for l in para22(rel, n):
+            todo += [x for x in re.findall(r'PERFORM ([A-Z0-9-]+)', l)]
+    return seen
+
+
+touch22 = closure22('src/cobol/PACSCR.cob', ['RP-STATE', 'SET-FACE'])
+body22 = ' '.join(' '.join(para22('src/cobol/PACSCR.cob', n)) for n in touch22)
+assert 'WS-FACE' in body22 and 'PU-T0' in body22 and 'PU-X' in body22                      # 12 / 13
+for bad in ('VS-PREV', 'PREV-OK', 'VS-CUR', 'KEEP-VS', 'DIFF-', 'PUT-BYTE', 'PUT-TAIL', 'DS-BUF', 'MSG-ON', 'MSG-LAST'):
+    assert bad not in body22, bad                                                         # 15 (and the message)
+assert para22('src/cobol/PACDISP.cob', 'SCR-RTQS') == [
+    "MOVE 'RTQS' TO REQ-OP.", "CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS", 'PAC-ARC.', "MOVE 'RTQF' TO REQ-OP.",
+    'IF PT-ON = 1 AND PT-NEXT > 1', 'SUBTRACT 1 FROM PT-NEXT.']                       # 14: no SEND / BELL / SB / metric
+assert "ELSE IF REQ-OP = 'RTQF' AND REQ-PRES = 'N' | PERFORM SCR-RTQS | ELSE IF REQ-OP = 'RTQF'" in \
+    ' | '.join(para22('src/cobol/PACDISP.cob', 'SCREEN-OP'))
+for nxt, on, want in ((3, 1, 2), (2, 1, 1), (1, 1, 1), (3, 0, 3)):                    # the COBOL rule = ref_s2 skips
+    e22 = cobol22(para22('src/cobol/PACDISP.cob', 'SCR-RTQS'), {'PT-ON': on, 'PT-NEXT': nxt, 'REQ-OP': 'RTQF'})
+    assert e22['PT-NEXT'] == want and e22['REQ-OP'] == 'RTQF'
+
+# --- 16 / 17 / 18: the model. Default / EVERY = the frozen oracle streams (section 20 anchors ref_rt to 310); every
+#     RT TSD case at both speeds: the filtered model runs every quantum (same end lines, rqs, consumed events), presents
+#     the grid, never replays, and each presented image = the unfiltered model's image of that quantum
+def tsd22(cards, cv, per, present, **kw):
+    log = Log22()
+    log.kinds = []
+    out, fr = ref_rt.tsd(cards, cv, snap=log, per=per, present=present, **kw)
+    return out, fr, log
+
+
+INV22 = 'INVALID'.encode('cp037')
+
+
+def img_eq22(a, b, gw, stat):
+    """The image invariant with its one listed exemption (physical presentation state, design section 16): the
+    invalid-input message is a one-shot latch (PACSCR MSG-ON) shown by the next presented prompt frame; when EVERY shows
+    and clears it inside one coalesced interval the two images may differ on the message row only, with INVALID there
+    on one side."""
+    if a == b:
+        return True
+    diff = [i for i, (x, y) in enumerate(zip(a, b)) if x != y]
+    rows = {i // gw for i in diff}
+    if len(a) != len(b) or len(rows) != 1:
+        return False
+    r = rows.pop()
+    txt = [bytes(c[0] for c in im[r * gw:(r + 1) * gw]) for im in (a, b)]
+    ok = any(INV22 in t for t in txt)
+    stat['msg'] += ok
+    return ok
+
+
+def grid22(fr, kinds, stride):
+    qi = [j for j, k in enumerate(kinds) if k in ('Q', 'P')]
+    assert all(fr.qs[a] < fr.qs[b] for a, b in zip(qi, qi[1:]))                           # 6: no replay
+    for a, b in zip(qi, qi[1:]):
+        if b == a + 1:
+            assert fr.qs[b] - fr.qs[a] == stride, (fr.qs[a], fr.qs[b])                    # 7: no catch-up burst
+    return qi
+
+
+ncase22, st22, vis_diff22 = 0, {'msg': 0}, 0
+for c, cv in RT_TSD + [('RTLONG', 'W'), ('RTWIN', 'W'), ('RTEDGE', 'W'), ('RTTTL', 'W'), ('RTREV', 'W')]:
+    raw = (R / f'tests/rtcases/{c}.txt').read_text().splitlines()
+    cards = ([raw[0]] if raw[0][:1] == 'A' else ['AI1 1']) + [x for x in (raw[1:] if raw[0][:1] == 'A' else raw)]
+    for per, stride in ((150, 2), (125, 3)):
+        oe, fe, le = tsd22(cards, cv, per, None)
+        oE, fE, _ = tsd22(cards, cv, per, 'E')
+        assert list(fe) == list(fE) and oe == oE and fe.qs == fE.qs                        # 16: default == EVERY
+        oc, fc22, lc = tsd22(cards, cv, per, 'C')
+        assert oc == oe, c                                                                 # same logical game
+        qi = grid22(fc22, lc.kinds, stride)
+        ev = {q: im for q, im in zip(fe.qs, fe.imgs) if q is not None}
+        gw = len(fe.imgs[0]) // (27 if cv == 'W' else 24)
+        assert all(img_eq22(ev[q], im, gw, st22) for q, im in zip(fc22.qs, fc22.imgs) if q is not None), c
+        if lc.kinds[-1] == 'E':          # the end screen: the final logical state (VIS too, RTQS), = EVERY's
+            assert le.kinds[-1] == 'E' and fc22.imgs[-1] == fe.imgs[-1] and list(fc22)[-1] == list(fe)[-1], c
+            qp = [q for q in fc22.qs if q is not None]
+            qf = int(oc[-1].split()[1])
+            vis_diff22 += ((qp[-1] // ref_rt.ANIM_Q) % 2) != ((qf // ref_rt.ANIM_Q) % 2)
+        assert len(qi) < len([q for q in fe.qs if q is not None]) or len(qi) <= 2
+        ncase22 += 1
+assert C6.STRIDE == {150: 2, 125: 3}
+assert vis_diff22 >= 1, vis_diff22      # runs whose last presented VIS differs from the final one (the PACZ6DR1 defect)
+# the old defect, caught on real z/OS output: PACZ6DR1 JOB09418 (PACZ6D before the RTQS VIS fix) - N2 / N3 differ from
+# the model only in the end screen (the sprite of the last presented VIS); with the comparator fix N1 matches
+import zos6_dry as DRY22  # noqa: E402
+sp22 = R / 'build/zos/PACZ6DR1-JOB09418'
+if sp22.exists():
+    ok22, rep22 = DRY22.check(sp22, 1)
+    st22r = {k: v['state'] for k, v in rep22['steps'].items()}
+    assert not ok22 and st22r == {'E1': 'PASS', 'E2': 'PASS', 'N1': 'PASS', 'N2': 'FAIL', 'N3': 'FAIL', 'N4': 'PASS'}, st22r
+    for k in ('N2', 'N3'):
+        st_ = next(s for s in DRY22.STEPS if s['step'] == k)
+        _, frz, _ = DRY22.parse_tsd(__import__('zos_equiv').zos_runs(sp22)[2][k]['lines'])
+        mz = DRY22.model(st_)
+        assert frz[:-1] == mz['frames'][:-1] and frz[-1] != mz['frames'][-1] and mz['kinds'][-1] == 'E', k
+
+# ARCADE (RULES(ARCADE): popups, death frames, READY!, facing) - every RP / GP2 REALTIME case, both speeds
+pu22 = []
+real_start22 = RP22.Tracker.start
+
+
+def rec_start22(self, cell, pts, col, kind, now):
+    pu22.append(now)
+    return real_start22(self, cell, pts, col, kind, now)
+
+
+from make_deck import RP_RT as RPRT22, RP_SEED as SEED22  # noqa: E402
+RP22.Tracker.start = rec_start22
+try:
+    narc22, skipped_pu22 = 0, 0
+    for d, c, cv, snd, st_, dd in RPRT22:
+        start = L22.parse_start(st_)
+        hs = None if not dd else ('E', 0, start) if dd == 'DUMMY' else             ('R', SEED22[dd[2:]], start) if dd[2:] in SEED22 else ('Z', 0, start)
+        cards = (R / f'tests/{d}/{c}.txt').read_text().splitlines()
+        for per in (150, 125):
+            mk = (lambda ai, n, s=start: L22.Level(ai, n, 'R', s))
+            pu22.clear()
+            oe, fe = ref_rt.tsd(cards, cv, mk_game=mk, mk_ctl=L22.LevelRT, hs=hs, per=per)
+            eat_q = list(pu22)
+            pu22.clear()
+            oc, fcz = ref_rt.tsd(cards, cv, mk_game=mk, mk_ctl=L22.LevelRT, hs=hs, per=per, present='C')
+            assert oc == oe, (c, per)
+            ev = {q: im for q, im in zip(fe.qs, fe.imgs) if q is not None}
+            assert all(im == ev[q] for q, im in zip(fcz.qs, fcz.imgs) if q is not None), (c, per)    # 12 / 13
+            slots = {q for q in fcz.qs if q is not None}
+            skipped_pu22 += sum(1 for q in eat_q if q not in slots)
+            assert sorted(pu22) == sorted(eat_q), (c, per, pu22, eat_q)       # PU-T0 = the event quantum (RTQS)
+            narc22 += 1
+finally:
+    RP22.Tracker.start = real_start22
+assert narc22 >= 10 and skipped_pu22 >= 1, (narc22, skipped_pu22)
+
+# 12: the facing - L lands on a skipped quantum, U on the next (presented) one: the presented frame faces left as in
+# EVERY (SET-FACE ran on the skipped quantum)
+face22 = None
+for k in range(2, 40):
+    cs = ['AI0 1', 'R'] + ['.'] * k + ['L', 'U'] + ['.'] * 6 + ['Q']
+    oe, fe = ref_rt.tsd(cs, 'W')
+    oc, fcf = ref_rt.tsd(cs, 'W', present='C')
+    ev = {q: im for q, im in zip(fe.qs, fe.imgs) if q is not None}
+    assert all(im == ev[q] for q, im in zip(fcf.qs, fcf.imgs) if q is not None)
+    lq = k + 2                                               # the L card's quantum
+    if lq not in set(fcf.qs) and lq in ev and ev[lq] != ev.get(lq - 1):
+        face22 = cs
+        break
+assert face22 is not None                                    # such a case exists and passed the invariant
+
+# 14: the S2 pattern clock on skipped quanta (ref_s2 skips = PACDISP SCR-RTQS): CLASSIC death with SOUND Y, ALARM P
+for per in (150, 125):
+    cs = (R / 'tests/rtcases/RTSTILL.txt').read_text().splitlines()
+    cs = cs if cs[0][:1] == 'A' else ['AI1 1'] + cs
+    _, fe, le = tsd22(cs, 'W', per, None)
+    _, fc14, lc14 = tsd22(cs, 'W', per, 'C')
+    _, tre = S22.patterns(list(fe), le, 'Y', 'R', per)
+    _, trc = S22.patterns(list(fc14), lc14, 'Y', 'R', per, skips=fc14.skips)
+    tre = [x for x in tre if x[0] < len(fe) and fe.qs[x[0]] is not None]          # rings on quantum writes
+    trc = [x for x in trc if x[0] < len(fc14) and fc14.qs[x[0]] is not None]
+    qe = [fe.qs[k] for k, _, _ in tre]
+    qc = [fc14.qs[k] for k, _, _ in trc]
+    assert [n for _, n, _ in tre] == [n for _, n, _ in trc] and all(a >= b for a, b in zip(qc, qe)), (qe, qc)
+    steps = [q for (k, n, _), q in zip(trc, qc) if n == 'STEP']
+    assert steps and all(q - qc[i - 1] == S22.gap(per) for i, ((k, n, _), q) in enumerate(zip(trc, qc))
+                         if n == 'STEP'), qc                     # every step G LOGICAL quanta after the ring before it
+    _, trn = S22.patterns(list(fc14), lc14, 'Y', 'R', per)                       # without the skips: wrong spacing
+    assert [fc14.qs[k] for k, n, _ in trn if n == 'STEP' and k < len(fc14)] != steps and steps, (per, steps)
+assert sum(fc14.skips) > 0
+
+# --- 19 .. 25: the checker on COALESCED synthetic traces (tests/zos6_fixture.py simulates a coalesced host: polls
+#     every quantum, writes at the PSLT slots, one post-write poll B)
+PLAN22 = copy.deepcopy(D6.PLANS['R1'])
+PLAN22['cfg'] = 'AI1 1'          # test-only: a moving ghost, so the frames depend on the freeze length
+
+
+def run22(case, plan=None, **kw):
+    text, lg = F6.build(case, plan=plan, **kw)
+    try:
+        return C6.check(text, lg, case, plan=plan)
+    except C6.Fail as ex:
+        return {'state': C6.FAILED, 'why': str(ex)}
+
+
+rm = run22('R1', PLAN22)                                     # 23: the exact 10-quantum freeze, both mutants rejected
+assert rm['state'] == C6.PASS and rm['present'] == 'C' and rm['death_runs'] == [10], rm.get('blocked', rm.get('why'))
+assert rm['freeze_mutants'] == {9: 'rejected', 11: 'rejected'} and rm['death_ms'] == 1500
+assert rm['death_pair_quanta'][1] - rm['death_pair_quanta'][0] == 10 and rm['writes'] < rm['quanta']
+for frt, n in ((9, '21'), (11, '22')):                       # a host freezing 9 / 11 quanta: FUNCTIONAL FAIL
+    r = run22('R1', PLAN22, frt=frt)
+    assert r['state'] == C6.FAILED and 'does not match the model' in r['why'], (n, r.get('why'))
+r1c = run22('R1')                         # the approved R1 plan (AI(0)): 9 / 10 / 11 observationally identical -
+assert r1c['state'] == C6.PASS and r1c['live_freeze_discrimination'] == 'NOT OBSERVABLE', r1c.get('blocked',
+                                                                                                 r1c.get('why'))
+assert r1c['freeze_mutants'] == {9: 'matches', 11: 'matches'} and r1c['death_runs'] == [10] and \
+    1350 <= r1c['death_ms'] <= 1650 and 'PACRT unchanged' in r1c['logical_freeze_proof']   # reported, not a PASS of it
+assert rm['live_freeze_discrimination'] == 'DISCRIMINATED'
+# the logical freeze proof for R1 (offline): PACRT unchanged (above, Z1 text) and RTSTILL - the model's freeze is
+# exactly quanta(10) at both speeds (oracle 310 RTB7 / RTT2 anchor RTSTILL in section 20)
+for per22 in (150, 125):
+    cs22 = (R / 'tests/rtcases/RTSTILL.txt').read_text().splitlines()
+    m22 = C6.model(cs22[1:] if cs22[0][:1] == 'A' else cs22, 'W', per22, 'C',
+                   cfg=cs22[0] if cs22[0][:1] == 'A' else 'AI1 1')
+    runs22, cur = [], 0
+    for kd, _ in m22['rqs'] + [('-', 0)]:
+        cur = cur + 1 if kd == 'F' else (runs22.append(cur) or 0) if cur else 0
+    assert runs22 and set(runs22) == {ref_rt.quanta(10, per22)}, (per22, runs22)
+assert 'FRZ-INIT              PIC 99 VALUE 10.' in (R / 'src/cobol/PACRT.cob').read_text()
+r2c = run22('R2')
+assert r2c['state'] == C6.PASS and r2c['present'] == 'C' and r2c['principal']['quanta'] >= 200, r2c.get('why')
+assert set(b - a for a, b in zip(r2c['frame_quanta'], r2c['frame_quanta'][1:])) <= {3, 1} and \
+    r2c['gates']['physical']['median'] == 375
+assert [(d['action'], d['aid'], d['model']) for d in r2c['directional']] == [
+    ('PF11', '7B', 'R'), ('PF8', 'F8', 'D'), ('PF7', 'F7', 'U'), ('PF10', '7A', 'L')]
+for w, why in ((40, 'non-slot write'), (60, 'replay')):                                  # 19 / 20
+    r = run22('R2', **({'nonslot': w} if why == 'non-slot write' else {'replay': w}))
+    assert r['state'] == C6.FAILED and ('differs from the model' in r['why'] or 'permitted quantum' in r['why']), \
+        (why, r.get('why'))
+# 9 / 11: delivery only after a write (PR2I-C2): every running AID is read by B and placed on the card after a write
+for case, plan in (('R1', PLAN22), ('R2', None)):
+    r = run22(case, plan, visibility='write')
+    assert r['state'] == C6.PASS, (case, r.get('blocked', r.get('why')))
+    pf9 = [n for n, (a, _, _) in enumerate(r['placements']) if a == 'PF9']
+    run_aids = [s for n, (a, s, _) in enumerate(r['placements']) if n > 0 and n not in pf9[1::2]]   # not blocking
+    assert run_aids and all(s - 1 in r['frame_cards'] for s in run_aids), (case, run_aids)   # card after a write
+    assert len(r['placements']) == len(r['reaction'])
+# 24: input reaction in the trace clock only - the driver log timestamps (shifted by 10 s, still consistent) change
+#     nothing; and the measure is wire AID -> arrival of the first write answering the card or later
+t24, lg24 = F6.build('R2')
+sh24 = []
+for x in lg24:
+    y = json.loads(x)
+    for k in ('requested', 'wait_start', 'unlocked', 'sent'):
+        y[k] += 10000
+    sh24.append(json.dumps(y))
+ra, rb = C6.check(t24, lg24, 'R2'), C6.check(t24, sh24, 'R2')
+assert ra['reaction'] == rb['reaction'] and all(x['ms'] is not None and x['ms'] > 0 for x in ra['reaction'])
+assert C6.reaction(1000, [0, 1, 3, 5, 7], [0, 900, 1200, 1500, 1800], 4) == (3, 500)
+assert C6.reaction(1000, [0, 1, 3], [0, 900, 1200], 9) == (None, None)
+# 25: the predeclared candidate gates (BLOCKED, never FAIL) - NORMAL / FAST values as approved
+assert C6.GATES[150] == {'median': (280, 320), 'p95': 450, 'max': 1000, 'backlog': 100, 'react': 1000,
+                         'react_median': 750}
+assert C6.GATES[125] == {'median': (345, 405), 'p95': 525, 'max': 1000, 'backlog': 100, 'react': 1075,
+                         'react_median': 825}
+nw25 = r2c['writes']
+gates25 = {
+    'physical median': dict(scale=1.1),
+    'physical p95': dict(delay={i: 200 for i in range(30, nw25 - 5, 8)}),
+    'physical max': dict(delay={50: 700}),
+    'backlog delta': dict(delay={i: 160 for i in range(55, nw25)}),
+    'input reaction': dict(delay={r2c['reaction'][2]['write']: 900}),        # PF7's answering frame 0.9 s late
+}
+for why, kw in gates25.items():
+    r = run22('R2', **kw)
+    assert r['state'] == C6.BLOCKED and any(b.startswith(why) for b in r['blocked']), (why, r.get('blocked'),
+                                                                                       r.get('why'))
+# a game that ends (LOST) on a COALESCED quantum: no write for the deciding quantum, the end screen follows at once;
+# a host that writes the deciding quantum anyway fails
+for T in (150, 125):
+    pg = {'T': T, 'present': 'C', 'cfg': 'AI2 3', 'kw': 'AI(2) GHOSTS(3) RULES(CLASSIC) PLAY(REALTIME) SOUND(NO) '
+          'PRESENT(COALESCED)' + (' SPEED(FAST)' if T == 125 else ''),
+          'steps': [('transition', 'EXEC'), ('expect', '***'), ('transition', 'ENTER'), ('expect', 'GAME'),
+                    ('wait', 2), ('gameplay', 'PF8'), ('wait', 60), ('expect', '***'), ('closure', 'ENTER'),
+                    ('expect', 'SHELL')]}
+    rg = run22('R2', pg)
+    qend = int(rg['end_lines'][4].split()[1])
+    assert rg['state'] == C6.PASS and rg['end_lines'][0] == 'LOST' and qend not in rg['frame_quanta'], \
+        (T, rg.get('blocked', rg.get('why')))
+    assert rg['frame_quanta'][-1] < qend and rg['live_freeze_discrimination'] == 'DISCRIMINATED', \
+        (T, rg['frame_quanta'][-3:], qend)
+    rx = run22('R2', pg, nonslot=rg['writes'] - 1)           # an extra write before the end screen
+    assert rx['state'] == C6.FAILED, (T, rx.get('why'))
+# R1-T4 decisions (2026-10-19). (1) The TSO blocking-read CONTROL record `F1 C3`: accepted (counted, never a game write)
+# only right after an AID read by a blocking TGET (start / resume); an unrelated, duplicated, different or substituted
+# record fails. (2) The historical lateness-envelope rule: diagnostic under COALESCED, a BLOCKED rule under EVERY.
+for case, n_ in (('R1', 2), ('R2', 1)):
+    r = run22(case, tso_c3='blocking')
+    assert r['state'] == C6.PASS and len(r['tso_controls']) == n_ and r['writes'] == run22(case)['writes'], \
+        (case, r.get('why'), r.get('tso_controls'))
+    assert {c['aid'] for c in r['tso_controls']} <= {'F8', 'F9', '7B'} and all('card' in c for c in r['tso_controls'])
+for case in ('R1', 'R2'):
+    for bad in ('unrelated', 'dup', 'other2', 'replace'):
+        r = run22(case, tso_c3=bad)
+        assert r['state'] == C6.FAILED, (case, bad, r.get('state'), r.get('blocked'))
+rs = run22('R2', skip_at=120)                                # COALESCED: the envelope rise is a diagnostic only
+assert rs['state'] == C6.PASS and any('probable skipped period' in x for x in rs.get('diag_notes', [])), \
+    (rs.get('blocked'), rs.get('why'))
+re_ = run6('R2', skip_at=120)                                # EVERY: the historical D33 rule still BLOCKS
+assert re_['state'] == C6.BLOCKED and any('skipped period' in b for b in re_['blocked']), re_.get('blocked')
+# 4: the NORMAL / FAST gates, the stride and the presentation interval are FROZEN as approved (2026-10-19); they are
+# never tuned from live results
+assert (C6.GATES, C6.STRIDE, ref_rt.PRES_TP, PSTP22) == (
+    {150: {'median': (280, 320), 'p95': 450, 'max': 1000, 'backlog': 100, 'react': 1000, 'react_median': 750},
+     125: {'median': (345, 405), 'p95': 525, 'max': 1000, 'backlog': 100, 'react': 1075, 'react_median': 825}},
+    {150: 2, 125: 3}, 300, 300)
+GATES_SHA22 = '13d815edc1c73fc0913b6c14549d85f13cd201c20ab073628ec4743a538c11e9'      # frozen 2026-10-19
+assert hashlib.sha256(repr(sorted((k, sorted(v.items())) for k, v in C6.GATES.items())).encode()).hexdigest() == \
+    GATES_SHA22
+print(f'ZOS-6 production (ZV-D33, local): PRESENT absent = EVERY = the 2.0 PARM, COALESCED = column 26 C; PACFSIO / '
+      f'PACTSO / zos5_live_check / PACRT / PACGAME / PACMAP / PACAI / PACINPT unchanged, Z4 = {len(zos_c2.Z4_FILES)} '
+      f'sources; COBOL PSLT (interpreted) = 2 / 3-quantum grid, base at start / resume, no burst, EVERY / BAT / TSO = '
+      f'every quantum; phases A S D R W B T, B = one RTRD = one TGET; RTQS = RP-STATE + SET-FACE, no image / diff; '
+      f'model: {ncase22} RT + {narc22} ARCADE runs, image invariant ({st22["msg"]} message-row exemptions), '
+      f'{skipped_pu22} popups started on skipped quanta, end screens = EVERY ({vis_diff22} with the last presented VIS '
+      f'!= the final one; JOB09418 old defect caught), '
+      f'S2 pattern clock; checker: moving-ghost freeze 10 PASS (DISCRIMINATED) / 9 / 11 FAIL, approved R1 plan PASS '
+      f'with live freeze discrimination NOT OBSERVABLE (logical proof: PACRT unchanged + RTSTILL), R2 PASS, game over '
+      f'on a coalesced quantum PASS, non-slot / replay FAIL, delivery after a write PASS, trace-clock reaction, '
+      f'{len(gates25)} frozen candidate gates BLOCKED: PASS')
+
+
+# 23. ZOS-6 production build deck PACZ6BLD (jcl/zos/PACZ6BLD.jcl = tools/zowe/zos_target.py z6bld_deck): the compiler
+#     work-file override is explicit and local to this deck (JOB09327: COB8 PACSCR SYSUT11 B37-04 with TRK,(5,5)); the
+#     historical default TRK,(5,5) of every other deck is unchanged
+import zos_target as ZT23  # noqa: E402
+import make_deck as MD23  # noqa: E402
+if not ZT23._md:                  # an earlier section may already have swapped the step builders (apply is not idempotent)
+    ZT23.apply(MD23, '@@HLQ@@.PACMAN')
+assert ZT23.COB_WORK == [ZT23.COB_WORK_DEFAULT] == ['TRK,(5,5)'] and ZT23.Z6BLD_SPACE == 'CYL,(1,1)'
+assert ZT23.cobol_work() == ''.join(f'//{f"SYSUT{i}":<9}DD UNIT=SYSALLDA,SPACE=(TRK,(5,5))\n' for i in range(1, 16)) + \
+    '//SYSMDECK DD UNIT=SYSALLDA,SPACE=(TRK,(5,5))\n'                                   # 1: the default, byte for byte
+z23 = ZT23.deck('Z6BLD', '@@HLQ@@.PACMAN')
+assert ZT23.COB_WORK == ['TRK,(5,5)']                                                   # the override is not left set
+assert z23 == (R / 'jcl/zos/PACZ6BLD.jcl').read_text()                                  # the deck of record
+for name in ('Z2BLD', 'ZCMP', 'Z2DRV'):                                                  # 1: existing decks keep TRK
+    t = ZT23.deck(name, '@@HLQ@@.PACMAN')
+    assert 'CYL,(1,1)' not in t and t.count('SPACE=(TRK,(5,5))') >= 16, name
+assert (R / 'jcl/zos/PACZ2CMP.jcl').read_text() == ZT23.deck('ZCMP', '@@HLQ@@.PACMAN')
+st23 = ZT23.steps_of_deck(z23)
+cob23 = [s for s in st23 if s != 'LINK']
+assert list(st23) == cob23 + ['LINK'] and all('PGM=IGYCRCTL' in st23[s] for s in cob23)
+assert [re.search(r'COBOL\((\w+)\)', st23[s]).group(1) for s in cob23] == ZT23.Z6BLD_UNITS == [
+    'PACMAIN', 'PACGAME', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACRT']           # 4: the seven PACREQ users
+for s in cob23:                                                                         # 2: CYL,(1,1) on the 16 files
+    ws = re.findall(r'^//(SYSUT\d+|SYSMDECK)\s+DD UNIT=SYSALLDA,SPACE=\((.*)\)$', st23[s], re.M)
+    assert sorted(w for w, _ in ws) == sorted([f'SYSUT{i}' for i in range(1, 16)] + ['SYSMDECK']) and \
+        {sp for _, sp in ws} == {'CYL,(1,1)'}, s
+    assert "PARM=('RENT,RMODE(24),DATA(24),NODYNAM'," in st23[s] and 'REGION=0M' in st23[s]
+assert 'ASMA90' not in z23 and 'ASM(' not in z23                                         # 3 / 7: no assembly
+assert 'COBOL(PACFSIO)' not in z23 and 'OBJ(PACFSIO),DISP' not in z23                   # 7: PACFSIO not rebuilt
+assert sorted(re.findall(r'INCLUDE OBJ\((\w+)\)', st23['LINK'])) == sorted(ZT23.Z6BLD_UNITS + ZT23.Z6BLD_REUSED)
+assert ZT23.Z6BLD_REUSED == ['PACMAP', 'PACAI', 'PACQRY', 'PACTSO', 'PACFSIO', 'PACHSIO']  # 6: reused objects
+assert re.findall(r'NAME (\w+)\(R\)', z23) == ['PACZ6D'] and 'PACZ2D' not in z23 and 'LOAD(PACMAIN)' not in z23  # 5
+assert "PARM='LIST,AMODE=24,RMODE=24,RENT'" in st23['LINK']
+old23 = ZT23.steps_of_deck(ZT23.deck('Z2BLD', '@@HLQ@@.PACMAN'))                        # only the override differs
+for s in cob23:
+    assert st23[s].replace('CYL,(1,1)', 'TRK,(5,5)') == old23[s], s
+assert st23['LINK'] == old23['LINK'].replace('NAME PACZ2D(R)', 'NAME PACZ6D(R)')
+assert audit_deck(render(z23, 'Z00000'), 'Z00000') == []
+print('PACZ6BLD: default compiler work files TRK,(5,5) unchanged (existing decks byte-identical), override CYL,(1,1) '
+      'on SYSUT1-15 + SYSMDECK of the 7 PACREQ compiles only, no assembly, 13 INCLUDEs (6 reused, PACFSIO not rebuilt), '
+      'NAME PACZ6D(R), audit clean: PASS')

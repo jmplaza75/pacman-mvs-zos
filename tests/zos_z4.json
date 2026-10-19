@@ -1,0 +1,271 @@
+{
+ "src/copy/PACREQ.cpy": [
+  [
+   98,
+   98,
+   [],
+   [
+    "      * ZOS-6 (ZV-D33, Z4): REQ-PMODE = PARM COLUMN 26, SET ONCE BY",
+    "      * PACMAIN: C = PRESENT(COALESCED) (PHYSICAL WRITES COALESCED BY",
+    "      * PACPLAT PSLT), ANYTHING ELSE = EVERY QUANTUM WRITTEN (D33).",
+    "      * REQ-PRES: PSLT IN B (BASE: START / RESUME QUANTUM) OR Q, OUT Y",
+    "      * (PRESENT THIS QUANTUM) OR N (COALESCED: NO SCREEN, NO WRITE).",
+    "           05  REQ-PMODE             PIC X.",
+    "           05  REQ-PRES              PIC X."
+   ]
+  ]
+ ],
+ "src/cobol/PACMAIN.cob": [
+  [
+   47,
+   47,
+   [],
+   [
+    "      * ZOS-6 (ZV-D33, Z4): COLUMN 26 = PRESENT: C COALESCED, ANYTHING",
+    "      * ELSE / ABSENT EVERY (D33: ONE WRITE PER QUANTUM, UNCHANGED).",
+    "      * EACH RUNNING QUANTUM: A INPUT (RT-COLLECT), S PACRT RQ, D",
+    "      * PACPLAT PSLT (PRESENT IT: Y / N), R PACDISP RTQF (N: SCREEN",
+    "      * STATE ONLY), W THE WRITE (Y), B COALESCED TSC ONLY AFTER A",
+    "      * WRITE: EXACTLY ONE NON-BLOCKING READ (ONE TGET), ITS EVENT IS",
+    "      * FOR THE NEXT QUANTUM, T THE DEADLINE (WDLN). START AND RESUME",
+    "      * QUANTA ARE BASES (ALWAYS PRESENTED). AN ENTER / INVALID / PA2",
+    "      * PROMPT FRAME WAITS FOR THE NEXT PRESENTED QUANTUM."
+   ]
+  ],
+  [
+   63,
+   63,
+   [],
+   [
+    "       01  RT-PBASE              PIC 9 VALUE 0."
+   ]
+  ],
+  [
+   91,
+   91,
+   [],
+   [
+    "           05  PARM-PRES         PIC X."
+   ]
+  ],
+  [
+   151,
+   151,
+   [],
+   [
+    "           MOVE SPACE TO REQ-PMODE.",
+    "           IF PARM-LEN > 25 AND PARM-PRES = 'C'",
+    "               MOVE 'C' TO REQ-PMODE.",
+    "           MOVE 'Y' TO REQ-PRES."
+   ]
+  ],
+  [
+   218,
+   218,
+   [],
+   [
+    "           MOVE 1 TO RT-PBASE."
+   ]
+  ],
+  [
+   273,
+   273,
+   [],
+   [
+    "           MOVE 'Q' TO REQ-PRES.",
+    "           IF RT-PBASE = 1",
+    "               MOVE 'B' TO REQ-PRES.",
+    "           MOVE 0 TO RT-PBASE.",
+    "           MOVE 'PSLT' TO REQ-OP.",
+    "           CALL 'PACPLAT' USING PAC-REQ."
+   ]
+  ],
+  [
+   274,
+   275,
+   [
+    "           MOVE SPACE TO RT-FRAME."
+   ],
+   [
+    "           IF REQ-PRES = 'Y'",
+    "               MOVE SPACE TO RT-FRAME."
+   ]
+  ],
+  [
+   285,
+   285,
+   [],
+   [
+    "           IF REQ-PMODE = 'C' AND REQ-PRES = 'Y'",
+    "                              AND REQ-MODE = 'TSC'",
+    "               PERFORM RT-POST-READ THRU RT-POST-READ-EXIT.",
+    "           IF RT-OVER = 1",
+    "               GO TO RT-QUANTUM-EXIT."
+   ]
+  ],
+  [
+   289,
+   289,
+   [],
+   [
+    "           EXIT.",
+    "       RT-POST-READ.",
+    "      * ZOS-6 PHASE B (COALESCED TSC, RIGHT AFTER A PRESENTED WRITE):",
+    "      * EXACTLY ONE RTRD = ONE PACPLAT POLL = ONE TGET ASIS,NOWAIT (NO",
+    "      * DRAIN LOOP). ITS EVENT GOES TO PACRT RIN NOW, SO IT IS AN INPUT",
+    "      * OF THE NEXT QUANTUM (BEFORE THAT QUANTUM'S OWN A READS); THE",
+    "      * STEP AND THE FRAME OF THIS QUANTUM ARE ALREADY DONE.",
+    "           PERFORM RT-READ.",
+    "           PERFORM RT-EVENT THRU RT-EVENT-EXIT.",
+    "       RT-POST-READ-EXIT."
+   ]
+  ],
+  [
+   315,
+   315,
+   [],
+   [
+    "           MOVE 1 TO RT-PBASE."
+   ]
+  ]
+ ],
+ "src/cobol/PACPLAT.cob": [
+  [
+   56,
+   56,
+   [],
+   [
+    "      * ZOS-6 (ZV-D33, Z4): PSLT = THE PRESENTATION SLOT OF A RUNNING",
+    "      * REALTIME QUANTUM, IN LOGICAL TIME (NEVER THE WALL CLOCK): Y",
+    "      * UNLESS REQ-PMODE C AND TSC / TSD; THEN REQ-PRES B (START /",
+    "      * RESUME QUANTUM) = Y AND PS-ACC 0; ELSE PS-ACC + REQ-RTPER, Y",
+    "      * WHEN IT REACHES PS-TP (300 MS, PROBE PR2-A) AND PS-ACC BACK TO",
+    "      * 0 (RESET, NOT SUBTRACT: NO CATCH-UP), ELSE N. NORMAL (150): A",
+    "      * WRITE EVERY 2ND QUANTUM, FAST (125): EVERY 3RD (375 MS)."
+   ]
+  ],
+  [
+   64,
+   64,
+   [],
+   [
+    "       01  PS-TP                 PIC 9(4) VALUE 300.",
+    "       01  PS-ACC                PIC 9(5) VALUE 0."
+   ]
+  ],
+  [
+   175,
+   175,
+   [],
+   [
+    "           ELSE IF REQ-OP = 'PSLT'",
+    "               PERFORM DO-PSLT THRU DO-PSLT-EXIT"
+   ]
+  ],
+  [
+   496,
+   496,
+   [],
+   [
+    "       DO-PSLT.",
+    "           IF REQ-PMODE NOT = 'C'",
+    "               MOVE 'Y' TO REQ-PRES",
+    "               GO TO DO-PSLT-EXIT.",
+    "           IF REQ-MODE NOT = 'TSC' AND REQ-MODE NOT = 'TSD'",
+    "               MOVE 'Y' TO REQ-PRES",
+    "               GO TO DO-PSLT-EXIT.",
+    "           IF REQ-PRES = 'B'",
+    "               MOVE 0 TO PS-ACC",
+    "               MOVE 'Y' TO REQ-PRES",
+    "               GO TO DO-PSLT-EXIT.",
+    "           ADD REQ-RTPER TO PS-ACC.",
+    "           MOVE 'N' TO REQ-PRES.",
+    "           IF PS-ACC NOT < PS-TP",
+    "               MOVE 0 TO PS-ACC",
+    "               MOVE 'Y' TO REQ-PRES.",
+    "       DO-PSLT-EXIT.",
+    "           EXIT."
+   ]
+  ]
+ ],
+ "src/cobol/PACDISP.cob": [
+  [
+   54,
+   54,
+   [],
+   [
+    "      * ZOS-6 (ZV-D33, Z4): RTQF WITH REQ-PRES N (A COALESCED QUANTUM,",
+    "      * TSC / TSD) = SCR-RTQS: NO SCREEN, NO SEND; PACSCR RTQS ADVANCES",
+    "      * THE DISPLAY STATE OF LOGICAL TIME (FACING, POPUP) AND THE S2",
+    "      * PATTERN CLOCK COUNTS THE QUANTUM (PT-NEXT DOWN TO 1 AT MOST: A",
+    "      * STEP DUE ON A SKIPPED QUANTUM RINGS ON THE NEXT WRITE). THE",
+    "      * BELL SNAPSHOT, METRICS AND THE SCREEN IMAGE ADVANCE ONLY WITH",
+    "      * WHAT IS SENT."
+   ]
+  ],
+  [
+   280,
+   280,
+   [],
+   [
+    "           ELSE IF REQ-OP = 'RTQF' AND REQ-PRES = 'N'",
+    "               PERFORM SCR-RTQS"
+   ]
+  ],
+  [
+   496,
+   496,
+   [],
+   [
+    "       SCR-RTQS.",
+    "      * ZOS-6: A COALESCED QUANTUM (SEE THE HEADER).",
+    "           MOVE 'RTQS' TO REQ-OP.",
+    "           CALL 'PACSCR' USING PAC-STATE PAC-REQ PAC-DS",
+    "                   PAC-ARC.",
+    "           MOVE 'RTQF' TO REQ-OP.",
+    "           IF PT-ON = 1 AND PT-NEXT > 1",
+    "               SUBTRACT 1 FROM PT-NEXT."
+   ]
+  ]
+ ],
+ "src/cobol/PACSCR.cob": [
+  [
+   67,
+   67,
+   [],
+   [
+    "      * ZOS-6 (ZV-D33, Z4): OP RTQS = A COALESCED (NOT PRESENTED)",
+    "      * REALTIME QUANTUM: ONLY THE DISPLAY STATE THAT FOLLOWS LOGICAL",
+    "      * TIME ADVANCES - RP-STATE (POPUP START / CELL / EXPIRY AT THIS",
+    "      * QUANTUM), SET-FACE (FACING FROM THIS STEP) AND, ANIM Y, VIS =",
+    "      * REQ-VIS (DO-ENDS DRAWS THE SAVED VIS). NO IMAGE, NO DIFF, NO",
+    "      * STREAM (DS-LEN 0); VS-PREV / PREV-OK / MSG-ON UNTOUCHED."
+   ]
+  ],
+  [
+   455,
+   456,
+   [
+    "               PERFORM DO-RTQF THRU DO-RTQF-EXIT."
+   ],
+   [
+    "               PERFORM DO-RTQF THRU DO-RTQF-EXIT",
+    "           ELSE IF REQ-OP = 'RTQS'",
+    "               PERFORM DO-RTQS."
+   ]
+  ],
+  [
+   457,
+   457,
+   [],
+   [
+    "       DO-RTQS.",
+    "           MOVE 0 TO DS-LEN.",
+    "           PERFORM RP-STATE THRU RP-STATE-EXIT.",
+    "           PERFORM SET-FACE.",
+    "           IF REQ-ANIM = 'Y'",
+    "               MOVE REQ-VIS TO VIS."
+   ]
+  ]
+ ]
+}

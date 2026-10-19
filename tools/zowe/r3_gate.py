@@ -12,7 +12,8 @@ directory) and the source delta is checked separately:
 3. generator: every MVS deck make_deck.py offers (default prefix, with and without --runonly), current tools/ vs the
    tools/ of --ref, both over the --tag sources: byte-identical;
 4. source delta: the same MVS decks generated from the zos working tree differ from (3) only by Z1 lines (every
-   removed line is the 'old' and every added line the 'new' text of a tests/zos_c2.json entry). These decks are not
+   removed line is the 'old' and every added line the 'new' text of a tests/zos_c2.json entry) and by Z4 lines (ZOS-6,
+   the hunks of tests/zos_z4.json, checked exactly on the sources by tests/zos_c2.py). These decks are not
    MVS builds of record: MVS is frozen at --tag and is never rebuilt from branch zos.
 Exit 1 on any difference. Nothing is written outside a temporary directory.
 """
@@ -78,6 +79,9 @@ def main():
     z1 = json.loads((R / 'tests/zos_c2.json').read_text()) if (R / 'tests/zos_c2.json').exists() else []
     old_lines = collections.Counter(e['old'] for e in z1)
     new_lines = collections.Counter(e['new'] for e in z1)
+    z4 = json.loads((R / 'tests/zos_z4.json').read_text()) if (R / 'tests/zos_z4.json').exists() else {}
+    z4_old = {l for hs in z4.values() for h in hs for l in h[2]}      # ZOS-6 Z4 hunks (tests/zos_c2.py z4_guard)
+    z4_new = {l for hs in z4.values() for h in hs for l in h[3]}
     with tempfile.TemporaryDirectory() as t:
         t = Path(t)
         frozen = tree(a.tag, t / 'tag')                 # sources of record + current generator
@@ -117,7 +121,9 @@ def main():
                             add[l[1:]] += 1
                     if rem or add:
                         nz += 1
-                    if set(rem) - set(old_lines) or set(add) - set(new_lines) or sum(rem.values()) != sum(add.values()):
+                    z1r = sum(v for k, v in rem.items() if k in old_lines and k not in z4_old)
+                    z1a = sum(v for k, v in add.items() if k in new_lines and k not in z4_new)
+                    if set(rem) - set(old_lines) - z4_old or set(add) - set(new_lines) - z4_new or z1r != z1a:
                         bad += 1
                         print(f'DIFF 4 source delta {d} {" ".join(extra)}: removed {dict(rem)} added {dict(add)}')
                 elif (rc2, e2) != (rc3, e3):
@@ -127,7 +133,7 @@ def main():
                     (t / f).unlink(missing_ok=True)
         print(f'3 {n} MVS deck generations: current generator = {a.ref} generator on the {a.tag} sources')
         print(f'4 {nz} of them carry source text and differ from the frozen ones only by Z1 lines '
-              f'({len(z1)} listed substitutions)')
+              f'({len(z1)} listed substitutions) and Z4 lines ({sum(len(v) for v in z4.values())} hunks)')
     print('R3 GATE ' + ('PASS' if not bad else f'FAIL ({bad})'))
     sys.exit(1 if bad else 0)
 

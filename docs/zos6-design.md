@@ -25,7 +25,9 @@ R1 NORMAL, T = 150 ms: `EXEC 'Z00000.PACMAN.CLIST(PACMAN)' 'AI(0) RULES(CLASSIC)
 PARM `TSO AI0 1 NAAAPAAARNC01NP`. Plan: pre-game transition ENTER (ISPF `***`); 5 s before press-to-start (zero PACMAN
 game writes); PF8 start; 60 s principal run (~400 quanta); PF9 pause; 60 s paused (zero PACMAN game writes); PF9
 resume; 10 s run; `x` + ENTER (invalid); PA2; PF11 (runs right on row 9 into the still ghost: death); exactly 10
-death-stop quanta; blocking wait; `Q` + ENTER; exact closure; `***`; closure ENTER; ISPF Command Shell.
+death-stop quanta; respawn; the REALTIME quanta continue (Pac-Man stationary until a direction - not a blocking TGET
+wait, D33 / ref_rt; corrected 2026-10-16); `Q` + ENTER while the REALTIME loop is active; exact closure; `***`; closure
+ENTER; ISPF Command Shell. The blocking input path is proved by the press-to-start and by the pause.
 (ref_rt.simulate of this plan: death, LIVES 2, SCORE 0230; the quantum numbers depend on the live arrival times.)
 R2 FAST, T = 125 ms: the same command with `SPEED(FAST)`, PARM `TSO AI0 1 NAAAPAAARNC01FP`. Plan (decision
 2026-10-16: all four directional PF AIDs proven on the real z/OS TN3270E / TGET path, PF7 and PF10 added to R2, no
@@ -115,6 +117,14 @@ Raw traces and driver logs stay outside git; derived evidence only after the sec
 Actions only through the c3270 script port, spellings checked against the installed x3270 4.5ga6 (local s3270, no
 host): `PF(7)` `PF(8)` `PF(9)` `PF(10)` `PF(11)` `PA(2)` `Enter()` `String("x")` `Wait(5,Unlock)` (`Ascii()` to read
 the screen).
+Driver scheduling / operational waits (tools/zowe/zos6_drive.py PLANS; not timing acceptance criteria: the checker
+derives every measurement interval from the trace and never assumes these sleeps were exact). Each wait is a sleep
+after the previous action was sent; each action is preceded by Wait(5,Unlock) (> 5 s: STOP); expect steps poll the
+screen (game title <= 30 s, `***` <= 60 s, shell <= 60 s).
+R1: EXEC; expect `***`; ENTER; expect the game; 5 s; PF8; 60 s; PF9; 60 s; PF9; 10 s; `x` + ENTER; 3 s; PA2; 3 s;
+PF11; 10 s (death, 10-quantum stop, respawn, quanta continue); `Q` + ENTER; expect `***`; ENTER; expect the shell.
+R2: EXEC; expect `***`; ENTER; expect the game; 2 s (pre-start, blocking read); PF11; 5 s; PF8; 2 s; PF7; 2 s; PF10;
+30 s (the clean principal FAST segment, no driver input); `Q` + ENTER; expect `***`; ENTER; expect the shell.
 Per action a log entry: ordinal; category transition | gameplay | closure; planned action; requested timestamp;
 Wait(5,Unlock) start; unlock timestamp; send timestamp; result / error. Transition = the EXEC and the pre-game ENTER at
 ISPF's `***`; gameplay = the in-game keys (PF7 / PF8 / PF9 / PF10 / PF11 / `x` + ENTER / PA2 / `Q` + ENTER); closure = the ENTER at
@@ -128,13 +138,16 @@ from TN3270E, in exact order, none missing or duplicated. For every directional 
 four layers must agree and are reported explicitly: planned driver action == successfully sent x3270if action ==
 reconstructed TN3270E AID (X'F7' / X'F8' / X'7A' / X'7B') == the direction of the card the REALTIME model consumed
 (U / D / L / R); no missing, duplicate or substituted PF AID; success is never inferred only from later game state.
+The driver log is not trusted for being well-formed: ordinals 1..n, wait_start <= unlocked <= sent, requested <= sent,
+send times non-decreasing, every result ok, (category, action) list == the approved plan exactly, gameplay actions ==
+the AIDs reconstructed independently from TN3270E (AID byte, time, typed text); any edit or omission fails.
 
 ## 8. Checker (tools/zowe/zos6_live_check.py; zos5_live_check.py frozen)
 Imports the stable ZOS-5 helpers (blocks, telnet, tn3270e, functions, texts, SHELL, outside_errors and the query /
 profile rules) without changing them or the return contract of parse(); obtains the raw records (BID, RESPONSE) itself
 for the statistics. If a clean reuse proves impossible: STOP for approval before touching zos5_live_check.py.
 rt_game(trace, case, T, driver log): switch, query, valid reply, profile / canvas, first screen; zero game writes
-before the start AID; cards from the gameplay AIDs (both assignments); every quantum write = ref_rt.tsd byte for byte
+before the start AID; cards from the gameplay AIDs; every quantum write = ref_rt.tsd byte for byte
 (ZOS-5 command-byte rules; restore-only `F1 C2 28 00 00`); PAUSED screen then zero game writes until the resume AID;
 10 death-stop quanta per the model; end lines incl. QUANTA = model; `***`, closure ENTER, shell; planned == driver ==
 reconstructed, with a per-directional-action report (planned, sent, observed AID byte, quantum and model direction).
@@ -146,8 +159,48 @@ Tests: section 20 of tests/test_zos_tools.py with tests/zos6_fixture.py (synthet
 in ZOS-5 with CONTENTION-RESOLUTION, BIDs and responses, on a T grid) and the local anchor ref_rt = oracle 310
 RTT1-6 / RTB1-12; positives R1 / R2; negatives for every FUNCTIONAL FAIL rule and each ENVIRONMENT / TIMING class.
 
+## 8a. Hardening (final local review, 2026-10-16)
+AID placement (bounded, never best fit): every gameplay AID keeps its TN3270E order; it may only be placed on a write in
+[lo, hi]: lo = the first game write whose BID (else its data) reached the terminal after the AID was sent (every earlier
+write was produced by a poll that ran before the AID existed at the host), and not before the previous AID's write;
+hi = lo + 1 (the AID reaches the host one up-path delay after it was sent, poll lo ran no earlier than one down-path
+delay before its BID arrived, so with a round trip <= T the next poll already sees it); hi = lo + 2 only with protocol
+evidence that the round trip exceeded T there (BID response -> data latency of write lo or lo + 1 > T); never more.
+Inside the window the model chooses the first placement that matches through the next AID's lo; if none matches the
+case FAILS (the AID is not moved further). The AID byte, time and typed text come from TN3270E, never from the model.
+Game-write boundary (fail-closed): game writes = the host 3270-DATA records after the first game screen (so the pre-game
+ISPF / TSO traffic, the switch and the query are excluded) up to the first TSO line-mode record (WCC C1; PACMAN writes
+C3 / C2 only). A C1 record in the middle of the game truncates the game writes, so the AIDs after it no longer match the
+plan / driver log and the model's remaining writes and end screen are missing: FUNCTIONAL FAIL (tested); no closure C1
+at all: FAIL. The closure (end lines, `***`, ENTER, shell) is checked separately after the boundary.
+Causal lower bound (host burst proof): a quantum write cannot arrive before it was generated, and REALTIME generates the
+quanta of a segment no earlier than its anchor + (j - j0) T: start - the start AID is read by the blocking pre-start
+read (CLOK = now), its quantum is written at once (j = j0, bound = the AID send time), every later quantum waits for
+the deadline previous + T; resume - the resume AID ends the blocking pause read (CLOK = now), the resume card is itself
+the first quantum (j = j0 at the resume write), then previous + T. Anchor = the terminal send time of that AID (the
+host saw it later); j0 = its write; the PAUSED screen ends the start segment. Skipped periods only delay; network /
+BID only delay; TCP keeps the records in order. Check: arrival(j) >= anchor + (j - j0) T - 2 ms (timestamp resolution);
+violated = FUNCTIONAL / TIMING FAIL.
+
 ## 9. Files (when implementation is approved)
 New: tools/zowe/zos6_live_check.py, tools/zowe/zos6_drive.py, tests/zos6_fixture.py, docs/zos6-live-session.md,
 docs/evidence/zos6-realtime.md. Modified: tests/test_zos_tools.py, docs/CURRENT_PHASE.md. Not modified:
 tools/zowe/zos5_live_check.py. Game / source / JCL: none.
 All design decisions are resolved (user, 2026-10-16); implementation waits for approval.
+
+## Experimental z/OS presentation-decoupling variance (2026-10-19; NOT a change of D33)
+Approved as an experiment only, justified by the probe evidence (docs/zos6-protocol-probe.md sections 8-11,
+docs/zos6-io-architecture-memo.md) and the documented STBREAK behaviour: the logical REALTIME quantum stays 150 ms and
+every quantum still advances the game model exactly once (movement, ghosts, collisions, timers, death sequencing,
+score / state, input); only the physical 3270 write frequency may be lower on z/OS, coalescing (never replaying) the
+skipped states. D33 (one write per quantum) remains the baseline and the ZOS-6 acceptance contract until the PR2
+evidence is reviewed; a possible restatement ("one logical state update per 150 ms quantum, with platform-dependent
+coalescing of physical presentation writes") is a separate decision.
+Probe series closed 2026-10-19 (PR2-A, PR2I-C2; docs/zos6-protocol-probe.md section 14). Production proposal for
+review, nothing implemented: docs/zos6-production-design.md (PACPLAT presentation slot, 300 ms minimum interval in
+logical time, proposed z/OS variance ZV-D33, checker redesign, revised R1 / R2 acceptance). D33 above stays unchanged
+until that proposal is approved.
+
+## Closure (2026-10-19)
+ZOS-6 COMPLETE: executed under ZV-D33 with PRESENT(COALESCED) (docs/zos6-production-design.md, sections 18-20);
+R1 (as R1-T4) and R2 PASS with the plans of sections 2 / 7 unchanged. Evidence: docs/evidence/zos6-realtime.md.

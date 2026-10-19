@@ -5,6 +5,15 @@ ref_gx_screen renderer. One card = one quantum: its characters up to the first b
 (U D L R any case, Q quit, P pause, * = PA2 redraw, . or + = nothing, anything else invalid); a first card starting with
 A is the configuration (BAT). Before the start only a direction makes the game start (that card is quantum 1).
 simulate(cards) -> BAT output lines; frames(cards, parm_cfg, canvas) -> (TSD streams, end lines).
+ZOS-6 (ZV-D33, docs/zos6-production-design.md), additive: present='C' = PRESENT(COALESCED) for TSD screens - every
+logical quantum still runs; a quantum is presented (composed and written) only at the PACPLAT PSLT slots (start / resume
+quantum = base, then when PRES_TP ms of logical time have passed, the accumulator reset: NORMAL every 2nd quantum, FAST
+every 3rd); a skipped quantum advances only the display state that follows logical time (PACSCR RTQS: the facing and
+the RP popup tracker) and keeps a pending prompt frame for the next slot; nothing skipped is ever written later.
+Default present=None / 'E' = PRESENT(EVERY) = the frozen one-write-per-quantum model (oracle 310) unchanged. Every run
+tags its frames (frames.qs: the logical quantum a quantum write presents, else None; frames.cards: the card / poll
+index that produced it; frames.imgs: the composed image; frames.skips: coalesced quanta just before it). frt: the
+freeze-length hook for the ZOS-6 checker's negative (mutant) models only.
 Usage: ref_rt.py CARDFILE [--tsd CANVAS]"""
 import sys
 from pathlib import Path
@@ -25,6 +34,7 @@ TTL, FREEZE, GH_NUM, GH_DEN, ANIM_Q = 3, 10, 4, 5, 3
 # first frame, a death-animation frame is 150 ms.
 NORMAL, FAST = 150, 125
 READY_Q, POPUP_Q, DEATH_FRAME_MS = 4, 5, 150
+PRES_TP = 300                    # ZOS-6 PRESENT(COALESCED): the minimum presentation interval in logical ms (PR2-A)
 
 
 def quanta(q, per=NORMAL):
@@ -163,21 +173,51 @@ def events(cards):
         yield evs
 
 
-def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None, per=NORMAL):
+def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None, per=NORMAL, present=None,
+        frt=None):
     """The PACMAIN RT-GAME driver. tsd = None (BAT) or a canvas letter (TSD); cfg = (ai, n) from the PARM (TSD).
     snap: optional ref_snap.Log ((lives, won) per screen sent, MVS-S1). mk_game / mk_ctl (MVS-GP1): the ARCADE game
     and controller of tests/ref_arcade.py (TSD screens only; its end lines come from the game)."""
-    stream = []
-    for evs in events(cards):
+    st = {'card': 0}
+    stream, cardno = [], []
+    for ci, evs in enumerate(events(cards), 1):
         stream += [e for e in evs] + [('NON', ' ', ' ')]
+        cardno += [ci] * (len(evs) + 1)
     stream.append(('EOF', ' ', ' '))
+    cardno.append(len(cards) + 1)
     pos = [0]
 
     def read():
-        e = stream[min(pos[0], len(stream) - 1)]
+        k = min(pos[0], len(stream) - 1)
+        e = stream[k]
+        st['card'] = cardno[k]
         pos[0] += 1
         return e
     out, frames = [], Rec(snap, lambda: g.snap() if hasattr(g, 'snap') else (g.lives, g.won))
+    frames.qs, frames.cards, frames.imgs, frames.skips = [], [], [], []
+    coalesce = present == 'C' and tsd is not None
+    ps = {'acc': 0, 'base': True, 'skips': 0}
+
+    def put(f, kind, img, q=None):
+        frames.append(f, kind)
+        frames.qs.append(q)
+        frames.cards.append(st['card'])
+        frames.imgs.append(img)
+        frames.skips.append(ps['skips'])
+        ps['skips'] = 0
+
+    def pslt():
+        """PACPLAT PSLT: True = present this running quantum."""
+        if not coalesce:
+            return True
+        if ps['base']:
+            ps['base'], ps['acc'] = False, 0
+            return True
+        ps['acc'] += c.per
+        if ps['acc'] >= PRES_TP:
+            ps['acc'] = 0
+            return True
+        return False
     first = read() if tsd is None else None
     ai, n = cfg or (1, 1)
     if tsd is None and first[0] == 'CFG':
@@ -185,7 +225,9 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
         first = read()
     g = (mk_game or RTGame)(ai, n)
     c = (mk_ctl or Controller)(g, per)
-    st = {'prev': None, 'msg_on': None, 'msg_last': None, 'face': 'R', 'frame': ' ', 'over': False}
+    if frt is not None:
+        c.frt = frt
+    st.update({'prev': None, 'msg_on': None, 'msg_last': None, 'face': 'R', 'frame': ' ', 'over': False})
     from ref_rp import Tracker
     tr = Tracker(hs)
 
@@ -212,14 +254,21 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
         show = st['msg_on']
         cur = gx.image(geo, g, g.cmd, g.res, None if paused else show, True, c.vis, face(),
                        'PAUSE' if paused else None, decor())
-        frames.append(gx.full(geo, cur) if st['prev'] is None or rdr else gx.partial(geo, cur, st['prev'], 'P'), kind)
+        put(gx.full(geo, cur) if st['prev'] is None or rdr else gx.partial(geo, cur, st['prev'], 'P'), kind, cur,
+            c.q if kind == 'P' else None)
         st['prev'], st['msg_last'], st['msg_on'] = cur, show, None
 
     def rtqf(rtstat=None, rtfrz=None):
         cur = gx.image(geo, g, g.cmd, g.res, st['msg_last'], True, c.vis, face(), None, decor(rtstat, rtfrz))
         p = gx.partial(geo, cur, st['prev'], 'T')
-        frames.append(p if p is not None else bytes([0xC2, 0x28, 0x00, 0x00]), 'Q')
+        put(p if p is not None else bytes([0xC2, 0x28, 0x00, 0x00]), 'Q', cur, c.q if rtstat is None else None)
         st['prev'] = cur
+
+    def rtqs():
+        """PACSCR RTQS (ZOS-6): a coalesced quantum - the facing and the RP tracker follow it; no image, no write."""
+        face()
+        decor()
+        ps['skips'] += 1
 
     def event(e):
         kind, d, ch = e
@@ -277,14 +326,21 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
                     pre_screen()
             if st['over']:
                 break
+            ps['base'] = True                   # ZOS-6: the resume quantum is a presentation base
             collect()
         if st['over']:
             break
         c.rq()
+        slot = pslt()
         if geo is None:
             out.append(f'Q{c.q:07d} IN={c.rtin:<8} K={c.kind} C={c.cur} R={c.req} T={c.ttl} X={g.x:02d} Y={g.y:02d} '
                        f'S={g.score:04d} L={g.left:03d} V={g.lives} ST={g.state}')
             out.append('  G=' + ' '.join('%02d,%02d' % (gx_, gy) for gx_, gy, _ in g.gh))
+        elif not slot:
+            rtqs()                              # ZOS-6: coalesced, a pending prompt frame waits for the next slot
+            if g.won or g.lost:
+                st['over'], st['end'] = True, 'LOST' if g.lost else 'WIN'
+            continue
         elif st['frame'] != ' ':
             pre_screen('P')                     # MVS-S2: the quantum's one write in prompt form
         else:
@@ -297,8 +353,8 @@ def run(cards, tsd=None, cfg=None, snap=None, mk_game=None, mk_ctl=None, hs=None
         for k in range(c.frt, c.rdy, -1):     # MVS-RP: the final death frames (PACDISP, before the end screen)
             rtqf('FRZ ', k)
     if geo is not None and geo.fam != 'G':
-        frames.append(gx.full(geo, gx.image(geo, g, g.cmd, g.res, None, True, c.vis, face(), end,
-                                            decor(ends=True))), 'E')
+        img = gx.image(geo, g, g.cmd, g.res, None, True, c.vis, face(), end, decor(ends=True))
+        put(gx.full(geo, img), 'E', img)
     if hasattr(g, 'end_lines'):
         return out + g.end_lines(end, c.q), frames
     out += [end, f'TURNS {g.t:03d}', f'SCORE {g.score:04d}', f'LIVES {g.lives}', f'QUANTA {c.q:07d}']
@@ -326,10 +382,11 @@ def simulate(cards, per=NORMAL):
     return run(list(cards), per=per)[0]
 
 
-def tsd(cards, canvas, snap=None, mk_game=None, mk_ctl=None, hs=None, per=NORMAL):
-    """(parm config, cards) as the TSD deck runs them: the config card goes to the PARM."""
+def tsd(cards, canvas, snap=None, mk_game=None, mk_ctl=None, hs=None, per=NORMAL, present=None, frt=None):
+    """(parm config, cards) as the TSD deck runs them: the config card goes to the PARM. present / frt: see the top."""
     ai, n, rest = parse_config(list(cards))
-    return run(rest, tsd=canvas, cfg=(ai, n), snap=snap, mk_game=mk_game, mk_ctl=mk_ctl, hs=hs, per=per)
+    return run(rest, tsd=canvas, cfg=(ai, n), snap=snap, mk_game=mk_game, mk_ctl=mk_ctl, hs=hs, per=per,
+               present=present, frt=frt)
 
 
 if __name__ == '__main__':

@@ -54,6 +54,13 @@
       * LEVEL 1: R = UPDATE IN PLACE (WRIT), Z = ONE NEW RECORD (REPL,
       * HEALS THE MEMBER). REQ-HSNEW Y SAVED, F WRITE FAILED, P BEATEN
       * BY A LATER-LEVEL START (NOT RECORDED), N NOTHING.
+      * ZOS-6 (ZV-D33, Z4): PSLT = THE PRESENTATION SLOT OF A RUNNING
+      * REALTIME QUANTUM, IN LOGICAL TIME (NEVER THE WALL CLOCK): Y
+      * UNLESS REQ-PMODE C AND TSC / TSD; THEN REQ-PRES B (START /
+      * RESUME QUANTUM) = Y AND PS-ACC 0; ELSE PS-ACC + REQ-RTPER, Y
+      * WHEN IT REACHES PS-TP (300 MS, PROBE PR2-A) AND PS-ACC BACK TO
+      * 0 (RESET, NOT SUBTRACT: NO CATCH-UP), ELSE N. NORMAL (150): A
+      * WRITE EVERY 2ND QUANTUM, FAST (125): EVERY 3RD (375 MS).
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACPLAT.
        ENVIRONMENT DIVISION.
@@ -62,6 +69,8 @@
        OBJECT-COMPUTER. IBM-370.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
+       01  PS-TP                 PIC 9(4) VALUE 300.
+       01  PS-ACC                PIC 9(5) VALUE 0.
        01  TSO-OP                PIC X(4) VALUE 'CLS '.
        01  TSO-WAIT              PIC X(4) VALUE 'WAIT'.
        01  TSO-RC                PIC S9(4) COMP.
@@ -173,6 +182,8 @@
                PERFORM DO-WDLN
            ELSE IF REQ-OP = 'DLWT' AND REQ-MODE = 'TSC'
                CALL 'PACTSO' USING TSO-DLWT TSO-RC REQ-TIME
+           ELSE IF REQ-OP = 'PSLT'
+               PERFORM DO-PSLT THRU DO-PSLT-EXIT
            ELSE IF REQ-OP = 'HSRD'
                PERFORM DO-HSRD THRU DO-HSRD-EXIT
            ELSE IF REQ-OP = 'HSWR'
@@ -494,6 +505,24 @@
            CALL 'PACTSO' USING TSO-DLWT TSO-RC REQ-TIME.
        SKIP-PERIOD.
            ADD RT-PERIOD TO RT-NEXT.
+       DO-PSLT.
+           IF REQ-PMODE NOT = 'C'
+               MOVE 'Y' TO REQ-PRES
+               GO TO DO-PSLT-EXIT.
+           IF REQ-MODE NOT = 'TSC' AND REQ-MODE NOT = 'TSD'
+               MOVE 'Y' TO REQ-PRES
+               GO TO DO-PSLT-EXIT.
+           IF REQ-PRES = 'B'
+               MOVE 0 TO PS-ACC
+               MOVE 'Y' TO REQ-PRES
+               GO TO DO-PSLT-EXIT.
+           ADD REQ-RTPER TO PS-ACC.
+           MOVE 'N' TO REQ-PRES.
+           IF PS-ACC NOT < PS-TP
+               MOVE 0 TO PS-ACC
+               MOVE 'Y' TO REQ-PRES.
+       DO-PSLT-EXIT.
+           EXIT.
        COPY-TEXT.
            COMPUTE WS-K = WS-I + 6.
            IF WS-K NOT > FS-LEN

@@ -68,7 +68,7 @@ HS_JOBS = {'Z3HS1': ['HA1', 'HA2', 'HA3'], 'Z3HS2': ['HA4'], 'Z3HS3': ['HA5'], '
            'Z3HS5': ['HB1', 'HC1', 'HD1'], 'Z3HS6': ['HE1', 'HE2', 'HF1', 'HF2'], 'Z3HS7': ['HG1', 'HG2', 'HG3'],
            'Z3HS8': ['HH1', 'HTSO1', 'HTSO2']}
 HS_DEFERRED = ['HA6']
-DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL', 'Z4LE', 'Z4Z2', 'Z4Z3', 'Z4INS'] + list(CHUNKS)
+DECKS = ['ZCMP', 'ZHSA', 'Z3HA'] + list(HS_JOBS) + ['Z4CL', 'Z4LE', 'Z4Z2', 'Z4Z3', 'Z4INS'] + list(CHUNKS) + ['Z6BLD']
 Z4INS_SMOKE = ['RUN1', 'TSO2']      # ZOS-4 PACZ4INS: the two oracle 307 smoke runs on PACMAIN (batch, TSO line mode DIE1)
 # ZOS-4 PACZ4LE (docs/zos4-le-diagnostic.md): LE runtime-option diagnostic with the ZOS-1 probes (no Pac-Man):
 # (step, program, PARM, CEEOPTS records or None). ZHARG is not an LE option name: the program's PARM echo shows which
@@ -115,6 +115,11 @@ ZCMP_COBOL = ['PACMAIN', 'PACGAME', 'PACMAP', 'PACAI', 'PACINPT', 'PACDISP', 'PA
               'PACQRYT', 'PACTSOT']
 ZCMP_ASM = ['PACTSO', 'PACFSIO', 'PACHSIO']
 UT = '//{0:<9}DD UNIT=SYSALLDA,SPACE=(TRK,(5,5))\n'
+# Compiler work files (SYSUT1-15, SYSMDECK): the historical default stays TRK,(5,5) for every existing deck; a deck may
+# set an explicit override for its own compile steps only (ZOS-6 PACZ6BLD: CYL,(1,1) after JOB09327, COB8 PACSCR SYSUT11
+# B37-04). Assembler work files are not affected.
+COB_WORK_DEFAULT = 'TRK,(5,5)'
+COB_WORK = [COB_WORK_DEFAULT]
 COB_LIBS = ('//STEPLIB  DD DSN=IGY650.SIGYCOMP,DISP=SHR\n//         DD DSN=CEE.SCEERUN,DISP=SHR\n'
             '//         DD DSN=CEE.SCEERUN2,DISP=SHR\n')
 ASM_LIBS = ('//STEPLIB  DD DSN=HLA.SASMMOD1,DISP=SHR\n'
@@ -122,7 +127,14 @@ ASM_LIBS = ('//STEPLIB  DD DSN=HLA.SASMMOD1,DISP=SHR\n'
 _mvs = {}
 
 
+JOBNAME_RE = r'[A-Z@#$][A-Z0-9@#$]{0,7}'       # a JES job name: 1-8 characters, alphabetic / national first
+
+
 def job_card(job, title):
+    import re as re_
+    name = JOBNAME or job
+    if not re_.fullmatch(JOBNAME_RE, name or ''):
+        raise SystemExit(f'invalid JES job name {name!r} (1-8 characters A-Z 0-9 @ # $, not starting with a digit)')
     return (f"//{JOBNAME or job} JOB 1,'{title[:20]}',CLASS=7,MSGLEVEL=(1,1),\n"
             '//             NOTIFY=&SYSUID\n')
 
@@ -133,8 +145,10 @@ def upload(step, pfx, lib, member, text):
     return ''
 
 
-def cobol_work():
-    return ''.join(UT.format(f'SYSUT{i}') for i in range(1, 16)) + '//SYSMDECK DD UNIT=SYSALLDA,SPACE=(TRK,(5,5))\n'
+def cobol_work(space=None):
+    sp = space or COB_WORK[0]
+    return ''.join(f'//{f"SYSUT{i}":<9}DD UNIT=SYSALLDA,SPACE=({sp})\n' for i in range(1, 16)) + \
+        f'//SYSMDECK DD UNIT=SYSALLDA,SPACE=({sp})\n'
 
 
 def compile_step(step, pfx, member, obj):
@@ -441,4 +455,32 @@ def deck(name, pfx):
     if name in HS_JOBS:
         return z3hs_deck(name, pfx)
     return {'ZCMP': zcmp_deck, 'ZHSA': zhsa_deck, 'Z3HA': z3ha_deck, 'Z4CL': z4cl_deck, 'Z4LE': z4le_deck,
-            'Z4Z2': z4z2_deck, 'Z4Z3': lambda p: z4z2_deck(p, 'T3'), 'Z4INS': z4ins_deck}[name](pfx)
+            'Z4Z2': z4z2_deck, 'Z4Z3': lambda p: z4z2_deck(p, 'T3'), 'Z4INS': z4ins_deck, 'Z6BLD': z6bld_deck}[name](pfx)
+
+
+# ZOS-6 production build (docs/zos6-production-design.md, Z4): the 7 COBOL units that COPY PACREQ recompiled, the 6
+# other objects of the ZOS-2 build of record reused unchanged (no assembly: PACFSIO is not rebuilt), one bind into the
+# new test member PACZ6D (PACZ2D / the installed PACMAIN untouched). Derived from chunk Z2BLD; the only differences are
+# the step subset, NAME PACZ6D(R) and the compiler work-file override Z6BLD_SPACE.
+Z6BLD_UNITS = ['PACMAIN', 'PACGAME', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACRT']
+Z6BLD_REUSED = ['PACMAP', 'PACAI', 'PACQRY', 'PACTSO', 'PACFSIO', 'PACHSIO']
+Z6BLD_SPACE = 'CYL,(1,1)'
+
+
+def z6bld_deck(pfx):
+    COB_WORK[0] = Z6BLD_SPACE
+    try:
+        full = steps_of_deck(chunk_deck('Z2BLD', pfx))
+    finally:
+        COB_WORK[0] = COB_WORK_DEFAULT
+    keep = [s for s, t in full.items() if s.startswith('COB') and
+            re.search(r'COBOL\((\w+)\)', t).group(1) in Z6BLD_UNITS]
+    assert [re.search(r'COBOL\((\w+)\)', full[s]).group(1) for s in keep] == \
+        ['PACMAIN', 'PACGAME', 'PACINPT', 'PACDISP', 'PACPLAT', 'PACSCR', 'PACRT']
+    link = full['LINK']
+    inc = re.findall(r'INCLUDE OBJ\((\w+)\)', link)
+    assert sorted(inc) == sorted(Z6BLD_UNITS + Z6BLD_REUSED) and link.count('  NAME PACZ2D(R)\n') == 1
+    out = job_card('PACZ6BLD', 'PACMAN ZOS6 BUILD') + ''.join(full[s] for s in keep) + \
+        link.replace('  NAME PACZ2D(R)\n', '  NAME PACZ6D(R)\n')
+    assert 'ASMA90' not in out and 'PACZ2D' not in out
+    return out

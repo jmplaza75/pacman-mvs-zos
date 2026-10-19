@@ -45,6 +45,15 @@
       * THE HIGH SCORE; AFTER THE LAST FRAME HS-END HANDS THE FINAL
       * SCORE, LEVEL AND ELIGIBILITY (STARTED AT LEVEL 1) TO PACPLAT
       * HSWR, WHICH DECIDES AND WRITES; PACDISP END PRINTS THE RESULT.
+      * ZOS-6 (ZV-D33, Z4): COLUMN 26 = PRESENT: C COALESCED, ANYTHING
+      * ELSE / ABSENT EVERY (D33: ONE WRITE PER QUANTUM, UNCHANGED).
+      * EACH RUNNING QUANTUM: A INPUT (RT-COLLECT), S PACRT RQ, D
+      * PACPLAT PSLT (PRESENT IT: Y / N), R PACDISP RTQF (N: SCREEN
+      * STATE ONLY), W THE WRITE (Y), B COALESCED TSC ONLY AFTER A
+      * WRITE: EXACTLY ONE NON-BLOCKING READ (ONE TGET), ITS EVENT IS
+      * FOR THE NEXT QUANTUM, T THE DEADLINE (WDLN). START AND RESUME
+      * QUANTA ARE BASES (ALWAYS PRESENTED). AN ENTER / INVALID / PA2
+      * PROMPT FRAME WAITS FOR THE NEXT PRESENTED QUANTUM.
        IDENTIFICATION DIVISION.
        PROGRAM-ID. PACMAIN.
        ENVIRONMENT DIVISION.
@@ -61,6 +70,7 @@
        01  WS-K                  PIC 99.
        01  RT-OVER               PIC 9 VALUE 0.
        01  RT-FRAME              PIC X VALUE SPACE.
+       01  RT-PBASE              PIC 9 VALUE 0.
        01  WS-LV.
            05  WS-LV1            PIC X.
            05  WS-LV2            PIC X.
@@ -89,6 +99,7 @@
            05  PARM-LV2          PIC X.
            05  PARM-SPEED        PIC X.
            05  PARM-ALARM        PIC X.
+           05  PARM-PRES         PIC X.
        PROCEDURE DIVISION USING PARM-AREA.
        MAIN-PARA.
            MOVE 'BAT' TO REQ-MODE.
@@ -149,6 +160,10 @@
            MOVE 'S' TO REQ-ALARM.
            IF PARM-LEN > 24 AND PARM-ALARM = 'P'
                MOVE 'P' TO REQ-ALARM.
+           MOVE SPACE TO REQ-PMODE.
+           IF PARM-LEN > 25 AND PARM-PRES = 'C'
+               MOVE 'C' TO REQ-PMODE.
+           MOVE 'Y' TO REQ-PRES.
            MOVE 0 TO REQ-RTFRT.
            MOVE 0 TO REQ-RTRDY.
            MOVE 0 TO REQ-RTPUQ.
@@ -216,6 +231,7 @@
            IF RT-OVER = 0 AND REQ-MODE = 'TSC'
                MOVE 'CLOK' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ.
+           MOVE 1 TO RT-PBASE.
            PERFORM RT-QUANTUM THRU RT-QUANTUM-EXIT
                UNTIL RT-OVER = 1.
            IF REQ-PLAY = 'T' AND F-EOF = 0 AND F-QUIT = 0
@@ -271,8 +287,15 @@
            MOVE 'RQ  ' TO REQ-OP.
            CALL 'PACRT' USING PAC-STATE PAC-REQ
                    PAC-ARC.
+           MOVE 'Q' TO REQ-PRES.
+           IF RT-PBASE = 1
+               MOVE 'B' TO REQ-PRES.
+           MOVE 0 TO RT-PBASE.
+           MOVE 'PSLT' TO REQ-OP.
+           CALL 'PACPLAT' USING PAC-REQ.
            MOVE RT-FRAME TO REQ-RTFR.
-           MOVE SPACE TO RT-FRAME.
+           IF REQ-PRES = 'Y'
+               MOVE SPACE TO RT-FRAME.
            MOVE 'RTQF' TO REQ-OP.
            CALL 'PACDISP' USING PAC-STATE PAC-REQ
                    PAC-ARC.
@@ -283,10 +306,25 @@
                MOVE 'T' TO REQ-PLAY
                MOVE 1 TO RT-OVER
                GO TO RT-QUANTUM-EXIT.
+           IF REQ-PMODE = 'C' AND REQ-PRES = 'Y'
+                              AND REQ-MODE = 'TSC'
+               PERFORM RT-POST-READ THRU RT-POST-READ-EXIT.
+           IF RT-OVER = 1
+               GO TO RT-QUANTUM-EXIT.
            IF REQ-MODE = 'TSC'
                MOVE 'WDLN' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ.
        RT-QUANTUM-EXIT.
+           EXIT.
+       RT-POST-READ.
+      * ZOS-6 PHASE B (COALESCED TSC, RIGHT AFTER A PRESENTED WRITE):
+      * EXACTLY ONE RTRD = ONE PACPLAT POLL = ONE TGET ASIS,NOWAIT (NO
+      * DRAIN LOOP). ITS EVENT GOES TO PACRT RIN NOW, SO IT IS AN INPUT
+      * OF THE NEXT QUANTUM (BEFORE THAT QUANTUM'S OWN A READS); THE
+      * STEP AND THE FRAME OF THIS QUANTUM ARE ALREADY DONE.
+           PERFORM RT-READ.
+           PERFORM RT-EVENT THRU RT-EVENT-EXIT.
+       RT-POST-READ-EXIT.
            EXIT.
        RT-COLLECT.
       * EVERY INPUT AVAILABLE NOW (A CARD = THE INPUT OF ONE QUANTUM).
@@ -313,6 +351,7 @@
            IF REQ-MODE = 'TSC'
                MOVE 'CLOK' TO REQ-OP
                CALL 'PACPLAT' USING PAC-REQ.
+           MOVE 1 TO RT-PBASE.
            PERFORM RT-COLLECT THRU RT-COLLECT-EXIT.
        RT-PAUSED-EXIT.
            EXIT.

@@ -295,3 +295,26 @@
   AMODE 24, NOT that the complete Pac-Man application is viable in AMODE 24. Profile B (AMODE 31, J4 JOB08335) is a
   documented fallback only, never adopted automatically: if a real Pac-Man module exposes an AMODE 24 limitation,
   stop and report before changing profile or source.
+- ZV-D33 (ZOS-6 z/OS variance of D33, APPROVED FOR ZOS-6 VALIDATION 2026-10-19, docs/zos6-production-design.md
+  section 8; NOT the final cross-platform rewrite of D33, the requirements DOCX unchanged) One logical state update per logical
+  quantum (150 ms NORMAL, 125 ms FAST), exactly the 2.0 game semantics; on z/OS TSO / TN3270E the platform coalesces
+  physical writes (PRESENT(COALESCED): PACPLAT PSLT, 300 ms minimum interval in logical time: every 2nd / 3rd quantum,
+  start / resume presented) with no stale-frame replay, no catch-up burst, bounded backlog, explicit input-latency and
+  cadence gates (candidate R1 / R2 values, section 11). PRESENT(EVERY) keeps D33 (and is the default while ZOS-6 is
+  under development). Implemented locally as Z4 / Z5 (docs/ZOS-DIFFS.md); D33 stays the MVS contract.
+  R1 acceptance split (user, 2026-10-19): the approved R1 plan (AI(0)) is kept; its frames cannot show the freeze
+  length, so the exact 10 logical quanta are proven offline (PACRT unchanged + RTSTILL; the moving-ghost fixture keeps
+  10 PASS / 9 FAIL / 11 FAIL) and live R1 must match the canonical model and pass the freeze-span proxy and every
+  other gate; the checker reports "live freeze discrimination: NOT OBSERVABLE" (not a PASS, not a failure). The
+  candidate NORMAL / FAST gates are frozen as approved and are not tuned from live results.
+  R1-T4 checker decisions (user, 2026-10-19; the original R1-T4 verdict FUNCTIONAL FAIL stays recorded as a checker
+  false negative): (1) a bare host Write `F1 C3` right after an AID read by a blocking TGET (start / resume) is a TSO
+  CONTROL record - exact bytes, exact context, at most one per AID, confirmed on the model, counted, never a game or
+  model write; observed in R1-T3 (before ZOS-6) and R1-T4; the TSO / VTAM mechanism is an inference. (2) Under
+  PRESENT(COALESCED) the historical D33 lateness-envelope ("probable skipped period") rule is diagnostic only (its fixed
+  20-write windows cover 40 / 60 logical quanta at stride 2 / 3; COALESCED acceptance is the frozen explicit gates);
+  under PRESENT(EVERY) it remains a BLOCKED rule. No threshold changed.
+  ZOS-6 closure (user, 2026-10-19): R1-T4 accepted as the R1 live evidence and R2 FAST (one run) PASS under ZV-D33
+  with the frozen gates (margins accepted as PASS, no tuning, no rerun); ZOS-6 COMPLETE
+  (docs/evidence/zos6-realtime.md). ZV-D33 is now the validated z/OS presentation contract for PRESENT(COALESCED);
+  D33 stays the MVS contract and the PRESENT(EVERY) path; the requirements DOCX is not edited.
