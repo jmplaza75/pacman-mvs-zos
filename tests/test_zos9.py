@@ -29,8 +29,12 @@ FROZEN = ['src', 'tests/oracle20', 'releases/2.0-MVS-MAX', 'tools/make_deck.py',
           'tests/ref_gx_screen.py', 'tests/ref_gp2.py', 'tests/ref_rt.py', 'tests/ref_mvs6.py', 'tests/test_gp2.py',
           'tests/test_gx.py', 'tests/gpcases', 'tests/gp2cases', 'tests/rtcases', 'tests/cases']
 for p in FROZEN:
-    r = subprocess.run(['git', 'diff', '--quiet', 'zos-8', '--', p], cwd=R)
+    ex = [':(exclude)src/zos/PACMAN.clist'] if p == 'src' else []     # ZOS-10 Z6, checked exactly below
+    r = subprocess.run(['git', 'diff', '--quiet', 'zos-8', '--', p] + ex, cwd=R)
     assert r.returncode == 0, f'{p} differs from zos-8'
+import zos_c2  # noqa: E402
+assert zos_c2.z6_strip((R / 'src/zos/PACMAN.clist').read_text()) == subprocess.run(
+    ['git', 'show', 'zos-8:./src/zos/PACMAN.clist'], cwd=R, capture_output=True, text=True, check=True).stdout
 print('frozen sources / oracles / reused tools and models = zos-8: PASS')
 
 # 2. selftest ---------------------------------------------------------------------------------------------------------

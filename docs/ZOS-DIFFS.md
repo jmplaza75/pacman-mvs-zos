@@ -91,6 +91,20 @@ approval.
 - Status 2026-10-19 (ZOS-6 closure): test copy PACZ6CL JOB09382 PASS; installed as CLIST(PACMAN) (136 records,
   byte for byte); live R1-T4 / R2 PASS with PRESENT(COALESCED). Default stays PRESENT(EVERY).
 
+## Z6 - ZOS-10 CLIST default PRESENT(AUTO): COALESCED for PLAY(REALTIME) only (DEC-2; approved 2026-10-20)
+- File src/zos/PACMAN.clist (branch zos; the MVS CLIST unchanged): PROC default `PRESENT(EVERY)` -> `PRESENT(AUTO)`;
+  the two PRESENT help lines -> three; one comment + one statement after the Z5 `SET &E = &SUBSTR(1:1,&PRESENT)`:
+  `IF &PRESENT = AUTO AND &Y = R THEN SET &E = C`. The Z5 statements stay byte for byte (no parser change).
+- Behaviour: no PRESENT operand (AUTO) + PLAY(REALTIME) -> PARM column 26 = C (COALESCED); AUTO + PLAY(TURN) -> no
+  column 26 (the historical 25-column TURN PARM); explicit COALESCED -> C (any PLAY, as Z5); explicit EVERY and any
+  other value -> no column 26 (EVERY, as Z5). PACMAIN unchanged: an absent column 26 still means EVERY.
+- Reason: on z/OS TSO / VTAM / TN3270E one write per quantum (EVERY) is unsuitable for interactive REALTIME (R1-T3,
+  ZV-D33); the accepted REALTIME architecture is COALESCED (ZOS-9 DEC-2: the release default).
+- Guards: tests/zos_c2.py Z6_* / z6_strip (exact, required by the guard; z5_strip applies it first);
+  tests/test_zos_tools.py section 22 reads the ZOS-6 text through z6_strip; tests/test_zos10.py (PARM matrix).
+- Status: implemented locally for ZOS-10 (release preparation); verified on z/OS by PACZ10CL (PARM matrix) and the
+  installed live smoke S10 (docs/zos10-design.md).
+
 ## Model / checker for Z4 (tests and tools only, not z/OS differences in the product)
 - tests/ref_rt.py: additive present='C' filter (every quantum runs; writes at the PSLT slots; skipped quanta advance the
   facing and the RP tracker; pending prompt frame), frame tags (qs, cards, imgs, skips) and the frt freeze hook (checker

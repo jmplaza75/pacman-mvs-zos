@@ -15,7 +15,8 @@ tests/test_g8.py) accept a core change only when reversing exactly these lines r
 Z4 (ZOS-6 presentation decoupling, ZV-D33, docs/zos6-production-design.md): PACREQ / PACMAIN / PACPLAT / PACDISP / PACSCR
 differ from their Z1 text (2.0-mvs-max + the Z1 lines) by exactly the hunks of tests/zos_z4.json (no core source, no other
 file); z4_reverse(rel, text) puts the Z1 text back. Z5 (ZOS-6): the PRESENT keyword lines of src/zos/PACMAN.clist
-(Z5_*), put back by z5_strip before the Z3 / Z2 checks.
+(Z5_*), put back by z5_strip before the Z3 / Z2 checks. Z6 (ZOS-10, DEC-2): PRESENT(AUTO) default = COALESCED for
+PLAY(REALTIME) only (Z6_*), put back by z6_strip (exact; required by the guard, applied first by z5_strip).
   python3 tests/zos_c2.py --z4-table  rewrite tests/zos_z4.json from the working tree (an explicit, reviewed step)
 """
 import json
@@ -108,8 +109,38 @@ Z5_SET = ['/* Z5 (ZOS-6): PRESENT(COALESCED) ADDS PARM COLUMN 26 = C; EVERY    *
           'IF &E = C THEN SET &P = &STR(&P&E)']
 
 
+# Z6 (ZOS-10, docs/zos10-design.md section 8, DEC-2): the PROC default PRESENT(AUTO) (was EVERY), the help lines, and
+# one statement after the Z5 SET &E: AUTO with PLAY(REALTIME) -> C. EVERY, explicit COALESCED, invalid values and TURN
+# keep the Z5 behaviour (TURN without PRESENT: no column 26).
+Z6_PROC = (Z5_PROC[1], '  ALARM(PATTERN) PRESENT(AUTO)')
+Z6_HELP = (Z5_HELP, ['/* PRESENT: AUTO (DEFAULT: COALESCED WITH PLAY(REALTIME), NOTHING  */',
+                     '/* WITH TURN), COALESCED (ZOS-6, ZV-D33: A WRITE EVERY 2ND / 3RD    */',
+                     '/* QUANTUM) OR EVERY (ONE SCREEN WRITE PER REALTIME QUANTUM).       */'])
+Z6_SET_AFTER = 'SET &E = &SUBSTR(1:1,&PRESENT)'
+Z6_SET = ['/* Z6 (ZOS-10): PRESENT(AUTO) = COALESCED FOR PLAY(REALTIME) ONLY.  */',
+          'IF &PRESENT = AUTO AND &Y = R THEN SET &E = C']
+
+
+def z6_strip(text):
+    """The Z5 text of src/zos/PACMAN.clist: the Z6 lines (exactly, once each, in place) removed / put back."""
+    now = text.split('\n')
+    assert now.count(Z6_PROC[1]) == 1 and Z6_PROC[0] not in now, 'Z6: PROC line'
+    now[now.index(Z6_PROC[1])] = Z6_PROC[0]
+    i = now.index(Z6_HELP[1][0])
+    assert now[i:i + 3] == Z6_HELP[1] and now.count(Z6_HELP[1][0]) == 1, 'Z6: help lines not exact'
+    now[i:i + 3] = Z6_HELP[0]
+    j = now.index(Z6_SET_AFTER) + 1
+    assert now[j:j + 2] == Z6_SET and now.count(Z6_SET[1]) == 1, 'Z6: statement not exact'
+    del now[j:j + 2]
+    assert not any('AUTO AND' in l or 'Z6 (' in l or 'PRESENT(AUTO)' in l for l in now), 'Z6: a Z6 line elsewhere'
+    return '\n'.join(now)
+
+
 def z5_strip(text):
-    """The Z3 text of src/zos/PACMAN.clist: the Z5 lines (exactly, once each, in place) removed / put back."""
+    """The Z3 text of src/zos/PACMAN.clist: the Z5 lines (exactly, once each, in place) removed / put back (the Z6
+    lines, when present, are put back first by z6_strip)."""
+    if Z6_PROC[1] in text.split('\n'):
+        text = z6_strip(text)
     now = text.split('\n')
     assert now.count(Z5_PROC[1]) == 1 and Z5_PROC[0] not in now, 'Z5: PROC line'
     now[now.index(Z5_PROC[1])] = Z5_PROC[0]
@@ -208,8 +239,8 @@ def guard():
         rel = str(p.relative_to(R))
         if rel.startswith('src/probe/'):            # z/OS probes (ZOS-1) are not part of the release set
             continue
-        if rel == 'src/zos/PACMAN.clist':           # Z2 + Z3 (ZOS-4) + Z5 (ZOS-6): the frozen 2.0 CLIST + Z3 + Z2 + Z5
-            z2_guard(z3_strip(z5_strip(p.read_text(encoding='ascii'))))
+        if rel == 'src/zos/PACMAN.clist':           # the frozen 2.0 CLIST + Z3 + Z2 (ZOS-4) + Z5 (ZOS-6) + Z6 (ZOS-10)
+            z2_guard(z3_strip(z5_strip(z6_strip(p.read_text(encoding='ascii')))))
             continue
         now = p.read_text(encoding='ascii')
         if rel in Z4_FILES:                         # Z4 (ZOS-6): the exact hunks first, then the Z1 rule below
@@ -249,5 +280,5 @@ if __name__ == '__main__':
     t, changed = guard()
     z4 = z4_table()
     print(f'Z1 (C2) guard PASS: {len(t)} substitutions in {len(changed)} sources; Z4 (ZOS-6): '
-          f'{sum(len(v) for v in z4.values())} hunks in {len(z4)} sources; Z5 CLIST lines exact; every other src '
+          f'{sum(len(v) for v in z4.values())} hunks in {len(z4)} sources; Z5 + Z6 CLIST lines exact; every other src '
           f'file = {TAG}')

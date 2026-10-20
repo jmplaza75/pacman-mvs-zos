@@ -1921,7 +1921,7 @@ def clist_parm22(text, kw):
             return env['&P']
 
 
-zcl = (R / 'src/zos/PACMAN.clist').read_text()
+zcl = zos_c2.z6_strip((R / 'src/zos/PACMAN.clist').read_text())   # the ZOS-6 (Z5) text; Z6 (ZOS-10): test_zos10.py
 mcl = tag22('src/clist/PACMAN.clist')
 assert (R / 'src/clist/PACMAN.clist').read_text() == mcl                               # MVS CLIST untouched
 for kw in ('', 'AI(0) RULES(CLASSIC) PLAY(REALTIME) SOUND(NO)', 'AI(0) RULES(CLASSIC) PLAY(REALTIME) SOUND(NO) '
@@ -2437,8 +2437,13 @@ import ref_hs as HS24  # noqa: E402
 # --- frozen: no production source, CLIST or ZOS-6 / ZOS-5 acceptance tool differs from the zos-6 tag
 for p24 in ['src', 'jcl/zos/PACZ6BLD.jcl', 'tools/zowe/zos6_live_check.py', 'tools/zowe/zos6_drive.py',
             'tools/zowe/zos6_dry.py', 'tests/zos6_fixture.py', 'tools/zowe/zos5_live_check.py']:
-    r24 = SP24.run(['git', 'diff', '--quiet', 'zos-6', '--', p24], cwd=R)
+    # later src changes, each checked exactly elsewhere: ZOS-8 test CLIST RPESTAE (section 25), ZOS-10 Z6 (below)
+    ex24 = [':(exclude)src/zos/PACMAN.clist', ':(exclude)src/probe/zos/RPESTAE.clist'] if p24 == 'src' else []
+    r24 = SP24.run(['git', 'diff', '--quiet', 'zos-6', '--', p24] + ex24, cwd=R)
     assert r24.returncode == 0, f'{p24} differs from zos-6'
+# ZOS-10 Z6 (the only later production change): the CLIST = its zos-6 text once the exact Z6 lines are put back
+assert zos_c2.z6_strip((R / 'src/zos/PACMAN.clist').read_text()) == SP24.run(
+    ['git', 'show', 'zos-6:./src/zos/PACMAN.clist'], cwd=R, capture_output=True, text=True, check=True).stdout
 # --- the plans (D3 / D4): ARCADE, LEVEL >= 2, SOUND(NO), PRESENT(COALESCED) explicit, never PACMAIN's EVERY default
 for c24, pl in DV24.PLANS.items():
     w = pl['kw'].split()
@@ -2609,15 +2614,19 @@ FROZEN25 = ['src/cobol', 'src/copy', 'src/asm', 'src/clist', 'src/zos', 'jcl/zos
             'tools/zowe/zos7_live_check.py', 'tools/zowe/zos7_dry.py', 'tests/zos7_fixture.py',
             'tools/zowe/zos6_live_check.py', 'tools/zowe/zos6_drive.py', 'tools/zowe/zos6_dry.py',
             'tests/zos6_fixture.py', 'tools/zowe/zos5_live_check.py', 'tools/zowe/zos_target.py', 'tools/make_deck.py']
+Z6EX25 = [':(exclude)src/zos/PACMAN.clist']         # ZOS-10 Z6: checked exactly below (z6_strip = the zos-7 text)
 for p25 in FROZEN25:
-    assert SP25.run(['git', 'diff', '--quiet', 'zos-7', '--', p25], cwd=R).returncode == 0, f'{p25} differs from zos-7'
+    assert SP25.run(['git', 'diff', '--quiet', 'zos-7', '--', p25] + (Z6EX25 if p25 == 'src/zos' else []),
+                    cwd=R).returncode == 0, f'{p25} differs from zos-7'
     assert not SP25.run(['git', 'ls-files', '--others', '--exclude-standard', '--', p25], cwd=R,
                         capture_output=True, text=True).stdout.strip(), f'{p25}: untracked file'
-new25 = set(SP25.run(['git', 'diff', '--name-only', 'zos-7', '--', 'src'], cwd=R, capture_output=True,
-                     text=True).stdout.split()) | set(SP25.run(['git', 'ls-files', '--others', '--exclude-standard',
-                                                                '--', 'src'], cwd=R, capture_output=True,
-                                                               text=True).stdout.split())
-assert new25 <= {'src/probe/zos/RPESTAE.clist'}, new25
+new25 = set(SP25.run(['git', 'diff', '--name-only', '--relative', 'zos-7', '--', 'src'], cwd=R, capture_output=True,
+                     text=True).stdout.splitlines()) | \
+    set(SP25.run(['git', 'ls-files', '--others', '--exclude-standard', '--', 'src'], cwd=R, capture_output=True,
+                 text=True).stdout.splitlines())          # line-wise: the repository path contains spaces
+assert new25 <= {'src/probe/zos/RPESTAE.clist', 'src/zos/PACMAN.clist'}, new25
+assert zos_c2.z6_strip((R / 'src/zos/PACMAN.clist').read_text()) == SP25.run(
+    ['git', 'show', 'zos-7:./src/zos/PACMAN.clist'], cwd=R, capture_output=True, text=True, check=True).stdout
 # --- the scenario: card files = the commands each model game consumes; the Stage C state chain (ref_hs)
 for n25 in S25.GAMES:
     assert S25.live_cards(n25) == S25.consumed(n25), n25
