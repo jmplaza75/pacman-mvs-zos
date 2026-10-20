@@ -1,0 +1,21 @@
+L2 trace SHA-256 ac61a444592c196573163a6b3da77fb0b3297467a4f9450ce7ebd3a435ed7375 (727420 bytes); driver log SHA-256 36c58fe4cefb9711fcc6ffa287b28fb9606b94988290ff96c3dc31199be69e06; hiscore 'ABSENT'
+L2: T 150; profile (1, 1, 1) canvas (120, 27); 224 game writes = model; end lines ['LOST', 'TURNS 0000106', 'SCORE 0000510', 'LIVES 0', 'QUANTA 0000431', 'GHOSTS EATEN 0001', 'FRUITS EATEN 000', 'LEVEL 002', 'HIGH SCORE 0000510 LEVEL 002', 'START LEVEL 02: HIGH SCORE NOT RECORDED']; *** True; shell yes
+  coverage: {"expected": {"end": "LOST", "score": 510, "ghosts": 1, "lives": 0}, "actual": {"end": "LOST", "score": 510, "lives": 0, "quanta": 431, "ghosts": 1}, "ok": true}
+  writes: 216 COALESCED gameplay, 6 final-death (D1), end screen 223; 431 logical quanta; freeze runs [10, 10]
+  PF8: sent 68611117, AID F8, card 1 in (1, 2), model D
+  PF11: sent 68613468, AID 7B, card 19 in (16, 20), model R
+  PF10: sent 68619821, AID 7A, card 61 in (58, 62), model L
+  PF11: sent 68625240, AID 7B, card 97 in (94, 98), model R
+  PF8: sent 68659775, AID F8, card 327 in (324, 328), model D
+  PF11: sent 68663201, AID 7B, card 351 in (348, 352), model R
+  PF8: sent 68669664, AID F8, card 393 in (390, 394), model D
+  PF11: sent 68672927, AID 7B, card 415 in (412, 416), model R
+  final-death timing (reported only, no gate): {"writes": 6, "from_last_gameplay_write": 118, "gaps": [115, 175, 113, 114, 115], "to_end_screen": 185, "span": 632, "nominal_gap": 150}
+  freeze-span proxy per in-game death (information only): [1412, 1502] ms
+  freeze mutants {9: 'rejected', 11: 'rejected'}; live freeze discrimination DISCRIMINATED
+  principal segment: {"quanta": 227, "frames": 114, "first": 68626047, "last": 68660033, "elapsed": 33986, "ideal": 33900, "mean": 150.381, "gaps": {"n": 113, "min": 113, "median": 301, "p95": 412, "max": 510}, "endpoint_drift": 86, "trend_per_100": -0.045, "envelope_rise": 18, "long_gaps": 1, "backlog_delta": -5.2}
+  input reaction: [{"action": "PF8", "card": 1, "write": 1, "ms": 348}, {"action": "PF11", "card": 19, "write": 10, "ms": 612}, {"action": "PF10", "card": 61, "write": 31, "ms": 550}, {"action": "PF11", "card": 97, "write": 49, "ms": 487}, {"action": "PF8", "card": 327, "write": 164, "ms": 553}, {"action": "PF11", "card": 351, "write": 176, "ms": 694}, {"action": "PF8", "card": 393, "write": 197, "ms": 511}, {"action": "PF11", "card": 415, "write": 208, "ms": 621}]
+  frozen ZOS-6 gates: {"physical": {"n": 113, "min": 113, "median": 301, "p95": 412, "max": 510}, "running_max": 511, "reaction": {"n": 8, "min": 348, "median": 551.5, "p95": 694, "max": 694}, "backlog_delta": -5.2}
+  diagnostics: {"kri_records": 102, "kri_controls": 11, "kri_max_gap": 510, "bids": 101, "bid_latency": {"n": 102, "min": 112, "median": 114.5, "p95": 197, "max": 323}, "locked_fraction": 0.481, "long_gaps_with_bid_latency_over_T": 1}
+  TSO blocking-read CONTROL records (F1 C3): 1 [('F8', 1)]
+L2: PASS

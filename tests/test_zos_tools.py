@@ -2423,3 +2423,168 @@ assert audit_deck(render(z23, 'Z00000'), 'Z00000') == []
 print('PACZ6BLD: default compiler work files TRK,(5,5) unchanged (existing decks byte-identical), override CYL,(1,1) '
       'on SYSUT1-15 + SYSMDECK of the 7 PACREQ compiles only, no assembly, 13 INCLUDEs (6 reused, PACFSIO not rebuilt), '
       'NAME PACZ6D(R), audit clean: PASS')
+
+# 24. ZOS-7 ARCADE (docs/zos7-design.md, decisions D1-D5 2026-10-19; local only: nothing built, uploaded or run).
+#     Validation only: no source change; the ZOS-6 acceptance tools stay frozen; the live cases L1 (TURN) / L2 / L3
+#     (REALTIME NORMAL / FAST) and the dry runs PACZ7DR1 / PACZ7DR2 on PACZ6D.
+import subprocess as SP24  # noqa: E402
+import zos7_scen as SC24  # noqa: E402
+import zos7_drive as DV24  # noqa: E402
+import zos7_live_check as Z724  # noqa: E402
+import zos7_fixture as F724  # noqa: E402
+import zos7_dry as DR24  # noqa: E402
+import ref_hs as HS24  # noqa: E402
+# --- frozen: no production source, CLIST or ZOS-6 / ZOS-5 acceptance tool differs from the zos-6 tag
+for p24 in ['src', 'jcl/zos/PACZ6BLD.jcl', 'tools/zowe/zos6_live_check.py', 'tools/zowe/zos6_drive.py',
+            'tools/zowe/zos6_dry.py', 'tests/zos6_fixture.py', 'tools/zowe/zos5_live_check.py']:
+    r24 = SP24.run(['git', 'diff', '--quiet', 'zos-6', '--', p24], cwd=R)
+    assert r24.returncode == 0, f'{p24} differs from zos-6'
+# --- the plans (D3 / D4): ARCADE, LEVEL >= 2, SOUND(NO), PRESENT(COALESCED) explicit, never PACMAIN's EVERY default
+for c24, pl in DV24.PLANS.items():
+    w = pl['kw'].split()
+    assert {'SOUND(NO)', 'PRESENT(COALESCED)', 'AI(0)'} <= set(w) and not any(x.startswith('RULES(') for x in w), c24
+    lv = int(next(x for x in w if x.startswith('LEVEL('))[6:-1])
+    assert lv >= 2 and lv == pl['start'], c24
+    assert len(DV24.command(c24, 'Z00000.PACMAN')) <= 113, c24                  # <= R2's EXEC, proven live
+assert 'RULES(ARCADE)' in (R / 'src/zos/PACMAN.clist').read_text().split('/*')[0]     # ARCADE = the CLIST default
+assert [a for c, a in DV24.PLANS['L1']['steps'] if c == 'gameplay'] == SC24.liveb()[1:] and \
+    DV24.PLANS['L1']['kw'].split()[2:5] == ['PLAY(TURN)', 'ANIM(NO)', 'SOUND(NO)']
+for c24, T24 in (('L2', 150), ('L3', 125)):
+    pl = DV24.PLANS[c24]
+    assert pl['T'] == T24 and ('SPEED(FAST)' in pl['kw']) == (T24 == 125)
+    assert [(k, v) for k, v in pl['steps'] if k in ('wait', 'gameplay')] == \
+        [x for k, s in SC24.KEYS for x in (('wait', s), ('gameplay', k))]
+    assert 'Q' not in [a for c, a in pl['steps'] if c == 'gameplay']                 # the game ends LOST
+# --- the scenario: canonical outcome and the landing-shift proof (3^7 combinations per speed)
+for T24 in (150, 125):
+    assert SC24.intended(SC24.run(T24)) and SC24.prove(T24)[1] == []
+    assert SC24.gaps(T24)[3] >= 200 + 2 * max(SC24.SHIFTS)                          # the principal segment (frozen gate)
+# --- the high-score boundary (D3): LEVEL >= 2 never saves; the end lines for an absent / a present HISCORE
+assert Z724.hs_lines('ABSENT', ['LOST', 'T', 'SCORE 0000510', 'L', 'Q', 'G', 'F', 'LEVEL 002'], 2) == \
+    ['HIGH SCORE 0000510 LEVEL 002', 'START LEVEL 02: HIGH SCORE NOT RECORDED']
+rec24 = HS24.record(20000, 5)
+assert Z724.hs_lines(rec24, ['QUIT', 'T', 'SCORE 0010780', 'L', 'G', 'F', 'LEVEL 013'], 13) == \
+    ['HIGH SCORE 0020000 LEVEL 005']
+pds24 = HS24.Pds()
+HS24.end_lines(pds24, ('M', 'HISCORE'), 99999, 9, 2)
+assert pds24.members == {}                                                          # nothing written at LEVEL 2
+src24 = (R / 'src/cobol/PACPLAT.cob').read_text()
+assert re.search(r"MOVE 'P' TO REQ-HSNEW\.\n\s+IF REQ-HSELIG NOT = 'Y'\n\s+GO TO DO-HSWR-EXIT\.", src24) and \
+    src24.index("IF REQ-HSELIG NOT = 'Y'") < src24.index("CALL 'PACHSIO' USING HS-OP HS-RC HS-DDN HS-REC.\n           MOVE 'F'")
+# --- the checker: classification units (D1 is narrow)
+assert Z724.classify(['N', 'Q', 'Q', 'Q', 'Q', 'E'], [None, 1, 3, None, None, None], 'LOST')[1:] == ([3, 4], 5)
+for k24, q24, end24 in ((['N', 'Q', 'Q', 'E'], [None, 1, None, None], 'QUIT'),          # final death only if LOST
+                        (['N', 'Q', 'Q', 'Q', 'E'], [None, None, 3, None, None], 'LOST'),  # not after the gameplay
+                        (['N', 'Q', 'Q', 'E', 'Q'], [None, 1, None, None, None], 'LOST'),  # not before the end screen
+                        (['N', 'Q', 'E', 'E'], [None, 1, None, None], 'QUIT')):          # one end screen
+    try:
+        Z724.classify(k24, q24, end24)
+        raise AssertionError((k24, q24, end24))
+    except Z724.Fail:
+        pass
+assert Z724.FINAL_DEATH == {150: 6, 125: 7}
+
+
+def run24(case, hiscore='ABSENT', check_hs=None, **kw):
+    t, lg = F724.build(case, hiscore=hiscore, **kw)
+    try:
+        return Z724.check(t, lg, case, check_hs or hiscore)
+    except Z724.Fail as ex:
+        return str(ex)
+
+
+# --- positives: L1 / L2 / L3 PASS on the synthetic traces
+r24 = {c: run24(c) for c in ('L1', 'L2', 'L3')}
+assert all(isinstance(v, dict) and v['state'] == 'PASS' for v in r24.values()), r24
+assert r24['L1']['writes'] == 78 and r24['L1']['coverage']['actual'] == Z724.EXPECT_L1
+assert r24['L1']['end_lines'][-2:] == ['HIGH SCORE 0010780 LEVEL 013', 'START LEVEL 13: HIGH SCORE NOT RECORDED']
+for c24, T24 in (('L2', 150), ('L3', 125)):
+    v = r24[c24]
+    assert len(v['final_death_writes']) == Z724.FINAL_DEATH[T24] and v['death_runs'] == [ref_rt.quanta(10, T24)] * 2
+    assert v['final_death_timing']['gaps'] == [T24] * (Z724.FINAL_DEATH[T24] - 1)
+    assert v['end_screen'] == v['writes'] - 1 and v['coverage']['ok'] and v['principal']['quanta'] >= 200
+    assert v['end_lines'][-2:] == ['HIGH SCORE 0000510 LEVEL 002', 'START LEVEL 02: HIGH SCORE NOT RECORDED']
+    assert {x - y for x, y in zip(v['frame_quanta'][1:], v['frame_quanta'])} == {Z724.Z6.STRIDE[T24]}  # no pause
+# a present high-score record (R): read, shown, not beaten, nothing saved
+v24 = run24('L1', hiscore=rec24)
+assert v24['state'] == 'PASS' and v24['end_lines'][-1] == 'HIGH SCORE 0020000 LEVEL 005'
+# --- negatives: every class fails closed (FUNCTIONAL FAIL), coverage / timing are never PASS
+neg24 = {'L2 mutated write': dict(mutate=40), 'L2 dropped write': dict(drop_write=40),
+         'L2 non-slot write': dict(nonslot=40), 'L2 replayed write': dict(replay=40),
+         'L2 final-death write duplicated': dict(fd_dup=0), 'L2 final-death write dropped': dict(fd_drop=2),
+         'L2 final-death frame inside the game': dict(fd_mid=True), 'L3 final-death write duplicated': dict(fd_dup=3),
+         'L2 high-score line missing': dict(end_lines=None), 'L2 F1 C3 unrelated': dict(tso_c3='unrelated'),
+         'L2 F1 C3 duplicated': dict(tso_c3='dup'), 'L2 gameplay AID lost': dict(lose=1),
+         'L2 host freeze 11': dict(frt=11), 'L2 EXEC without PRESENT(COALESCED)':
+         dict(kw=DV24.KW_RT.replace(' PRESENT(COALESCED)', '')), 'L1 mutated write': dict(mutate=30),
+         'L1 dropped write': dict(drop_write=30), 'L1 F1 C3 duplicated': dict(tso_c3='dup')}
+for why, kw in neg24.items():
+    c24 = why[:2]
+    if why == 'L2 high-score line missing':
+        out24 = r24['L2']['end_lines'][:-1]
+        kw = dict(end_lines=out24)
+    res = run24(c24, **kw)
+    assert isinstance(res, str), (why, res if isinstance(res, str) else res['state'])
+assert isinstance(run24('L2', check_hs=rec24), str)                                  # the wrong DATA state
+# --- the narrow F1 C3 CONTROL rule is unchanged: after the start AID (blocking read) = counted, PASS
+for c24 in ('L2', 'L1'):
+    v = run24(c24, tso_c3='blocking')
+    assert v['state'] == 'PASS' and len(v['tso_controls']) == 1, c24
+# --- coverage and timing are never PASS. Every landing shift that still ends the game LOST gives the intended outcome
+#     (the proof above; a late key leaves the game running: no closure = FAIL), so the state is tested by requiring an
+#     outcome the trace does not show; and a slow host (the frozen gates)
+sv24 = dict(SC24.EXPECT)
+try:
+    SC24.EXPECT['ghosts'] = 2
+    v = run24('L2')
+    assert v['state'] == Z724.INCOMPLETE and not v['coverage']['ok'], v['state']
+finally:
+    SC24.EXPECT.clear()
+    SC24.EXPECT.update(sv24)
+v = run24('L2', scale=1.2)
+assert isinstance(v, str) or v['state'] != 'PASS'
+# --- the driver on the fake x3270if of section 20 (the frozen ZOS-6 Driver, the ZOS-7 plans): every planned action
+#     sent and logged ok, the EXEC typed with PRESENT(COALESCED), TURN commands typed + ENTER, the plan's waits; no
+#     shell = nothing sent; a failing action = STOP
+def drive24(fake, case):
+    real_run, real_sleep, slept = REAL_RUN6, DV24.time.sleep, []
+    DV24.Z6D.subprocess.run, DV24.time.sleep = fake, slept.append
+    log = IO6.StringIO()
+    try:
+        DV24.run(case, 4005, log, 'Z00000.PACMAN')
+        return 'ok', log.getvalue().splitlines(), slept
+    except DV24.Z6D.Stop as ex:
+        return f'STOP: {ex}', log.getvalue().splitlines(), slept
+    finally:
+        DV24.Z6D.subprocess.run, DV24.time.sleep = real_run, real_sleep
+
+
+for c24 in ('L1', 'L2', 'L3'):
+    fk = FakeX(SEQ6)
+    res, lines, slept = drive24(fk, c24)
+    assert res == 'ok' and [(json.loads(x)['category'], json.loads(x)['action']) for x in lines] == DV24.planned(c24)
+    assert fk.calls[2] == f'String("{DV24.command(c24, "Z00000.PACMAN")}")' and 'PRESENT(COALESCED)' in fk.calls[2]
+    assert slept == [s for k, s in DV24.PLANS[c24]['steps'] if k == 'wait']
+    if c24 == 'L1':
+        assert fk.calls.count('String("U")') == 16 and fk.calls.count('String("Q")') == 1 and slept == []
+    else:
+        assert [c for c in fk.calls if c.startswith('PF(')] == [f'PF({k[2:]})' for k, _ in SC24.KEYS]
+res, lines, _ = drive24(FakeX([SCREEN6.replace('ISPF Command Shell', 'ISPF Primary Option Menu')]), 'L2')
+assert res.startswith('STOP') and lines == []
+res, lines, _ = drive24(FakeX(SEQ6, fail='PF(11)'), 'L3')
+assert res.startswith('STOP') and json.loads(lines[-1])['action'] == 'PF11' and 'error' in json.loads(lines[-1])['result']
+# --- the dry runs: comparator self-test (oracle 311 G3R7, D1 faults, coverage at both speeds), decks of record
+ok24, res24, det24 = DR24.selftest()
+assert ok24 and all(det24.values()), [k for k, v in res24.items() if not v]
+for n24 in (1, 2):
+    d24 = DR24.deck(n24)
+    assert d24 == (R / f'jcl/zos/PACZ7DR{n24}.jcl').read_text()
+    assert audit_deck(render(d24, 'Z00000'), 'Z00000') == []
+    assert re.findall(r'^//(\w+)\s+EXEC PGM=(\w+)', d24, re.M) == [(s, 'PACZ6D') for s in DR24.JOBS[n24]]
+    assert DR24.estimate(n24) < 3500
+print('ZOS-7 ARCADE (local): src / CLIST / ZOS-6 tools = zos-6; plans ARCADE LEVEL >= 2 SOUND(NO) PRESENT(COALESCED); '
+      'L2 / L3 wall-stop scenario LOST / 510 / 1 ghost in 2187 x 2 landing shifts; HS read-only (LEVEL >= 2 never '
+      'saves); checker L1 / L2 / L3 PASS (final death 6 / 7 writes, D1 narrow), '
+      f'{len(neg24) + 1} negatives FAIL, F1 C3 rule unchanged, coverage / timing never PASS; driver on the fake x3270if; '
+      'PACZ7DR1 / DR2 decks of '
+      'record, comparator self-test PASS: PASS')

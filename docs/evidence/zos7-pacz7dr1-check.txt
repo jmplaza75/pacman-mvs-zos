@@ -1,0 +1,109 @@
+{
+ "job": "JOB09981",
+ "retcode": "CC 0000",
+ "steps": {
+  "E3": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 465,
+   "model": "exact",
+   "oracle311": "exact",
+   "facts": {
+    "frames": 88,
+    "end": "QUIT",
+    "quantum_frames": 84,
+    "strides": [
+     1
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 0,
+    "final_death_writes": 0,
+    "final_death_before_end_screen": false
+   },
+   "state": "PASS"
+  },
+  "N6": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 371,
+   "model": "exact",
+   "facts": {
+    "frames": 34,
+    "end": "LOST",
+    "quantum_frames": 24,
+    "strides": [
+     2
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 23,
+    "final_death_writes": 6,
+    "final_death_before_end_screen": true
+   },
+   "state": "PASS"
+  },
+  "F6": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 337,
+   "model": "exact",
+   "facts": {
+    "frames": 29,
+    "end": "LOST",
+    "quantum_frames": 18,
+    "strides": [
+     3
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 33,
+    "final_death_writes": 7,
+    "final_death_before_end_screen": true
+   },
+   "state": "PASS"
+  },
+  "N7": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 688,
+   "model": "exact",
+   "facts": {
+    "frames": 102,
+    "end": "QUIT",
+    "quantum_frames": 100,
+    "strides": [
+     2
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 99,
+    "final_death_writes": 0,
+    "final_death_before_end_screen": false
+   },
+   "state": "PASS"
+  },
+  "F7": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 658,
+   "model": "exact",
+   "facts": {
+    "frames": 92,
+    "end": "QUIT",
+    "quantum_frames": 90,
+    "strides": [
+     3
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 178,
+    "final_death_writes": 0,
+    "final_death_before_end_screen": false
+   },
+   "state": "PASS"
+  }
+ },
+ "state": "PASS"
+}
+PACZ7DR1 PASS

@@ -318,3 +318,13 @@
   with the frozen gates (margins accepted as PASS, no tuning, no rerun); ZOS-6 COMPLETE
   (docs/evidence/zos6-realtime.md). ZV-D33 is now the validated z/OS presentation contract for PRESENT(COALESCED);
   D33 stays the MVS contract and the PRESENT(EVERY) path; the requirements DOCX is not edited.
+- ZOS-7 ARCADE design APPROVED (user, 2026-10-19, docs/zos7-design.md): validation only (no production source change
+  unless ZOS-7 evidence demonstrates a source defect). D1: the ARCADE final-death sequence (PACDISP FINAL-DEATH of a
+  LOST REALTIME game: exactly 6 writes NORMAL / 7 FAST, one logical quantum apart, then the end screen) is an explicit,
+  narrow end-of-game exception to PRESENT(COALESCED) - exact model bytes / order, no replay, no extra frame, timing
+  reported separately, no other non-coalesced write allowed; PACDISP unchanged. D2: the in-game death animation stays
+  under ZV-D33. D3: live cases at LEVEL >= 2 only, no high-score write, one read-only DATA inspection first (HS = ZOS-8).
+  D4: live L1 (TURN) + L2 (NORMAL) + L3 (FAST, required), PRESENT(COALESCED) explicit, SOUND(NO), ZOS-6 rules and gates
+  unchanged. D5: dry runs PACZ7DR1 / PACZ7DR2 on PACZ6D, no rebuild. zos6_live_check.py stays frozen.
+  ZOS-7 closure (user, 2026-10-19): dry runs and live L1 / L2 / L3 accepted; D1 confirmed on z/OS; final-death timing
+  stays information only (no gate added after the live results); ZOS-7 COMPLETE, no production source change.

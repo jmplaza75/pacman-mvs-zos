@@ -1,0 +1,6 @@
+L1 trace SHA-256 ae8c0de5aaa6d7706112ca0981c0fa77ededf0aa157e0a8671e475b8634bd203 (761086 bytes); driver log SHA-256 a7251680e616825a4754c907f589a4e42ffcd979a1aa62e9c87846161deb65e8; hiscore 'ABSENT'
+L1: T None; profile (1, 1, 1) canvas (120, 27); 78 game writes = model; end lines ['QUIT', 'TURNS 0000076', 'SCORE 0010780', 'LIVES 4', 'GHOSTS EATEN 0000', 'FRUITS EATEN 002', 'LEVEL 013', 'HIGH SCORE 0010780 LEVEL 013', 'START LEVEL 13: HIGH SCORE NOT RECORDED']; *** True; shell yes
+  coverage: {"expected": {"end": "QUIT", "score": 10780, "lives": 4, "fruits": 2}, "actual": {"end": "QUIT", "score": 10780, "lives": 4, "fruits": 2}, "ok": true}
+  TURN: 77 commands, one screen each; write kinds {'E': 1, 'N': 77}
+  TSO blocking-read CONTROL records (F1 C3): 0 []
+L1: PASS

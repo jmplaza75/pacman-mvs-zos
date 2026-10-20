@@ -1,0 +1,140 @@
+{
+ "job": "JOB09992",
+ "retcode": "CC 0000",
+ "steps": {
+  "N8": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 527,
+   "model": "exact",
+   "facts": {
+    "frames": 76,
+    "end": "QUIT",
+    "quantum_frames": 74,
+    "strides": [
+     2
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 73,
+    "final_death_writes": 0,
+    "final_death_before_end_screen": false
+   },
+   "state": "PASS"
+  },
+  "F8": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 355,
+   "model": "exact",
+   "facts": {
+    "frames": 41,
+    "end": "QUIT",
+    "quantum_frames": 39,
+    "strides": [
+     3
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 78,
+    "final_death_writes": 0,
+    "final_death_before_end_screen": false
+   },
+   "state": "PASS"
+  },
+  "N9": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 310,
+   "model": "exact",
+   "facts": {
+    "frames": 26,
+    "end": "QUIT",
+    "quantum_frames": 24,
+    "strides": [
+     2
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 23,
+    "final_death_writes": 0,
+    "final_death_before_end_screen": false
+   },
+   "state": "PASS"
+  },
+  "F9": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 258,
+   "model": "exact",
+   "facts": {
+    "frames": 18,
+    "end": "QUIT",
+    "quantum_frames": 16,
+    "strides": [
+     3
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 31,
+    "final_death_writes": 0,
+    "final_death_before_end_screen": false
+   },
+   "state": "PASS"
+  },
+  "NL2": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 768,
+   "model": "exact",
+   "facts": {
+    "frames": 214,
+    "end": "LOST",
+    "quantum_frames": 206,
+    "strides": [
+     2
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 205,
+    "final_death_writes": 6,
+    "final_death_before_end_screen": true
+   },
+   "state": "PASS"
+  },
+  "FL2": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 677,
+   "model": "exact",
+   "facts": {
+    "frames": 173,
+    "end": "LOST",
+    "quantum_frames": 164,
+    "strides": [
+     3
+    ],
+    "strictly_increasing": true,
+    "skipped_quanta": 326,
+    "final_death_writes": 7,
+    "final_death_before_end_screen": true
+   },
+   "state": "PASS"
+  },
+  "T1": {
+   "pgm": "PACZ6D",
+   "rc": "0000",
+   "extra": [],
+   "lines": 438,
+   "model": "exact",
+   "facts": {
+    "frames": 78,
+    "end": "QUIT"
+   },
+   "state": "PASS"
+  }
+ },
+ "state": "PASS"
+}
+PACZ7DR2 PASS

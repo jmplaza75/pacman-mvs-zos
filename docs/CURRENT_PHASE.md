@@ -404,3 +404,22 @@ approval to implement the checker, driver and tests.
   PRESENT default (user, 2026-10-19): EVERY stays the compatibility default (CLIST unchanged); ZOS-6 acceptance and
   R1 / R2 used COALESCED explicitly; release default deferred; ZOS-7 REALTIME / ARCADE live work must request
   PRESENT(COALESCED) explicitly.
+
+## ZOS-7 ARCADE - VALIDATION ONLY (design approved 2026-10-19, docs/zos7-design.md)
+No production source change (unless ZOS-7 evidence shows a source defect); decisions D1-D5 (final-death exception,
+LEVEL >= 2 / no high-score write, live L1 / L2 / L3 with PRESENT(COALESCED), dry runs on PACZ6D).
+- Local tooling ready (not committed): tools/zowe/zos7_scen.py, zos7_drive.py, zos7_live_check.py, zos7_dry.py,
+  tests/zos7_fixture.py, test section 24; decks of record jcl/zos/PACZ7DR1.jcl / PACZ7DR2.jcl (audit clean).
+  NEXT (waiting for the user): submission of PACZ7DR1, then PACZ7DR2; then the read-only DATA inspection; then live.
+- PACZ7DR1 JOB09981 PASS (E3 = oracle 311 G3R7; final death 6 NORMAL / 7 FAST confirmed on z/OS) and PACZ7DR2
+  JOB09992 PASS (extra life, ghost chain, death, level clear; L1 / L2 / L3 cards exact): the dry-run gate is closed.
+- Read-only DATA inspection (2026-10-19): Z00000.PACMAN.DATA PDS FB 80/80, member directory empty (HISCORE absent:
+  live high score 0, `--hiscore ABSENT`); nothing written. ZOS-8 note (not ZOS-7): DATA was allocated
+  SPACE=(TRK,(1,1,5)) and lists `used 100` (the primary track holds the directory; one secondary track available) -
+  check the room for the first HISCORE save in ZOS-8.
+- ZOS-7 COMPLETE / PASS (2026-10-19; docs/evidence/zos7-arcade.md). Validation only: no production source change, no
+  build, no promotion. Dry runs PACZ7DR1 JOB09981 / PACZ7DR2 JOB09992 PASS; live L1 (TURN) / L2 (NORMAL) / L3 (FAST)
+  PASS with PRESENT(COALESCED) explicit; D1 final-death exception confirmed on z/OS (6 NORMAL / 7 FAST writes);
+  freezes 10 / 12 DISCRIMINATED; frozen ZOS-6 gates PASS; DATA read only, HISCORE still absent. Carried forward:
+  high-score writing / recovery, ESTAE / C3, live sound (ZOS-8); full batteries, HA6 (ZOS-9/10).
+  NEXT: ZOS-8 Services (not started).
