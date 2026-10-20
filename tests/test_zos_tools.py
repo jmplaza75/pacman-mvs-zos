@@ -2588,3 +2588,650 @@ print('ZOS-7 ARCADE (local): src / CLIST / ZOS-6 tools = zos-6; plans ARCADE LEV
       f'{len(neg24) + 1} negatives FAIL, F1 C3 rule unchanged, coverage / timing never PASS; driver on the fake x3270if; '
       'PACZ7DR1 / DR2 decks of '
       'record, comparator self-test PASS: PASS')
+
+
+# 25. ZOS-8 Services (docs/zos8-design.md, decisions U1-U12 2026-10-20; Stage A local only: nothing allocated,
+#     uploaded, built, submitted or run; no production source change). PACHSIO / PACFSIO / production CLIST frozen;
+#     the ZOS-7 tools frozen (U9) and imported; B1 PACZ8HB / B2 PACZ8RPE decks of record; test CLISTs (U3); the z/OS
+#     RPESTAE test CLIST (U4); live plans / checker for Stage C (HL), D (E1-E3 + GD), E (S8A / S8B / S8C).
+import subprocess as SP25  # noqa: E402
+import zos8_scen as S25  # noqa: E402
+import zos8_drive as DV25  # noqa: E402
+import zos8_live_check as Z825  # noqa: E402
+import zos8_batch as B25  # noqa: E402
+import zos8_fixture as F825  # noqa: E402
+import zos7_fixture as F725  # noqa: E402
+import zos_hs_model as HM25  # noqa: E402
+# --- frozen: production source, CLIST, PACHSIO / PACFSIO, the ZOS-5 / 6 / 7 acceptance tools = zos-7; the only new
+#     file under src/ is the test CLIST src/probe/zos/RPESTAE.clist
+FROZEN25 = ['src/cobol', 'src/copy', 'src/asm', 'src/clist', 'src/zos', 'jcl/zos/PACZ6BLD.jcl', 'jcl/zos/PACZ7DR1.jcl',
+            'jcl/zos/PACZ7DR2.jcl', 'tools/zowe/zos7_scen.py', 'tools/zowe/zos7_drive.py',
+            'tools/zowe/zos7_live_check.py', 'tools/zowe/zos7_dry.py', 'tests/zos7_fixture.py',
+            'tools/zowe/zos6_live_check.py', 'tools/zowe/zos6_drive.py', 'tools/zowe/zos6_dry.py',
+            'tests/zos6_fixture.py', 'tools/zowe/zos5_live_check.py', 'tools/zowe/zos_target.py', 'tools/make_deck.py']
+for p25 in FROZEN25:
+    assert SP25.run(['git', 'diff', '--quiet', 'zos-7', '--', p25], cwd=R).returncode == 0, f'{p25} differs from zos-7'
+    assert not SP25.run(['git', 'ls-files', '--others', '--exclude-standard', '--', p25], cwd=R,
+                        capture_output=True, text=True).stdout.strip(), f'{p25}: untracked file'
+new25 = set(SP25.run(['git', 'diff', '--name-only', 'zos-7', '--', 'src'], cwd=R, capture_output=True,
+                     text=True).stdout.split()) | set(SP25.run(['git', 'ls-files', '--others', '--exclude-standard',
+                                                                '--', 'src'], cwd=R, capture_output=True,
+                                                               text=True).stdout.split())
+assert new25 <= {'src/probe/zos/RPESTAE.clist'}, new25
+# --- the scenario: card files = the commands each model game consumes; the Stage C state chain (ref_hs)
+for n25 in S25.GAMES:
+    assert S25.live_cards(n25) == S25.consumed(n25), n25
+    assert S25.live_cards(n25)[-1] in ('Q', 'U', 'D', 'L', 'R') and 'EOF' not in S25.end_lines(n25, S25.live_cards(n25))
+chain25 = S25.hl_chain()
+assert [(c, b, h[-1], a) for c, _, b, h, a in chain25] == [
+    ('HL1', '0000720 PACHS001 001', 'START LEVEL 05: HIGH SCORE NOT RECORDED', '0000720 PACHS001 001'),
+    ('HL2', '0000720 PACHS001 001', 'NEW HIGH SCORE', '0000980 PACHS001 001'),
+    ('HL3', '0000980 PACHS001 001', 'HIGH SCORE 0000980 LEVEL 001', '0000980 PACHS001 001'),
+    ('HL4', '0000980 PACHS001 001', 'NEW HIGH SCORE', '0001310 PACHS001 001'),
+    ('HL6', 'n/a', 'HIGH SCORE UNAVAILABLE', 'n/a'), ('HL8', 'ABSENT', 'HIGH SCORE NOT SAVED', 'ABSENT')]
+# B1: the batch model = the frozen oracle 312 for the GPREVB game (HA2 base output); create / tie / update / lower
+base25 = HM25.expected_text('HA2')
+assert base25[:len(base25) - 1] == [l.rstrip() for l in GP2.simulate(S25.cards_of('gpcases', 'GPREVB'), start=1)]
+assert [x[1][-1] for x in S25.b1_model()] == ['NEW HIGH SCORE', 'HIGH SCORE 0000370 LEVEL 001', 'NEW HIGH SCORE',
+                                               'HIGH SCORE 0000720 LEVEL 001']
+# --- the plans: every live EXEC <= 113 characters (proven live), PRESENT(COALESCED) explicit, Stage C / D silent,
+#     Stage E sound; HL on the test CLISTs only; S8A / S8B = the ZOS-7 L2 / L3 gameplay with SOUND(YES), LEVEL 2
+for c25, p25 in DV25.PLANS.items():
+    acts = [a for k, a in p25['steps'] if k == 'transition' and a.startswith('EXEC')]
+    for a in acts:
+        cmd = DV25.command(c25, a, 'Z00000.PACMAN')
+        assert len(cmd) <= S25.EXEC_MAX and 'PACMAN.DATA' not in cmd, (c25, cmd)
+    if p25['kind'] != 'ESTAE':
+        w = p25['kw'].split()
+        assert 'PRESENT(COALESCED)' in w and ('SOUND(YES)' in w) == c25.startswith('S8'), c25
+for c25 in S25.HL_ORDER:
+    assert DV25.PLANS[c25]['clist'] in S25.TEST_CLISTS and 'ANIM(NO)' in DV25.PLANS[c25]['kw'], c25
+for c25, l25 in (('S8A', 'L2'), ('S8B', 'L3')):
+    assert DV25.PLANS[c25]['steps'] == DV24.PLANS[l25]['steps'][:-3] + DV25.TAIL[:1] + DV24.PLANS[l25]['steps'][-2:]
+    assert DV25.PLANS[c25]['kw'] == DV24.PLANS[l25]['kw'].replace('SOUND(NO)', 'SOUND(YES)')
+assert 'RULES(CLASSIC)' in DV25.PLANS['S8C']['kw'] and 'RULES(CLASSIC)' in S25.kw_of('GD')
+# --- batch: decks of record, audits, B1 geometry = DATA (PACZALLO), test CLISTs = installed CLIST but the DATA lines,
+#     the z/OS RPESTAE (Z2 core verbatim, E2 on HS8.T1), estimates
+ok25, res25 = B25.selftest()
+assert ok25, [k for k, v in res25.items() if not v]
+for k25, f25 in (('B1', B25.b1_deck), ('B2', B25.b2_deck)):
+    assert audit_deck(render(f25(), 'Z00000'), 'Z00000') == [] and B25.audit(f25(), k25) == []
+alloc25 = (R / 'jcl/zos/PACZALLO.jcl').read_text()
+assert all(x in alloc25 for x in B25.DATA_DD) and alloc25.count('SPACE=(TRK,(1,1,5))') == 1
+assert re.findall(r'EXEC PGM=(\w+)', B25.b2_deck())[2:] == ['PACRPE', 'PACRPE'] and 'NAME PACRPE(R)' in B25.b2_deck()
+# --- batch checkers on synthetic spools: PASS, and every injected fault fails closed
+for k25 in ('B1', 'B2'):
+    r25, _ = F825.spool_check(k25)
+    assert all(v for _, v in r25), (k25, [x for x, v in r25 if not v])
+for k25, f25 in (('B1', 'H2 rc'), ('B1', 'H3 line'), ('B1', 'print'), ('B1', 'members'), ('B1', 'data'),
+                 ('B1', 'iec'), ('B2', 'COB rc'), ('B2', 'E1 noabend'), ('B2', 'E2 lines'), ('B2', 'rmode'),
+                 ('B2', 'data')):
+    r25, _ = F825.spool_check(k25, (f25,))
+    assert not all(v for _, v in r25), (k25, f25)
+
+
+# --- live checker: positives
+def run25(case, before=None, **kw):
+    t, lg = F825.build(case, before=before, **kw)
+    chain = {c: b for c, _, b, _, _ in S25.hl_chain()}
+    try:
+        return Z825.check(t, lg, case, before or chain.get(case, 'ABSENT'))
+    except Z825.Fail as ex:
+        return str(ex)
+
+
+pos25 = {c: run25(c) for c in DV25.PLANS}
+assert all(isinstance(v, dict) and v['state'] == 'PASS' for v in pos25.values()), \
+    {c: (v if isinstance(v, str) else v['state']) for c, v in pos25.items()}
+assert pos25['HL8']['end_lines'][-1] == 'HIGH SCORE NOT SAVED' and pos25['HL6']['end_lines'][-1] == \
+    'HIGH SCORE UNAVAILABLE'
+assert pos25['S8C']['bells'] == [['START', 1], ['WIN', 4]] and pos25['S8C']['bell_gaps'][1:] == [300, 300, 300]
+assert pos25['S8A']['pattern_step_gaps'] == [[300], [300], [300, 300]] and \
+    pos25['S8B']['pattern_step_gaps'] == [[375], [375], [375, 375]]
+assert all(pos25[e]['abend_code'] == '0C7' and pos25[e]['followup']['end_lines'][0] == 'QUIT' for e in ('E1', 'E2',
+                                                                                                        'E3'))
+for v25 in ('hold', 'tail'):                                    # HL8: the IEC217I B14 message, with or without a hold
+    r25 = run25('HL8', iec=v25)
+    assert isinstance(r25, dict) and r25['state'] == 'PASS' and len(r25['iec']) == 1 and r25['hold'] == (v25 == 'hold')
+r25 = run25('E1', leftover=False)                               # the CLIST freed CEEOPTS itself: no FREE
+assert r25['state'] == 'PASS' and not r25['ceeopts_left'] and r25['cleanup'] == []
+assert run25('E2', recovery=2)['recovery_enters'] == 2
+# --- live checker: negatives fail closed
+neg25 = {'HL2 mutated write': ('HL2', dict(mutate=20)), 'HL4 dropped write': ('HL4', dict(drop_write=10)),
+         'HL2 NEW line missing': ('HL2', dict(end_lines=S25.end_lines('HL2', S25.live_cards('HL2')) +
+                                               ['HIGH SCORE 0000980 LEVEL 001'])),
+         'HL3 wrong store state': ('HL3', dict(before='0000720 PACHS001 001')),
+         'HL2 the installed CLIST instead of PACZ8HT': ('HL2', dict(member='PACMAN')),
+         'HL2 an IEC message': ('HL2', dict(iec='hold')), 'HL8 another IEC message': ('HL8', dict(iec='bad')),
+         'HL8 NOT SAVED missing': ('HL8', dict(end_lines=S25.end_lines('HL8', S25.live_cards('HL8')) +
+                                               ['HIGH SCORE 0000510 LEVEL 001', 'NEW HIGH SCORE'])),
+         'HL6 UNAVAILABLE missing': ('HL6', dict(end_lines=S25.end_lines('HL6', S25.live_cards('HL6')))),
+         'S8C bell-only write dropped': ('S8C', dict(drop_write=186)),
+         'S8C first write mutated': ('S8C', dict(mutate=0)),
+         'S8A mutated write': ('S8A', dict(mutate=40)), 'S8B dropped write': ('S8B', dict(drop_write=30)),
+         'S8A EXEC with SOUND(NO)': ('S8A', dict(kw=DV24.KW_RT)),
+         'E1 no abend': ('E1', dict(no_abend=True)), 'E1 test screen again': ('E1', dict(rescreen=True)),
+         'E3 line after the abend': ('E3', dict(e3_late=True)), 'E2 typed input in the recovery': ('E2',
+                                                                                              dict(extra_input=True)),
+         'E1 CEEOPTS left, not freed': ('E1', dict(no_free=True)),
+         'E2 FREE without a leftover': ('E2', dict(leftover=False, free_anyway=True)),
+         'E3 follow-up game differs': ('E3', dict(gd=dict(mutate=5)))}
+for why, (c25, kw25) in neg25.items():
+    r25 = run25(c25, **kw25)
+    assert isinstance(r25, str), (why, r25 if isinstance(r25, str) else r25['state'])
+# --- the end-screen NEW HIGH SCORE label follows the persistence outcome (HL8 live, 2026-10-20: PACSCR shows it only
+#     when REQ-HSNEW = 'Y'; ref_rp.Tracker, unchanged, shows it whenever the score beats the record). The correction
+#     changes no frame of a saved / practice / unavailable game and, for the failed save, only the end screen and only
+#     by the label; both wrong pairings and any other screen difference fail
+chain25b = {c: b for c, _, b, _, _ in S25.hl_chain()}
+for c25 in S25.HL_ORDER:
+    hs25 = S25.hs_tuple(c25, chain25b[c25])
+    sv25b = Z825.saved_of(Z825.expected_lines(c25, chain25b[c25])[1])
+    a25 = Z825.turn_model(c25, hs25, False)['frames']
+    b25 = Z825.turn_model(c25, hs25, False, saved=sv25b)['frames']
+    d25 = [i for i, (x, y) in enumerate(zip(a25, b25)) if x != y]
+    assert len(a25) == len(b25) and sv25b == (c25 in ('HL2', 'HL4')), c25
+    if c25 == 'HL8':
+        assert d25 == [len(a25) - 1], d25
+        ta25, tb25 = (Z5.texts(bytes([0x7E]) + f[-1]) for f in (a25, b25))
+        from collections import Counter as C25
+        assert C25(ta25) - C25(tb25) == C25(['NEW', 'HIGH', 'SCORE']) and not C25(tb25) - C25(ta25), (ta25, tb25)
+    else:
+        assert d25 == [], (c25, d25)
+neg25b = {'HL8 unsaved score with the NEW HIGH SCORE label': ('HL8', dict(end_label='saved')),
+          'HL2 saved new high score without the label': ('HL2', dict(end_label='unsaved')),
+          'HL4 saved new high score without the label': ('HL4', dict(end_label='unsaved')),
+          'HL8 end screen otherwise changed': ('HL8', dict(mutate=29)),
+          'HL8 game screen changed': ('HL8', dict(mutate=12))}
+for why, (c25, kw25) in neg25b.items():
+    r25 = run25(c25, **kw25)
+    assert isinstance(r25, str) and 'differs from the TURN model' in r25, (why, r25)
+sv25 = list(S25.S8_BELLS['S8C'])
+try:                                                            # coverage is never PASS when the bells differ
+    S25.S8_BELLS['S8C'] = [['START', 1], ['WIN', 3]]
+    assert run25('S8C')['state'] == Z825.INCOMPLETE
+finally:
+    S25.S8_BELLS['S8C'] = sv25
+
+
+# --- the driver on the fake x3270if of section 20: every planned action sent and logged ok; the conditional ones
+def drive25(fake, case, done=None):
+    real_run, real_sleep = REAL_RUN6, DV25.time.sleep
+    DV25.Z6D.subprocess.run, DV25.time.sleep = fake, lambda s: None
+    log = IO6.StringIO()
+    try:
+        DV25.run(case, 4005, log, 'Z00000.PACMAN', done)
+        return 'ok', [json.loads(x) for x in log.getvalue().splitlines()]
+    except DV25.Z6D.Stop as ex:
+        return f'STOP: {ex}', [json.loads(x) for x in log.getvalue().splitlines()]
+    finally:
+        DV25.Z6D.subprocess.run, DV25.time.sleep = real_run, real_sleep
+
+
+for c25 in ('HL1', 'HL4', 'S8A', 'S8C'):
+    fk = FakeX(SEQ6)
+    res, lines = drive25(fk, c25)
+    assert res == 'ok' and [(x['category'], x['action']) for x in lines] == DV25.planned(c25), (c25, res)
+    assert fk.calls[2] == f'String("{DV25.command(c25, "EXEC", "Z00000.PACMAN")}")'
+IEC25 = SCREEN6.replace('ISPF Command Shell', 'IEC217I B14-0C,IGG0201Z,Z00000 ***')
+res, lines = drive25(FakeX([SCREEN6, GAME6, GAME6, IEC25, GAME6, SCREEN6]), 'HL8')
+assert res == 'ok' and [(x['category'], x['action']) for x in lines] == \
+    DV25.planned('HL8')[:-1] + [('hold', 'ENTER'), ('closure', 'ENTER')]
+res, lines = drive25(FakeX([SCREEN6, GAME6, GAME6, IEC25, GAME6, SCREEN6]), 'HL2')
+assert res.startswith('STOP') and 'IEC' in res                     # an IEC message outside HL8 stops the case
+res, lines = drive25(FakeX([SCREEN6, GAME6, GAME6, IEC25.replace('IEC217I B14-0C', 'IEC020I 001-4'), SCREEN6]),
+                     'HL8')
+assert res.startswith('STOP')
+def tscreen25(rows, w, pos, lines=None):
+    """A test screen as Ascii() returns it: rows x w, every row padded to w, the lines written into the buffer at
+    (row, column) - a line longer than the rest of its row continues on the next row, as on the 3270."""
+    buf = [' '] * (rows * w)
+    for (r, c), line in zip(pos, lines or DV25.test_screen('E1')):
+        buf[r * w + c:r * w + c + len(line)] = line
+    b = ''.join(buf)
+    return ''.join(b[i:i + w] + '\n' for i in range(0, rows * w, w))
+
+
+# the two real E1 test screens, rebuilt from their line positions = the preserved Ascii() files byte for byte:
+# E1 2026-10-20 (24 x 80, unwrapped; ~/zos8-live/stageD/zos8-E1-resume-final-screen.txt) and E1-T2 (27 x 120: the
+# first line at column 81, the E3 line at row 5 column 81 wrapping onto row 6; stageD-E1-T2/zos8-E1-T2-final-screen)
+POS80, POS120 = [(1, 1), (3, 1), (5, 1), (6, 1), (7, 1)], [(0, 81), (2, 1), (3, 41), (4, 1), (4, 81)]
+ESTAE25 = tscreen25(24, 80, POS80)
+WRAP25 = tscreen25(27, 120, POS120)
+assert hashlib.sha256(ESTAE25.encode()).hexdigest() == \
+    'cde67794a40071e8d461637881a6a2f3dedc90f9a9153e6909db04b990868fe5'
+assert hashlib.sha256(WRAP25.encode()).hexdigest() == \
+    '2634a8ff1f63bd66b765bab27d1bb9f2a3a454591dbedc394668fc9dd99513bc'
+ABEND25 = SCREEN6.replace('ISPF Command Shell', 'CEE3207S ABEND 0C7 ENDED DUE TO ERROR ***')
+HOLD25 = SCREEN6.replace(' ===>', f" ===> {DV25.command('E1', 'EXEC', 'Z00000.PACMAN')}") + ' ***\n'
+
+
+def held25(text):                                       # the ISPF initial hold of a shell command (live 2026-10-20)
+    return SCREEN6.replace(' ===>', f' ===> {text}') + ' ***\n'
+
+
+def page25(lines):                                      # a line-mode output page (no shell panel), ending with ***
+    return ' ' + '\n '.join(lines) + '\n ***\n'
+
+
+def pages25(leftover=True, size=12):
+    ls = F825.listalc_lines('Z00000.PACMAN', leftover)
+    return [page25(ls[i:i + size]) for i in range(0, len(ls), size)]
+
+
+def tail25(freed, pages=None):                          # the Ascii() answers after the recovery's return to the shell
+    pg = pages25(freed) if pages is None else pages
+    return ([SCREEN6, held25('LISTALC STATUS')] + pg + [SCREEN6] +
+            ([SCREEN6, held25('FREE F(CEEOPTS)'), SCREEN6] if freed else []) + [GAME6, GAME6, GAME6, SCREEN6])
+
+
+for freed in (True, False):
+    fk = FakeX([SCREEN6, HOLD25, ESTAE25, ABEND25, SCREEN6] + tail25(freed))
+    res, lines = drive25(fk, 'E1')
+    acts25 = [(x['category'], x['action']) for x in lines]
+    assert res == 'ok' and acts25[:5] == [('transition', 'EXEC'), ('transition', 'ENTER'), ('abend', 'ENTER'),
+                                          ('recovery', 'ENTER'), ('check', 'LISTALC')], (res, acts25[:6])
+    assert (('cleanup', 'FREE') in acts25) == freed and acts25[-1] == ('closure', 'ENTER')
+    assert ('String("FREE F(CEEOPTS)")' in fk.calls) == freed and \
+        f'String("{DV25.command("E1", "EXEC:GD", "Z00000.PACMAN")}")' in fk.calls
+    assert acts25.count(('check', 'ENTER')) == 1 + len(pages25(freed)) and \
+        [a for a in acts25 if a[0] == 'cleanup'] == ([('cleanup', 'FREE'), ('cleanup', 'ENTER')] if freed else [])
+sv25 = DV25.RECOVER_TIMEOUT
+try:                                                            # the exit never restored line mode: STOP, nothing more
+    DV25.RECOVER_TIMEOUT = 0.5
+    res, lines = drive25(FakeX([SCREEN6, HOLD25, ESTAE25]), 'E1')
+    assert res.startswith('STOP') and [x['category'] for x in lines] == ['transition', 'transition', 'abend']
+finally:
+    DV25.RECOVER_TIMEOUT = sv25
+# --- the EXEC's initial ISPF `***` hold (E1 2026-10-20: every EXEC from the shell is held; the first E plans waited
+#     for the test screen at once): the plans, the checker (exactly EXEC -> one *** -> one ENTER -> the screen)
+for e25 in ('E1', 'E2', 'E3'):
+    assert DV25.PLANS[e25]['steps'][:4] == [('transition', 'EXEC'), ('expect', '***'), ('transition', 'ENTER'),
+                                            ('expect', 'ESTAE')]
+for h25, why25 in (('missing', 'driver log'), ('dup', 'not exactly one ENTER'), ('order', 'not held by exactly one')):
+    r25 = run25('E1', hold=h25)
+    assert isinstance(r25, str) and why25 in r25, (h25, r25)
+# --- a resumed case: its two trace segments joined losslessly (SEQ-NUMBERs continue, segment 1 ends with the hold,
+#     segment 2 starts with its ENTER); a lost / stray record at the boundary, swapped or missing segments fail
+t25, l25 = F825.build('E1')
+(a25, b25), la25, lb25 = F825.split_at_hold(t25, l25)
+r25 = Z825.check((a25, b25), la25 + lb25, 'E1')
+assert r25['state'] == 'PASS' and r25['segments'] == 2 and r25['followup']['end_lines'][0] == 'QUIT'
+assert r25['ceeopts_left'] == run25('E1')['ceeopts_left']
+for why25, kw25, swap25 in (('lost *** record', dict(drop_last=True), False),
+                            ('stray host write', dict(extra_first=True), False), ('swapped', {}, True)):
+    (a25, b25), la25, lb25 = F825.split_at_hold(t25, l25, **kw25)
+    try:
+        Z825.check((b25, a25) if swap25 else (a25, b25), la25 + lb25, 'E1')
+        raise AssertionError(why25)
+    except Z825.Fail:
+        pass
+(a25, b25), la25, lb25 = F825.split_at_hold(t25, l25)
+for seg25 in (a25, b25):
+    try:
+        Z825.check(seg25, la25 + lb25, 'E1')
+        raise AssertionError('one segment accepted')
+    except Z825.Fail:
+        pass
+# --- the driver resumes only the held EXEC of a Stage D case: nothing resent, ordinals continue the earlier log
+done25 = [{'ordinal': 1, 'category': 'transition', 'action': 'EXEC', 'result': 'ok'}]
+fk = FakeX([HOLD25, ESTAE25, ABEND25, SCREEN6] + tail25(True))
+res, lines = drive25(fk, 'E1', done25)
+assert res == 'ok' and lines[0]['ordinal'] == 2 and (lines[0]['category'], lines[0]['action']) == \
+    ('transition', 'ENTER') and not any('EXEC' in c and 'RPESTAE' in c for c in fk.calls)
+assert [(x['category'], x['action']) for x in lines][-1] == ('closure', 'ENTER')
+for scr25, d25, c25 in ((SCREEN6, done25, 'E1'), (HOLD25, done25 * 2, 'E1'), (HOLD25, done25, 'HL2'),
+                        (HOLD25.replace('CASE(E1)', 'CASE(E2)'), done25, 'E1')):
+    res, lines = drive25(FakeX([scr25]), c25, d25)
+    assert res.startswith('STOP') and lines == [], (c25, res)
+# --- the RPESTAE test screen (E1 2026-10-20: its own PRESS ENTER line contains ABEND, which the generic detector
+#     took for an error): recognised only complete and exact; the expected ABEND is exempt only as that exact line
+assert DV25.Z6D.BAD.search(ESTAE25).group(0) == 'ABEND'          # the original false positive, reproduced
+assert DV25.screen_state(ESTAE25, 'E1') == 'screen'
+try:                                                            # an altered PRESS ENTER line: its ABEND is an error
+    DV25.screen_state(ESTAE25.replace('PRESS ENTER', 'PRESS'), 'E1')
+    raise AssertionError('altered PRESS ENTER line accepted')
+except DV25.Z6D.Stop:
+    pass
+assert DV25.screen_state(HOLD25, 'E1') is None and DV25.screen_state(SCREEN6, 'E1') is None   # not (yet) the screen
+for bad25 in ('CEE3207S DATA EXCEPTION', 'IEA995I ABEND 0C7', 'IKJ56247I'):
+    try:
+        DV25.screen_state(ESTAE25 + bad25, 'E1')
+        raise AssertionError(bad25)
+    except DV25.Z6D.Stop:
+        pass
+res, lines = drive25(FakeX([SCREEN6, HOLD25, ESTAE25.replace('PRESS ENTER', 'PRESS') + 'CEE3207S']), 'E1')
+assert res.startswith('STOP') and [x['action'] for x in lines] == ['EXEC', 'ENTER']   # altered screen: no abend ENTER
+# --- resume at the displayed test screen: the earlier logs = [EXEC, hold ENTER]; nothing resent; next = abend ENTER
+done25b = done25 + [{'ordinal': 2, 'category': 'transition', 'action': 'ENTER', 'result': 'ok'}]
+fk = FakeX([ESTAE25, ABEND25, SCREEN6] + tail25(True))
+res, lines = drive25(fk, 'E1', done25b)
+assert res == 'ok' and lines[0]['ordinal'] == 3 and (lines[0]['category'], lines[0]['action']) == ('abend', 'ENTER')
+assert not any('RPESTAE' in c for c in fk.calls) and fk.calls.count('Enter()') >= 1
+for scr25, d25 in ((HOLD25, done25b), (ESTAE25.replace('PASS: LINE MODE', 'PASS'), done25b), (ESTAE25, done25),
+                   (ESTAE25, [done25b[1], done25b[0]]), (ESTAE25, done25b + done25b[1:])):
+    res, lines = drive25(FakeX([scr25]), 'E1', d25)
+    assert res.startswith('STOP') and lines == [], res
+# --- the three segments of the resumed E1: EXEC -> *** | ENTER -> test screen | abend ENTER -> the rest; joined only
+#     losslessly at those two points; missing, repeated, modified, reordered segments and boundary faults fail
+segs25, logs25 = F825.split_segments(t25, l25, ('hold', 'screen'))
+r25 = Z825.check(tuple(segs25), sum(logs25, []), 'E1')
+assert r25['state'] == 'PASS' and r25['segments'] == 3 and r25 == {**r25, 'segments': 3}
+mod25 = segs25[1].replace('d7c1c3d4c1d540d9d7', 'd7c1c3d4c1d540d9d8', 1)
+assert mod25 != segs25[1]
+for why25, sg25 in (('missing segment 2', (segs25[0], segs25[2])), ('segment 2 twice', (segs25[0], segs25[1],
+                                                                                       segs25[1])),
+                    ('four segments', (segs25[0], segs25[1], segs25[1], segs25[2])),
+                    ('reordered 1 / 2', (segs25[1], segs25[0], segs25[2])),
+                    ('reordered 2 / 3', (segs25[0], segs25[2], segs25[1])),
+                    ('modified segment 2', (segs25[0], mod25, segs25[2])),
+                    ('cut at the screen only', tuple(F825.split_segments(t25, l25, ('screen',))[0])),
+                    ('lost boundary record', tuple(F825.split_segments(t25, l25, ('hold', 'screen'),
+                                                                       drop_last=True)[0])),
+                    ('stray host write', tuple(F825.split_segments(t25, l25, ('hold', 'screen'),
+                                                                   extra_first=True)[0]))):
+    try:
+        Z825.check(sg25, sum(logs25, []), 'E1')
+        raise AssertionError(why25)
+    except Z825.Fail:
+        pass
+for scr25 in (DV25.test_screen('E1')[:4], DV25.test_screen('E1') + ['CEE3207S X'], DV25.test_screen('E2')):
+    assert isinstance(run25('E1', screen=scr25), str), scr25                        # an altered test screen
+# --- Stage D LISTALC / FREE as observed live (E1 recovery 2026-10-20: every shell command is held by ISPF first;
+#     LISTALC answered the hold + 13 output pages, FREE the hold only; the first E plans expected one *** and looked for
+#     CEEOPTS on the hold screen only). The page count is not fixed (bounded by PAGES_MAX); every hold / page is
+#     validated before its ENTER; CEEOPTS only by the strict DD rule over all pages
+P25 = 'Z00000.PACMAN'
+ls25 = F825.listalc_lines(P25)
+assert DV25.ceeopts_of(ls25, P25) is True and DV25.ceeopts_of(F825.listalc_lines(P25, False), P25) is False
+k25 = ls25.index(f'{P25}.CEEOPTS')
+for bad25 in (ls25[:k25 + 1] + ls25[k25 + 2:],                                      # dataset without its DD line
+              ls25[:k25] + ['Z00000.OTHER.PARMS'] + ls25[k25 + 1:],                 # the DD on another dataset
+              ls25[:k25 + 1] + ['ISPLOG  KEEP'] + ls25[k25 + 2:],                   # the dataset under another DD
+              ls25 + [f'{P25}.CEEOPTS', 'CEEOPTS  KEEP'],                           # listed twice
+              ls25[:k25] + ['CEEOPTS  KEEP'] + ls25[k25 + 2:]):                     # a DD line without the dataset
+    try:
+        DV25.ceeopts_of(bad25, P25)
+        raise AssertionError(bad25[k25 - 1:k25 + 3])
+    except ValueError:
+        pass
+# checker: page sizes (CEEOPTS pair split across two pages), the live split page record, no leftover
+for kw25 in (dict(page=k25 + 1), dict(page=5), dict(page=len(ls25)), dict(pagefault='split'), dict(leftover=False)):
+    r25 = run25('E1', **kw25)
+    assert isinstance(r25, dict) and r25['state'] == 'PASS' and r25['ceeopts_left'] == kw25.get('leftover', True), \
+        (kw25, r25)
+    assert r25['listalc_pages'] == -(-len(F825.listalc_lines(P25, kw25.get('leftover', True))) // kw25.get('page', 12))
+negp25 = {'no initial hold': dict(pagefault='no_hold'), 'hold with text': dict(pagefault='hold_text'),
+          'page missing': dict(pagefault='missing'), 'page ENTER not logged': dict(pagefault='missing_log'),
+          'page duplicated': dict(pagefault='dup'), 'pages reordered': dict(pagefault='reorder'),
+          'page without ***': dict(pagefault='no_star'), 'text after ***': dict(pagefault='after_star'),
+          'two ENTERs on a page': dict(pagefault='two_enters'), 'error text on a page': dict(pagefault='error'),
+          'more than PAGES_MAX pages': dict(pagefault='too_many'),
+          'no header': dict(listalc=ls25[1:]), 'CEEOPTS ambiguous': dict(listalc=ls25[:k25 + 1] + ls25[k25 + 2:]),
+          'FREE with output': dict(free_output=True), 'FREE not held': dict(free_fault='no_hold'),
+          'FREE hold answered twice': dict(free_fault='hold_twice'),
+          'LISTALC hold answered twice': dict(pagefault='hold_twice')}
+for why25, kw25 in negp25.items():
+    r25 = run25('E1', **kw25)
+    assert isinstance(r25, str), (why25, r25 if isinstance(r25, str) else r25['state'])
+# driver: every screen validated before its ENTER; bounded pages and time; nothing sent after a bad screen
+sv25 = DV25.PAGE_TIMEOUT, DV25.PAGES_MAX
+pre25 = [SCREEN6, HOLD25, ESTAE25, ABEND25, SCREEN6, SCREEN6]
+try:
+    DV25.PAGE_TIMEOUT = 0.3
+    for size25 in (3, 12, 40):                                  # any page count within the bound
+        res, lines = drive25(FakeX(pre25[:-1] + tail25(True, pages25(True, size25))), 'E1')
+        assert res == 'ok' and [(x['category'], x['action']) for x in lines].count(('check', 'ENTER')) == \
+            1 + len(pages25(True, size25)), (size25, res)
+    lh25 = held25('LISTALC STATUS')
+    pg25 = pages25()
+    n25 = len(pg25)
+    negd25 = {'no initial hold (a page first)': ([pg25[0]], 0), 'hold of another command': ([held25('LISTALC')], 0),
+              'the idle shell, never held': ([SCREEN6], 0),
+              'error text on a page': ([lh25, pg25[0], page25(['IKJ56231I DATA SET NOT ALLOCATED'])], 2),
+              'a shell screen with *** after the hold': ([lh25, pg25[0], held25('X')], 2),
+              'page never changes (timeout)': ([lh25, pg25[0]], 2),
+              'no --DDNAME---DISP-- header': ([lh25] + pg25[1:] + [SCREEN6], n25),
+              'CEEOPTS ambiguous': ([lh25, page25(ls25[:k25 + 1] + ls25[k25 + 2:]), SCREEN6], 2),
+              'FREE with output': ([lh25] + pg25 + [SCREEN6, SCREEN6, held25('FREE F(CEEOPTS)'), page25(['X']),
+                                                    SCREEN6], n25 + 1 + 2)}
+    for why25, (scr25, ent25) in negd25.items():
+        res, lines = drive25(FakeX(pre25 + scr25), 'E1')
+        acts25 = [(x['category'], x['action']) for x in lines]
+        assert res.startswith('STOP') and ('transition', 'EXEC:GD') not in acts25, (why25, res)
+        assert sum(a[1] == 'ENTER' and a[0] in ('check', 'cleanup') for a in acts25) == ent25, (why25, acts25)
+    DV25.PAGES_MAX = n25 - 1                                    # one page more than the bound: STOP, no ENTER on it
+    res, lines = drive25(FakeX(pre25 + [lh25] + pg25 + [SCREEN6]), 'E1')
+    assert res.startswith('STOP') and f'more than {n25 - 1}' in res and \
+        [(x['category'], x['action']) for x in lines].count(('check', 'ENTER')) == n25, res
+finally:
+    DV25.PAGE_TIMEOUT, DV25.PAGES_MAX = sv25
+# --- the test screen on a 120-column terminal (E1-T2 2026-10-20: the E3 line wraps at the row end; the first driver
+#     matched per row and timed out on the real screen): exact lines in the joined screen buffer, each once, in order,
+#     nothing else on the screen; the ABEND exemption only for the exact PRESS ENTER line
+assert '(FSOF), THEN 0C7.' not in WRAP25 and DV25.screen_state(WRAP25, 'E1') == 'screen'
+assert DV25.screen_state(ESTAE25, 'E1') == 'screen'                                   # unwrapped (80 columns)
+L25 = DV25.test_screen('E1')
+badscr25 = {'altered character (wrapped line)': WRAP25.replace('(FSOF)', '(FS0F)'),
+            'altered character (row 1)': WRAP25.replace('CASE E1', 'CASE E7'),
+            'missing line': tscreen25(27, 120, POS120[:4], L25[:4]),
+            'duplicated line': tscreen25(27, 120, POS120 + [(8, 1)], L25 + [L25[1]]),
+            'reordered lines': tscreen25(27, 120, POS120, [L25[0], L25[2], L25[1], L25[3], L25[4]]),
+            'other text on the screen': WRAP25[:-2] + 'X\n',
+            'other case': tscreen25(27, 120, POS120, DV25.test_screen('E2')),
+            'error text': tscreen25(27, 120, POS120 + [(9, 1)], L25 + ['CEE3207S DATA EXCEPTION']),
+            'error text in the wrapped line': WRAP25.replace('\nHEN 0C7.', '\nHENABEND'),
+            'IKJ message': tscreen25(27, 120, POS120 + [(20, 1)], L25 + ['IKJ56247I FILE NOT FREED']),
+            'altered PRESS ENTER line (its ABEND)': WRAP25.replace('PRESS ENTER:', 'PRESS ENTER;')}
+for why25, scr25 in badscr25.items():
+    assert scr25 != WRAP25, why25
+    try:
+        DV25.screen_state(scr25, 'E1')
+        raise AssertionError(why25)
+    except DV25.Z6D.Stop:
+        pass
+for why25 in ('altered character (wrapped line)', 'missing line', 'duplicated line', 'reordered lines'):
+    try:
+        DV25.screen_state(badscr25[why25].replace('PRESS ENTER: THE PROGRAM FORCES A 0C7 ABEND.', ' ' * 44), 'E1')
+        raise AssertionError(why25)
+    except DV25.Z6D.Stop:
+        pass
+assert DV25.screen_state(WRAP25.replace('CASE E1', 'CASE E2'), 'E2') == 'screen'
+for scr25 in (WRAP25, ESTAE25):                                 # the whole E1 plan on the real screen shapes
+    res, lines = drive25(FakeX([SCREEN6, HOLD25, scr25, ABEND25, SCREEN6] + tail25(True)), 'E1')
+    assert res == 'ok' and [x['action'] for x in lines][:3] == ['EXEC', 'ENTER', 'ENTER'], res
+for scr25 in (badscr25['altered character (wrapped line)'], badscr25['error text']):
+    res, lines = drive25(FakeX([SCREEN6, HOLD25, scr25]), 'E1')
+    assert res.startswith('STOP') and [x['action'] for x in lines] == ['EXEC', 'ENTER'], res   # no abend ENTER
+d2 = [{'ordinal': 1, 'category': 'transition', 'action': 'EXEC', 'result': 'ok'},
+      {'ordinal': 2, 'category': 'transition', 'action': 'ENTER', 'result': 'ok'}]
+fk = FakeX([WRAP25, ABEND25, SCREEN6] + tail25(True))           # E1-T2 resume: the wrapped screen, then abend
+res, lines = drive25(fk, 'E1', d2)
+assert res == 'ok' and (lines[0]['ordinal'], lines[0]['category']) == (3, 'abend') and \
+    not any('RPESTAE' in c for c in fk.calls)
+res, lines = drive25(FakeX([badscr25['other text on the screen']]), 'E1', d2)
+assert res.startswith('STOP') and lines == []
+# --- the checker joins a case cut once at the test screen only when that cut is named (E1-T2): segment 1 ends with
+#     exactly the test screen record, segment 2 starts with the abend ENTER; logs split there; per segment the terminal
+#     inputs = the driver actions; every trace / log checksum-verified by the CLI
+t25, l25 = F825.build('E1')
+sg25, lg25 = F825.split_segments(t25, l25, ('screen',))
+Z825.check_segments(sg25, lg25, 'E1', ('screen',))
+r25 = Z825.check(tuple(sg25), sum(lg25, []), 'E1', cuts=('screen',))
+assert r25['state'] == 'PASS' and r25['segments'] == 2 and r25['ceeopts_left'] and \
+    r25['followup']['end_lines'][0] == 'QUIT'
+tg25, lgg25 = F825.build('E1', gd=dict(mutate=5))
+sgm25, _ = F825.split_segments(tg25, lgg25, ('screen',))
+sgh25, lgh25 = F825.split_segments(t25, l25, ('hold',))
+negc25 = {'screen cut not named': (tuple(sg25), None), 'named as the hold cut': (tuple(sg25), ('hold',)),
+          'undefined cut': (tuple(sg25), ('game',)), 'hold split declared as screen': (tuple(sgh25), ('screen',)),
+          'lost test-screen record': (tuple(F825.split_segments(t25, l25, ('screen',), drop_last=True)[0]),
+                                      ('screen',)),
+          'stray host write before the ENTER': (tuple(F825.split_segments(t25, l25, ('screen',),
+                                                                          extra_first=True)[0]), ('screen',)),
+          'swapped segments': ((sg25[1], sg25[0]), ('screen',)), 'segment 2 missing': ((sg25[0],), ('screen',)),
+          'segment 2 twice': ((sg25[0], sg25[1], sg25[1]), ('screen',)),
+          'altered write in segment 2': ((sg25[0], sgm25[1]), ('screen',))}
+for why25, (sg, cu) in negc25.items():
+    try:
+        Z825.check(sg, sum(lg25, []), 'E1', cuts=cu)
+        raise AssertionError(why25)
+    except Z825.Fail:
+        pass
+negl25 = {'abend ENTER in log 1': [lg25[0] + lg25[1][:1], lg25[1][1:]], 'hold ENTER in log 2': [lg25[0][:1],
+                                                                                              lg25[0][1:] + lg25[1]],
+          'log 2 entry duplicated': [lg25[0], lg25[1][:1] + lg25[1]], 'log 2 entry missing': [lg25[0], lg25[1][1:]],
+          'logs swapped': [lg25[1], lg25[0]], 'one log only': [lg25[0] + lg25[1]]}
+for why25, lgs in negl25.items():
+    try:
+        Z825.check_segments(sg25, lgs, 'E1', ('screen',))
+        raise AssertionError(why25)
+    except Z825.Fail:
+        pass
+with tempfile.TemporaryDirectory() as td25:                     # the CLI: --cuts screen, independent checksums
+    fs25 = []
+    for n, (tx, lg) in enumerate(zip(sg25, lg25), 1):
+        for name, data in ((f's{n}.trace', tx), (f's{n}.jsonl', '\n'.join(lg) + '\n')):
+            f = Path(td25) / name
+            f.write_text(data)
+            (Path(td25) / f'{name}.sha256').write_text(f'{hashlib.sha256(f.read_bytes()).hexdigest()}  {name}\n')
+            fs25.append(str(f))
+    cli25 = [sys.executable, str(R / 'tools/zowe/zos8_live_check.py'), '--case', 'E1', '--trace', fs25[0],
+             '--drive-log', fs25[1], '--trace2', fs25[2], '--drive-log2', fs25[3]]
+    assert SP25.run(cli25 + ['--cuts', 'screen'], capture_output=True).returncode == 0
+    assert SP25.run(cli25, capture_output=True).returncode == 1                       # not named: refused
+    (Path(td25) / 's2.jsonl.sha256').write_text('0' * 64 + '  s2.jsonl\n')
+    out25 = SP25.run(cli25 + ['--cuts', 'screen'], capture_output=True, text=True)
+    assert out25.returncode == 1 and 'does not match' in out25.stdout
+    (Path(td25) / 's2.jsonl.sha256').unlink()
+    assert SP25.run(cli25 + ['--cuts', 'screen'], capture_output=True).returncode == 1  # checksum file missing
+# --- Stage E S1 (2026-10-20): with SOUND(YES) the screen before the first AID rings (WCC C7 = C3 + alarm), and the
+#     frozen parse6 rule (previous WCC exactly C3) left TSO's F1 C3 blocking-read control as a game write. ZOS-8 only:
+#     sound_c3_controls accepts C3 or C7 (alarm bit only), everything else of the rule unchanged; sound cases only
+def ev25(*items):                                       # synthetic parse6 events (order, dir, ts, payload)
+    return [(i, d, f'20261020.1000{t // 1000:02d}.{t % 1000:03d}', pl) for i, (d, t, pl) in enumerate(items)]
+
+
+AID25, C3R25 = bytes([0xF8, 0x6F, 0xD9]), b'\xf1\xc3'
+
+
+def ctl25(wcc=0xC7, rec=C3R25, gap=False, dup=False, tso=()):
+    items = [('<', 0, bytes([0xF1, wcc]) + b'\x11\x40\x40ABC'), ('>', 100, AID25)]
+    if gap:
+        items.append(('<', 150, b'\xf1\xc2\x11\x40\x40X'))
+    items.append(('<', 200, rec))
+    if dup:
+        items.append(('<', 210, C3R25))
+    kept, ctl = Z825.sound_c3_controls(ev25(*items), list(tso))
+    return len(ctl) - len(tso), [e[3] for e in kept]
+
+
+assert [w for w in range(256) if Z825.c3_alarm_equiv(w)] == [0xC3, 0xC7]
+assert ctl25(0xC3)[0] == 1 and ctl25(0xC7)[0] == 1                                     # 1, 2
+assert ctl25(0xC7, rec=b'\xf1\xc2')[0] == 0 and ctl25(0xC7, rec=b'\xf1\xc7')[0] == 0    # 4 wrong bytes
+assert ctl25(0xC7, rec=b'\xf1\xc3\x00')[0] == 0 and ctl25(0xC7, rec=b'\xf1')[0] == 0     # 5 wrong length
+n25, kept25 = ctl25(0xC7, dup=True)                                                     # 6 duplicate: one only
+assert n25 == 1 and kept25.count(C3R25) == 1
+assert ctl25(0xC7, gap=True)[0] == 0                                                   # 7 not right after the AID
+assert Z825.sound_c3_controls(ev25(('<', 0, b'\xf1\xc7\x11\x40\x40A'), ('<', 200, C3R25)), [])[0][-1][3] == C3R25
+for w25 in [0xC3 ^ (1 << b) for b in range(8) if b != 2] + [0xC0 + i for i in range(16) if 0xC0 + i not in (0xC3,
+                                                                                                            0xC7)]:
+    assert ctl25(w25)[0] == 0, hex(w25)                                                # 8 any other WCC
+assert ctl25(0xC7, tso=[{'ms': 1, 'ts': 'x', 'aid_ms': Z825.ms(ev25(('<', 0, b''), ('>', 100, b''))[1][2]),
+                         'aid': 'F8'}])[0] == 0                                         # the AID already has one
+for short25 in (b'\x7e\xc3', b'\xf1\xc7', b'\xf5\xc3', b'\xf1\xc3\x11'):                 # 10 other short writes
+    assert ctl25(0xC7, rec=short25)[0] == 0, short25
+# end to end on the frozen ZOS-7 fixture through the ZOS-8 sound model: the live S1 shape (rung screen, AID, F1 C3)
+for c25 in ('S8A', 'S8B'):
+    t25, l25 = F825.build(c25, tso_c3='blocking')
+    pe25 = Z825.parse8(t25)
+    c0 = pe25['tso_controls']
+    assert len(c0) == 1 and c0[0].get('alarm_context')
+    k25 = next(k for k, e in enumerate(Z825._PARSE6(t25)['ev']) if e[1] == '>' and e[3][:1] == b'\xf8')
+    prev25 = next(e for e in reversed(Z825._PARSE6(t25)['ev'][:k25]) if e[1] == '<')
+    assert prev25[3][1] == 0xC7 and not Z825._PARSE6(t25)['tso_controls']               # 3: the old rule missed it
+    r25 = Z825.check(t25, l25, c25, 'ABSENT')                                           # 3: now PASS
+    assert r25['state'] == 'PASS' and r25['bells'] == S25.S8_BELLS[c25] and r25['bell_alarm_bits'] == 8, (c25, r25)
+    for why25, kw25 in (('duplicate', dict(tso_c3='dup')), ('outside the AID context', dict(tso_c3='unrelated'))):
+        assert isinstance(run25(c25, **kw25), str), (c25, why25)
+t25, l25 = F825.build('S8A', tso_c3='blocking')                                         # 9: replaces a real write
+ev8 = Z825.parse8(t25)['ev']
+g25 = ev8[Z825.parse8(t25)['starts'][0]:]
+host8 = [e for e in g25 if e[1] == '<']
+i8 = g25.index(host8[2])
+w8 = [e for e in g25[i8:] if e[1] == '<']
+first_aid8 = next(e for e in g25[i8:] if e[1] == '>')
+after8 = next(n for n, e in enumerate(w8) if Z825.ms(e[2]) > Z825.ms(first_aid8[2]))
+assert isinstance(run25('S8A', tso_c3='blocking', drop_write=after8), str)
+assert run25('S8C')['state'] == 'PASS' and Z825.parse8(F825.build('HL2')[0])['tso_controls'] == []  # TURN unchanged
+L2t25 = F725.build('L2', tso_c3='blocking')[0]                                           # SOUND(NO): = parse6 (C3)
+assert Z825.parse8(L2t25)['tso_controls'] == Z825._PARSE6(L2t25)['tso_controls'] and \
+    len(Z825._PARSE6(L2t25)['tso_controls']) == 1
+# --- Stage F (frozen 2026-10-20, option A): SF = HL2's LIVEB cards through the installed CLIST(PACMAN), ARCADE LEVEL 1
+#     TURN, DATA(HISCORE) absent -> 980, NEW HIGH SCORE; one FB 80 record 0000980 PACHS001 001; no other member
+assert S25.GAMES['SF'] == S25.GAMES['HL2'] == ('gp2live', 'LIVEB', 1, 'A') and S25.live_cards('SF') == \
+    S25.live_cards('HL2') and len(S25.live_cards('SF')) - 1 == 77 and S25.kw_of('SF') == S25.kw_of('HL2')
+assert DV25.command('SF', 'EXEC', 'Z00000.PACMAN') == \
+    "EXEC 'Z00000.PACMAN.CLIST(PACMAN)' 'AI(0) PLAY(TURN) ANIM(NO) SOUND(NO) PRESENT(COALESCED)'"
+assert S25.SF_LINES == ['HIGH SCORE 0000980 LEVEL 001', 'NEW HIGH SCORE'] == Z825.expected_lines('SF', 'ABSENT')[1]
+assert S25.SF_RECORD == '0000980 PACHS001 001'.ljust(80) and not (R / 'tests/zos8live/SF.txt').exists()
+rsf = run25('SF')
+assert isinstance(rsf, dict) and rsf['state'] == 'PASS' and rsf['sf_lines'] == S25.SF_LINES, rsf
+out25 = S25.end_lines('SF', S25.live_cards('SF'))
+negsf = {'different score': list(out25[:2]) + ['SCORE 0000990'] + list(out25[3:]) +
+         ['HIGH SCORE 0000990 LEVEL 001', 'NEW HIGH SCORE'],
+         'different level': list(out25) + ['HIGH SCORE 0000980 LEVEL 002', 'NEW HIGH SCORE'],
+         'NEW HIGH SCORE missing': list(out25) + ['HIGH SCORE 0000980 LEVEL 001'],
+         'HIGH SCORE NOT SAVED': list(out25) + ['HIGH SCORE 0000980 LEVEL 001', 'HIGH SCORE NOT SAVED'],
+         'UNAVAILABLE': list(out25) + ['HIGH SCORE UNAVAILABLE']}
+for why25, el25 in negsf.items():
+    assert isinstance(run25('SF', end_lines=el25), str), why25
+for why25, kw25 in (('HISCORE present before', dict(before='0000720 PACHS001 001')),
+                    ('wrong card (a write differs)', dict(mutate=30)), ('a game write missing', dict(drop_write=40)),
+                    ('another game (GPAI0 keywords)', dict(kw=S25.kw_of('HL4'))),
+                    ('a test CLIST instead of the installed one', dict(member='PACZ8HT'))):
+    assert isinstance(run25('SF', **kw25), str), why25
+try:                                                # the model drifting from the frozen lines is itself a failure
+    real25 = S25.SF_LINES
+    S25.SF_LINES = ['HIGH SCORE 0000990 LEVEL 001', 'NEW HIGH SCORE']
+    assert isinstance(run25('SF'), str)
+finally:
+    S25.SF_LINES = real25
+ATTR25 = {'dsntp': 'PDS', 'dsorg': 'PO', 'recfm': 'FB', 'lrecl': '80', 'blksz': '80'}
+EXP25 = S25.SF_RECORD.encode('cp037')
+PRE25 = {'members': [], 'HISCORE': None, 'attrs': dict(ATTR25)}
+POST25 = {'members': ['HISCORE'], 'HISCORE': [S25.SF_RECORD.rstrip()], 'attrs': dict(ATTR25)}
+assert Z825.check_sf_store(PRE25, POST25, EXP25, EXP25) == []
+negst = {'HISCORE present before': (dict(PRE25, members=['HISCORE']), POST25, EXP25),
+         'HISCORE missing after': (PRE25, dict(POST25, members=[], HISCORE=None), b''),
+         'extra DATA member': (PRE25, dict(POST25, members=['HISCORE', 'X']), EXP25),
+         'two records': (PRE25, dict(POST25, HISCORE=[S25.SF_RECORD.rstrip()] * 2), EXP25 * 2),
+         'wrong score': (PRE25, dict(POST25, HISCORE=['0000990 PACHS001 001']),
+                         '0000990 PACHS001 001'.ljust(80).encode('cp037')),
+         'wrong level': (PRE25, dict(POST25, HISCORE=['0000980 PACHS001 002']),
+                         '0000980 PACHS001 002'.ljust(80).encode('cp037')),
+         'wrong tag': (PRE25, dict(POST25, HISCORE=['0000980 PACHS002 001']), EXP25),
+         'record bytes differ (padding)': (PRE25, POST25, EXP25[:-1] + b'\x00'),
+         'record bytes short': (PRE25, POST25, EXP25[:79]),
+         'attributes changed': (PRE25, dict(POST25, attrs=dict(ATTR25, recfm='FBA')), EXP25)}
+for why25, (pr, po, by) in negst.items():
+    assert Z825.check_sf_store(pr, po, by, EXP25), why25
+print(f'ZOS-8 Stage F (frozen LIVEB / HL2 cards, installed CLIST, DATA absent -> 0000980 PACHS001 001): positive PASS, '
+      f'{len(negsf) + 6} game faults and {len(negst)} production-state faults FAIL: PASS')
+print('ZOS-8 sound F1 C3 control (C3 / C7 only): unit rules (exact record, context, once per AID, WCC C3 / C7 only, '
+      'no other short write), S8A / S8B live shape PASS with bells 1/2/2/3, duplicate / unrelated / replaced write '
+      'FAIL, TURN and SOUND(NO) unchanged: PASS')
+print(f'ZOS-8 Stage D test screen / E1-T2 resume: wrapped (27 x 120) and unwrapped (24 x 80) real screens recognised, '
+      f'{len(badscr25)} altered / missing / repeated / reordered / error screens STOP; screen cut only when named, '
+      f'{len(negc25)} boundary / segment and {len(negl25)} log faults FAIL, CLI checksums: PASS')
+print('ZOS-8 Stage D LISTALC / FREE: the live pagination (initial hold + output pages, one ENTER each) modelled in '
+      f'driver / checker / fixture; strict CEEOPTS DD rule; {len(negp25)} checker and {len(negd25) + 1} driver faults '
+      'FAIL / STOP: PASS')
+print('ZOS-8 Services (Stage A, local): src / CLIST / PACHSIO / PACFSIO / ZOS-5..7 tools = zos-7 (+ the RPESTAE test '
+      'CLIST); live cards = model games; Stage C chain HL1-HL8 (ref_hs); B1 model = oracle 312 (GPREVB); decks PACZ8HB '
+      '/ PACZ8RPE audited, B1 geometry = DATA; test CLISTs = installed CLIST except the DATA lines; '
+      'batch checkers PASS '
+      f'+ 11 faults FAIL; live checker {len(pos25)} positives PASS (+ HL8 IEC variants, E leftovers), '
+      f'{len(neg25) + len(neg25b)} negatives FAIL (end-screen label = the persistence outcome), sound coverage never '
+      'PASS when bells differ; driver on the fake x3270if (hold, IEC stop, '
+      'recovery, cleanup): PASS')

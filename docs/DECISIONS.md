@@ -328,3 +328,13 @@
   unchanged. D5: dry runs PACZ7DR1 / PACZ7DR2 on PACZ6D, no rebuild. zos6_live_check.py stays frozen.
   ZOS-7 closure (user, 2026-10-19): dry runs and live L1 / L2 / L3 accepted; D1 confirmed on z/OS; final-death timing
   stays information only (no gate added after the live results); ZOS-7 COMPLETE, no production source change.
+- ZOS-8 Services design APPROVED (user, 2026-10-20, docs/zos8-design.md, U1-U12): no production source change;
+  persistence on test data first (HS8.T1 with the DATA geometry, HSFULL.T1 for NOT SAVED, test CLISTs PACZ8HT / HU /
+  HF), test-only LOAD(PACRPE) + CLIST(RPESTAE), TURN for the HS games, stage-level fail-fast with E micro-gates, ZOS-5 /
+  6 / 7 tools frozen. Live refinements approved during execution (ZOS-8 tooling only; no gate weakened): the HL8
+  end-screen label follows the persistence outcome; the Stage D ISPF initial hold, exact test-screen recognition incl.
+  120-column wrap, LISTALC paging, strict CEEOPTS DD rule, lossless named trace joins; the SOUND(YES) C3 / C7 alarm-bit
+  context for TSO's F1 C3 control. Stage F frozen as option A (LIVEB / HL2 cards, ARCADE LEVEL 1 TURN through the
+  installed CLIST; record `0000980 PACHS001 001`). ZOS-8 closure (user, 2026-10-20): Stages B-F accepted; C3 closed with
+  no PACFSIO change; the LE / TSO abend-code difference is documentation only; DATA(HISCORE) is production state and is
+  carried forward; ZOS-8 COMPLETE, no production source change. Next: ZOS-9 final equivalence (not started).

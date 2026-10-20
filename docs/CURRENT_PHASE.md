@@ -423,3 +423,19 @@ LEVEL >= 2 / no high-score write, live L1 / L2 / L3 with PRESENT(COALESCED), dry
   freezes 10 / 12 DISCRIMINATED; frozen ZOS-6 gates PASS; DATA read only, HISCORE still absent. Carried forward:
   high-score writing / recovery, ESTAE / C3, live sound (ZOS-8); full batteries, HA6 (ZOS-9/10).
   NEXT: ZOS-8 Services (not started).
+
+## ZOS-8 SERVICES - CLOSED / PASS (2026-10-20; docs/zos8-design.md, docs/evidence/zos8-services.md)
+- Services / persistence PASS: B1 PACZ8HB JOB02290 (first write / tie / update / lower on the DATA-shaped test PDS
+  HS8.T1), Stage C HL1-HL8 + HL7 on test data (NEW / tie / update / practice not recorded / UNAVAILABLE / NOT SAVED;
+  HL8 after the approved offline revalidation).
+- Recovery PASS: B2 PACZ8RPE JOB02299; E1 (as E1-T2) / E2 / E3 with a clean follow-up game each; C3 CLOSED with no
+  PACFSIO change. LE 0C7 vs TSO 0C4 (E1 / E2; E3 TSO 0C7) recorded, cause not established, not gated.
+- Sound PASS: S1 S8A (corrected ZOS-8 offline recheck of the live trace: C3 / C7 alarm-bit context), S2 S8B, S3 S8C;
+  bells exact and audible.
+- Production HISCORE first write PASS (Stage F, LIVEB / HL2 cards, one run).
+- No production-source modification was required (COBOL, assembler, PACFSIO, PACHSIO, installed CLIST unchanged).
+- Carried production state: **Z00000.PACMAN.DATA(HISCORE) = `0000980 PACHS001 001`** (legitimate; never delete it to
+  recreate an empty DATA).
+- NEXT: **ZOS-9 FINAL EQUIVALENCE - NOT STARTED** (needs its own authorization). Principle: reuse the accepted ZOS-2..8
+  evidence and execute only genuine equivalence gaps (requirement-by-requirement matrix; HA6 within the site output
+  limit; approved z/OS-specific differences listed explicitly, the MVS oracle frozen).
