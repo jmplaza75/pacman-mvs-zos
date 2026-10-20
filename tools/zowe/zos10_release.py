@@ -20,6 +20,7 @@ import json
 import re
 import sys
 import tempfile
+import zlib
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -319,28 +320,199 @@ def spans(member, b):
 
 def objeq(old, new, member):
     """-> (state, detail): IDENTICAL-MODULO-TIMESTAMP when every byte outside the documented spans is equal and the
-    spans hold valid timestamps in both images; else DIFFERENT / FORMAT."""
+    spans hold valid timestamps in both images; for a COBOL object whose only other difference is the compressed form of
+    its no-load D_MCODE class, EQUIVALENT-DMCODE-RECOMPRESSED (dmcode_eq, decision B 2026-10-20); else DIFFERENT /
+    FORMAT."""
     try:
         so, sn = spans(member, old), spans(member, new)
     except ValueError as e:
         return 'FORMAT', str(e)
-    if len(old) != len(new):
-        return 'DIFFERENT', f'{member}: {len(old)} / {len(new)} bytes'
-    if so != sn:
-        return 'DIFFERENT', f'{member}: span positions {so} / {sn}'
-    mask = {p for o, n in so for p in range(o, o + n)}
-    diff = [i for i in range(len(old)) if old[i] != new[i] and i not in mask]
-    if diff:
-        return 'DIFFERENT', f'{member}: {len(diff)} byte(s) differ outside the timestamp spans, first at record ' \
-                            f'{diff[0] // 80 + 1} offset {diff[0] % 80}'
-    return 'IDENTICAL-MODULO-TIMESTAMP', f'{member}: {len(old) // 80} records equal; masked {so}'
+    if len(old) == len(new) and so == sn:
+        mask = {p for o, n in so for p in range(o, o + n)}
+        diff = [i for i in range(len(old)) if old[i] != new[i] and i not in mask]
+        if not diff:
+            return 'IDENTICAL-MODULO-TIMESTAMP', f'{member}: {len(old) // 80} records equal; masked {so}'
+        first = f'{len(diff)} byte(s) differ outside the timestamp spans, first at record {diff[0] // 80 + 1} ' \
+                f'offset {diff[0] % 80}'
+    else:
+        first = f'{len(old)} / {len(new)} bytes, span positions {so} / {sn}'
+    if member in RELEASE['ASM']:
+        return 'DIFFERENT', f'{member}: {first}'
+    try:
+        return dmcode_eq(member, old, new, so, sn)
+    except ValueError as e:
+        return 'DIFFERENT', f'{member}: {first}; D_MCODE rule: {e}'
+
+
+# ---- D_MCODE (decision B, 2026-10-20): the compressed form may differ, the logical content may not -------------------
+# GOFF: 80-byte records, byte 1 = type (high nibble: 0 ESD, 1 TXT, 2 RLD, 3 LEN, 4 END, F HDR) + X'02' continuation of
+# the previous record + X'01' continued. ESD ED (symbol type 1): ESDID 4..7, class length 24..27, behavioural
+# attribute byte 65 = the class loading attribute (X'80' no-load as the binder IDR class B_IDRL, X'00' loaded as
+# C_CODE), name length 70..71, name 72... TXT: element ESDID 4..7, offset 12..15, data length 22..23, data from 24
+# (continuations: 77 bytes from 3, the last padded with X'00'). D_MCODE payload: 20-byte header (0..11 fixed, 12..15 =
+# decompressed length + 20, 16..19 = payload length) + exactly one zlib stream, in TXT chunks of 16384 bytes.
+DMCODE, B_IDRL, C_CODE = _E('D_MCODE'), _E('B_IDRL'), _E('C_CODE')
+NOLOAD, LOADED = 0x80, 0x00
+
+
+def _logical(b):
+    """80-byte GOFF records -> [(type, [physical records])], continuation chains validated."""
+    if len(b) % 80:
+        raise ValueError('not 80-byte records')
+    out = []
+    for i in range(0, len(b), 80):
+        r = b[i:i + 80]
+        if r[0] != 3:
+            raise ValueError(f'record {i // 80 + 1}: not GOFF')
+        if r[1] & 2:
+            if not out or not out[-1][1][-1][1] & 1:
+                raise ValueError(f'record {i // 80 + 1}: continuation without a continued record')
+            out[-1][1].append(r)
+        else:
+            if out and out[-1][1][-1][1] & 1:
+                raise ValueError(f'record {i // 80 + 1}: continued record not continued')
+            out.append((r[1] >> 4, [r]))
+    if out and out[-1][1][-1][1] & 1:
+        raise ValueError('last record continued')
+    return out
+
+
+def _eds(L, name):
+    return [rs for t, rs in L if t == 0 and rs[0][3] == 1 and
+            rs[0][72:72 + int.from_bytes(rs[0][70:72], 'big')] == name]
+
+
+def _dmcode(L):
+    """-> (ED record, [(index in L, offset, TXT header 0..21, data)], payload, decompressed) with every rule of the
+    D_MCODE class verified for this one image, else ValueError."""
+    ed = _eds(L, DMCODE)
+    if len(ed) != 1 or len(ed[0]) != 1:
+        raise ValueError(f'{len(ed)} D_MCODE classes (exactly 1 required)')
+    ed = ed[0][0]
+    for nm, want in ((B_IDRL, NOLOAD), (C_CODE, LOADED)):
+        e = _eds(L, nm)
+        if len(e) != 1 or e[0][0][65] != want:
+            raise ValueError(f'{nm.decode("cp037")}: not one class with loading attribute X\'{want:02X}\'')
+    if ed[65] != NOLOAD:
+        raise ValueError(f'D_MCODE loading attribute X\'{ed[65]:02X}\' (X\'80\' no-load required)')
+    eid, chunks, pay = ed[4:8], [], b''
+    for i, (t, rs) in enumerate(L):
+        if t == 1 and rs[0][4:8] == eid:
+            ln = int.from_bytes(rs[0][22:24], 'big')
+            data = rs[0][24:] + b''.join(r[3:] for r in rs[1:])
+            if not 0 <= len(data) - ln < 77 or any(data[ln:]):
+                raise ValueError('D_MCODE TXT record length / padding')
+            if int.from_bytes(rs[0][12:16], 'big') != len(pay):
+                raise ValueError('D_MCODE TXT offsets not contiguous')
+            chunks.append((i, len(pay), bytes(rs[0][:22]), data[:ln]))
+            pay += data[:ln]
+    if not chunks or int.from_bytes(ed[24:28], 'big') != len(pay):
+        raise ValueError('D_MCODE class length != its text')
+    if len(pay) < 20 or int.from_bytes(pay[16:20], 'big') != len(pay):
+        raise ValueError('D_MCODE header payload length')
+    z = zlib.decompressobj()
+    try:
+        u = z.decompress(pay[20:])
+    except zlib.error as e:
+        raise ValueError(f'D_MCODE does not decompress: {e}')
+    if not z.eof or z.unused_data or z.unconsumed_tail:
+        raise ValueError('D_MCODE is not exactly one complete zlib stream')
+    if int.from_bytes(pay[12:16], 'big') != len(u) + 20:
+        raise ValueError('D_MCODE header decompressed length')
+    return ed, chunks, pay, u
+
+
+def _neutral(b, sp):
+    b = bytearray(b)
+    for o, n in sp:
+        b[o:o + n] = b'\xf0' * n               # the frozen timestamp spans (validated by spans) only
+    return bytes(b)
+
+
+def dmcode_eq(member, old, new, so, sn):
+    """Old / new COBOL images (frozen timestamp spans validated) whose bytes differ: equivalent only if the sole other
+    difference is the compressed representation of the no-load D_MCODE class. Required: in each image one D_MCODE class,
+    no-load (X'80'), B_IDRL no-load and C_CODE loaded; the D_MCODE ED record equal apart from the class length, which
+    equals the D_MCODE text in each image; the same number of D_MCODE TXT records at the same places, headers equal
+    apart from the data length, every chunk but the last of equal length; payload headers equal apart from the payload
+    length; each payload exactly one zlib stream; decompressed lengths and bytes equal; every other logical record (ESD,
+    TXT, RLD, LEN, END, HDR) byte-identical. -> (state, detail), or ValueError naming the first violation."""
+    Lo, Ln = _logical(_neutral(old, so)), _logical(_neutral(new, sn))
+    (eo, co, po, uo), (en, cn, pn, un) = _dmcode(Lo), _dmcode(Ln)
+    if eo[:24] + eo[28:] != en[:24] + en[28:]:
+        raise ValueError('D_MCODE ESD record differs beyond its class length')
+    if len(Lo) != len(Ln):
+        raise ValueError(f'{len(Lo)} / {len(Ln)} logical records')
+    if [c[0] for c in co] != [c[0] for c in cn]:
+        raise ValueError(f'D_MCODE TXT records {len(co)} / {len(cn)} or at other places')
+    for k, (a, c) in enumerate(zip(co, cn)):
+        if a[2][:22] != c[2][:22] or (k < len(co) - 1 and len(a[3]) != len(c[3])):
+            raise ValueError(f'D_MCODE TXT record {k + 1} header / length')
+    if po[:16] != pn[:16]:
+        raise ValueError('D_MCODE payload header (fixed fields / decompressed length) differs')
+    if len(uo) != len(un):
+        raise ValueError(f'D_MCODE decompressed length {len(uo)} / {len(un)}')
+    if uo != un:
+        d = next(i for i in range(len(uo)) if uo[i] != un[i])
+        raise ValueError(f'D_MCODE decompressed content differs (first at byte {d})')
+    skip = {c[0] for c in co}
+    for i, ((ta, ra), (tb, rb)) in enumerate(zip(Lo, Ln)):
+        if i in skip:
+            continue
+        a, b = b''.join(ra), b''.join(rb)
+        if ra[0] == eo and ta == 0:
+            a, b = a[:24] + a[28:], b[:24] + b[28:]
+        if ta != tb or a != b:
+            raise ValueError(f'logical record {i + 1} (type {ta:X}) differs')
+    return 'EQUIVALENT-DMCODE-RECOMPRESSED', \
+        f'{member}: {len(Lo)} logical records equal outside D_MCODE; masked {so} / {sn}; D_MCODE no-load, ' \
+        f'{len(co)} TXT records, compressed {len(po)} / {len(pn)} bytes, decompressed {len(uo)} bytes identical'
+
+
+OBJ_PASS = ('IDENTICAL-MODULO-TIMESTAMP', 'EQUIVALENT-DMCODE-RECOMPRESSED')
+
+# The corrected baseline (decision A, 2026-10-20): the 13 members of Z00000.PACMAN.OBJ read 2026-10-20 = the binder
+# inputs of the accepted ZOS-6 program (PACZ6BLD JOB09460 LINK: INCLUDE OBJ(...) x 13 -> PACZ6D -> PACMAIN, PACZ6INS
+# JOB09499). member -> (build job, embedded timestamp: COBOL YYYYMMDDHHMMSS, HLASM yyddd), and the image SHA-256.
+BASELINE = R / 'build/zos/Z10BASE'
+BASE_PROV = {'PACMAIN': ('PACZ6BLD JOB09460', '20261019101020'), 'PACGAME': ('PACZ6BLD JOB09460', '20261019101024'),
+             'PACMAP': ('PACZ2BLD JOB08888', '20261014113022'), 'PACAI': ('PACZ2BLD JOB08888', '20261014113026'),
+             'PACINPT': ('PACZ6BLD JOB09460', '20261019101029'), 'PACDISP': ('PACZ6BLD JOB09460', '20261019101033'),
+             'PACPLAT': ('PACZ6BLD JOB09460', '20261019101038'), 'PACSCR': ('PACZ6BLD JOB09460', '20261019101042'),
+             'PACQRY': ('PACZ2BLD JOB08888', '20261014113044'), 'PACRT': ('PACZ6BLD JOB09460', '20261019101047'),
+             'PACTSO': ('PACZ2BLD JOB08888', '26287'), 'PACFSIO': ('PACZ2BLD JOB08888', '26287'),
+             'PACHSIO': ('PACZ2BLD JOB08888', '26287')}
+BASE_SHA = {'PACAI': '3e9b69b57bb9b2383f69668409c725a669bfccde75ccd63c818f11b9d7220db7',
+            'PACDISP': 'fc52fe4370f0855167ca535cbd984ea4c988cd6a5b4e61b0ebbfdbea0db17783',
+            'PACFSIO': '6e797e353c865b20e99d36ea14493e43200d87630bb809ce18bdc52a27f97802',
+            'PACGAME': '5297428bf5b661c9c5ab2a24ef021efcda7a8f52cddfcd27c574bb4fdeb24ba5',
+            'PACHSIO': '223239c786d57d5104c7a709801527897ed78e08697bddb1bcbe7b356aef57f9',
+            'PACINPT': '3abf25a6c9bcdda338181b85be6c1fd88fedf9b17b6baa71e62f34983c579e26',
+            'PACMAIN': '0da319397fc1919b3e49bebc0fa7e55e473f843ccde68f05f04f3ab0cff71414',
+            'PACMAP': '799a2dcd980e237a9a179ee7f9d37dc9ccf1ce6b03119dd02146390ebef17c93',
+            'PACPLAT': '4d6b80402630812fdc8e19887a0bdce6e1d33429683219e4dd7f40d1f8526584',
+            'PACQRY': 'f8c70bca1c185777fc2738ee5cabcc77b54f13294094d71f06450ef35b41cf87',
+            'PACRT': '0f65a76160f12eca8b5d70d66303fb644b07e4aed25d5f6818b2c2960210c0af',
+            'PACSCR': 'aa21100328da3402ee86038cddf410860ea8ec6924802a17d5a6da07e7f0a420',
+            'PACTSO': 'b3cffeec9709df64d822642a82c8461eb77dfb88e0829d5b5caef4157f0620b7'}
+
+
+def baseline_check(d=BASELINE):
+    """Each baseline image = its recorded SHA-256 and carries the timestamp of its recorded build job."""
+    import hashlib
+    res = {}
+    for m in OBJECTS:
+        b = Path(d, f'OBJ.{m}.bin').read_bytes()
+        o, n = spans(m, b)[0]
+        res[m] = hashlib.sha256(b).hexdigest() == BASE_SHA[m] and b[o:o + n].decode('cp037') == BASE_PROV[m][1]
+    return all(res.values()), res
 
 
 def objeq_dirs(old_dir, new_dir):
     res = {}
     for m in OBJECTS:
         res[m] = objeq(Path(old_dir, f'OBJ.{m}.bin').read_bytes(), Path(new_dir, f'OBJ.{m}.bin').read_bytes(), m)
-    return all(s == 'IDENTICAL-MODULO-TIMESTAMP' for s, _ in res.values()), res
+    return all(s in OBJ_PASS for s, _ in res.values()), res
 
 
 # ---- spool checkers --------------------------------------------------------------------------------------------------
@@ -738,15 +910,14 @@ def selftest():
         objeq(asm, bytes(an), 'PACTSO')[0] == 'IDENTICAL-MODULO-TIMESTAMP'
     an[10] = 0x00
     det['HLASM TXT byte changed'] = objeq(asm, bytes(an), 'PACTSO')[0] == 'DIFFERENT'
-    real = R / 'build/zos/Z6POST'
-    if real.is_dir():
-        import hashlib
-        sha = json.loads((real / 'obj-sha256.json').read_text())
-        res['accepted ZOS-6 object images = their recorded SHA-256 (13)'] = all(
-            hashlib.sha256((real / f'OBJ.{m}.bin').read_bytes()).hexdigest() == sha[m] for m in OBJECTS)
-        res['accepted images: spans found exactly as documented (13)'] = all(
-            len(spans(m, (real / f'OBJ.{m}.bin').read_bytes())) == (1 if m in RELEASE['ASM'] else 2) for m in OBJECTS)
-        res['accepted images compare with themselves'] = objeq_dirs(real, real)[0]
+    if BASELINE.is_dir():
+        res['corrected baseline: 13 images = recorded SHA-256 and their build-job timestamps'] = baseline_check()[0]
+        res['baseline images: spans found exactly as documented (13)'] = all(
+            len(spans(m, (BASELINE / f'OBJ.{m}.bin').read_bytes())) == (1 if m in RELEASE['ASM'] else 2)
+            for m in OBJECTS)
+        res['baseline images compare with themselves'] = objeq_dirs(BASELINE, BASELINE)[0]
+        res['baseline COBOL images: one no-load D_MCODE, one complete zlib stream (10)'] = all(
+            _dmcode(_logical((BASELINE / f'OBJ.{m}.bin').read_bytes())) for m in RELEASE['COBOL'])
     res['all injected faults detected'] = all(det.values())
     return all(res.values()), res, det
 

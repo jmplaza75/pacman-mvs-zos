@@ -1,9 +1,10 @@
-# ZOS-10 Release - release design (Z10-A .. Z10-D) - APPROVED 2026-10-20; release preparation done locally
+# ZOS-10 Release - release design (Z10-A .. Z10-D) - APPROVED 2026-10-20; EXECUTED; ZOS-10 CLOSED / PASS
 
 Status: design APPROVED by the user (2026-10-20) with decisions 1-3 and refinements (section 19). Release preparation
 implemented locally (Z6, guards, tools/zowe/zos10_release.py, tests/test_zos10.py, decks jcl/zos/PACZ10*.jcl) and
-committed as the release-preparation commit (the build's source provenance). Host execution NOT yet authorised: no
-z/OS access, no upload, no job, no build, no install, no c3270 so far.
+committed as the release-preparation commit 2c99fae (the build's source provenance). Host execution authorised and
+completed 2026-10-20 (PACZ10AL JOB04812 .. PACZ10P1 JOB04874, S10; object-gate history section 19.7); release evidence:
+docs/evidence/zos10-release.md. ZOS-10 CLOSED / PASS, release 2.0-zos (tags zos-10, 2.0-zos on the closure commit).
 Baseline: branch `zos`, HEAD = tag `zos-9` = 885c12b; `zos-8` =
 32d99f2; MVS reference `2.0-mvs-max` = 94fd6f6. Production state carried: `Z00000.PACMAN.DATA(HISCORE)` = one FB 80
 record `0000980 PACHS001 001`.
@@ -358,3 +359,32 @@ Timing gates as frozen; ENVIRONMENT / TIMING BLOCKED -> STOP for a decision.
   second latent defect from the same commit: it split `git diff --name-only` output on whitespace, but the repository
   path contains spaces ('Pacman MVS and zOS/...'), so once RPESTAE was committed its allow-list check failed; it now
   reads the names line by line with `--relative`. Both reproduced on the unmodified zos-9 tree; no product impact.
+
+### 19.7 Object-equivalence gate: first attempt STOP, corrected baseline, second attempt (host, 2026-10-20)
+- **First attempt (PACZ10BL JOB04820 objects vs build/zos/Z6POST): 8 / 13 PASS, 5 DIFFERENT -> STOP** (C1 not run).
+  PACAI, PACINPT, PACDISP, PACQRY, PACRT, PACTSO, PACFSIO, PACHSIO identical modulo the frozen timestamps; PACMAIN,
+  PACGAME, PACMAP, PACPLAT different only in the compressed bytes of the D_MCODE class; PACSCR C_CODE 32 bytes longer
+  plus D_MCODE. Kept as recorded (build/zos/Z10/objeq.json).
+- **Classification (accepted 2026-10-20): no product regression, no rebuild.** (1) ZOS-10 tooling / evidence-baseline
+  defect: Z6POST was captured after the superseded PACZ6BLD JOB09365 (PACSCR 2,583 source records / 1,493 procedure
+  statements), not after JOB09460 (2,586 / 1,495, the VIS fix) whose PACZ6D PACZ6INS JOB09499 installed. Historical
+  ZOS-6 evidence and tags unchanged. (2) Compiler non-determinism in the compressed form of D_MCODE, a no-load debug class
+  (ED loading attribute X'80' as B_IDRL; C_CODE X'00'); decompressed content identical.
+- **Decision A - corrected baseline**: the 13 members of Z00000.PACMAN.OBJ, read only (build/zos/Z10BASE, SHA-256 in
+  `zos10_release.BASE_SHA`). They are the 13 INCLUDE inputs of the JOB09460 bind (PACZ6D). Per member: PACMAIN, PACGAME,
+  PACINPT, PACDISP, PACPLAT, PACSCR, PACRT = JOB09460 compiles (embedded timestamps 2026-10-19 10:10:20..47 = the listing
+  times to the second; statistics = JOB09460 = JOB04820, e.g. PACSCR 2,586 / 508 / 1,495, not JOB09365's 2,583 / 1,493);
+  PACMAP, PACAI, PACQRY, PACTSO, PACFSIO, PACHSIO = PACZ2BLD JOB08888 (2026-10-14 11:30:22 / 26 / 44; HLASM 26287;
+  statistics = JOB04820), byte-identical to the Z6POST images, not recompiled by any ZOS-6 build. Only later archived job
+  writing PACMAN.OBJ: PACZ8RPE JOB02299 (member PACRPE, a probe). Compiler 6.5.0 P260714, HLASM R6.0 PTF UO07449 in all.
+- **Decision B - D_MCODE rule** (`dmcode_eq`): the compressed form may differ, the logical content may not. Required in
+  each image: exactly one D_MCODE ED, loading attribute X'80' (B_IDRL X'80', C_CODE X'00'); ED record equal except the
+  class length, which equals the D_MCODE text; same number and places of D_MCODE TXT records, headers equal except the data
+  length, offsets contiguous, padding zero; payload header equal except the payload length (validated); exactly one
+  complete zlib stream; decompressed length and bytes equal; every other logical record byte-identical (the three frozen
+  timestamp spans neutralised after validation). HLASM objects unchanged (byte-exact outside the END date). Tests: 13
+  injected faults rejected by their rule (test_zos10 section 6, selftest).
+- **Second attempt (same JOB04820 objects, no rebuild) vs the corrected baseline: 13 / 13 PASS.** IDENTICAL-MODULO-
+  TIMESTAMP: PACAI, PACINPT, PACDISP, PACQRY, PACRT, PACTSO, PACFSIO, PACHSIO; EQUIVALENT-DMCODE-RECOMPRESSED (decompressed
+  identical): PACMAIN 133,039 B, PACGAME 176,488, PACMAP 43,749, PACPLAT 156,713, PACSCR 635,355. PACSCR: old baseline
+  JOB09365 generation, corrected JOB09460 generation, C_CODE (46,560 record bytes) exact.

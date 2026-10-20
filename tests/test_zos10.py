@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import zlib
 from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
@@ -216,26 +217,117 @@ with tempfile.TemporaryDirectory() as t:
 print(f'checkers on simulated spools: C1 / C2 / P1 / CL / PV / IN positives PASS, {neg} faults FAIL (incl. a partial '
       'promotion and a TURN PARM with C): PASS')
 
-# 6. object equivalence on the accepted images -----------------------------------------------------------------------
-acc = R / 'build/zos/Z6POST'
-if acc.is_dir():
+# 6. object equivalence: the corrected baseline (decision A) and the D_MCODE rule (decision B) -----------------------
+def goff_dmcode(img, payload=None, ed=None, extra_ed=False):
+    """Re-serialize a COBOL GOFF image with its D_MCODE payload replaced (chunks of 16384, ED class length and TXT
+    headers updated as the compiler writes them); ed(bytearray) may alter the ED record."""
+    L = Z._logical(img)
+    e, chunks, pay, _ = Z._dmcode(L)
+    payload = pay if payload is None else payload
+    out, tmpl = [], chunks[0][2]
+    for i, (t, rs) in enumerate(L):
+        if i == chunks[0][0]:
+            for off in range(0, len(payload), 16384):
+                d = payload[off:off + 16384]
+                h = bytearray(tmpl) + len(d).to_bytes(2, 'big')
+                h[12:16] = off.to_bytes(4, 'big')
+                body, recs = d[56:], [h + d[:56]]
+                while body:
+                    recs.append(b'\x03\x12\x00' + body[:77])
+                    body = body[77:]
+                recs = [bytearray(r.ljust(80, b'\x00')) for r in recs]
+                for r in recs[:-1]:
+                    r[1] |= 1
+                out += [bytes(r) for r in recs]
+            continue
+        if i in {c[0] for c in chunks}:
+            continue
+        rs = [bytearray(r) for r in rs]
+        if rs[0] is not None and t == 0 and bytes(rs[0]) == e:
+            rs[0][24:28] = len(payload).to_bytes(4, 'big')
+            if ed:
+                ed(rs[0])
+            out += [bytes(r) for r in rs]
+            if extra_ed:
+                out.append(bytes(rs[0]))
+            continue
+        out += [bytes(r) for r in rs]
+    return b''.join(out)
+
+
+def dm_payload(pay, u, level):
+    c = zlib.compress(u, level)
+    return pay[:12] + (len(u) + 20).to_bytes(4, 'big') + (20 + len(c)).to_bytes(4, 'big') + c
+
+
+base = Z.BASELINE
+if base.is_dir():
+    ok, r = Z.baseline_check(base)
+    assert ok, r                                   # each baseline image = recorded SHA-256 + its build job's timestamp
     with tempfile.TemporaryDirectory() as t:
         new = Path(t)
-        for m in Z.OBJECTS:
-            b = bytearray((acc / f'OBJ.{m}.bin').read_bytes())
+        for m in Z.OBJECTS:                        # PASS: timestamp-only changes
+            b = bytearray((base / f'OBJ.{m}.bin').read_bytes())
             for o, n in Z.spans(m, bytes(b)):
                 b[o:o + n] = (('9' * n) if m in Z.RELEASE['ASM'] else '20' + '9' * (n - 2)).encode('cp037')
             (new / f'OBJ.{m}.bin').write_bytes(bytes(b))
-        ok, r = Z.objeq_dirs(acc, new)
-        assert ok, r
+        ok, r = Z.objeq_dirs(base, new)
+        assert ok and all(v[0] == 'IDENTICAL-MODULO-TIMESTAMP' for v in r.values()), r
         b = bytearray((new / 'OBJ.PACSCR.bin').read_bytes())
         b[1000] ^= 0x01
         (new / 'OBJ.PACSCR.bin').write_bytes(bytes(b))
-        ok, r = Z.objeq_dirs(acc, new)
-        assert not ok and r['PACSCR'][0] == 'DIFFERENT' and all(v[0] == 'IDENTICAL-MODULO-TIMESTAMP'
-                                                                 for k, v in r.items() if k != 'PACSCR')
-    print('object equivalence on the 13 accepted ZOS-6 images: timestamp-only changes IDENTICAL, one code byte '
-          'DIFFERENT: PASS')
+        ok, r = Z.objeq_dirs(base, new)
+        assert not ok and r['PACSCR'][0] == 'DIFFERENT'
+    img = (base / 'OBJ.PACMAP.bin').read_bytes()
+    L = Z._logical(img)
+    e, ch, pay, u = Z._dmcode(L)
+    assert goff_dmcode(img) == img                 # the re-serializer reproduces the compiler's image exactly
+    rec = goff_dmcode(img, dm_payload(pay, u, 1))
+    assert rec != img and len(Z._dmcode(Z._logical(rec))[2]) != len(pay)
+    st = lambda x, m='PACMAP': Z.objeq(img, x, m)[0]        # noqa: E731
+    assert st(rec) == 'EQUIVALENT-DMCODE-RECOMPRESSED'      # PASS: other compressed form, same decompressed content
+    cc = next(i for i, (t, rs) in enumerate(L) if t == 1 and rs[0][4:8] == Z._eds(L, Z.C_CODE)[0][0][4:8])
+    off = sum(len(b''.join(rs)) for _, rs in Z._logical(rec)[:cc]) + 60
+
+    def flip(x, o):
+        x = bytearray(x)
+        x[o] ^= 0x01
+        return bytes(x)
+    u2 = bytearray(u)
+    u2[100] ^= 0x01
+    sp = Z.spans('PACMAP', img)
+    neg_obj = {
+        'C_CODE (executable) byte changed, D_MCODE recompressed': flip(rec, off),
+        'C_CODE byte changed, D_MCODE identical': flip(img, sp[0][0] + 30),
+        'one decompressed D_MCODE byte changed': goff_dmcode(img, dm_payload(pay, bytes(u2), 6)),
+        'D_MCODE decompressed length changed': goff_dmcode(img, dm_payload(pay, u + b'\x00', 6)),
+        'D_MCODE header decompressed length wrong': goff_dmcode(img, dm_payload(pay, u, 1)[:12] +
+                                                                (len(u) + 21).to_bytes(4, 'big') +
+                                                                dm_payload(pay, u, 1)[16:]),
+        'D_MCODE zlib stream truncated': goff_dmcode(img, (lambda p: p[:16] + (len(p) - 5).to_bytes(4, 'big') +
+                                                           p[20:-5])(dm_payload(pay, u, 1))),
+        'D_MCODE load attribute X\'00\'': goff_dmcode(img, dm_payload(pay, u, 1), ed=lambda r: r.__setitem__(65, 0)),
+        'D_MCODE other ED attribute': goff_dmcode(img, dm_payload(pay, u, 1), ed=lambda r: r.__setitem__(60, 1)),
+        'D_MCODE missing (renamed)': goff_dmcode(img, dm_payload(pay, u, 1),
+                                                 ed=lambda r: r.__setitem__(slice(72, 79), Z._E('D_MCODF'))),
+        'extra D_MCODE class': goff_dmcode(img, dm_payload(pay, u, 1), extra_ed=True),
+        'structural: one RLD record dropped': b''.join(b''.join(rs) for t, rs in Z._logical(rec) if t != 2),
+        'structural: END record changed': (lambda x: x[:-80] + flip(x[-80:], 11))(rec),
+    }
+    for why, x in neg_obj.items():
+        s, d = Z.objeq(img, x, 'PACMAP')
+        assert s == 'DIFFERENT', (why, s, d)
+        print(f'   {why} -> {d.split("; ")[-1][:100]}')
+        neg += 1
+    a = (base / 'OBJ.PACTSO.bin').read_bytes()             # HLASM objects stay byte-exact outside the END date
+    assert Z.objeq(a, flip(a, 100), 'PACTSO')[0] == 'DIFFERENT'
+    print(f'object equivalence on the corrected baseline (13 images = recorded SHA-256 and build-job timestamps): '
+          f'timestamp-only IDENTICAL, recompressed D_MCODE EQUIVALENT, {len(neg_obj) + 1} faults DIFFERENT: PASS')
+    rz = R / 'build/zos/Z10OBJ'
+    if rz.is_dir():                                        # the PACZ10BL JOB04820 PACSCR against JOB09460's
+        s, d = Z.objeq((base / 'OBJ.PACSCR.bin').read_bytes(), (rz / 'OBJ.PACSCR.bin').read_bytes(), 'PACSCR')
+        assert s in Z.OBJ_PASS, d
+        print(f'PACSCR (JOB04820) against the corrected JOB09460 baseline: {s}: PASS')
 else:
-    print('object equivalence on the accepted images: build/zos/Z6POST not present here (local evidence) - SKIPPED')
+    print('object equivalence: build/zos/Z10BASE not present here (local evidence) - SKIPPED')
 print('ZOS-10 LOCAL CHECKS PASS')

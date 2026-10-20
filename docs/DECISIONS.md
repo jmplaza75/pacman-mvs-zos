@@ -351,3 +351,15 @@
   NON-INTERFERENCE (Z4 gated by PARM column 26 = C; installed line-mode / 1.0-oracle check after the ZOS-10 rebuild).
   I5: the z/OS capability column is a documentation-only closure from accepted evidence. ZOS-9 CLOSED / PASS: GAP 0,
   DECISION 0; no production-source or DATA change.
+- ZOS-10 Release (user, 2026-10-20; detail docs/zos10-design.md sections 8, 11, 15, 19.7; evidence
+  docs/evidence/zos10-release.md). Z6 / DEC-2 option O-C: the release CLIST default PRESENT(AUTO) means COALESCED for
+  PLAY(REALTIME) only; PLAY(TURN) keeps the historical 25-column PARM; explicit PRESENT(EVERY) / COALESCED kept; a PARM
+  without column 26 is still EVERY. The release smoke is S10 = CLASSIC (`AI(0) RULES(CLASSIC) SOUND(NO)`, no PLAY / no
+  PRESENT), superseding the G8 no-operand smoke (ARCADE LEVEL 1, MVS score 1050 > 980 would overwrite production
+  HISCORE); ARCADE LEVEL(2) rejected. CV2 always runs. PACZ10PV: a verified rollback copy of the installed CLIST is a
+  gate before any replacement; promotion is not atomic - a partial promotion is a STOP + rollback decision, never a
+  retry. Object gate: the corrected baseline is the 13 members of Z00000.PACMAN.OBJ = the JOB09460 bind inputs, with
+  per-member provenance (the Z6POST capture was stale, JOB09365); the D_MCODE rule accepts a different compressed
+  representation of the no-load D_MCODE class only when its decompressed content is byte-identical and every other
+  object byte is exact outside the three frozen timestamp spans. Tags: annotated `zos-10` and `2.0-zos` both on the
+  ZOS-10 closure commit (the release-preparation commit 2c99fae is the build provenance). ZOS-10 CLOSED / PASS.

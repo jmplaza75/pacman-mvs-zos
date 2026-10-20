@@ -6,6 +6,9 @@ terminal bell as sound, and picks the best presentation the terminal supports au
 runs on the emulated mainframe (see "What runs where"). Release notes, manifest, final defaults, benchmarks,
 capability matrix and screenshots: `releases/2.0-MVS-MAX/`. Design of the release: `docs/G8-RELEASE.md` (D43).
 
+**z/OS: release 2.0-zos** (branch `zos`) runs the same 2.0 game on IBM z/OS (IBM Z Xplore) - see "PAC-MAN 2.0 for
+z/OS" below and `releases/2.0-ZOS/`.
+
 ## Quick start (2.0)
 1. Hercules / TK4- running; size a macOS Terminal window to 120x30 **before** connecting, then
    `TYPEAHEAD=false tools/c3270_rt.sh` (c3270 on the 120x27 alternate screen, arrows = PF7/8/10/11) and log on to
@@ -156,6 +159,23 @@ Type `U/D/L/R` and press ENTER for each move, and `Q` to quit. An empty ENTER re
 fresh screen, so TSO's `***` paging does not interrupt play (`docs/INTERACTIVITY.md`). Several invalid commands in a
 row can still fill the screen once. Validated live in c3270.
 
+## PAC-MAN 2.0 for z/OS (release 2.0-zos)
+The 2.0-MVS-MAX game ported to IBM z/OS V3R1 (Enterprise COBOL 6.5, HLASM R6.0, the z/OS binder, LE, TSO / VTAM /
+TN3270E), with only the registered z/OS differences (`docs/ZOS-DIFFS.md`, Z1-Z6). Release material (notes, manifest,
+defaults, capability matrix, decks of record, SHA256SUMS): `releases/2.0-ZOS/`; evidence:
+`docs/evidence/zos10-release.md` (release) and `docs/evidence/zos9-equivalence.md` (equivalence with the MVS oracle).
+- **Play:** window 120 x 30 before connecting, `c3270 -model 2 -oversize auto 198.51.100.200:623`, log on, then at TSO
+  READY or in ISPF option 6: `EXEC 'Z00000.PACMAN.CLIST(PACMAN)'` (no operand = ARCADE, REALTIME, automatic
+  profile). Arrows = PF7 / PF8 / PF10 / PF11 (the `tools/c3270_rt.sh` keymap), PF9 pause, PA2 redraw, Q + ENTER quits.
+- **z/OS presentation default:** with PLAY(REALTIME) the launcher selects `PRESENT(COALESCED)` (logic every 150 / 125
+  ms, a screen write every 2nd / 3rd quantum), because one write per quantum is not viable over z/OS TSO / VTAM /
+  TN3270E; `PRESENT(EVERY)` stays selectable, `PLAY(TURN)` keeps its historical PARM (`releases/2.0-ZOS/DEFAULTS.md`).
+- **What runs where:** as on MVS - the whole game (rules, AI, clock, input decoding, every 3270 screen, the alarm bit,
+  the high score in `Z00000.PACMAN.DATA(HISCORE)`) runs on z/OS; the Mac only runs c3270 and optional helpers.
+- **Build / install:** from empty `<HLQ>.PACMAN.RZ.*` libraries with the decks in `releases/2.0-ZOS/decks/`
+  (`@@HLQ@@` templates, submitted by `tools/zowe/zos_submit.py --hlq <HLQ>`; procedure `docs/zos-build.md`,
+  `docs/zos10-design.md`). Rollback: `LOAD(PACZ6D)` and `PRV.CLIST(PACMAN)`.
+
 ## Architecture and documentation
 - `PACMAIN` is the driver; the layers are `PACGAME`, `PACMAP` and `PACAI` (portable core), `PACINPT` and `PACDISP`
   (adapters), and `PACPLAT` with `PACTSO` (platform). See `docs/ARCHITECTURE.md`.
@@ -235,3 +255,5 @@ regression run-only on that module (JOBs 308-312), installed by copy with byte i
 final capability matrix `docs/CAPABILITIES.md`, release folder `releases/2.0-MVS-MAX/`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). The MVS line ends with 2.0-MVS-MAX; any
 z/OS work is a separate roadmap, and the companion audio (S3/S4) is an optional client extension after 2.0.
+ZOS-0 to ZOS-10 (branch `zos`, tags `zos-*`) port 2.0 to z/OS: ZOS-9 proved the final MVS / z/OS equivalence (tag
+`zos-9`), ZOS-10 built, verified and installed the release (tags `zos-10` and `2.0-zos`; `docs/evidence/zos10-release.md`).

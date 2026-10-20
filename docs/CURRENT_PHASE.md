@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G8 / 2.0-MVS-MAX COMPLETA, etiqueta 2.0-mvs-max; la rama MVS esta TERMINADA. No hay fase activa; el port z/OS no esta iniciado).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G8 / 2.0-MVS-MAX COMPLETA, etiqueta 2.0-mvs-max; la rama MVS esta TERMINADA. Port z/OS TERMINADO: ZOS-10 RELEASE CERRADA / PASS, etiquetas zos-10 y 2.0-zos. No hay fase activa).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -456,3 +456,22 @@ LEVEL >= 2 / no high-score write, live L1 / L2 / L3 with PRESENT(COALESCED), dry
   5. installed line-mode / 1.0-oracle verification on the release build;
   6. the release smoke accounts for HISCORE = 980 (expected lines start from 980);
   7. the smoke must not accidentally overwrite production HISCORE (an ARCADE LEVEL 1 score > 980 writes it).
+
+## ZOS-10 RELEASE - CLOSED / PASS (2026-10-20; docs/zos10-design.md, docs/evidence/zos10-release.md)
+- Release 2.0-zos: build provenance = release-preparation commit 2c99fae (only Z6 changed: src/zos/PACMAN.clist);
+  closure commit tagged `zos-10` and `2.0-zos` (annotated). Material: releases/2.0-ZOS/.
+- ZOS-9 equivalence remains valid (no program source changed in ZOS-10).
+- Clean rebuild PACZ10BL JOB04820 into new empty Z00000.PACMAN.RZ.* (19 sources uploaded from 2c99fae, byte-verified;
+  C3 ASMA303W only; bind AMODE 24 / RMODE 24 / RENT / REUS / entry PACMAIN; dataset chain RZ only).
+- Object gate: first attempt 8 / 13 STOP (stale Z6POST baseline + compressed no-load D_MCODE; no product regression);
+  second attempt on the same objects with the corrected per-member baseline and the D_MCODE rule: 13 / 13 PASS
+  (executable content exact, PACSCR exact against JOB09460). No rebuild.
+- Candidate PACZ10C1 JOB04862 (2,572 lines) and PACZ10C2 JOB04864 (1,163 lines) exact.
+- DEC-2 release CLIST default active: PRESENT(AUTO) = COALESCED with PLAY(REALTIME); TURN default historical; EVERY
+  selectable (PACZ10CL JOB04866, 10 / 10).
+- Rollback copy PACZ10PV JOB04868 verified; promotion PACZ10IN JOB04870 complete, no partial state; installed
+  LOAD(PACMAIN) binary-identical to the candidate; PACZ6D unchanged.
+- Installed P1 PACZ10P1 JOB04874 exact (566 lines = oracle = C1); live S10 (installed CLIST, `AI(0) RULES(CLASSIC)
+  SOUND(NO)`): FUNCTIONAL PASS, TIMING PASS (mean 150.399 ms, death stop 1,496 ms), shell return PASS.
+- **Z00000.PACMAN.DATA(HISCORE) = `0000980 PACHS001 001`** (unchanged; one read-only check at closure).
+- The release is complete. There is no next implementation phase.
