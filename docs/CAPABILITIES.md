@@ -29,7 +29,7 @@ Status: CONFIRMED = proven on this installation (evidence named). No row is PEND
 | Partial screen update (Write X'F1' + TPUT NOEDIT) | CONFIRMED (probe E6, live) | docs/evidence/g3-probe-analysis.md; ASIS variant erases the screen | G3+ |
 | Idle animation (visual tick between inputs) | CONFIRMED with COLOR(YES); with COLOR(AUTO) only after the first input (TSO holds NOEDIT output after the capability Query Reply; investigation closed, D28) | docs/G3-PARTIAL.md, docs/evidence/g3-game-timeline*.txt | G3 |
 | Viable update rate | CONFIRMED: REALTIME one write per 150 ms quantum (125 ms with SPEED(FAST)) on an absolute grid, no skipped period, lateness median 5-7 ms; 2.0 default median 86 bytes per quantum write (partial redraw, G3) | docs/BENCHMARKS.md, docs/evidence/rp-live.md, rp3-fast-live.md, g8-live.md; G3: docs/G3-PARTIAL.md | G3/RT/G8 |
-| Real-time input (PF7/8/10/11 arrows, PF9 pause, keyboard restore per write) | CONFIRMED | probe E14, docs/evidence/rt3-live.md, rp-live.md | RT |
+| Real-time input (PF7/8/10/12 arrows since MVS-10 - PF11 until 2.0-MVS-MAX, D46; PF9 pause, keyboard restore per write) | CONFIRMED | probe E14, docs/evidence/rt3-live.md, rp-live.md | RT |
 | Alarm patterns (separate bells, timed by quanta) | CONFIRMED (S2) | docs/evidence/s2-live.md: 1-4 bells per event, 296-302 ms apart, heard as separate | S2 |
 | Automatic maximum profile (G9) | CONFIRMED (G8.4): the CLIST with no operand selects colour full-screen, highlighting, GRAPHIC glyphs, 4x2 scale, partial redraw, 120 x 27 wide layout, REALTIME, ARCADE, PATTERN; 180/180 live writes = model | docs/evidence/g8-live.md, docs/G8-RELEASE.md (D43) | G8/G9 |
 

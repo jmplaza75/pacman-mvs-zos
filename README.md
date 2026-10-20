@@ -8,11 +8,12 @@ capability matrix and screenshots: `releases/2.0-MVS-MAX/`. Design of the releas
 
 ## Quick start (2.0)
 1. Hercules / TK4- running; size a macOS Terminal window to 120x30 **before** connecting, then
-   `TYPEAHEAD=false tools/c3270_rt.sh` (c3270 on the 120x27 alternate screen, arrows = PF7/8/10/11) and log on to
+   `TYPEAHEAD=false tools/c3270_rt.sh` (c3270 on the 120x27 alternate screen, arrows = PF7/8/10/12) and log on to
    TSO.
 2. At `READY`: `EXEC 'HERC01.PACMAN.CLIST(PACMAN)'` — no operand needed (or `python3 tools/rt_play.py` from a second
    shell, which also maps P to PF9 = pause while the game runs; PF9 itself always pauses).
-3. Pac-Man waits for the first arrow, then moves by himself every 150 ms; Q + ENTER quits.
+3. Pac-Man waits for the first arrow, then moves by himself every 150 ms; type Q, then ENTER to quit (no PF key
+   quits). Controls: "Controls (REALTIME and TURN)" below.
 
 With no operand the launcher selects the 2.0 profile: ARCADE rules (power pellets, levels, fruit, persistent high
 score, READY!, death animation, popups), REALTIME, colour full-screen with highlighting, GRAPHIC glyphs, the 4x2 maze
@@ -95,7 +96,7 @@ for example `AI3 2`. The game is printed in the job listing.
 **Real time (MVS-RT, the default):** size a macOS Terminal window to 120x30, start the terminal with the game keymap and
 log on to TSO, then start the game from a second shell:
 ```
-TYPEAHEAD=false tools/c3270_rt.sh          (c3270 120x27, arrows = PF7/8/10/11, typeahead off)
+TYPEAHEAD=false tools/c3270_rt.sh          (c3270 120x27, arrows = PF7/8/10/12, typeahead off)
 python3 tools/rt_play.py                   (at TSO READY: EXEC ... 'PLAY(REALTIME)', P = PF9 pause while it runs)
 ```
 Pac-Man waits until the first arrow, then keeps moving by himself every 150 ms; the ghosts move on their own (4/5 of
@@ -156,6 +157,22 @@ Type `U/D/L/R` and press ENTER for each move, and `Q` to quit. An empty ENTER re
 fresh screen, so TSO's `***` paging does not interrupt play (`docs/INTERACTIVITY.md`). Several invalid commands in a
 row can still fill the screen once. Validated live in c3270.
 
+### Controls (REALTIME and TURN; MVS-10 / release 2.1-mvs, D46)
+| Action | REALTIME (full screen) | TURN |
+|---|---|---|
+| Up / Down / Left | PF7 / PF8 / PF10 (Up / Down / Left arrow in `tools/c3270_rt.sh`) | `U` / `D` / `L` + ENTER |
+| **Right** | **PF12** (the Right arrow in `tools/c3270_rt.sh` sends PF12) | `R` + ENTER |
+| Pause / resume | PF9 (or `P` while `tools/rt_play.py` runs) | - |
+| Redraw | PA2 (or an empty ENTER) | PA2 / empty ENTER |
+| **Quit** | **type `Q`, then press ENTER** | `Q` + ENTER |
+- **PF11 is no longer used for Right** (it was in 2.0-MVS-MAX); in REALTIME PF11 now does nothing, like PF1-PF6 and
+  PF13-PF24 (in TURN full screen any key other than ENTER redraws, as before).
+- **No PF key quits** - neither PF11 nor PF12 nor any other. A typed `Q` alone does nothing: the 3270 terminal sends
+  it only with ENTER.
+- TURN mode (`PLAY(TURN)`, line mode) is unchanged: U/D/L/R + ENTER, Q + ENTER.
+- The installed 2.0-MVS-MAX release keeps its own mapping (Right = PF11) until 2.1-mvs is installed (MVS-10 live gate,
+  `docs/MVS10-PF12.md`); `releases/2.0-MVS-MAX/` documents 2.0 as released.
+
 ## Architecture and documentation
 - `PACMAIN` is the driver; the layers are `PACGAME`, `PACMAP` and `PACAI` (portable core), `PACINPT` and `PACDISP`
   (adapters), and `PACPLAT` with `PACTSO` (platform). See `docs/ARCHITECTURE.md`.
@@ -184,7 +201,7 @@ MVS-GS (scaled renderer and geometry: 4x2 maze with arcade contour walls and hal
 80x24 fallback; design `docs/GS-SCALED.md`, `docs/GS-GEOMETRY.md`) is complete (tag `mvs-gs`; Hercules JOBs 200/207 and
 live in c3270). The maze stays 80x20 at 4x2: larger canvases add centring and HUD space, not maze scale.
 MVS-RT (real-time gameplay: `PLAY(REALTIME|TURN)`, REALTIME the CLIST default; 150 ms absolute-deadline clock,
-arrows = PF7/8/10/11, PF9 pause, buffered turns, autonomous ghosts at 4/5 speed, one write per quantum with keyboard
+arrows = PF7/8/10/11 (Right = PF12 since MVS-10), PF9 pause, buffered turns, autonomous ghosts at 4/5 speed, one write per quantum with keyboard
 restore; probe E14 + design D33 in `docs/RT-REALTIME.md`) is complete (tag `mvs-rt`; Hercules JOB 226 and live in c3270,
 `docs/evidence/rt3-live.md`). TURN is unchanged (1.0-MVS oracle and all earlier regressions pass).
 MVS-S1 (sound: `SOUND(AUTO|YES|NO)`, the 3270 alarm - the terminal bell - on start, death and win in colour full-screen
@@ -233,5 +250,8 @@ AUTO chain was already the maximum), rebuild from empty libraries `HERC01.PACMAN
 regression run-only on that module (JOBs 308-312), installed by copy with byte identity (JOB 314, AMASPZAP) and checked
 (JOBs 315-317), live smoke of the installed release (`docs/evidence/g8-live.md`), benchmarks `docs/BENCHMARKS.md`,
 final capability matrix `docs/CAPABILITIES.md`, release folder `releases/2.0-MVS-MAX/`.
+MVS-10 (D46, `docs/MVS10-PF12.md`): REALTIME Right moves from PF11 to PF12 (the Right arrow of `tools/c3270_rt.sh`
+sends PF12); PF11 does nothing; no PF key quits, QUIT = Q + ENTER; TURN, batch and the oracles unchanged - local
+implementation and tests done, Hercules build / install / live gate pending (release 2.1-mvs).
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). The MVS line ends with 2.0-MVS-MAX; any
 z/OS work is a separate roadmap, and the companion audio (S3/S4) is an optional client extension after 2.0.

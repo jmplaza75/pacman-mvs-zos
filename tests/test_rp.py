@@ -40,6 +40,8 @@ import ref_rp  # noqa: E402
 import subprocess  # noqa: E402
 
 
+import mvs10_delta as m10  # noqa: E402
+
 def git_show(rev, path):
     return subprocess.run(['git', 'show', f'{rev}:./{path}'], cwd=R, capture_output=True, text=True,
                           check=True).stdout.splitlines()
@@ -54,7 +56,7 @@ BASE = 'mvs-hs'
 for f in ('src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob', 'src/copy/PACARC.cpy',
           'src/copy/PACSTATE.cpy', 'src/copy/PACMREQ.cpy', 'src/copy/PACDS.cpy', 'src/cobol/PACINPT.cob',
           'src/asm/PACFSIO.asm', 'src/asm/PACHSIO.asm', 'maps/LEVEL1.txt', 'maps/ARCADE1.txt'):
-    assert git_show(BASE, f) == src(f), f
+    assert git_show(BASE, f) == m10.lines(R, f), f        # MVS-10 (D46): PACINPT PF12 delta stripped exactly
 for f in ('src/copy/PACREQ.cpy', 'src/copy/PACPAL.cpy'):
     old, new = git_show(BASE, f), src(f)
     assert new[:len(old)] == old, f + ' must grow append-only'

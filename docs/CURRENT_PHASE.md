@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G8 / 2.0-MVS-MAX COMPLETA, etiqueta 2.0-mvs-max; la rama MVS esta TERMINADA. No hay fase activa; el port z/OS no esta iniciado).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G8 / 2.0-MVS-MAX COMPLETA, etiqueta 2.0-mvs-max. FASE ACTIVA: MVS-10 (D46, docs/MVS10-PF12.md, release 2.1-mvs): implementacion local hecha, gate en Hercules pendiente de autorizacion).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -225,3 +225,19 @@ PACMAN_LATER_PHASE=G8 when run alone (as at mvs-s2); the guards are not weakened
 THE MVS BRANCH IS COMPLETE: 2.0-MVS-MAX is the final MVS release (roadmap decision 3). No active phase. The z/OS port
 (ZOS-*) is NOT started and needs a separate roadmap and the user's go; S3/S4 companion audio is optional, client-side
 and not started.
+
+## MVS-10 - REALTIME Right on PF12 (D46; release 2.1-mvs) - LOCAL DONE, HOST GATE PENDING (2026-10-20)
+Post-2.0 control phase authorised by the user (design, source, documentation, local tests only; no Hercules access).
+Design / specification: docs/MVS10-PF12.md. The z/OS line follows as ZOS-11 (2.1-zos) on branch zos.
+- Product: PACINPT RT-TSC `IF WS-V = 123` (PF11) -> `IF WS-V = 124` (PF12) + its comment; PF11 falls to the existing
+  IGN path. QUIT unchanged and only `Q` + ENTER (no PF key quits; proven from the source). TURN, batch, the core and
+  every oracle unchanged. CLIST: the ARROWS help comment only (PF7/8/10/12).
+- Client: tools/c3270_rt.sh Right arrow -> PF(12); tools/rt_play.py message. User controls: README "Controls".
+- Successor live tools (frozen 2.0 tools untouched): tools/mvs10_live.py (driver), tools/mvs10_trace.py (checker, 2.1
+  map + 2.0 / PF12-ignored / PF11-Right controls), tests/mvs10live (scenario LIVE10, CLASSIC, no high-score path).
+- Local: tests/test_mvs10.py PASS (decode table, QUIT path, exact deltas, keymap, scenario discrimination, checker on
+  synthetic traces with 10 faults, the accepted S2E 2.0 live trace reproduced with the 2.0 map, all regressions).
+  Test pins adapted only through tests/mvs10_delta.py (exact MVS-10 lines); test_g8's changed-file list now read line
+  by line (the repository path contains spaces; the defect was latent while the list was empty).
+- NEXT (needs authorisation): Hercules build of record (fresh libraries), run-only regressions, install by copy, CLIST,
+  live gate LIVE10 (acceptance 1-8, docs/MVS10-PF12.md section 6); then releases/2.1-MVS and tags mvs-10 / 2.1-mvs.

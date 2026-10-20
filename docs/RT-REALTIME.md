@@ -72,7 +72,8 @@ unreliable). TICK-COUNT (PIC 999): JOB 217 (unchanged mvs-gs, 1,005 blocked turn
 data exception, display only (status line, HUD, TURNS line); no logic reads it -> PACSTATE unchanged.
 
 ## RT1 frozen design (D33, approved 2026-10-10)
-Values: T = 150 ms (175 ms fallback/tuning; 100 ms not for production). UP PF7, DOWN PF8, LEFT PF10, RIGHT PF11; U/D/L/R +
+Values: T = 150 ms (175 ms fallback/tuning; 100 ms not for production). UP PF7, DOWN PF8, LEFT PF10, RIGHT PF11 (PF12
+since MVS-10, D46: docs/MVS10-PF12.md); U/D/L/R +
 ENTER fallback. Request TTL 3 player steps. Player every quantum; ghosts 4/5 by integer accumulator (acc += 4; due when
 acc >= 5, then acc -= 5; acc starts at 0: quanta 1..5 = no, yes, yes, yes, yes). Animation frame VIS = (q / 3) mod 2
 (flips every 3 quanta = 450 ms; 0 before the start, as the TURN first screen). Death freeze 10 quanta (1.5 s).
@@ -158,7 +159,7 @@ without PARM column 19 still play TURN.
 CLIST default (D34): `PLAY(REALTIME)`; `PLAY(TURN)` is the compatibility mode (one move per command, the mvs-gs game).
 REALTIME falls back to TURN by itself when colour full-screen mode is not available (line mode). Recommended terminal:
 `tools/c3270_rt.sh` (keymap, typeahead off) and `python3 tools/rt_play.py` (starts the game and switches the P = PF9
-pause key on only while it runs); with a plain c3270, PF7/8/10/11/PF9 or U/D/L/R/P + ENTER work too.
+pause key on only while it runs); with a plain c3270, PF7/8/10/11/PF9 (PF7/8/10/12/PF9 since MVS-10) or U/D/L/R/P + ENTER work too.
 Known limits: speed is fixed (T = 150 ms, player every quantum, ghosts 4/5); fast multi-key bursts with typeahead off
 can drop a key pressed while the keyboard is locked (accepted, D33); long pauses and the waits before the start use the
 existing blocking RECV path (not separately soak-tested).

@@ -36,6 +36,8 @@ os.environ['PACMAN_LATER_PHASE'] = 'G8'
 import make_deck as M  # noqa: E402
 from g8_jcl_audit import audit_deck, audit_listing  # noqa: E402
 
+import mvs10_delta as m10  # noqa: E402
+
 BASE = 'mvs-s2'
 FINAL = dict(AI='1', GHOSTS='1', COLOR='AUTO', HILITE='AUTO', ANIM='AUTO', REDRAW='PARTIAL', METRICS='NO',
              GLYPHS='AUTO', SCALE='AUTO', CANVAS='AUTO', PLAY='REALTIME', SOUND='AUTO', RULES='ARCADE', LEVEL='1',
@@ -55,8 +57,12 @@ assert all(len(l) <= 72 for l in clist.replace('@@PREFIX@@', 'HERC01.PACMAN.R20'
 old = git('show', f'{BASE}:./src/clist/PACMAN.clist').stdout.splitlines()
 strip = lambda ls: [l for l in ls if not l.startswith('/*')]
 assert [l.replace('RULES(CLASSIC)', 'RULES(ARCADE)') for l in strip(old)] == strip(lines), 'CLIST code changed'
-changed = git('diff', '--name-only', BASE, '--', 'src/cobol', 'src/copy', 'src/asm').stdout.split()
-assert changed == [], changed
+# MVS-10 (D46): names read line by line (the repository path contains spaces); only PACINPT may differ, by exactly
+# the MVS-10 delta
+changed = git('diff', '--name-only', '--relative', BASE, '--', 'src/cobol', 'src/copy', 'src/asm').stdout.splitlines()
+assert changed in ([], ['src/cobol/PACINPT.cob']), changed
+for f in changed:
+    assert m10.m10_strip(f, (R / f).read_text()) == git('show', f'{BASE}:./{f}').stdout, f
 subprocess.run([sys.executable, str(R / 'tests/test_core_frozen.py')], check=True, stdout=subprocess.DEVNULL)
 assert M.DECKS['REL20'][1:3] == M.DECKS['S2'][1:3] and M.ASM['REL20'] == M.ASM['S2'] and \
     M.DECKS['REL20'][3] == 'PACMAIN' and M.TSO['REL20'] == M.TSO['RELEASE'] and M.DECKS['REL20'][4] == M.DECKS['RELEASE'][4]

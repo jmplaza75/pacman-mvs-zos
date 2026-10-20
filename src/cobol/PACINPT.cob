@@ -9,7 +9,7 @@
       * MVS-RT (D33): RTRD (NON-BLOCKING) / RTRB (BLOCKING) RETURN ONE
       *   INPUT EVENT: MOV, QUI, PAU (PAUSE), RDR, INV, CFG, IGN (AN AID
       *   WITHOUT MEANING), NON (NOTHING MORE NOW), EOF, ERR (TSC LOST).
-      *   TSC: PACPLAT POLL / RECV; PF7 U PF8 D PF10 L PF11 R, PF9 PAU
+      *   TSC: PACPLAT POLL / RECV; PF7 U PF8 D PF10 L PF12 R, PF9 PAU
       *   (RT3: THE LAUNCHER MAPS P TO PF9), PA2 RDR,
       *   ENTER = THE TYPED FIELD (U/D/L/R, Q, P, BLANK = RDR, ELSE INV;
       *   REQ-INKEY STAYS E). BAT/TSD: ONE CARD = ONE QUANTUM, ITS
@@ -149,7 +149,7 @@
            IF WS-V = 122
                MOVE 'L' TO RT-C
                PERFORM RT-CHAR.
-           IF WS-V = 123
+           IF WS-V = 124
                MOVE 'R' TO RT-C
                PERFORM RT-CHAR.
            IF WS-V = 249

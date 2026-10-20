@@ -64,8 +64,8 @@ while True:
         raise SystemExit('no game screen within 60 s')
     time.sleep(0.5)
 x('TemporaryKeymap(pacgame)')
-print(f'{time.strftime("%H:%M:%S")} game started ({words}); game keys on: arrows = PF7/8/10/11, P = PF9 pause, '
-      'PA2 redraw, Q + ENTER quit')
+print(f'{time.strftime("%H:%M:%S")} game started ({words}); game keys on: arrows = PF7/8/10/12, P = PF9 pause, '
+      'PA2 redraw, Q + ENTER quit (no PF key quits)')
 try:
     while True:
         time.sleep(1)

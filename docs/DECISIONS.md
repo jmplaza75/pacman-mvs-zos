@@ -283,3 +283,10 @@
   libraries), the validated R20 PACMAIN copied (not relinked) into HERC01.PACMAN.LOAD as the installed 2.0 module
   (JOB 298 historical), final CLIST installed, minimal installed live smoke; folder releases/2.0-MVS-MAX, annotated
   tag 2.0-mvs-max.
+- D46 (MVS-10 / ZOS-11, user 2026-10-20; releases 2.1-mvs and 2.1-zos; docs/MVS10-PF12.md) REALTIME Right is PF12
+  (AID X'7C' = 124) instead of PF11 (X'7B' = 123), in PACINPT RT-TSC only; PF11 falls to the existing ignored path; all
+  other keys unchanged. QUIT stays exclusively `Q` typed in the input field + ENTER, in the normal input path: no PF
+  key quits. TURN, batch, the movement model, the core and the frozen oracles are unchanged. The c3270 launcher maps the
+  Right arrow to PF(12). Frozen 2.0 artifacts and historical live tools stay as they are (successor tools for the new
+  map). MVS first, then z/OS, each gated: design, local, STOP, host only on authorisation, release after the live gate;
+  annotated tags 2.1-mvs / 2.1-zos; 2.0-mvs-max / 2.0-zos never moved. (D44 / D45 are used on branch zos.)
