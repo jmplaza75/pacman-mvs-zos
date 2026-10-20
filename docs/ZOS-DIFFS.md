@@ -54,7 +54,7 @@ approval.
   (docs/evidence/zos4-live.md); installed CLIST 130 x 80, SHA-256 f8989cfa....
 
 
-## Z4 - ZOS-6 presentation decoupling, sources (ZV-D33; implemented locally 2026-10-19, NOT built, NOT installed)
+## Z4 - ZOS-6 presentation decoupling, sources (ZV-D33; implemented 2026-10-19; built / installed in ZOS-6, see Status)
 - Approval: production design docs/zos6-production-design.md approved for local implementation (user, 2026-10-19).
   Branch zos only; the MVS sources of record, main, 2.0-mvs-max and the MVS release are untouched.
 - Cause: on z/OS TSO / VTAM / TN3270E with CONTENTION-RESOLUTION one TPUT NOHOLD per 150 ms quantum grows the output
@@ -81,7 +81,7 @@ approval.
 - Status 2026-10-19 (ZOS-6 closure): built PACZ6BLD JOB09460 RC 0, dry runs JOB09466 / JOB09470 PASS, promoted to
   LOAD(PACMAIN) by PACZ6INS JOB09499, live R1-T4 / R2 PASS (docs/evidence/zos6-realtime.md). Installed.
 
-## Z5 - ZOS-6 CLIST keyword PRESENT(EVERY|COALESCED) (implemented locally 2026-10-19, NOT installed)
+## Z5 - ZOS-6 CLIST keyword PRESENT(EVERY|COALESCED) (implemented 2026-10-19; installed at ZOS-6 closure, see Status)
 - File src/zos/PACMAN.clist (the MVS CLIST unchanged): PROC default `PRESENT(EVERY)`; two help lines; the 2.0 PARM
   line unchanged, then two comment lines, `SET &E = &SUBSTR(1:1,&PRESENT)` and `IF &E = C THEN SET &P = &STR(&P&E)`:
   EVERY leaves the 25-column 2.0 PARM byte for byte, COALESCED appends column 26 = C. Only statement forms the 2.0
@@ -98,3 +98,11 @@ approval.
 - tools/zowe/zos6_live_check.py: logical quanta vs physical frames, bounded backtracking placement, the 9 / 10 / 11
   freeze discrimination, freeze-span proxy, trace-clock input reaction, the predeclared candidate gates.
   zos5_live_check.py frozen.
+
+## Post-closure documentation errata (ZOS-9, 2026-10-20)
+Identified in docs/zos9-design.md section 6; recorded in docs/evidence/zos9-equivalence.md.
+- C3 above still reads "not resolved": superseded. **C3 was CLOSED in ZOS-8** (Stage D E1-E3: PACFSIO's ESTAE driven on
+  z/OS, line mode / session recovered, clean follow-up game each time; docs/evidence/zos8-services.md) with no PACFSIO
+  source change; the ASMA303W stays the only, accepted, assembler warning.
+- The Z4 / Z5 headings said "NOT built / NOT installed" (their state when written); the headings now point to the
+  Status lines, which record the ZOS-6 build (PACZ6BLD JOB09460), promotion (PACZ6INS JOB09499) and CLIST install.

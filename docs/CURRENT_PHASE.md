@@ -439,3 +439,20 @@ LEVEL >= 2 / no high-score write, live L1 / L2 / L3 with PRESENT(COALESCED), dry
 - NEXT: **ZOS-9 FINAL EQUIVALENCE - NOT STARTED** (needs its own authorization). Principle: reuse the accepted ZOS-2..8
   evidence and execute only genuine equivalence gaps (requirement-by-requirement matrix; HA6 within the site output
   limit; approved z/OS-specific differences listed explicitly, the MVS oracle frozen).
+
+## ZOS-9 FINAL EQUIVALENCE - CLOSED / PASS (2026-10-20; docs/zos9-design.md, docs/evidence/zos9-equivalence.md)
+- Coverage authority: the 51-row requirement / equivalence matrix (DEC-1); no accepted ZOS-0..8 evidence invalidated.
+- Targeted host executions (the only ones): PACZ9E1 JOB04412 PASS (14 / 14), PACZ9E2 JOB04418 PASS (10 / 10): 24 / 24
+  steps exact against their own oracle block and their frozen model; read-only (PGM=PACZ6D, spool only).
+- Final matrix: GAP = 0, DECISION = 0 (I5 capability column closed as documentation); HA6 CLOSED BY COMPOSED EVIDENCE;
+  METRICS(YES) approved out of scope; TSO line mode VALID BY NON-INTERFERENCE.
+- No production-source change in ZOS-9; no production DATA change: **Z00000.PACMAN.DATA(HISCORE) = `0000980 PACHS001
+  001`** (unchanged since ZOS-8).
+- NEXT: **ZOS-10 RELEASE - NOT STARTED** (needs its own authorization). Carried forward:
+  1. release CLIST REALTIME default -> PRESENT(COALESCED);
+  2. explicit PRESENT(EVERY) remains selectable;
+  3. a low-level PARM without column 26 remains EVERY;
+  4. the final clean rebuild;
+  5. installed line-mode / 1.0-oracle verification on the release build;
+  6. the release smoke accounts for HISCORE = 980 (expected lines start from 980);
+  7. the smoke must not accidentally overwrite production HISCORE (an ARCADE LEVEL 1 score > 980 writes it).

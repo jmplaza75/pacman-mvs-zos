@@ -338,3 +338,16 @@
   installed CLIST; record `0000980 PACHS001 001`). ZOS-8 closure (user, 2026-10-20): Stages B-F accepted; C3 closed with
   no PACFSIO change; the LE / TSO abend-code difference is documentation only; DATA(HISCORE) is production state and is
   carried forward; ZOS-8 COMPLETE, no production source change. Next: ZOS-9 final equivalence (not started).
+- ZOS-9 Final equivalence (user, 2026-10-20; detail docs/zos9-design.md, evidence docs/evidence/zos9-equivalence.md).
+  DEC-1: the plan's "run the full batteries" wording is superseded - the requirement / equivalence matrix is the
+  coverage authority; every in-scope requirement and path CLOSED by exact, semantic, model / batch, live, observational,
+  approved platform-specific or rigorous composed evidence; uncovered paths get focused direct proof. DEC-2: release
+  policy frozen for ZOS-10 - the installed CLIST's REALTIME default becomes PRESENT(COALESCED), PRESENT(EVERY) stays
+  explicitly selectable, a PARM without column 26 still means EVERY (no ZOS-9 CLIST change). DEC-3: two targeted batch
+  jobs on PACZ6D, run once each and PASS: PACZ9E1 JOB04412 (14 / 14) and PACZ9E2 JOB04418 (10 / 10), every step = its
+  oracle block and its model. HA6: CLOSED BY COMPOSED EVIDENCE (gameplay = oracle 310 G2B29; the later-level
+  non-recording rule proven by HA7 and HL1; PACHSIO unchanged). DEC-4: METRICS(YES) APPROVED OUT OF SCOPE - DIAGNOSTIC /
+  NO FROZEN 2.0 EQUIVALENCE ORACLE (D23 optional; not PASS). TSO line mode on the post-ZOS-6 build: VALID BY
+  NON-INTERFERENCE (Z4 gated by PARM column 26 = C; installed line-mode / 1.0-oracle check after the ZOS-10 rebuild).
+  I5: the z/OS capability column is a documentation-only closure from accepted evidence. ZOS-9 CLOSED / PASS: GAP 0,
+  DECISION 0; no production-source or DATA change.

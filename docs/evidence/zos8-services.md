@@ -4,9 +4,9 @@ Status: **ZOS-8 PASS** (COMPLETE). Next phase: ZOS-9 Final equivalence (not star
 Design and decisions U1-U12 (and the live refinements of sections 19-20): docs/zos8-design.md.
 
 **NO PRODUCTION SOURCE CHANGE WAS REQUIRED BY ZOS-8.** No PACMAN COBOL source or copybook, no assembler source
-(PACFSIO and PACHSIO unchanged), and the installed production CLIST(PACMAN) changed. No build of LOAD(PACMAIN), no
-promotion. The accepted ZOS-8 changes are tooling, tests, JCL decks / test CLISTs / probe material, documentation, and
-one production data state: `Z00000.PACMAN.DATA(HISCORE)` (Stage F, below).
+(PACFSIO and PACHSIO unchanged), and the installed production CLIST(PACMAN) unchanged [erratum, see the end]. No
+build of LOAD(PACMAIN), no promotion. The accepted ZOS-8 changes are tooling, tests, JCL decks / test CLISTs / probe
+material, documentation, and one production data state: `Z00000.PACMAN.DATA(HISCORE)` (Stage F, below).
 
 ZOS-8 validated on z/OS: the high-score services (PACHSIO through the installed program), persistence on test data,
 UNAVAILABLE / NOT SAVED handling, live high-score behaviour, abend recovery, PACFSIO terminal recovery (C3), live sound
@@ -138,3 +138,9 @@ RPESTAE) remain as test material. `Z00000.ZHEIST.*` was never touched; nothing w
 | Stage D E2 / E3 | ~/zos8-live/stageD-E2, stageD-E3-prep, stageD-E3 | E2 abce17e83e3dfca6, E3 29adba867896662c |
 | Stage E S1 / S2 / S3 | ~/zos8-live/stageE-S1-S8A, stageE-S2-S8B, stageE-S3-S8C | S1 trace 2812db30222e32bb (original check ea43386beaa521d4, corrected 361e5eabf9cb57c0), S2 699b3cfde85ad292, S3 464ec0bb7e36cf04 |
 | Stage F | ~/zos8-live/stageF | trace cda7b3a93bae0c09, check 83042a084733f11c, HISCORE bytes bbd979a4bb574093 |
+
+## Post-closure documentation erratum (ZOS-9, 2026-10-20)
+Identified in docs/zos9-design.md section 6; recorded in docs/evidence/zos9-equivalence.md. The status paragraph
+originally said the installed production CLIST(PACMAN) "changed". The evidenced fact is that it was **UNCHANGED**
+(byte-verified before / after every stage; production-source conclusion above). Wording corrected only; no ZOS-8
+result, verdict or tag changed.
