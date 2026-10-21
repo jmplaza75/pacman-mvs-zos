@@ -1,6 +1,7 @@
 # ZOS-11 - REALTIME Right on PF12 (D46; release 2.1-zos) - design / specification
-Status: step 1 (design, source, documentation, local tests) authorised by the user 2026-10-21 and done locally on branch
-zos; no z/OS access. Host staging (step 2) needs its own authorisation. The MVS line did the same change as MVS-10
+Status: CLOSED / PASS 2026-10-21 (release 2.1-zos, tags zos-11 / 2.1-zos; evidence docs/evidence/zos11-release.md).
+Step 1 (design, source, documentation, local tests) done locally on branch zos; step 2 ran as 2A (build RZ21), 2B
+(promotion) and 2C (live gate, attempt 3 accepted) on separate authorisations. The MVS line did the same change as MVS-10
 (release 2.1-mvs, main, docs/MVS10-PF12.md); main is neither merged nor touched here.
 
 ## 1. Scope (exact)

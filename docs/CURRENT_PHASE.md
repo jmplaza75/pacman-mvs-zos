@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G8 / 2.0-MVS-MAX COMPLETA, etiqueta 2.0-mvs-max; la rama MVS esta TERMINADA. Port z/OS TERMINADO: ZOS-10 RELEASE CERRADA / PASS, etiquetas zos-10 y 2.0-zos. No hay fase activa).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G8 / 2.0-MVS-MAX COMPLETA, etiqueta 2.0-mvs-max; la rama MVS esta TERMINADA. Port z/OS TERMINADO: ZOS-10 RELEASE CERRADA / PASS, etiquetas zos-10 y 2.0-zos; ZOS-11 RELEASE 2.1-zos CERRADA / PASS, etiquetas zos-11 y 2.1-zos. No hay fase activa).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -476,7 +476,12 @@ LEVEL >= 2 / no high-score write, live L1 / L2 / L3 with PRESENT(COALESCED), dry
 - **Z00000.PACMAN.DATA(HISCORE) = `0000980 PACHS001 001`** (unchanged; one read-only check at closure).
 - The release is complete. There is no next implementation phase.
 
-## ZOS-11 - REALTIME Right on PF12 (D46; release 2.1-zos) - STEP 1 LOCAL DONE; STEP 2A (BUILD RZ21) + 2B (PROMOTION) DONE, STEP 2C (LIVE GATE) NOT AUTHORISED (2026-10-21)
+## ZOS-11 - REALTIME Right on PF12 (D46; release 2.1-zos) - CLOSED / PASS (2026-10-21; tags zos-11, 2.1-zos)
+- Closure: docs/evidence/zos11-release.md, releases/2.1-ZOS/. Installed: LOAD(PACMAIN) = RZ21 (`798596b9...`), CLIST
+  (`49d6e26d...`, ARROWS = PF7/8/10/12); rollback RZ.LOAD(PACMAIN) + PRV20.CLIST; HISCORE `0000980 PACHS001 001`.
+- Step 2C (live gate, installed release): attempt 1 FAIL (driver Q probe, fixed 67dfa21), attempt 2 ENVIRONMENT /
+  TIMING BLOCKED (1,351 ms; checker Q window fixed 6d04b6f), attempt 3 ZOS-11 LIVE GATE PASS (max gap 942 ms;
+  docs/evidence/zos11-step2c-attempt3.md). No active phase.
 - Step 2A (docs/evidence/zos11-step2a.md): new prefix Z00000.PACMAN.RZ21, build PACZ11BL JOB09451, object gate 13 / 13
   (PACINPT = the D46 literal only), C1 JOB09488 / C2 JOB09491 PASS.
 - Step 2B (docs/evidence/zos11-step2b.md): backup PRV20.CLIST JOB09545, PACMAIN JOB09553, CLIST JOB09558 promoted from
@@ -488,4 +493,4 @@ LEVEL >= 2 / no high-score write, live L1 / L2 / L3 with PRESENT(COALESCED), dry
   test_zos_tools 24 / 25 / 26-28 and test_rt's keymap assertion adapted through d46_strip only.
 - Successor live tools: tools/zowe/zos11_live.py (plan Z11, driver, checker on the unchanged ZOS-6 check()); the frozen
   ZOS-6 tools untouched. tests/test_zos11.py PASS (2.1 variants A / B; 9 faults fail by their rule).
-- 2.0-zos remains installed on z/OS (Right = PF11) until ZOS-11 step 2 (host staging) is authorised and passes.
+- 2.1-zos is installed on z/OS (Right = PF12) since step 2B; the live gate (step 2C attempt 3) accepted it.
