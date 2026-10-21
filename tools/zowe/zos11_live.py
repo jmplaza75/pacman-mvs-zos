@@ -13,6 +13,9 @@ into the command field, no AID) with a 3 s hold, then ENTER. Categories: gamepla
 an AID the 2.1 game must ignore; hold = TYPEQ (no AID). The ENTER after the hold: if the typed Q is still in the field
 it is gameplay `Q` (Q + ENTER quits); if a host write erased it, it is gameplay `ENTER()` (a blank ENTER = redraw) and
 the driver then sends a fresh `Q` + ENTER (gameplay `Q`). The driver records which; the checker uses the driver log.
+The Q decision reads the game's input field itself (q_field: the text after `COMMAND ===>` on a full Ascii() of the
+screen), never the cursor: attempt 1 (2026-10-21) showed that the game's writes move the cursor (Q at row 25 column
+33, cursor 25 / 35), so a cursor-relative probe mistook a surviving Q for an erased one.
 
 Checker (`--check`): the frozen check() on the trace with the ignored AIDs removed from the game input (each one
 proven separately: AID-only record, the game wrote on after it), the 2.1 map (PF12 X'7C' = R) and case name Z11 (the
@@ -188,6 +191,30 @@ def gate(text, log_lines, prefix='Z00000.PACMAN', epoch=True):
     return all(res.values()), res, detail, blocked, rep
 
 
+FIELD_MARK = 'COMMAND ===>'
+
+
+def q_field(screen):
+    """Full Ascii() screen -> the content of the game's input field: the text after the single `COMMAND ===>` row's
+    marker (the next column is the field attribute, shown blank), stripped. No cursor is involved. Raises D.Stop when
+    the marker row is not exactly one (not the game screen) - the driver never guesses."""
+    rows = [r for r in screen.split('\n') if FIELD_MARK in r]
+    if len(rows) != 1:
+        raise D.Stop(f'{len(rows)} rows with {FIELD_MARK!r} on the screen (exactly 1 required)')
+    return rows[0].split(FIELD_MARK, 1)[1].strip()
+
+
+def q_decision(screen):
+    """'enter' when the typed Q is still in the field (send ENTER: it carries the Q), 'fallback' when the field is
+    empty (a host write erased it: the designed blank ENTER, then a fresh Q + ENTER); any other content -> D.Stop."""
+    content = q_field(screen)
+    if content == 'Q':
+        return 'enter'
+    if content == '':
+        return 'fallback'
+    raise D.Stop(f'unexpected input-field content {content!r} after the Q hold')
+
+
 def drive(port, log_path, prefix='Z00000.PACMAN'):
     """The Z11 plan once through the c3270 script port (logged-on ISPF Command Shell; never logs on, never retries)."""
     calls = {**{k: [f'PF({int(k[2:])})'] for k in PF_AID}, 'PA2': ['PA(2)'], 'TYPEQ': ['String("Q")'],
@@ -205,8 +232,7 @@ def drive(port, log_path, prefix='Z00000.PACMAN'):
                 d.act(kind, 'EXEC', [f'String("EXEC \'{prefix}.CLIST(PACMAN)\' \'{KW}\'")', 'Enter()'])
             elif v == 'QENTER':
                 d.x('Wait(5,Unlock)', timeout=15)
-                r, c = (int(x) for x in d.x('Query(Cursor)').split()[:2])
-                still = d.x(f'Ascii({r},{max(c - 1, 0)},1)').strip() == 'Q'
+                still = q_decision(d.screen()) == 'enter'      # the field itself, not the cursor
                 d.act('gameplay', 'Q' if still else 'ENTER()', ['Enter()'])
                 if not still:                    # variant B: the blank ENTER redraws; a fresh Q + ENTER quits
                     time.sleep(3)

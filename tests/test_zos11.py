@@ -168,6 +168,92 @@ for why, (tr, crit) in FAULTS.items():
     print(f'   FAIL as required: {why} -> {next(k for k in failed if k.startswith(crit))}')
 print(f'live gate on synthetic z/OS traces: 2.1 PASSES (variants A, B), {len(FAULTS)} faults FAIL by their rule: PASS')
 
+# 6. the Q-hold decision of the driver (attempt 1, 2026-10-21: the game's writes moved the cursor to 25 / 35 while the
+#    typed Q stayed in the field at row 25 column 33; the old cursor-relative probe read column 34 = blank) -----------
+import tempfile  # noqa: E402
+
+
+def game_screen(field):
+    """A 27 x 120 game screen as Ascii() returns it; row 25 = the command field (`COMMAND ===>` at column 20, the field
+    attribute at column 32, the data from column 33 - the inbound SBA X'6FD9' of attempt 1)."""
+    rows = [' ' * 120 for _ in range(27)]
+    rows[0] = ('P A C - M A N' + ' ' * 120)[:120]
+    rows[25] = (' ' * 20 + 'COMMAND ===> ' + field + ' ' * 120)[:120]
+    return '\n'.join(rows)
+
+
+s25 = game_screen('Q')
+assert s25.split('\n')[25][33] == 'Q' and s25.split('\n')[25][34] == ' ', 'attempt-1 geometry'
+assert Z.q_field(s25) == 'Q' and Z.q_decision(s25) == 'enter', 'Q kept in the field -> direct ENTER'
+assert Z.q_decision(game_screen('')) == 'fallback', 'Q erased -> the designed fallback'
+for bad, why in ((game_screen('X'), 'other content'), (game_screen('QQ'), 'other content'),
+                 (D.SHELL + '\n ===>', 'not the game screen'), (s25 + '\n' + s25, 'two marker rows')):
+    try:
+        Z.q_decision(bad)
+        raise AssertionError(f'fail-closed missing: {why}')
+    except D.Stop:
+        pass
+
+
+class FakePort:
+    """Stands in for zos6_drive.Driver: records every act and script action; Ascii() returns the current screen. After
+    TYPEQ the game keeps writing and moves the cursor to 25 / 35; `erase` decides whether those writes clear the Q."""
+
+    def __init__(self, erase):
+        self.erase, self.acts, self.calls, self.cursor = erase, [], [], (25, 33)
+        self.scr = D.SHELL
+
+    def x(self, action, timeout=10):
+        self.calls.append(action)
+        if action == 'Ascii()':
+            return self.scr
+        if action == 'Query(Cursor)':
+            return f'{self.cursor[0]} {self.cursor[1]}'
+        return ''
+
+    def screen(self):
+        return self.x('Ascii()')
+
+    def act(self, category, action, calls):
+        self.acts.append((category, action, tuple(calls)))
+        self.calls += list(calls)
+        if action == 'EXEC':
+            self.scr = game_screen('')
+        elif action == 'TYPEQ':
+            self.cursor = (25, 35)                       # the game's writes move the cursor ...
+            self.scr = game_screen('' if self.erase else 'Q')   # ... and keep (or erase) the typed Q
+
+    def expect(self, what, timeout):
+        pass
+
+
+def run_driver(erase):
+    fake = FakePort(erase)
+    saved = (D.Driver, Z.time.sleep)
+    D.Driver, Z.time.sleep = (lambda port, log: fake), (lambda sec: None)
+    try:
+        with tempfile.TemporaryDirectory() as t:
+            Z.drive(4012, Path(t) / 'drive.jsonl')
+    finally:
+        D.Driver, Z.time.sleep = saved
+    return fake
+
+
+kept = run_driver(erase=False)
+tail = [(c, a) for c, a, _ in kept.acts][-3:]
+assert tail == [('hold', 'TYPEQ'), ('gameplay', 'Q'), ('closure', 'ENTER')], tail
+assert kept.acts[-2][2] == ('Enter()',), 'direct ENTER carries the surviving Q'
+assert 'Query(Cursor)' not in kept.calls and not any(c.startswith('Ascii(25') for c in kept.calls), 'no cursor probe'
+assert sum(c == 'String("Q")' for c in kept.calls) == 1, 'Q typed once, no fallback'
+erased = run_driver(erase=True)
+tail = [(c, a) for c, a, _ in erased.acts][-4:]
+assert tail == [('hold', 'TYPEQ'), ('gameplay', 'ENTER()'), ('gameplay', 'Q'), ('closure', 'ENTER')], tail
+assert erased.acts[-2][2] == ('String("Q")', 'Enter()'), 'fallback: a fresh Q + ENTER'
+assert [a for _, a, _ in kept.acts][:-3] == [a for _, a, _ in erased.acts][:-4], 'the key sequence is unchanged'
+print('Q-hold decision: the field content after COMMAND ===> (no cursor); attempt-1 geometry (Q at 25/33, cursor '
+      '25/35) -> direct ENTER, no fallback; a genuinely erased Q -> the designed fallback; fail-closed on other '
+      'content or a non-game screen: PASS')
+
 # 5. step 2A tooling: decks PACZ11AL / BL / C1 / C2 (new prefix RZ21 only), audits, the D46 object rule ---------------
 import zos11_release as Z11  # noqa: E402
 ok, res, det = Z11.selftest()
