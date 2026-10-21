@@ -24,7 +24,8 @@ R1-only death rules do not apply; every other functional and timing rule does). 
   controls - the same trace FAILS check() with the 2.0 map (PF11 R, PF12 ignored), with PF12 ignored and with PF11 as
   Right (so PF12 moved right and PF11 did not);
   PF12 / PF11 / every swept PF key reached the host as an AID-only record and the game wrote on after each;
-  TYPEQ -> ENTER: no inbound record and >= 5 game writes in between (Q alone does not quit);
+  TYPEQ -> ENTER: no inbound record and >= 5 game writes in between (Q alone does not quit; the window ends at the
+  ENTER action's pre-send `unlocked` time, so the ENTER that transmits the Q is not inside it);
   the end: model end lines QUIT after the last ENTER (Q + ENTER quits), `***`, the ISPF Command Shell.
 Usage: zos11_live.py --drive PORT LOG [--prefix P]     zos11_live.py --check TRACE LOG [--prefix P]"""
 import argparse
@@ -161,8 +162,11 @@ def gate(text, log_lines, prefix='Z00000.PACMAN', epoch=True):
     pf = [(tm, rev[p[0]], p) for tm, p in inb if p[:1] and p[0] in rev]
     conv = tod_ms if epoch else (lambda x: x)
     tq = next((conv(x['sent']) for x in log if x['action'] == 'TYPEQ'), None)
-    ten = next((conv(x['sent']) for x in log if x['category'] == 'gameplay' and x['action'] in ('Q', 'ENTER()')
-                and tq is not None and conv(x['sent']) > tq), None)
+    # The hold ends when the ENTER action is about to be sent: its `unlocked` time (pre-send). The driver stamps `sent`
+    # only after Enter() returns, i.e. after the inbound ENTER carrying the Q (attempt 2: unlocked 13.180, inbound
+    # 13.190, sent 13.524), so `sent` would put that ENTER inside the hold window.
+    ten = next((conv(x.get('unlocked', x['sent'])) for x in log if x['category'] == 'gameplay'
+                and x['action'] in ('Q', 'ENTER()') and tq is not None and conv(x['sent']) > tq), None)
     variant = ('A (typed Q survived, ENTER quit)' if not any(x['action'] == 'ENTER()' for x in log) else
                'B (typed Q erased, blank ENTER redraw, fresh Q + ENTER quit)')
     res = {

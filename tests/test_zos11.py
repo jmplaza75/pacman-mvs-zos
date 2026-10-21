@@ -168,6 +168,27 @@ for why, (tr, crit) in FAULTS.items():
     print(f'   FAIL as required: {why} -> {next(k for k in failed if k.startswith(crit))}')
 print(f'live gate on synthetic z/OS traces: 2.1 PASSES (variants A, B), {len(FAULTS)} faults FAIL by their rule: PASS')
 
+# Q-hold window (attempt 2, 2026-10-21): the driver stamps `sent` after Enter() returns, i.e. after the inbound ENTER
+# that carries the Q; the hold window must end at the ENTER action's pre-send `unlocked` time, not at `sent`.
+tr, lg = synth(variant='A')
+log2 = [json.loads(x) for x in lg]
+qe = next(x for x in reversed(log2) if x['category'] == 'gameplay' and x['action'] == 'Q')
+inbound = qe['sent']                               # the fixture sends the ENTER at its logged time
+qe['unlocked'], qe['sent'] = inbound - 10, inbound + 334     # live shape: unlocked < inbound Q + ENTER < sent
+ok, res, det, blocked, rep = gate((tr, [json.dumps(x) for x in log2]))
+crit = 'TYPEQ -> ENTER: no inbound record, >= 5 game writes (Q alone does not quit)'
+# only the Q-hold criterion is under test here: moving the fixture's `sent` also moves the frozen check()'s placement
+# window of the final Q (the model criteria are covered by the unmodified variants above and by the live trace)
+assert res[crit] and det['writes TYPEQ->ENTER'] >= 5, (res[crit], det['writes TYPEQ->ENTER'])
+assert qe['unlocked'] <= inbound < qe['sent'], 'the inbound ENTER lies between unlocked and sent'
+tq = next(x['sent'] for x in log2 if x['action'] == 'TYPEQ')
+ev = Z.C.parse6(tr)['ev']
+assert not any(e[1] == '>' and tq <= Z.C.ms(e[2]) < qe['unlocked'] for e in ev), 'no inbound inside the hold'
+assert any(e[1] == '>' and qe['unlocked'] <= Z.C.ms(e[2]) < qe['sent'] for e in ev), \
+    'the Q + ENTER lies in [unlocked, sent)'
+print('Q-hold window ends at the ENTER action\'s unlocked time: the inbound Q + ENTER logged before `sent` is excluded '
+      f'({det["writes TYPEQ->ENTER"]} writes in the hold): PASS')
+
 # 6. the Q-hold decision of the driver (attempt 1, 2026-10-21: the game's writes moved the cursor to 25 / 35 while the
 #    typed Q stayed in the field at row 25 column 33; the old cursor-relative probe read column 34 = blank) -----------
 import tempfile  # noqa: E402
