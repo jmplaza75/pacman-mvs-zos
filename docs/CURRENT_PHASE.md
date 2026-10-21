@@ -476,9 +476,11 @@ LEVEL >= 2 / no high-score write, live L1 / L2 / L3 with PRESENT(COALESCED), dry
 - **Z00000.PACMAN.DATA(HISCORE) = `0000980 PACHS001 001`** (unchanged; one read-only check at closure).
 - The release is complete. There is no next implementation phase.
 
-## ZOS-11 - REALTIME Right on PF12 (D46; release 2.1-zos) - STEP 1 LOCAL DONE; STEP 2A (BUILD RZ21) DONE, STEP 2B NOT AUTHORISED (2026-10-21)
+## ZOS-11 - REALTIME Right on PF12 (D46; release 2.1-zos) - STEP 1 LOCAL DONE; STEP 2A (BUILD RZ21) + 2B (PROMOTION) DONE, STEP 2C (LIVE GATE) NOT AUTHORISED (2026-10-21)
 - Step 2A (docs/evidence/zos11-step2a.md): new prefix Z00000.PACMAN.RZ21, build PACZ11BL JOB09451, object gate 13 / 13
-  (PACINPT = the D46 literal only), C1 JOB09488 / C2 JOB09491 PASS; no promotion, installed 2.0-zos unchanged.
+  (PACINPT = the D46 literal only), C1 JOB09488 / C2 JOB09491 PASS.
+- Step 2B (docs/evidence/zos11-step2b.md): backup PRV20.CLIST JOB09545, PACMAIN JOB09553, CLIST JOB09558 promoted from
+  RZ21; installed = RZ21 (binary); P1 JOB09562 PASS; live gate not run; no tag.
 - Design / specification: docs/zos11-design.md. The same change as 2.1-mvs (main, MVS-10), applied by hand on branch zos
   (main not merged): PACINPT RT-TSC 123 -> 124 + comment, src/zos/PACMAN.clist ARROWS help, tools/c3270_rt.sh Right
   arrow -> PF(12). TURN, batch, QUIT (Q + ENTER only), every other key and every oracle unchanged.
