@@ -290,3 +290,5 @@
   Right arrow to PF(12). Frozen 2.0 artifacts and historical live tools stay as they are (successor tools for the new
   map). MVS first, then z/OS, each gated: design, local, STOP, host only on authorisation, release after the live gate;
   annotated tags 2.1-mvs / 2.1-zos; 2.0-mvs-max / 2.0-zos never moved. (D44 / D45 are used on branch zos.)
+  D46 MVS-10 closure (user, 2026-10-21): live gate accepted; 2.1-mvs released (tags mvs-10 / 2.1-mvs on the closure
+  commit); the pristine TK4- mvsres.148 is the canonical system volume (the old one retired); docs/evidence/mvs10-release.md.

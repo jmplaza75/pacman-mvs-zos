@@ -298,3 +298,8 @@ G8.4 (2026-10-14): live smoke `python3 tools/gp2_live.py G8 --snap ~/g8-snaps` (
 with no operand), analysed by `python3 tools/c3270_s2_trace.py TRACE --scenario G8 [--from HHMMSS]` and
 `tools/c3270_rt_game.py`: docs/evidence/g8-live.md. G8.5: `python3 tools/g8_bench.py` on JOBs 308-312 -> docs/BENCHMARKS.md;
 releases/2.0-MVS-MAX/ (decks of record copied from build/, SHA256SUMS, screenshots rendered from the c3270 captures).
+MVS-10 / 2.1-mvs (D46, 2026-10-20 / 21; docs/MVS10-PF12.md): `make_deck.py ALLOC|REL20 --prefix HERC01.PACMAN.R21`, the
+run-only S2 RP GP2 GP23 HS decks with `--runonly --load PACMAIN --prefix HERC01.PACMAN.R21`, CLIST, `INST20 --source
+HERC01.PACMAN.R21`, RELEASE / S2 run-only and CLIST at HERC01.PACMAN (JOBs 319-331; decks releases/2.1-MVS/decks), every
+deck audited with tools/g8_jcl_audit.py and checked with tests/test_g8.py. Live: `tools/mvs10_live.py --log LOG` +
+`tools/mvs10_trace.py TRACE --log LOG`. Evidence docs/evidence/mvs10-release.md.

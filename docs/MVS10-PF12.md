@@ -1,6 +1,6 @@
 # MVS-10 - REALTIME Right on PF12 (D46; release 2.1-mvs) - design / specification
-Status: authorised by the user 2026-10-20 for design, source, documentation and local tests only. No Hercules / TK4-
-access, no job, no build, no install, no live session until a separate authorization. The z/OS line follows as
+Status: CLOSED / PASS 2026-10-21 (release 2.1-mvs, tags mvs-10 / 2.1-mvs; evidence docs/evidence/mvs10-release.md). Design,
+source and local tests 2026-10-20 (commit 815c98b); host gate JOBs 319-333 and the live gate on separate authorisations. The z/OS line follows as
 ZOS-11 (release 2.1-zos) after this one, with the same decision D46.
 
 ## 1. Scope (exact)

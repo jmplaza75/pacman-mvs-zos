@@ -10,3 +10,16 @@
   Conservative dialect: no inline EXIT, no `>=`/`<=` (use NOT < / NOT >), `01 name COPY member.`
 - TSO user: HERC01. Datasets: HERC01.PACMAN.COBOL / .COPY / .LOAD.
 - Credentials: TK4_USER/TK4_PASSWORD via environment or gitignored `.env`; never committed.
+
+## Host since the 2026-10-21 DASD recovery (MVS-10; docs/evidence/mvs10-release.md section 4)
+- Never run two Hercules instances on the same DASD (that corrupted mvsdlb.248). Check first: `pgrep -fl hercules`.
+- Active system volume: dasd/mvsres.148 from the pristine TK4- image (backup mvsres.148.post-recovery-mvs10-20261021);
+  the old volume (mvsres.148.pre-pristine-test-20261021) IPLs into disabled wait 00020000 80000005 - retired, kept.
+- Boot (manual console): `./start_herc` in ~/mainframe/tk4; console `c3270 -model 2 CONS@127.0.0.1:3270`; Hercules
+  `ipl 148`; at IEA101A on the MVS console `R 00,CMD=02` (autopilot startup). `./mvs` is not used any more.
+- Shutdown (TK4- manual): `f bsppilot,shutnow`, wait `$HASP099`; `$PJES2` -> `$HASP085`; `Z EOD` -> `IEE334I`;
+  `QUIESCE` -> `HHC00809I disabled wait state 000A0000 00000CCC`; Hercules `stopall`, `sysclear`, `quit`. In this
+  setup the 3215 console 01F (console ID 04) has nothing attached and collects messages: if `IEA404A WTO BUFFER
+  SHORTAGE` appears and JES2 stops answering, `D C` then `K Q,L=04` frees the buffers (IEA406I).
+- Hercules commands also through the HTTP console (http://127.0.0.1:8038, POST field `command`); MVS commands only on
+  the MVS console (a `/` command is rejected there, HHC01600E).

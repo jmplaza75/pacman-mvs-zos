@@ -1,10 +1,12 @@
-# Pac-Man for MVS 3.8J — release 2.0-MVS-MAX (final MVS release)
+# Pac-Man for MVS 3.8J — release 2.1-mvs (2.0-MVS-MAX with REALTIME Right on PF12)
 
 A Pac-Man written in conservative COBOL (IBM OS COBOL, `IKFCBL00`) with three small assembler services, for MVS 3.8J
 (TK4-) on Hercules. Release 2.0-MVS-MAX plays the arcade game in real time on a scaled, coloured 3270 screen with the
 terminal bell as sound, and picks the best presentation the terminal supports automatically. Everything in the game
 runs on the emulated mainframe (see "What runs where"). Release notes, manifest, final defaults, benchmarks,
 capability matrix and screenshots: `releases/2.0-MVS-MAX/`. Design of the release: `docs/G8-RELEASE.md` (D43).
+Release 2.1-mvs (MVS-10, D46) changes only the controls: REALTIME Right is PF12 and no PF key quits (see "Controls");
+`releases/2.1-MVS/`, `docs/evidence/mvs10-release.md`.
 
 ## Quick start (2.0)
 1. Hercules / TK4- running; size a macOS Terminal window to 120x30 **before** connecting, then
@@ -170,8 +172,8 @@ row can still fill the screen once. Validated live in c3270.
 - **No PF key quits** - neither PF11 nor PF12 nor any other. A typed `Q` alone does nothing: the 3270 terminal sends
   it only with ENTER.
 - TURN mode (`PLAY(TURN)`, line mode) is unchanged: U/D/L/R + ENTER, Q + ENTER.
-- The installed 2.0-MVS-MAX release keeps its own mapping (Right = PF11) until 2.1-mvs is installed (MVS-10 live gate,
-  `docs/MVS10-PF12.md`); `releases/2.0-MVS-MAX/` documents 2.0 as released.
+- Installed since 2.1-mvs (MVS-10, `releases/2.1-MVS/`, live-verified: `docs/evidence/mvs10-release.md`).
+  `releases/2.0-MVS-MAX/` documents 2.0 (Right = PF11) as it was released.
 
 ## Architecture and documentation
 - `PACMAIN` is the driver; the layers are `PACGAME`, `PACMAP` and `PACAI` (portable core), `PACINPT` and `PACDISP`
@@ -250,8 +252,9 @@ AUTO chain was already the maximum), rebuild from empty libraries `HERC01.PACMAN
 regression run-only on that module (JOBs 308-312), installed by copy with byte identity (JOB 314, AMASPZAP) and checked
 (JOBs 315-317), live smoke of the installed release (`docs/evidence/g8-live.md`), benchmarks `docs/BENCHMARKS.md`,
 final capability matrix `docs/CAPABILITIES.md`, release folder `releases/2.0-MVS-MAX/`.
-MVS-10 (D46, `docs/MVS10-PF12.md`): REALTIME Right moves from PF11 to PF12 (the Right arrow of `tools/c3270_rt.sh`
-sends PF12); PF11 does nothing; no PF key quits, QUIT = Q + ENTER; TURN, batch and the oracles unchanged - local
-implementation and tests done, Hercules build / install / live gate pending (release 2.1-mvs).
+MVS-10 / release 2.1-mvs (D46, `docs/MVS10-PF12.md`; tags `mvs-10`, `2.1-mvs`): REALTIME Right moves from PF11 to PF12
+(the Right arrow of `tools/c3270_rt.sh` sends PF12); PF11 does nothing; no PF key quits, QUIT = Q + ENTER; TURN, batch and
+the oracles unchanged. Built into fresh libraries HERC01.PACMAN.R21 (JOB 321), regressions run-only (JOBs 322-326),
+installed by copy with byte identity (JOBs 328-331), live gate PASS; `releases/2.1-MVS/`, `docs/evidence/mvs10-release.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). The MVS line ends with 2.0-MVS-MAX; any
 z/OS work is a separate roadmap, and the companion audio (S3/S4) is an optional client extension after 2.0.

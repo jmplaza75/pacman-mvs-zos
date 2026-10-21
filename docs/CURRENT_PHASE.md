@@ -1,5 +1,5 @@
 El documento maestro de requisitos esta en docs/requirements/PACMAN_MVS_ZOS_REQUISITOS_DESARROLLO_v4.docx. No releerlo completo en cada sesion;
-consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G8 / 2.0-MVS-MAX COMPLETA, etiqueta 2.0-mvs-max. FASE ACTIVA: MVS-10 (D46, docs/MVS10-PF12.md, release 2.1-mvs): implementacion local hecha, gate en Hercules pendiente de autorizacion).
+consultar unicamente las secciones de la fase actual cuando CURRENT_PHASE.md lo indique (MVS-G8 / 2.0-MVS-MAX COMPLETA, etiqueta 2.0-mvs-max. MVS-10 / 2.1-mvs CERRADA (D46, etiquetas mvs-10 y 2.1-mvs). No hay fase activa en la rama MVS; ZOS-11 (2.1-zos, rama zos) pendiente de autorizacion).
 
 MVS-G3 COMPLETE (tag mvs-g3, 2026-10-08, final build JOB 188): partial redraw (Write X'F1' + TPUT NOEDIT) and glyph animation with an idle
 visual tick; options REDRAW(PARTIAL|FULL), ANIM(AUTO|YES|NO), METRICS(NO|YES). Final manual checklist PASS (AUTO, COLOR(YES) HILITE(YES),
@@ -226,7 +226,7 @@ THE MVS BRANCH IS COMPLETE: 2.0-MVS-MAX is the final MVS release (roadmap decisi
 (ZOS-*) is NOT started and needs a separate roadmap and the user's go; S3/S4 companion audio is optional, client-side
 and not started.
 
-## MVS-10 - REALTIME Right on PF12 (D46; release 2.1-mvs) - LOCAL DONE, HOST GATE PENDING (2026-10-20)
+## MVS-10 - REALTIME Right on PF12 (D46; release 2.1-mvs) - CLOSED / PASS (2026-10-21)
 Post-2.0 control phase authorised by the user (design, source, documentation, local tests only; no Hercules access).
 Design / specification: docs/MVS10-PF12.md. The z/OS line follows as ZOS-11 (2.1-zos) on branch zos.
 - Product: PACINPT RT-TSC `IF WS-V = 123` (PF11) -> `IF WS-V = 124` (PF12) + its comment; PF11 falls to the existing
@@ -239,5 +239,14 @@ Design / specification: docs/MVS10-PF12.md. The z/OS line follows as ZOS-11 (2.1
   synthetic traces with 10 faults, the accepted S2E 2.0 live trace reproduced with the 2.0 map, all regressions).
   Test pins adapted only through tests/mvs10_delta.py (exact MVS-10 lines); test_g8's changed-file list now read line
   by line (the repository path contains spaces; the defect was latent while the list was empty).
-- NEXT (needs authorisation): Hercules build of record (fresh libraries), run-only regressions, install by copy, CLIST,
-  live gate LIVE10 (acceptance 1-8, docs/MVS10-PF12.md section 6); then releases/2.1-MVS and tags mvs-10 / 2.1-mvs.
+- Host (source 815c98b): R21 build of record JOB 321 (60 steps RC 0000), run-only regressions JOBs 322-326 PASS,
+  R21 CLIST 327, promotion JOB 328 (installed PACMAIN = R21 byte for byte; vs 2.0 exactly one dump row: PACINPT X'780'
+  123C -> 124C; dump SHA-256 78b09d28...0dbd39), installed checks JOBs 329-331 PASS.
+- Host DASD incident (two Hercules instances on the same volumes): mvsdlb.248 recovered; old mvsres.148 retired (IPL
+  disabled wait 00020000 80000005); pristine TK4- mvsres.148 active (backup post-recovery-mvs10-20261021, SHA-256
+  cc72aebf...a28b8); new manual boot (docs/ENVIRONMENT.md). Re-verified: JOB 332 (oracle = JOB 321), JOB 333 (dumps +
+  CLIST unchanged; its IEBPTPCH RC 0012 = deck control-statement error).
+- Live gate PASS (tools/mvs10_trace.py): 68 / 68 writes = the 2.1 model (2.0 map: 29); PF12 Right without ENTER, PF11 no
+  move, no PF key quits, PF1-PF24 sweep, pause, PA2; Q alone no host input, Q survived 20 writes, ENTER quit.
+- Evidence docs/evidence/mvs10-release.md; release releases/2.1-MVS/; annotated tags mvs-10 and 2.1-mvs on the closure
+  commit. The MVS line has no next phase; ZOS-11 (2.1-zos) needs its own authorisation.
