@@ -52,8 +52,11 @@ FROZEN = ['tools/zowe/zos6_drive.py', 'tools/zowe/zos6_live_check.py', 'tests/zo
           'tools/zowe/zos5_live_check.py', 'tools/zowe/zos7_live_check.py', 'tools/zowe/zos8_live_check.py',
           'tools/zowe/zos9_equiv.py', 'tools/zowe/zos_equiv.py', 'tests/ref_rt.py', 'tests/oracle20', 'src/clist',
           'src/copy', 'src/asm', 'jcl/zos', 'releases/2.0-MVS-MAX', 'releases/2.0-ZOS']
+Z11DECKS = [f'jcl/zos/PACZ11{n}.jcl' for n in ('AL', 'BL', 'C1', 'C2')]     # step 2A decks (zos11_release.py)
 for p in FROZEN:
-    assert subprocess.run(['git', 'diff', '--quiet', 'zos-10', '--', p], cwd=R).returncode == 0, f'{p} != zos-10'
+    ex = [f':!{d}' for d in Z11DECKS] if p == 'jcl/zos' else []
+    assert subprocess.run(['git', 'diff', '--quiet', 'zos-10', '--', p, *ex], cwd=R).returncode == 0, f'{p} != zos-10'
+assert set(git('diff', '--name-only', '--relative', 'zos-10', '--', 'jcl/zos').split()) <= set(Z11DECKS)
 assert 'PF11' in D.EXPECT and D.EXPECT['PF11'] == (0x7B, 'R') and 'PF12' not in D.EXPECT, 'frozen ZOS-6 map'
 print(f'frozen: {len(FROZEN)} ZOS-5..10 tools / fixtures / oracles / decks / releases = zos-10 (the ZOS-6 map still '
       'PF11 = R); successor tools/zowe/zos11_live.py: PASS')
@@ -164,4 +167,10 @@ for why, (tr, crit) in FAULTS.items():
     assert not ok and any(k.startswith(crit) for k in failed), (why, failed)
     print(f'   FAIL as required: {why} -> {next(k for k in failed if k.startswith(crit))}')
 print(f'live gate on synthetic z/OS traces: 2.1 PASSES (variants A, B), {len(FAULTS)} faults FAIL by their rule: PASS')
+
+# 5. step 2A tooling: decks PACZ11AL / BL / C1 / C2 (new prefix RZ21 only), audits, the D46 object rule ---------------
+import zos11_release as Z11  # noqa: E402
+ok, res, det = Z11.selftest()
+assert ok, ([k for k, v in res.items() if not v], [k for k, v in det.items() if not v])
+print(f'zos11_release selftest: {len(res)} checks PASS, {len(det)} injected faults detected: PASS')
 print('ZOS-11 LOCAL CHECKS PASS')
