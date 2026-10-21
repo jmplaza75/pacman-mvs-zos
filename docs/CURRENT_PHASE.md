@@ -475,3 +475,13 @@ LEVEL >= 2 / no high-score write, live L1 / L2 / L3 with PRESENT(COALESCED), dry
   SOUND(NO)`): FUNCTIONAL PASS, TIMING PASS (mean 150.399 ms, death stop 1,496 ms), shell return PASS.
 - **Z00000.PACMAN.DATA(HISCORE) = `0000980 PACHS001 001`** (unchanged; one read-only check at closure).
 - The release is complete. There is no next implementation phase.
+
+## ZOS-11 - REALTIME Right on PF12 (D46; release 2.1-zos) - STEP 1 LOCAL DONE, HOST STAGING NOT AUTHORISED (2026-10-21)
+- Design / specification: docs/zos11-design.md. The same change as 2.1-mvs (main, MVS-10), applied by hand on branch zos
+  (main not merged): PACINPT RT-TSC 123 -> 124 + comment, src/zos/PACMAN.clist ARROWS help, tools/c3270_rt.sh Right
+  arrow -> PF(12). TURN, batch, QUIT (Q + ENTER only), every other key and every oracle unchanged.
+- Guards: tests/zos_c2.py D46 / d46_strip (exact, required); r3_gate check 4; the phase pins of test_zos9 / test_zos10 /
+  test_zos_tools 24 / 25 / 26-28 and test_rt's keymap assertion adapted through d46_strip only.
+- Successor live tools: tools/zowe/zos11_live.py (plan Z11, driver, checker on the unchanged ZOS-6 check()); the frozen
+  ZOS-6 tools untouched. tests/test_zos11.py PASS (2.1 variants A / B; 9 faults fail by their rule).
+- 2.0-zos remains installed on z/OS (Right = PF11) until ZOS-11 step 2 (host staging) is authorised and passes.

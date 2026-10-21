@@ -11,7 +11,7 @@ z/OS" below and `releases/2.0-ZOS/`.
 
 ## Quick start (2.0)
 1. Hercules / TK4- running; size a macOS Terminal window to 120x30 **before** connecting, then
-   `TYPEAHEAD=false tools/c3270_rt.sh` (c3270 on the 120x27 alternate screen, arrows = PF7/8/10/11) and log on to
+   `TYPEAHEAD=false tools/c3270_rt.sh` (c3270 on the 120x27 alternate screen, arrows = PF7/8/10/12) and log on to
    TSO.
 2. At `READY`: `EXEC 'HERC01.PACMAN.CLIST(PACMAN)'` — no operand needed (or `python3 tools/rt_play.py` from a second
    shell, which also maps P to PF9 = pause while the game runs; PF9 itself always pauses).
@@ -98,7 +98,7 @@ for example `AI3 2`. The game is printed in the job listing.
 **Real time (MVS-RT, the default):** size a macOS Terminal window to 120x30, start the terminal with the game keymap and
 log on to TSO, then start the game from a second shell:
 ```
-TYPEAHEAD=false tools/c3270_rt.sh          (c3270 120x27, arrows = PF7/8/10/11, typeahead off)
+TYPEAHEAD=false tools/c3270_rt.sh          (c3270 120x27, arrows = PF7/8/10/12, typeahead off)
 python3 tools/rt_play.py                   (at TSO READY: EXEC ... 'PLAY(REALTIME)', P = PF9 pause while it runs)
 ```
 Pac-Man waits until the first arrow, then keeps moving by himself every 150 ms; the ghosts move on their own (4/5 of
@@ -166,7 +166,9 @@ defaults, capability matrix, decks of record, SHA256SUMS): `releases/2.0-ZOS/`; 
 `docs/evidence/zos10-release.md` (release) and `docs/evidence/zos9-equivalence.md` (equivalence with the MVS oracle).
 - **Play:** window 120 x 30 before connecting, `c3270 -model 2 -oversize auto 198.51.100.200:623`, log on, then at TSO
   READY or in ISPF option 6: `EXEC 'Z00000.PACMAN.CLIST(PACMAN)'` (no operand = ARCADE, REALTIME, automatic
-  profile). Arrows = PF7 / PF8 / PF10 / PF11 (the `tools/c3270_rt.sh` keymap), PF9 pause, PA2 redraw, Q + ENTER quits.
+  profile). Arrows = PF7 / PF8 / PF10 / PF12 (the `tools/c3270_rt.sh` keymap), PF9 pause, PA2 redraw; quit = type Q,
+  then ENTER (no PF key quits). Right is PF12 from 2.1-zos on (ZOS-11, D46, `docs/zos11-design.md`); PF11 does
+  nothing in REALTIME. The installed 2.0-zos release keeps Right = PF11 until 2.1-zos is installed.
 - **z/OS presentation default:** with PLAY(REALTIME) the launcher selects `PRESENT(COALESCED)` (logic every 150 / 125
   ms, a screen write every 2nd / 3rd quantum), because one write per quantum is not viable over z/OS TSO / VTAM /
   TN3270E; `PRESENT(EVERY)` stays selectable, `PLAY(TURN)` keeps its historical PARM (`releases/2.0-ZOS/DEFAULTS.md`).
@@ -204,7 +206,7 @@ MVS-GS (scaled renderer and geometry: 4x2 maze with arcade contour walls and hal
 80x24 fallback; design `docs/GS-SCALED.md`, `docs/GS-GEOMETRY.md`) is complete (tag `mvs-gs`; Hercules JOBs 200/207 and
 live in c3270). The maze stays 80x20 at 4x2: larger canvases add centring and HUD space, not maze scale.
 MVS-RT (real-time gameplay: `PLAY(REALTIME|TURN)`, REALTIME the CLIST default; 150 ms absolute-deadline clock,
-arrows = PF7/8/10/11, PF9 pause, buffered turns, autonomous ghosts at 4/5 speed, one write per quantum with keyboard
+arrows = PF7/8/10/11 (Right = PF12 since D46), PF9 pause, buffered turns, autonomous ghosts at 4/5 speed, one write per quantum with keyboard
 restore; probe E14 + design D33 in `docs/RT-REALTIME.md`) is complete (tag `mvs-rt`; Hercules JOB 226 and live in c3270,
 `docs/evidence/rt3-live.md`). TURN is unchanged (1.0-MVS oracle and all earlier regressions pass).
 MVS-S1 (sound: `SOUND(AUTO|YES|NO)`, the 3270 alarm - the terminal bell - on start, death and win in colour full-screen

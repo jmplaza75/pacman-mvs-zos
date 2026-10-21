@@ -114,7 +114,8 @@ inp = (R / 'src/cobol/PACINPT.cob').read_text()
 assert re.search(r"IF WS-V = 249\n\s+MOVE 'P' TO RT-C\n\s+PERFORM RT-CHAR\.", inp), 'PF9 must map to pause'
 launcher = (R / 'tools/c3270_rt.sh').read_text()
 assert '<Key>UP: PF(7)' in launcher and '<Key>DOWN: PF(8)' in launcher and '<Key>LEFT: PF(10)' in launcher \
-    and '<Key>RIGHT: PF(11)' in launcher and 'c3270.keymap.pacgame' in launcher and '<Key>p: PF(9)' in launcher
+    and '<Key>RIGHT: PF(12)' in launcher and 'PF(11)' not in launcher and 'c3270.keymap.pacgame' in launcher \
+    and '<Key>p: PF(9)' in launcher                       # MVS-10 (D46): Right arrow = PF12, was PF(11)
 paused = ' PAUSED '.encode('cp037')
 ps = tsd[('RTPAUSE', 'W')][1]
 idx = [k for k, f in enumerate(ps) if paused in f]

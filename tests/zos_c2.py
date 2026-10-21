@@ -17,6 +17,9 @@ differ from their Z1 text (2.0-mvs-max + the Z1 lines) by exactly the hunks of t
 file); z4_reverse(rel, text) puts the Z1 text back. Z5 (ZOS-6): the PRESENT keyword lines of src/zos/PACMAN.clist
 (Z5_*), put back by z5_strip before the Z3 / Z2 checks. Z6 (ZOS-10, DEC-2): PRESENT(AUTO) default = COALESCED for
 PLAY(REALTIME) only (Z6_*), put back by z6_strip (exact; required by the guard, applied first by z5_strip).
+D46 (ZOS-11 / 2.1-zos, docs/zos11-design.md; the 2.1-mvs change, not a z/OS difference): REALTIME Right on PF12 -
+the PACINPT RT-TSC statement + comment and the CLIST ARROWS help line, put back by d46_strip (exact, once each;
+required by the guard; z6_strip puts the CLIST line back first when present, so the historical CLIST pins still hold).
   python3 tests/zos_c2.py --z4-table  rewrite tests/zos_z4.json from the working tree (an explicit, reviewed step)
 """
 import json
@@ -121,8 +124,28 @@ Z6_SET = ['/* Z6 (ZOS-10): PRESENT(AUTO) = COALESCED FOR PLAY(REALTIME) ONLY.  *
           'IF &PRESENT = AUTO AND &Y = R THEN SET &E = C']
 
 
+# D46 (ZOS-11): path -> [(2.0 line, 2.1 line)]
+D46 = {'src/cobol/PACINPT.cob': [('      *   TSC: PACPLAT POLL / RECV; PF7 U PF8 D PF10 L PF11 R, PF9 PAU',
+                                  '      *   TSC: PACPLAT POLL / RECV; PF7 U PF8 D PF10 L PF12 R, PF9 PAU'),
+                                 ('           IF WS-V = 123', '           IF WS-V = 124')],
+       'src/zos/PACMAN.clist': [('/* 150 MS, SEE SPEED; ARROWS = PF7/8/10/11, P = PF9 PAUSE WITH THE */',
+                                 '/* 150 MS, SEE SPEED; ARROWS = PF7/8/10/12, P = PF9 PAUSE WITH THE */')]}
+
+
+def d46_strip(rel, text):
+    """The text of `rel` with its D46 lines put back to the 2.0 form (each 2.1 line exactly once, no 2.0 line left)."""
+    now = text.split('\n')
+    for old, new in D46.get(rel, []):
+        assert now.count(new) == 1 and now.count(old) == 0, f'D46: {rel} line not exact: {new.strip()}'
+        now[now.index(new)] = old
+    return '\n'.join(now)
+
+
 def z6_strip(text):
-    """The Z5 text of src/zos/PACMAN.clist: the Z6 lines (exactly, once each, in place) removed / put back."""
+    """The Z5 text of src/zos/PACMAN.clist: the Z6 lines (exactly, once each, in place) removed / put back; the D46
+    ARROWS line (ZOS-11) is put back first when present."""
+    if D46['src/zos/PACMAN.clist'][0][1] in text.split('\n'):
+        text = d46_strip('src/zos/PACMAN.clist', text)
     now = text.split('\n')
     assert now.count(Z6_PROC[1]) == 1 and Z6_PROC[0] not in now, 'Z6: PROC line'
     now[now.index(Z6_PROC[1])] = Z6_PROC[0]
@@ -240,9 +263,11 @@ def guard():
         if rel.startswith('src/probe/'):            # z/OS probes (ZOS-1) are not part of the release set
             continue
         if rel == 'src/zos/PACMAN.clist':           # the frozen 2.0 CLIST + Z3 + Z2 (ZOS-4) + Z5 (ZOS-6) + Z6 (ZOS-10)
-            z2_guard(z3_strip(z5_strip(z6_strip(p.read_text(encoding='ascii')))))
+            z2_guard(z3_strip(z5_strip(z6_strip(d46_strip(rel, p.read_text(encoding='ascii'))))))  # + D46 (ZOS-11)
             continue
         now = p.read_text(encoding='ascii')
+        if rel in D46:                              # D46 (ZOS-11): the exact PF12 lines first (required)
+            now = d46_strip(rel, now)
         if rel in Z4_FILES:                         # Z4 (ZOS-6): the exact hunks first, then the Z1 rule below
             now = z4_reverse(rel, now)
         if rel in changed:
@@ -280,5 +305,6 @@ if __name__ == '__main__':
     t, changed = guard()
     z4 = z4_table()
     print(f'Z1 (C2) guard PASS: {len(t)} substitutions in {len(changed)} sources; Z4 (ZOS-6): '
-          f'{sum(len(v) for v in z4.values())} hunks in {len(z4)} sources; Z5 + Z6 CLIST lines exact; every other src '
+          f'{sum(len(v) for v in z4.values())} hunks in {len(z4)} sources; Z5 + Z6 CLIST lines exact; '
+          f'D46 (ZOS-11) PF12 lines exact; every other src '
           f'file = {TAG}')

@@ -13,8 +13,9 @@ directory) and the source delta is checked separately:
    tools/ of --ref, both over the --tag sources: byte-identical;
 4. source delta: the same MVS decks generated from the zos working tree differ from (3) only by Z1 lines (every
    removed line is the 'old' and every added line the 'new' text of a tests/zos_c2.json entry) and by Z4 lines (ZOS-6,
-   the hunks of tests/zos_z4.json, checked exactly on the sources by tests/zos_c2.py). These decks are not
-   MVS builds of record: MVS is frozen at --tag and is never rebuilt from branch zos.
+   the hunks of tests/zos_z4.json, checked exactly on the sources by tests/zos_c2.py) and by the D46 lines (ZOS-11,
+   REALTIME Right on PF12: tests/zos_c2.py D46, PACINPT). These decks are not MVS builds of record: MVS is frozen at
+   --tag and is never rebuilt from branch zos.
 Exit 1 on any difference. Nothing is written outside a temporary directory.
 """
 import argparse
@@ -82,6 +83,10 @@ def main():
     z4 = json.loads((R / 'tests/zos_z4.json').read_text()) if (R / 'tests/zos_z4.json').exists() else {}
     z4_old = {l for hs in z4.values() for h in hs for l in h[2]}      # ZOS-6 Z4 hunks (tests/zos_c2.py z4_guard)
     z4_new = {l for hs in z4.values() for h in hs for l in h[3]}
+    sys.path.insert(0, str(R / 'tests'))
+    from zos_c2 import D46                                              # ZOS-11 (2.1-zos): the exact PF12 lines
+    z4_old |= {o for rel, ls in D46.items() if rel.startswith('src/cobol/') for o, _ in ls}
+    z4_new |= {n for rel, ls in D46.items() if rel.startswith('src/cobol/') for _, n in ls}
     with tempfile.TemporaryDirectory() as t:
         t = Path(t)
         frozen = tree(a.tag, t / 'tag')                 # sources of record + current generator
@@ -133,7 +138,7 @@ def main():
                     (t / f).unlink(missing_ok=True)
         print(f'3 {n} MVS deck generations: current generator = {a.ref} generator on the {a.tag} sources')
         print(f'4 {nz} of them carry source text and differ from the frozen ones only by Z1 lines '
-              f'({len(z1)} listed substitutions) and Z4 lines ({sum(len(v) for v in z4.values())} hunks)')
+              f'({len(z1)} listed substitutions), Z4 lines ({sum(len(v) for v in z4.values())} hunks) and D46 lines')
     print('R3 GATE ' + ('PASS' if not bad else f'FAIL ({bad})'))
     sys.exit(1 if bad else 0)
 

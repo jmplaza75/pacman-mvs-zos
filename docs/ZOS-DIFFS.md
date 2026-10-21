@@ -105,6 +105,11 @@ approval.
 - Status: implemented locally for ZOS-10 (release preparation); verified on z/OS by PACZ10CL (PARM matrix) and the
   installed live smoke S10 (docs/zos10-design.md).
 
+## D46 - REALTIME Right on PF12 (ZOS-11 / 2.1-zos; NOT a z/OS difference)
+- The same change as 2.1-mvs (MVS-10, main): PACINPT RT-TSC `IF WS-V = 123` -> `124` + its comment, the z/OS CLIST
+  ARROWS help comment. Shared product evolution, not forced by z/OS, so not a Z-entry; tests/zos_c2.py allows exactly
+  these lines as D46 (d46_strip, required), docs/zos11-design.md.
+
 ## Model / checker for Z4 (tests and tools only, not z/OS differences in the product)
 - tests/ref_rt.py: additive present='C' filter (every quantum runs; writes at the PSLT slots; skipped quanta advance the
   facing and the RP tracker; pending prompt frame), frame tags (qs, cards, imgs, skips) and the frt freeze hook (checker

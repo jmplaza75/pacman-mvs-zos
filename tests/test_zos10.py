@@ -35,8 +35,11 @@ def git(*a):
 # 1. provenance --------------------------------------------------------------------------------------------------------
 changed = set(git('diff', '--name-only', '--relative', 'zos-9', '--', 'src').splitlines()) | \
     set(git('ls-files', '--others', '--exclude-standard', '--', 'src').splitlines())
-assert changed == {'src/zos/PACMAN.clist'}, changed
+# ZOS-11 (D46): the PF12 lines of PACINPT and of the CLIST are the only later change (exact, tests/zos_c2.py d46_strip)
+assert changed <= {'src/zos/PACMAN.clist', 'src/cobol/PACINPT.cob'} and 'src/zos/PACMAN.clist' in changed, changed
 assert zos_c2.z6_strip((R / 'src/zos/PACMAN.clist').read_text()) == git('show', 'zos-9:./src/zos/PACMAN.clist')
+for f in changed - {'src/zos/PACMAN.clist'}:
+    assert zos_c2.d46_strip(f, (R / f).read_text()) == git('show', f'zos-9:./{f}'), f
 FROZEN = ['src/cobol', 'src/copy', 'src/asm', 'src/clist', 'src/probe', 'tests/oracle20', 'releases/2.0-MVS-MAX',
           'tools/make_deck.py', 'tools/zowe/zos_target.py', 'tools/zowe/zos_equiv.py',
           'tools/zowe/zos_classic_check.py',
@@ -45,14 +48,15 @@ FROZEN = ['src/cobol', 'src/copy', 'src/asm', 'src/clist', 'src/probe', 'tests/o
           'tools/zowe/zos9_equiv.py', 'tools/zowe/zos8_batch.py', 'tests/ref_gx_screen.py', 'tests/ref_gp2.py',
           'tests/ref_rt.py', 'tests/ref_mvs6.py', 'tests/test_gp2.py', 'tests/test_mvs8.py']
 for p in FROZEN:
-    r = subprocess.run(['git', 'diff', '--quiet', 'zos-9', '--', p], cwd=R)
+    r = subprocess.run(['git', 'diff', '--quiet', 'zos-9', '--', p, ':!src/cobol/PACINPT.cob'], cwd=R)   # ZOS-11
     assert r.returncode == 0, f'{p} differs from zos-9'
 for lib, mems in Z.RELEASE.items():
     d, ext = Z.SRC[lib]
     assert all((R / d / f'{m}{ext}').is_file() for m in mems)
 assert sorted(Z.OBJECTS) == sorted(Z.RELEASE['COBOL'] + Z.RELEASE['ASM']) and len(Z.OBJECTS) == 13
 assert not set(Z.NEVER) & set(sum(Z.RELEASE.values(), []))
-print('provenance: only Z6 changed in src since zos-9 (exact); MVS CLIST, sources, oracles, models, reused tools = '
+print('provenance: only Z6 and the D46 PF12 lines (ZOS-11) changed in src since zos-9 (exact); MVS CLIST, sources, '
+      'oracles, models, reused tools = '
       'zos-9; release set 10 + 6 + 3 explicit: PASS')
 
 # 2. selftest ----------------------------------------------------------------------------------------------------------
@@ -61,8 +65,12 @@ assert ok, [k for k, v in res.items() if not v] + [k for k, v in det.items() if 
 print(f'zos10_release selftest: {len(res)} checks PASS, {len(det)} injected faults detected: PASS')
 
 # 3. decks of record ---------------------------------------------------------------------------------------------------
+(d46_old, d46_new), = zos_c2.D46['src/zos/PACMAN.clist']        # ZOS-11: the CL deck inlines the CLIST copy
 for n, job in Z.JOBS.items():
-    assert (R / f'jcl/zos/{job}.jcl').read_text() == Z.deck(n), f'{job}: deck of record != generated'
+    gen = Z.deck(n)
+    assert gen.count(d46_new) == (1 if n == 'CL' else 0) and d46_old not in gen, job
+    assert (R / f'jcl/zos/{job}.jcl').read_text() == gen.replace(d46_new, d46_old), \
+        f'{job}: deck of record != generated'
 print(f'decks of record ({", ".join(Z.JOBS.values())}) = generated: PASS')
 
 # 4. Z6 PARM matrix ----------------------------------------------------------------------------------------------------

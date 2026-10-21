@@ -363,3 +363,11 @@
   representation of the no-load D_MCODE class only when its decompressed content is byte-identical and every other
   object byte is exact outside the three frozen timestamp spans. Tags: annotated `zos-10` and `2.0-zos` both on the
   ZOS-10 closure commit (the release-preparation commit 2c99fae is the build provenance). ZOS-10 CLOSED / PASS.
+- D46 (MVS-10 / ZOS-11, user 2026-10-20 / 21; releases 2.1-mvs and 2.1-zos; docs/MVS10-PF12.md on main,
+  docs/zos11-design.md here) REALTIME Right is PF12 (AID X'7C' = 124) instead of PF11 (X'7B' = 123), in PACINPT RT-TSC
+  only; PF11 falls to the existing ignored path; all other keys unchanged. QUIT stays exclusively `Q` typed in the input
+  field + ENTER: no PF key quits. TURN, batch, the movement model, the core and the frozen oracles are unchanged. The
+  c3270 launcher maps the Right arrow to PF(12). Frozen artifacts and historical live tools stay as they are (successor tools
+  for the new map). MVS first (2.1-mvs released 2026-10-21, tags mvs-10 / 2.1-mvs on main), then z/OS (ZOS-11), each
+  gated; annotated tags 2.1-zos / zos-11 only after the ZOS-11 live gate; 2.0-zos never moved. Not a z/OS difference (no
+  Z-entry): tests/zos_c2.py allows it as D46.

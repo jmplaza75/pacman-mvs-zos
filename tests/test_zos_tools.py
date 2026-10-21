@@ -1872,7 +1872,7 @@ assert subprocess.run(['git', 'ls-files', '--error-unmatch', 'tools/zowe/zos5_li
                       capture_output=True).returncode == 0
 for rel in ('src/cobol/PACRT.cob', 'src/cobol/PACGAME.cob', 'src/cobol/PACMAP.cob', 'src/cobol/PACAI.cob',
             'src/cobol/PACINPT.cob', 'src/copy/PACSTATE.cpy', 'src/copy/PACARC.cpy', 'src/copy/PACDS.cpy'):
-    assert (R / rel).read_text() == zos_c2.z1_text(rel), rel
+    assert zos_c2.d46_strip(rel, (R / rel).read_text()) == zos_c2.z1_text(rel), rel     # ZOS-11: D46 lines exact
 zos_c2.guard()
 assert sorted(zos_c2.z4_table()) == sorted(zos_c2.Z4_FILES) and 'src/asm/PACFSIO.asm' not in zos_c2.Z4_FILES
 for rel in zos_c2.Z4_FILES:                               # Z4 is pure addition except two replaced lines (listed)
@@ -2438,12 +2438,16 @@ import ref_hs as HS24  # noqa: E402
 for p24 in ['src', 'jcl/zos/PACZ6BLD.jcl', 'tools/zowe/zos6_live_check.py', 'tools/zowe/zos6_drive.py',
             'tools/zowe/zos6_dry.py', 'tests/zos6_fixture.py', 'tools/zowe/zos5_live_check.py']:
     # later src changes, each checked exactly elsewhere: ZOS-8 test CLIST RPESTAE (section 25), ZOS-10 Z6 (below)
-    ex24 = [':(exclude)src/zos/PACMAN.clist', ':(exclude)src/probe/zos/RPESTAE.clist'] if p24 == 'src' else []
+    ex24 = [':(exclude)src/zos/PACMAN.clist', ':(exclude)src/probe/zos/RPESTAE.clist',
+            ':(exclude)src/cobol/PACINPT.cob'] if p24 == 'src' else []          # + ZOS-11 D46 (below)
     r24 = SP24.run(['git', 'diff', '--quiet', 'zos-6', '--', p24] + ex24, cwd=R)
     assert r24.returncode == 0, f'{p24} differs from zos-6'
 # ZOS-10 Z6 (the only later production change): the CLIST = its zos-6 text once the exact Z6 lines are put back
 assert zos_c2.z6_strip((R / 'src/zos/PACMAN.clist').read_text()) == SP24.run(
     ['git', 'show', 'zos-6:./src/zos/PACMAN.clist'], cwd=R, capture_output=True, text=True, check=True).stdout
+# ZOS-11 D46: PACINPT = its zos-6 text once the exact PF12 lines are put back
+assert zos_c2.d46_strip('src/cobol/PACINPT.cob', (R / 'src/cobol/PACINPT.cob').read_text()) == SP24.run(
+    ['git', 'show', 'zos-6:./src/cobol/PACINPT.cob'], cwd=R, capture_output=True, text=True, check=True).stdout
 # --- the plans (D3 / D4): ARCADE, LEVEL >= 2, SOUND(NO), PRESENT(COALESCED) explicit, never PACMAIN's EVERY default
 for c24, pl in DV24.PLANS.items():
     w = pl['kw'].split()
@@ -2615,8 +2619,10 @@ FROZEN25 = ['src/cobol', 'src/copy', 'src/asm', 'src/clist', 'src/zos', 'jcl/zos
             'tools/zowe/zos6_live_check.py', 'tools/zowe/zos6_drive.py', 'tools/zowe/zos6_dry.py',
             'tests/zos6_fixture.py', 'tools/zowe/zos5_live_check.py', 'tools/zowe/zos_target.py', 'tools/make_deck.py']
 Z6EX25 = [':(exclude)src/zos/PACMAN.clist']         # ZOS-10 Z6: checked exactly below (z6_strip = the zos-7 text)
+D46EX25 = [':(exclude)src/cobol/PACINPT.cob']       # ZOS-11 D46: checked exactly below (d46_strip = the zos-7 text)
 for p25 in FROZEN25:
-    assert SP25.run(['git', 'diff', '--quiet', 'zos-7', '--', p25] + (Z6EX25 if p25 == 'src/zos' else []),
+    assert SP25.run(['git', 'diff', '--quiet', 'zos-7', '--', p25] + (Z6EX25 if p25 == 'src/zos' else []) +
+                    (D46EX25 if p25 == 'src/cobol' else []),
                     cwd=R).returncode == 0, f'{p25} differs from zos-7'
     assert not SP25.run(['git', 'ls-files', '--others', '--exclude-standard', '--', p25], cwd=R,
                         capture_output=True, text=True).stdout.strip(), f'{p25}: untracked file'
@@ -2624,9 +2630,11 @@ new25 = set(SP25.run(['git', 'diff', '--name-only', '--relative', 'zos-7', '--',
                      text=True).stdout.splitlines()) | \
     set(SP25.run(['git', 'ls-files', '--others', '--exclude-standard', '--', 'src'], cwd=R, capture_output=True,
                  text=True).stdout.splitlines())          # line-wise: the repository path contains spaces
-assert new25 <= {'src/probe/zos/RPESTAE.clist', 'src/zos/PACMAN.clist'}, new25
+assert new25 <= {'src/probe/zos/RPESTAE.clist', 'src/zos/PACMAN.clist', 'src/cobol/PACINPT.cob'}, new25
 assert zos_c2.z6_strip((R / 'src/zos/PACMAN.clist').read_text()) == SP25.run(
     ['git', 'show', 'zos-7:./src/zos/PACMAN.clist'], cwd=R, capture_output=True, text=True, check=True).stdout
+assert zos_c2.d46_strip('src/cobol/PACINPT.cob', (R / 'src/cobol/PACINPT.cob').read_text()) == SP25.run(
+    ['git', 'show', 'zos-7:./src/cobol/PACINPT.cob'], cwd=R, capture_output=True, text=True, check=True).stdout
 # --- the scenario: card files = the commands each model game consumes; the Stage C state chain (ref_hs)
 for n25 in S25.GAMES:
     assert S25.live_cards(n25) == S25.consumed(n25), n25
