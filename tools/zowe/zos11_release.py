@@ -239,7 +239,7 @@ def local_source_ok():
     files = [f'{Z10.SRC[l][0]}/{m}{Z10.SRC[l][1]}' for l, ms in Z10.RELEASE.items() for m in ms] + \
         ['src/zos/PACMAN.clist']
     for f in files:
-        blob = _git('rev-parse', f'{SOURCE_COMMIT}:{f}')
+        blob = _git('rev-parse', f'{SOURCE_COMMIT}:./{f}')
         res[f] = _git('hash-object', f) == blob
     res['src tree = SOURCE_COMMIT'] = _git('diff', '--name-only', SOURCE_COMMIT, '--', 'src') == '' and \
         _git('status', '--porcelain', '--', 'src') == ''
