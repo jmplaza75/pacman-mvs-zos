@@ -52,7 +52,7 @@ FROZEN = ['tools/zowe/zos6_drive.py', 'tools/zowe/zos6_live_check.py', 'tests/zo
           'tools/zowe/zos5_live_check.py', 'tools/zowe/zos7_live_check.py', 'tools/zowe/zos8_live_check.py',
           'tools/zowe/zos9_equiv.py', 'tools/zowe/zos_equiv.py', 'tests/ref_rt.py', 'tests/oracle20', 'src/clist',
           'src/copy', 'src/asm', 'jcl/zos', 'releases/2.0-MVS-MAX', 'releases/2.0-ZOS']
-Z11DECKS = [f'jcl/zos/PACZ11{n}.jcl' for n in ('AL', 'BL', 'C1', 'C2')]     # step 2A decks (zos11_release.py)
+Z11DECKS = [f'jcl/zos/PACZ11{n}.jcl' for n in ('AL', 'BL', 'C1', 'C2', 'PV', 'IP', 'IC', 'ZD', 'P1')]  # zos11_release
 for p in FROZEN:
     ex = [f':!{d}' for d in Z11DECKS] if p == 'jcl/zos' else []
     assert subprocess.run(['git', 'diff', '--quiet', 'zos-10', '--', p, *ex], cwd=R).returncode == 0, f'{p} != zos-10'
