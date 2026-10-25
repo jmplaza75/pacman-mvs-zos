@@ -1,5 +1,7 @@
 # Pac-Man for MVS 3.8J — release 2.0-MVS-MAX (final MVS release)
 
+> **Branches:** [`main`](../../tree/main) = MVS 3.8J / Hercules line (release 2.1-mvs) · `zos` = IBM z/OS port (this branch, release 2.1-zos: see "PAC-MAN 2.0 for z/OS" below). Every release is tagged (`git tag`); several regression tests compare against those tags, so clone with tags.
+
 A Pac-Man written in conservative COBOL (IBM OS COBOL, `IKFCBL00`) with three small assembler services, for MVS 3.8J
 (TK4-) on Hercules. Release 2.0-MVS-MAX plays the arcade game in real time on a scaled, coloured 3270 screen with the
 terminal bell as sound, and picks the best presentation the terminal supports automatically. Everything in the game
