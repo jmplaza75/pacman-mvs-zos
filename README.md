@@ -260,3 +260,6 @@ the oracles unchanged. Built into fresh libraries HERC01.PACMAN.R21 (JOB 321), r
 installed by copy with byte identity (JOBs 328-331), live gate PASS; `releases/2.1-MVS/`, `docs/evidence/mvs10-release.md`.
 MVS-0 to MVS-9 are complete (tags `mvs-2`..`mvs-8`; release tag `1.0-MVS`). The MVS line ends with 2.0-MVS-MAX; any
 z/OS work is a separate roadmap, and the companion audio (S3/S4) is an optional client extension after 2.0.
+
+## License
+MIT, see [LICENSE](LICENSE).
