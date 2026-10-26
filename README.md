@@ -265,3 +265,6 @@ z/OS work is a separate roadmap, and the companion audio (S3/S4) is an optional 
 ZOS-0 to ZOS-10 (branch `zos`, tags `zos-*`) port 2.0 to z/OS: ZOS-9 proved the final MVS / z/OS equivalence (tag
 `zos-9`), ZOS-10 built, verified and installed the release (tags `zos-10` and `2.0-zos`; `docs/evidence/zos10-release.md`).
 ZOS-11 released 2.1-zos (REALTIME Right on PF12, D46; tags `zos-11` and `2.1-zos`; `docs/evidence/zos11-release.md`).
+
+## License
+MIT, see [LICENSE](LICENSE).
