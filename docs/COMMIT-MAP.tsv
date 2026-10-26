@@ -1,188 +1,188 @@
 original_commit	current_commit	subject
 c09fe91	ccbb182	MVS-0: establish verified Hercules build pipeline
 3485689	3940aa3	MVS-1: verified static 20x10 board on Hercules
-65544fa	b7a281a	MVS-2: verified turn-based player movement on Hercules
-436addf	d49148f	MVS-3: verified pellets, score and win condition on Hercules
-bda3730	11b4e38	MVS-4: verified basic ghost and collision on Hercules
-6e44ef1	12dba3c	MVS-5: verified lives, game states and D11 edge cases on Hercules
-01672f2	6cc3ab4	MVS-6: verified smarter ghosts (AI0-AI3, 1-3 ghosts) on Hercules
-48f59a8	7c2ebb0	MVS-7: portability refactor into GAME/MAP/AI/INPUT/DISPLAY/PLATFORM modules, behaviour identical to MVS-6
-c2466fc	a281d80	MVS-8: interactive TSO mode (CLIST, PARM, STLINENO paging fix) validated live in c3270; batch regression identical
-89fe86b	5a3855a	MVS-9: release 1.0-MVS - prefix-parametrised decks, release check, from-scratch rebuild verified
-8ca9166	95d3f75	MVS-G0: stable visual baseline - core frozen, 1.0-MVS oracle, optional metrics, replaceable display, capability matrix
-e8bcf0d	9473748	MVS-G1: colour full-screen renderer TSC (PACSCR, PACFSIO, central palette), auto-detection, monochrome fallback; validated live
-dfebdd6	de5d721	MVS-G2: highlighting option of the TSC renderer (HILITE AUTO/YES/NO): reverse P/G, blinking INVALID, underlined input; validated on Hercules and live in c3270
-b7491df	b9b9903	MVS-G3: partial redraw (Write F1 + TPUT NOEDIT) and glyph animation with idle visual tick; REDRAW/ANIM/METRICS options; validated on Hercules and live
-d54fbc7	42655b0	MVS-G4 research/design checkpoint: probe E9 (APL/CP310 via GE and SA 43, full Query Reply), evidence, approved design G4-GLYPHS
-21601ef	c7da185	MVS-G4: glyph profiles GLYPHS(AUTO|GRAPHIC|BASE|CLASSIC): CP310 pellets/sprites via GE, filled walls, PACQRY; validated on Hercules (JOB 195) and live
-6c44a64	3097154	MVS-G5: Programmed Symbols probe E10, closed negative (capability limit): c3270 offers no loadable sets and rejects Load PS (unsupported ID 0x06); G4 is the production character-set ceiling; G6 blocked; validated on Hercules (JOB 196) and live
-fbc52ab	19fca43	MVS-GS design checkpoint: scaled renderer study, probe E11 (2x2/3x2/4x2 layouts, sprite gallery; JOB 198, live captures identical to the model), approved design 4x2 layout B (docs/GS-SCALED.md, D31)
-7f56300	c67a39b	MVS-GS geometry checkpoint: 80x24 scaled renderer (JOB 200 PASS, live 4x2 proportions confirmed), geometry probe E12 (80x32, 80x43, 132x27, 120x27 IBM-DYNAMIC live PASS; latent wide-buffer defect found) and approved geometry design (docs/GS-GEOMETRY.md, D32); mvs-gs not closed
-62ab854	7d92f5d	MVS-GS: geometry integration - CANVAS(AUTO|DEFAULT), one size switch before the query, PACFSIO op SENX, wide 120x27/132x27, tall 80x43/80x32 and centred 80x24 layouts with a compact side HUD; validated on Hercules (JOB 207: 117 steps, 1371 streams = models) and live (120x27 IBM-DYNAMIC); MVS-GS complete
-1bc7da7	fd03471	MVS-RT RT0/RT1 checkpoint: probe E14 (timing/input) closed, REALTIME design D33 approved
-ad94b2d	6fa4689	MVS-RT RT2: REALTIME core, controller and batch/TSD validation (JOB 222)
-e3db29f	f7a7836	MVS-RT RT3 pre-live: PF9 pause, PAUSED banner, keyboard restore on every waiting input
-ab60110	e833ea6	MVS-RT RT3: fix PACMAN CLIST CALL line beyond column 72 (live defect)
-87b629c	0183b09	MVS-RT RT3: fix PACTSO deadline wait (live X Wait defect), add batch clock test
-3a75c7d	676a05f	MVS-RT complete: RT3 live PASS, REALTIME is the CLIST default (D34)
-fd1ac8a	f5fc6c7	MVS-S1: SOUND(AUTO|YES|NO) - 3270 alarm on start, death and win; fix latent PACTSO WAIT fall-through (0C4)
-24c0d79	0af5ff9	MVS-S1 complete: QUIT end live PASS after the PACTSO fix, phase closed
-bc419f7	53b108a	MVS-GP1 GP1.2: RULES(ARCADE) core and text output (D36), JOB 238 PASS
-820238e	af37b2b	MVS-GP1 GP1.3: ARCADE screens for every glyph profile and layout, JOB 240 PASS
-92e4e7b	e0faad3	MVS-GP1 GP1.4: live trace analyzer and evidence (2 games = model)
-405413e	4a1e7e5	MVS-GP1 complete: GP1.4 live PASS, README/CURRENT_PHASE/roadmap, phase closed
-93a4811	e42b9f9	MVS-GP2 GP2.2: levels, progression, fruit, extra life (D37), JOB 244 PASS
-3c7cf59	3399f18	MVS-GP2 GP2.3: ARCADE screens for levels and fruit, JOB 246/247 PASS
-0513790	7908fe6	MVS-GP2 GP2.4: live checklist, scenario driver and trace analyser (before the live run)
-ca39c67	20606d4	MVS-GP2 GP2.4: live run 1 analysed (B PASS), driver sync defect fixed
-f294ae2	e8d2ec4	MVS-GP2 complete: GP2.4 live PASS, evidence, README/CURRENT_PHASE/roadmap, phase closed
-ef2e591	8cf0e9a	MVS-HS HS.0/HS.1: probe E16 PASS (JOB 254), design D38 approved with the D4 amendment
-f6ef97a	108720d	MVS-HS HS.2: persistent ARCADE high score (D38), JOB 260 PASS, GP2/GP23 regression PASS
-e5ba2a0	4e5b49c	MVS-HS complete: HS.3 live PASS, evidence, README/CURRENT_PHASE/roadmap, phase closed
-e08e10e	be5df42	MVS-RP RP.1: design D39 approved (ARCADE-only visuals, fruit popup, SPEED, ESTAE driver)
-ac1b39a	3df32ec	MVS-RP RP.0: ESTAE test driver PACRPE + CLIST RPESTAE, deck RPE JOB 266 PASS (batch 0C7 trigger)
-56de2c1	40c969c	MVS-RP RP.0 live 1 diagnosis: E1/E2 recovery PASS, relaunch fallback traced to a TSO *** hold; PACRPE fixed (JOB 267)
-adfa240	d3c8497	MVS-RP RP.0 closed: ESTAE recovery PASS (live 2); startup *** recorded as D40 (open)
-8ac687a	25437d9	MVS-RP: D40 startup hardening design (RP-POLISH section 11, proposed)
-22f57b7	96b8b8d	MVS-RP RP.2: ARCADE presentation (READY!, death frames, popups, HUD high score, end line); deck RP JOB 270 PASS, GP2/HS regression PASS
-56dfc8c	3309905	MVS-RP RP.2b: D40 startup hardening (valid Query Reply only, bounded read, drain); deck RP JOB 275 PASS, GP2/HS regression PASS
-ef2edb7	2fd05a6	MVS-RP RP.3: SPEED(NORMAL|FAST) with wall-clock timers preserved; deck RP JOB 285 PASS, GP2 JOB 283 / HS JOB 284 regression PASS
-e410618	6c48159	MVS-RP RP.3 installed (PACMAIN JOB 286, CLIST JOB 287); FAST live checklist; analysers: --period / schedule drift, --speed / HUD high score / timer wall-clock
-c174c3c	5cd7d43	MVS-RP RP.3 FAST live PASS (344/344 writes = FAST models, cadence 125 ms, timers = NORMAL wall clock); trace loader splits telnet records; replay: HUD high score, greedy AID attribution, timer / decoration wall-clock; rt_play --hold-ok; RP.4 checklist
-4ee2c3a	16a0901	MVS-RP RP.4: TK4- JWT=60 min read (JOB 288, read-only, authorised); 10-minute soak stretches within the limit
-8c98285	8b5b091	MVS-RP RP.4 checklist: drop an unverified remark
-58e17fd	d9a3600	MVS-RP RP.4 session 1 analysis: D40 case (b) PASS, Part A 262/262 and Part B 5357/5357 writes = models, 10-minute pause soak PASS (no catch-up), no host skip in 10.75 min; open: 10-minute pre-start hold, pause/PA2 inside a freeze; tool fixes
-acfbed9	b5ad6ec	MVS-RP closed: RP.4 accepted with two documented coverage exceptions; README, CURRENT_PHASE, roadmap, build history
-c340b99	82636bb	MVS-S2 S2.1: D41 alarm patterns approved and frozen (ALARM column 25, G = 2/3 quanta, no new sound event, 3-s end pause kept)
-baea879	27e3795	MVS-S2 S2.2 build green (not installed): ALARM(PATTERN|SINGLE) column 25, PACDISP pattern player + bounded end pause, PACPLAT DLWT; deck S2 JOB 290 (25 TSD runs = model, 21 D41 edges), SINGLE regression RP 291 / GP2 293 / HS 294 PASS
-f993a64	de5ed88	MVS-S2 S2.3 installed (PACMAIN JOB 297/298 checks PASS, CLIST JOB 299 ALARM(PATTERN)); run_step keeps EXEC cards within column 71; S2.4 live kit: scenarios tests/s2live, driver S2A-S2E, analyser c3270_s2_trace.py, checklist
-51f6fe4	85a1861	MVS-S2 closed: S2.4 live PASS (six runs = models byte for byte, S2A run 2 via --aids; bells 300 / 375 ms apart, end pause 3.0 s, user heard 4 distinct win bells, no anomaly elsewhere); README ALARM(PATTERN|SINGLE), CURRENT_PHASE, roadmap, build history
-59efbca	dc67af2	MVS-G7 closed negative (D42): no host graphics on c3270 / TK4-
-8129f28	26449c6	MVS-G8 G8.1: D43 approved and frozen (2.0-MVS-MAX release design, release-integrity amendment: R20 artifact installed, JCL audit, minimal installed smoke)
-36d5e3a	1a19c95	MVS-G8 G8.2 build green (not installed): CLIST default RULES(ARCADE), deck REL20 (JOB 303 into PACR20D, 60 steps RC 0000, 1.0 oracle + CLIST PARMs PASS), make_deck --runonly (S2 run-only JOB 304 = 2986 model streams), ALLOC sized for 2.0, JCL audit, bench tool, test_g8, release_check 2.0
-dd528ed	9d34ac2	MVS-G8 G8.3 complete: fresh R20 build of record (REL20 JOB 307), run-only S2/RP/GP2/GP23/HS on it (JOBs 308-312) PASS, R20 CLIST 313; promotion INST20 JOB 314 (IEBCOPY, SPZAP byte identity), installed checks 315/316 PASS, final CLIST 317 (default RULES(ARCADE))
-94fd6f6	7fdb9f1	MVS-G8 G8.4 PASS + G8.5 release material: installed-release live smoke (CLIST with no operand, 180/180 writes = model twice, clean QUIT -> READY), benchmarks, final capability matrix, README 2.0, releases/2.0-MVS-MAX (notes, manifest, defaults, decks of record, SHA256SUMS, screenshots)
-0b7d154	68a1372	MVS-G8 complete (tag 2.0-mvs-max on 94fd6f6, post-tag read-only check JOB 318): the MVS branch is complete; z/OS not started
-3f193b8	1dd97c6	ZOS plan approved (D44): docs/ZOS-MIGRATION-PLAN.md, branch zos / worktree setup; ZOS-0 not started
-ad68c6f	9b9e56b	ZOS-0 A/B/C: oracle20 frozen, reserved-word scan, codepage check, read-only z/OS and TN3270 discovery
-1e5a9eb	94280d1	ZOS-0 D/E PASS: TSO READY reached directly (no ISPF); IEFBR14 JOB08215 CC 0000, spool read
-e8e8c4b	f10f30f	ZOS-0 recorded PASS (tag zos-0 on 1e5a9eb); open ZOS-1 questions listed; ZOS-1 not started
-5457eb3	d784908	ZOS-1 parts 1-6: Zowe helpers, Z00000.PACMAN.* allocated (DATA = PDS), 23 sources IBM-037 identical, COBOL 6.5.0
-c2fc1a8	8d2804b	ZOS-1 J3/J4 PASS: toolchain probe runs in AMODE 24 (JOB08331) and AMODE 31 (JOB08335); DISPLAY SYSOUT FBA 121
-bfdb465	2e1c80b	ZOS-1 complete (D45 build profile A): docs/zos-build.md, toolchain evidence closed
-b0c36cc	9e5862f	ZOS-2 local tooling: make_deck --target zos (zos_target), zos_listing in-stream PROCs, zos_equiv, zos_compile_report, R3 gate PASS, Z2-1 deck PACZ2CMP
-38fd998	6883eb1	ZOS-2 Z2-1 PACZ2CMP JOB08497: compile inventory (C1 not confirmed, C2 ANS-68 01-COPY in 9 modules, C3 ASMA303W benign, PACHSIO cut by site output limit S722); stopped for decisions
-7e65238	3309d0f	ZOS-2 Z1 (ex C2): 28 ANS-68 01-COPY -> COPY substitutions on branch zos, guarded (tests/zos_c2.py, explicit allowance in test_core_frozen / test_g8, R3 gate on frozen sources); C1 closed; C3 known warning; PACHSIO compact deck; Z2-2..Z2-4 redesigned as small jobs (zos_plan matrix, zos_equiv --subset / clock)
-a72f078	e968562	ZOS-2: Z1 members uploaded (9/9 identical, others unchanged); PACZ2HSA JOB08810 PACHSIO RC 0, 266 records, no diagnostics
-71e2221	f8facbf	ZOS-2: PACZ2BLD deck of record for review (not submitted), freshness guard in test_zos_tools
-b1473fa	003e860	ZOS-2: PACZ2BLD binder options LIST,AMODE=24,RMODE=24,RENT (MAP removed, user-approved)
-25f7757	005328e	ZOS-2 Z2-2 PACZ2BLD JOB08888: LOAD(PACZ2D) built (COBOL 10x RC 0, PACFSIO RC 4 = C3 only, binder RC 0, AMODE 24 RMODE 24 RENT); compile report reads HLASM machine-control lines
-71744ad	be6c80b	ZOS-2: PACZ2C1 deck of record for review (not submitted)
-47c92c3	2292484	ZOS-2 PACZ2C1 JOB08984: first PACZ2D executions, RUN1..RUN5 RC 0, identical to oracle 307 and models
-0890d79	4d3cbfa	ZOS-2: PACZ2C2 deck of record for review (not submitted); C1 scope note
-b2508c8	ad69520	ZOS-2 PACZ2C2 JOB09000: RUN6..RUN8 RC 0, identical to oracle 307 and models
-5f84a3c	5615fa9	ZOS-2: PACZ2C3 deck of record for review (not submitted)
-01f28d1	7a1dfb0	ZOS-2 PACZ2C3 JOB09015: RUN9 LOST1 RC 0, identical to oracle 307 and model
-4c007b8	02d52d0	ZOS-2: PACZ2C4 deck of record for review (not submitted)
-d34c767	5861df4	ZOS-2 PACZ2C4 JOB09023: RUN10 EDGE3 RC 0, identical to oracle 307 and model (WIN, 319 turns, 1000, 2 lives)
-8077ebe	393cb93	ZOS-2: PACZ2C5..C7 decks of record, zos_classic_check (oracle + test_mvs8 models, combined CLASSIC), zos_run_precheck
-8c9ff10	3172668	ZOS-2 CLASSIC oracle complete on z/OS: PACZ2C5 JOB09027, C6 JOB09030, C7 JOB09031 PASS; combined 25-run validation PASS
-4c0bd92	71a19f2	ZOS-2: PACZ2G1 deck of record for review (not submitted), zos_arcade_check (oracle 310 + ref_gp2 as test_gp2)
-85b3c10	f5eacba	ZOS-2 PACZ2G1 JOB09069: 10 ARCADE runs RC 0, identical to oracle 310 and ref_gp2 (levels 1/13/ab, power, fright, tie, deaths, 2-3 ghosts, TSO)
-4ff8b4d	40072f0	ZOS-2 tool fix: zos_equiv --subset anchors each step at its own oracle block (step identity + ordinal; program/PARM consistency only; not-anchorable fails, no content search); regression tests; G1 and C1-C7 re-processed locally PASS
-9979fb4	3b78769	ZOS-2: PACZ2G2 deck of record for review (not submitted); zos_arcade_check covers G2R / RTB / S1S (ref_gp2 RT, ref_rt); oracle-309 anchoring issue recorded
-9e3075a	fc68798	ZOS-2: PACZ2G2 without S1S2 (redundant with RTB7; sound has later coverage), user-approved
-4fc445d	bf8e923	ZOS-2 PACZ2G2 JOB09114: 8 REALTIME runs RC 0, identical to own oracle 310 blocks and ref_rt / ref_gp2
-6f52ffd	01a1458	ZOS-2: PACZ2G3 deck of record for review (not submitted); S1S3 left out (byte-identical to the C7 TSO2 DIE1 block, sound covered later)
-b22a9fd	50648a8	ZOS-2 PACZ2G3 JOB09128: G2B19 level clear in TURN and G2T3 TSO start level 03, RC 0, identical to own oracle 310 blocks and ref_gp2
-1ecefd0	bf6c258	ZOS-2: PACZ2DRV deck of record for review (not submitted); checks cover QRY1 (qry_cases) / TSOT1 (RT3 rules) and build steps
-f6ba545	0bb0477	ZOS-2: PACZ2DRV reuses the JOB08888 objects OBJ(PACQRY) / OBJ(PACTSO) (COBQ2, ASMT removed; user-approved)
-32a011c	6b8b8ae	ZOS-2 PACZ2DRV JOB09164: QRY1 = oracle 310 and qry_cases, TSOT1 RT3 PASS; reused JOB08888 objects proven; site retention of older job output recorded
-2fc01d9	fc1605d	ZOS-0..ZOS-2 raw spool evidence preserved: 19 deterministic per-job archives, SHA256SUMS, MANIFEST (site-retention status), secret audit clean
-600f283	21d85cc	ZOS-2: PACZ2ST0 / PACZ2STF decks of record for review (not submitted); precheck CEEOPTS per chunk; arcade check covers GP2-deck CLASSIC runs and an ST0/STF cross-check
-45d196c	d3c322c	ZOS-2: ST0/STF review hardening: cross_check() isolated and tested (identical / one-character difference / order / missing step), exact CEEOPTS per deck asserted (STORAGE only on ST0/STF)
-68824b2	421e7af	ZOS-2 Z2-3 PACZ2ST0 JOB09191 / PACZ2STF JOB09195: STORAGE 00 and FF both = oracle 310 and models, SYSOUT identical between them; spool archived
-13774d3	65d6a98	ZOS-2: PACZ2S2 review finding: S2 alarm behaviour exists only in TSD dry runs (outside ZOS-2); the 4 line-mode S2 runs are byte-identical to blocks already PASS on z/OS
-100ad04	b4919a6	ZOS-2: S2 deferred to the TSD / full-screen phase (user decision); no PACZ2S2
-8bfc3f8	585adb0	ZOS-2: oracle 309 RP anchoring: one digest-bound known boundary (RPT1 after the RPSEED IEBUPDTE listing), fail-closed checks, tests; every earlier check unchanged (local only, no z/OS job)
-7cfa8c6	9f6c1c0	ZOS-2: PACZ2RP deck of record for review (not submitted); zos_arcade_check --oracle 309 with the test_rp RP3 BAT references
-f426858	2ae59b2	ZOS-2 PACZ2RP JOB09245: 7 RP3 speed runs RC 0, anchored at their own oracle 309 blocks, = oracle and test_rp references; spool archived; ZOS-2 result recorded
-7b55b2d	cdab318	ZOS-2 closed (tag zos-2 on f426858); ZOS-3 platform-layer design / reconnaissance package for review (docs only)
-0387296	98ca27d	ZOS-3: decisions recorded; PACZ3FS deck of record for review (S1S3 + S2L4, PACFSIO batch contract; not submitted), zos_fs_check, multi-deck chunks (SOURCES), test section 9; CURRENT_PHASE: ZOS-2 complete, ZOS-3 in progress
-2831ad2	79ef349	ZOS-3 PACZ3FS JOB01362 PASS: S1S3 / S2L4 RC 0, own oracle blocks (310 / 308), = DIE1 models and the z/OS TSO2 run, clean line-mode fallback; spool archived (zos3-spool), PACFSIO conclusion recorded
-48ec0ad	fe57f8d	ZOS-3: CURRENT_PHASE records PACZ3FS JOB01362 PASS; waiting for review before PACZ3HA
-fee3343	1c43976	ZOS-3: PACZ3HA deck of record for review (HSTEST.T1 / HSFULL.T1 as real PDSs FB 80/80, frozen seed / fill steps, read-only LISTDS; not submitted), zos_hs_setup_check (spool + read-only catalog), test section 10
-6b446cc	9d7b024	ZOS-3: zos_hs_setup_check LISTDS parser bounded per command extent (echo .. READY, final IKJEFT01 END outside every extent; fail closed), explicit HISCORE / M21..M30 absence; regression tests on the real JOB02091 SYSTSPRT fixture; JOB02091 raw spool SHA-256 and the first (false-FAIL) checker run recorded before the fix
-bbc148c	bb71baa	ZOS-3 PACZ3HA JOB02091 PASS: T1 HS PDSs allocated, seeded and filled (HSFILL RC 12, IEB813I at M21); spool archived (zos3-spool), actual catalog / member state recorded; audit note: first checker run false FAIL (final IKJEFT01 END parsed as a member), fixed in 6b446cc and re-checked on the same evidence
-c3a1b0e	1b1e27d	ZOS-3: oracle 312 HA1 known boundary (digest-bound, fail closed, 19/19); compare() checks a known-boundary step at its one-empty-line prefix (309 RPT1 / 312 HA1; all ZOS-2 / ZOS-3 evidence re-checked PASS); zos_hs_model (frozen test_hs model, G8); HS T1 pre-submit state gate; test section 11
-7000a9b	b5aeb12	ZOS-3: PACZ3HS preparation blocked on the site output limit (HA6 5,262 lines, HS total 25,175): options recorded for the user
-c5b263a	6f9f78c	ZOS-3: PACZ3HS1..8 review package (frozen HS order split under the spool budget, HA6 deferred, HSP1..9 -> read-only state checks): decks of record, zos_hs_check (state gates before / after every job from ref_hs, spool + oracle 312 + model + HH1 B14-0C checks), HTSO model = fixed oracle 312 ranges, test section 12, docs/zos3-pacz3hs-review.md; not submitted
-984ae89	37db285	ZOS-3 PACZ3HS1 JOB02401 PASS (HA1-HA3; gate 1 PASS): spool archived, check recorded
-62c3bc9	a5a0079	ZOS-3 PACZ3HS2 JOB02404 PASS (HA4; gate 2 PASS): spool archived, check recorded
-9328d61	6511c95	ZOS-3 PACZ3HS3 JOB02411 PASS (HA5; gate 3 PASS): spool archived, check recorded
-cc06e28	23e5ca6	ZOS-3 PACZ3HS4 JOB02416 PASS (HA7, HA8; gate 4 PASS): spool archived, check recorded
-2da1ac1	3d06e83	ZOS-3 PACZ3HS5 JOB02417 PASS (HB1, HC1, HD1; gate 5 PASS): spool archived, check recorded
-487ebe9	0de8696	ZOS-3 PACZ3HS6 JOB02421 PASS (HE1, HE2, HF1, HF2; gate 6 PASS): spool archived, check recorded
-915ed75	141e58b	ZOS-3 PACZ3HS7 JOB02422 PASS (HG1, HG2, HG3; gate 7 PASS): spool archived, check recorded
-87a584e	645cdc9	ZOS-3 PACZ3HS8 JOB02433: STOPPED on one checker FAIL (HH1 IEC217I criterion); raw spool SHA-256 and the first check output preserved, files read-only; no fix, no archive, waiting for the user
-76c8852	d4888ce	ZOS-3: zos_hs_check HH1 IEC217I rule in the z/OS form (one IEC event; continuation record without message id = HSFULL.T1(HISCORE); fail closed); regression tests on the real JOB02433 JESYSMSG + 12 negative shapes
-04482da	6eea5b7	ZOS-3 PACZ3HS8 JOB02433 PASS (after checker fix 76c8852; first check false FAIL kept): spool archived; final read-only T1 state = ref_hs.Pds; PACZ3HS1..8 evidence summary; HA6 deferred
-b82cfd8	70d028a	ZOS-3: PACZ3TSD review package - minimum ALARM(PATTERN) TSD set (12 S2T runs, all 21 D41 edges; HG2 / HG3 SINGLE already proven) in 4 jobs PACZ3TD1..4; zos_s2_model (frozen test_s2 model), zos_tsd_check (oracle 308 + byte-exact streams), test section 13; not submitted
-1fc2305	eca6e9b	ZOS-3 PACZ3TD1 JOB02506 PASS (S2T1, S2T3, S2T5, S2T6, S2T7): spool archived, check recorded
-5481674	25a81a2	ZOS-3 PACZ3TD2 JOB02511 PASS (S2T8, S2T9, S2T10): spool archived, check recorded
-355610b	497bd29	ZOS-3 PACZ3TD3 JOB02512 PASS (S2T13, S2T17, S2T25): spool archived, check recorded
-879bbf6	d773b24	ZOS-3 PACZ3TD4 JOB02516 PASS (S2T23): spool archived, check recorded
-e624924	663a764	ZOS-3: PACZ3TD1..4 evidence summary; ZOS-3 coverage summary (all jobs PASS; carried-forward items)
-94093e3	cc13d4c	ZOS-3 accepted (tag zos-3 on e624924); ZOS-4 CLASSIC design / reconnaissance package for review (docs only)
-881e9a5	86229d0	ZOS-4: CEEOPTS discovery instructions + read-only SHOWCEE REXX (not uploaded); PACZ4CL review package (CLIST PARM lines + HS CLIST block under the TMP, fresh T1 datasets, no DELETE): deck, zos_clist_check, test section 14; not submitted
-4f3e00c	5989ee6	ZOS-4: interactive CEEOPTS discovery STOP (no CEEOPTS DD; logon DBPROCDG enters ISPF - design corrected); read-only analysis of LE option precedence, DBPROCDG / SETUP / STEPLIB, alternatives and recommendation
-6a2a084	a6051cf	ZOS-4: PACZ4LE LE runtime-option diagnostic for review (ZHELLO31 defaults, ZHELLO24 profile A via CEEOPTS, ZHELLO31 invocation-over-CEEOPTS precedence; argument split verified by the run), zos_le_check, test section 15; precedence corrected (invocation > CEEOPTS, IBM z/OS 3.1); not submitted
-368d489	183a2f2	ZOS-4: PACZ4LE correction (user): D3 decided by RPTOPTS only (SAVEA information only, STACK ANYWHERE allows either); D1 = effective no-override LE defaults (evidence, not an observation of the interactive CALL); D1 SAVEA checked only for a BELOW stack; D2 strict; negative tests updated
-d61b710	71c9c99	ZOS-4 PACZ4LE JOB03693: STOPPED on one checker FAIL (D1 source wording); raw spool SHA-256 and first check preserved, files read-only; no fix, no archive
-a800ebf	dc14115	ZOS-4: zos_le_check D1 recognises the real no-override origin 'IBM-supplied default' (or an installation default) and still fails DD:CEEOPTS / Invocation command / any other origin; regression on the real JOB03693 D1 SYSOUT + negative origins; spool archive --phase 4
-40bef9a	04c06aa	ZOS-4 PACZ4LE JOB03693 PASS (after checker fix a800ebf; first check false FAIL kept): spool archived (zos4-spool), evidence zos4-classic.md
-bd9b026	d525ccc	ZOS-4: proposed CLIST Z-entry Z2 (profile A CEEOPTS around the CALL, fail-safe when missing) for review - not installed, not written to src/
-d270a4e	89d0f47	ZOS-4: Z2 refined (ALLOC without REUSE under an ERROR routine: an existing CEEOPTS DD is never replaced or freed; missing project dataset -> RC 8, no CALL) as candidate src/zos/PACMAN.clist (guarded, not installed); PACZ4CL extended with the three Z2 cases (G8 / HS parts unchanged); checker + tests; not submitted
-9824782	f7d14e7	ZOS-4: zos_clist_check - case-3 IKJ diagnostics must name CEEOPTS (the refused ALLOC), none elsewhere; final FREE cleanup criterion; negative tests
-4f80ecd	3048153	ZOS-4 PACZ4CL JOB03750: STOPPED on Z2 case 3 (fail-safe outcome but through the missing-dataset branch, not the refused ALLOC); raw spool SHA-256 + first check preserved, files read-only; no archive
-02cdb16	430ecb2	ZOS-4 PACZ4CL JOB03750 recorded: G8 PASS, HS CLIST PASS, Z2 1-2 PASS, Z2 case 3 SAFE but INCONCLUSIVE (left at &SYSDSN); spool archived as evidence
-3c9caa8	58c5dac	ZOS-4: manifest file count of JOB03750
-db6a951	a3d5cf1	ZOS-4: Z2 refinement 2 (SYSDSN OK / DATASET NOT FOUND / CHECK FAILED with the result, fail closed); PACZ4Z2 Z2-only attempt T2 for review (DYNAMNBR=200, CONTROL LIST, before/after LISTALC of the pre-existing DD), zos_z2_check, test section 16; PACZ4CL T1 frozen as submitted; not submitted
-945a8cb	6f295bd	ZOS-4 PACZ4Z2 JOB03829: STOPPED - Z2 case 3 reached the ALLOC and it was refused (IKJ56246I FILE IN USE) but the CLIST ended without the ERROR routine path (no message, no Z2RC, SYSIN/SYSOUT left allocated); original DD unchanged; raw spool SHA-256 + first check preserved, files read-only; no archive, no rerun
-5767d77	d7b3343	ZOS-4 PACZ4Z2 JOB03829 recorded: Z2 cases 1-2 PASS, case 3 SAFE but FAIL (ERROR routine did not regain control: no message, no Z2RC, SYSIN/SYSOUT left); spool archived as evidence
-8724464	1e79457	ZOS-4: Z2 refinement 3 (CONTROL NOFLUSH / FLUSH around the ERROR routine + ALLOC only; Z2 not accepted); PACZ4Z3 Z2-only attempt T3 for review; zos_z2_check per-case extents and one criterion per case-3 requirement (T2 / T3), JOB03829 real output as regression fixture; PACZ4Z2 frozen as submitted; not submitted
-c192a52	4c67f37	ZOS-4 PACZ4Z3 JOB03875 PASS 26/26: the definitive Z2 validation (handler regains control under CONTROL NOFLUSH); spool archived; Z2 accepted for installation (ZOS-DIFFS Z2); JOB03750 / JOB03829 kept as partial / failed experiments
-1589551	cfb11cc	ZOS-4: PACZ4INS first-promotion review package (PACSRCT template copy, CEEOPTS, PACZ2D -> PACMAIN by IEBCOPY without rebind, RUN1 / TSO2 smoke on PACMAIN; CLIST install by Zowe + binary identity after PASS): deck, zos_ins_check, zos_clist_install, test section 17; gate PASS; not submitted
-2ecb87d	0a520b1	ZOS-4: zos_ins_check - CEEOPTS content checked in binary (exactly one fixed 80-byte IBM-037 record ALL31(OFF),STACK(,,BELOW) + padding), also re-checked by the CLIST installer before writing
-c06946b	bfb5fb2	ZOS-4 PACZ4INS JOB03939 PASS 23/23 + z/OS CLIST installed and verified byte for byte: first promotion done (PACMAIN, CLIST with Z2, CEEOPTS, PACSRCT template); spool archived
-a4b282b	07bce41	ZOS-4: live TSO acceptance instructions for review (one session, ISPF option 6, DIE1 then LOST0 with the frozen inputs and model milestone screens, STOP, evidence, closure, tag zos-4 proposal); nothing executed
-8fdb78b	3124387	ZOS-4: live evidence rule (trailing blanks only; *** inside a frame = FAIL, after the program allowed) and the capture comparator zos_live_check; no functional change
-a15ed96	ef37373	ZOS-4 live session 1 STOPPED (DIE1 FAIL before the first frame: SYSIN LRECL 120 vs COMMAND-FILE 80, IGZ0035S status 39, U4038; LOST0 not run); SYSIN analysis and smallest fix proposal Z3 for review; nothing changed
-cb3a655	3b28d63	ZOS-4 Z3 revised per review (ATTRIB + USING for the terminal SYSIN, not inline LRECL): src/zos/PACMAN.clist SYSIN line -> 24-line fail-closed block (list Z3SIATTR freed at once, only if created; RC 8 before SYSOUT / Z2 / CALL), guard Z3_BLOCK, test section 18 (Z2 byte-identical to the installed 8724464, control-flow model 5 outcomes), zos_z3_install (--gate PASS 7/7, read-only); session 1 stays FAIL; live session 2 procedure; NOT installed
-620c45d	a6ab2ba	ZOS-4 Z3 installed (zos_z3_install --install once: gate PASS 7/7, CLIST(PACMAN) only, binary identity 130 x 80 SHA-256 f8989cfa..., PACSRCT / CEEOPTS / PACMAIN / PACZ2D unchanged); live session 2 next (manual); session 1 stays FAIL
-95b2ad9	b5ffa18	ZOS-4 CLASSIC complete: live TSO line-mode acceptance DIE1 / LOST0 PASS on the installed PACMAIN + CLIST (Z3 + Z2), session 2 on the 120-column geometry of the failed session 1 (user attestation); read-only closure check PASS; session 1 kept as FAIL evidence
-cf718a3	8370bba	ZOS-5 design for review (no change, nothing executed): one live session on the installed zos-4 baseline, three frozen 2.0 TSD runs (oracle 310 TSD45 / TSD48 / TSD28) played live in the ZOS-4 geometry, trace postcheck against ref_gx_screen (61/61 frozen blocks), real Query Reply captured; no source / CLIST change required
-3ba5553	ab09fba	ZOS-5 prepared for final review (nothing executed): zos5_live_check (TN3270E framing validated and fail-closed, start-of-trace dumps skipped, cards rebuilt, model = oracle 310 TSD45/48/28 byte for byte), zos5_precheck (read-only), synthetic + real x3270 mid-session trace fixtures, test section 19, live session procedure
-0efe4b5	1a82f62	ZOS-5 read-only precheck PASS 7/7 (installed zos-4 state unchanged); live session next (manual)
-38e7ad7	199a88e	ZOS-5 procedure corrected to ISPF option 6 (=X ends the TSO session on this logon procedure; no trace, no game: not a live attempt): checker boundary READY -> the ISPF Command Shell panel, *** only after the end lines, error text outside the games still fails; fixture and tests updated; game streams, PACQRY rules, TSD45/48/28 comparison and TN3270E parsing unchanged; for review
-e047049	6ccb00f	Close ZOS-5 full-screen live acceptance
-6609b9d	482cf73	Approve ZOS-6 realtime design
-e2d92e1	d76df86	Close ZOS-6 REALTIME: ZV-D33 coalesced presentation, R1-T4 / R2 live PASS
-75b3fd5	eeb1b7d	Close ZOS-7 ARCADE: dry runs PACZ7DR1 / DR2 and live L1 / L2 / L3 PASS, D1 confirmed
-32d99f2	d929e1d	Close ZOS-8 services, recovery, sound and persistence
-885c12b	99d3501	Close ZOS-9 final MVS/zOS equivalence
-2c99fae	c7d9b52	Prepare ZOS-10 release: Z6 CLIST default, release tooling and decks
-ad5fa00	23592dd	Release PAC-MAN 2.0 for z/OS
-815c98b	e4602c4	MVS-10 local: REALTIME Right on PF12 (D46, release 2.1-mvs)
-f797545	9d24540	MVS-10 closure: release 2.1-mvs (REALTIME Right on PF12, D46)
-35b803e	633d9a6	ZOS-11 step 1 (local): REALTIME Right on PF12 for 2.1-zos (D46)
-c9dfc28	5da5a7f	ZOS-11 step 2A tooling: zos11_release.py (new build prefix RZ21, decks PACZ11AL/BL/C1/C2, D46 object rule), test_zos11 section 5
-60468f2	52f674d	ZOS-11 step 2A: 2.1-zos build under RZ21 (JOBs 09441, 09451, 09488, 09491), object gate D46-only, C1/C2 PASS; no promotion
-8d2df86	a0d589e	ZOS-11 step 2B tooling: decks PACZ11PV/IP/IC/ZD/P1 (backup to new PRV20.CLIST, program then CLIST promotion from RZ21, read-only AMASPZAP DUMP, installed P1), audits, checkers, read-only state gates
-544532a	6b5c29f	ZOS-11 step 2B: 2.1-zos promoted from RZ21 (JOBs 09545 PV, 09553 IP, 09558 IC, 09560 ZD, 09562 P1); live gate not run, no tag
-55561a7	176befe	ZOS-11 step 2C attempt 1: live gate FAIL classified as driver Q-probe defect (game behaviour correct); not accepted, no tag
-67dfa21	100dac8	ZOS-11 step 2C: live driver Q-hold decision reads the game input field (COMMAND ===>), not the cursor; regression tests for attempt 1
-f99576e	35767f8	ZOS-11 step 2C attempt 2: checker FAIL (timing BLOCKED by environment; Q-hold window defect in the checker); behaviour correct; not accepted, no tag
-6d04b6f	8fca1e5	ZOS-11 step 2C: checker Q-hold window ends at the ENTER action's pre-send (unlocked) time; regression test
-6d9906d	7938403	ZOS-11 step 2C attempt 3: ZOS-11 LIVE GATE PASS (max physical gap 942 ms, controls reject 2.0 / PF12-ignored / PF11-Right); no tag
-737b7a1	84a9370	ZOS-11 closure: release 2.1-zos (REALTIME Right on PF12, D46)
+65544fa	2e45184	MVS-2: verified turn-based player movement on Hercules
+436addf	4c60329	MVS-3: verified pellets, score and win condition on Hercules
+bda3730	43f9f4a	MVS-4: verified basic ghost and collision on Hercules
+6e44ef1	b39e5c0	MVS-5: verified lives, game states and D11 edge cases on Hercules
+01672f2	9f06efc	MVS-6: verified smarter ghosts (AI0-AI3, 1-3 ghosts) on Hercules
+48f59a8	18f792c	MVS-7: portability refactor into GAME/MAP/AI/INPUT/DISPLAY/PLATFORM modules, behaviour identical to MVS-6
+c2466fc	fe90df0	MVS-8: interactive TSO mode (CLIST, PARM, STLINENO paging fix) validated live in c3270; batch regression identical
+89fe86b	c97a03f	MVS-9: release 1.0-MVS - prefix-parametrised decks, release check, from-scratch rebuild verified
+8ca9166	142dd90	MVS-G0: stable visual baseline - core frozen, 1.0-MVS oracle, optional metrics, replaceable display, capability matrix
+e8bcf0d	62d27a1	MVS-G1: colour full-screen renderer TSC (PACSCR, PACFSIO, central palette), auto-detection, monochrome fallback; validated live
+dfebdd6	ffa3ae4	MVS-G2: highlighting option of the TSC renderer (HILITE AUTO/YES/NO): reverse P/G, blinking INVALID, underlined input; validated on Hercules and live in c3270
+b7491df	308136d	MVS-G3: partial redraw (Write F1 + TPUT NOEDIT) and glyph animation with idle visual tick; REDRAW/ANIM/METRICS options; validated on Hercules and live
+d54fbc7	52a8e57	MVS-G4 research/design checkpoint: probe E9 (APL/CP310 via GE and SA 43, full Query Reply), evidence, approved design G4-GLYPHS
+21601ef	379a3f2	MVS-G4: glyph profiles GLYPHS(AUTO|GRAPHIC|BASE|CLASSIC): CP310 pellets/sprites via GE, filled walls, PACQRY; validated on Hercules (JOB 195) and live
+6c44a64	80e96f6	MVS-G5: Programmed Symbols probe E10, closed negative (capability limit): c3270 offers no loadable sets and rejects Load PS (unsupported ID 0x06); G4 is the production character-set ceiling; G6 blocked; validated on Hercules (JOB 196) and live
+fbc52ab	111b326	MVS-GS design checkpoint: scaled renderer study, probe E11 (2x2/3x2/4x2 layouts, sprite gallery; JOB 198, live captures identical to the model), approved design 4x2 layout B (docs/GS-SCALED.md, D31)
+7f56300	fdd8541	MVS-GS geometry checkpoint: 80x24 scaled renderer (JOB 200 PASS, live 4x2 proportions confirmed), geometry probe E12 (80x32, 80x43, 132x27, 120x27 IBM-DYNAMIC live PASS; latent wide-buffer defect found) and approved geometry design (docs/GS-GEOMETRY.md, D32); mvs-gs not closed
+62ab854	faa7e95	MVS-GS: geometry integration - CANVAS(AUTO|DEFAULT), one size switch before the query, PACFSIO op SENX, wide 120x27/132x27, tall 80x43/80x32 and centred 80x24 layouts with a compact side HUD; validated on Hercules (JOB 207: 117 steps, 1371 streams = models) and live (120x27 IBM-DYNAMIC); MVS-GS complete
+1bc7da7	1b8c9b2	MVS-RT RT0/RT1 checkpoint: probe E14 (timing/input) closed, REALTIME design D33 approved
+ad94b2d	7d1da6d	MVS-RT RT2: REALTIME core, controller and batch/TSD validation (JOB 222)
+e3db29f	b3510d7	MVS-RT RT3 pre-live: PF9 pause, PAUSED banner, keyboard restore on every waiting input
+ab60110	7e910e8	MVS-RT RT3: fix PACMAN CLIST CALL line beyond column 72 (live defect)
+87b629c	f931f3e	MVS-RT RT3: fix PACTSO deadline wait (live X Wait defect), add batch clock test
+3a75c7d	71be602	MVS-RT complete: RT3 live PASS, REALTIME is the CLIST default (D34)
+fd1ac8a	3400b44	MVS-S1: SOUND(AUTO|YES|NO) - 3270 alarm on start, death and win; fix latent PACTSO WAIT fall-through (0C4)
+24c0d79	156b96e	MVS-S1 complete: QUIT end live PASS after the PACTSO fix, phase closed
+bc419f7	c3c4536	MVS-GP1 GP1.2: RULES(ARCADE) core and text output (D36), JOB 238 PASS
+820238e	60bfa3c	MVS-GP1 GP1.3: ARCADE screens for every glyph profile and layout, JOB 240 PASS
+92e4e7b	7783265	MVS-GP1 GP1.4: live trace analyzer and evidence (2 games = model)
+405413e	aad3a6b	MVS-GP1 complete: GP1.4 live PASS, README/CURRENT_PHASE/roadmap, phase closed
+93a4811	2dab412	MVS-GP2 GP2.2: levels, progression, fruit, extra life (D37), JOB 244 PASS
+3c7cf59	f70584b	MVS-GP2 GP2.3: ARCADE screens for levels and fruit, JOB 246/247 PASS
+0513790	75090a8	MVS-GP2 GP2.4: live checklist, scenario driver and trace analyser (before the live run)
+ca39c67	3ea10da	MVS-GP2 GP2.4: live run 1 analysed (B PASS), driver sync defect fixed
+f294ae2	027a80d	MVS-GP2 complete: GP2.4 live PASS, evidence, README/CURRENT_PHASE/roadmap, phase closed
+ef2e591	9cbc4a0	MVS-HS HS.0/HS.1: probe E16 PASS (JOB 254), design D38 approved with the D4 amendment
+f6ef97a	2c856a8	MVS-HS HS.2: persistent ARCADE high score (D38), JOB 260 PASS, GP2/GP23 regression PASS
+e5ba2a0	7b16a00	MVS-HS complete: HS.3 live PASS, evidence, README/CURRENT_PHASE/roadmap, phase closed
+e08e10e	91a40d8	MVS-RP RP.1: design D39 approved (ARCADE-only visuals, fruit popup, SPEED, ESTAE driver)
+ac1b39a	e6b46b4	MVS-RP RP.0: ESTAE test driver PACRPE + CLIST RPESTAE, deck RPE JOB 266 PASS (batch 0C7 trigger)
+56de2c1	c7e5c06	MVS-RP RP.0 live 1 diagnosis: E1/E2 recovery PASS, relaunch fallback traced to a TSO *** hold; PACRPE fixed (JOB 267)
+adfa240	b11b029	MVS-RP RP.0 closed: ESTAE recovery PASS (live 2); startup *** recorded as D40 (open)
+8ac687a	4e131c0	MVS-RP: D40 startup hardening design (RP-POLISH section 11, proposed)
+22f57b7	84914e2	MVS-RP RP.2: ARCADE presentation (READY!, death frames, popups, HUD high score, end line); deck RP JOB 270 PASS, GP2/HS regression PASS
+56dfc8c	f049029	MVS-RP RP.2b: D40 startup hardening (valid Query Reply only, bounded read, drain); deck RP JOB 275 PASS, GP2/HS regression PASS
+ef2edb7	0d964df	MVS-RP RP.3: SPEED(NORMAL|FAST) with wall-clock timers preserved; deck RP JOB 285 PASS, GP2 JOB 283 / HS JOB 284 regression PASS
+e410618	610f579	MVS-RP RP.3 installed (PACMAIN JOB 286, CLIST JOB 287); FAST live checklist; analysers: --period / schedule drift, --speed / HUD high score / timer wall-clock
+c174c3c	d16f8f1	MVS-RP RP.3 FAST live PASS (344/344 writes = FAST models, cadence 125 ms, timers = NORMAL wall clock); trace loader splits telnet records; replay: HUD high score, greedy AID attribution, timer / decoration wall-clock; rt_play --hold-ok; RP.4 checklist
+4ee2c3a	31820b2	MVS-RP RP.4: TK4- JWT=60 min read (JOB 288, read-only, authorised); 10-minute soak stretches within the limit
+8c98285	3bcee78	MVS-RP RP.4 checklist: drop an unverified remark
+58e17fd	b014259	MVS-RP RP.4 session 1 analysis: D40 case (b) PASS, Part A 262/262 and Part B 5357/5357 writes = models, 10-minute pause soak PASS (no catch-up), no host skip in 10.75 min; open: 10-minute pre-start hold, pause/PA2 inside a freeze; tool fixes
+acfbed9	8a1b880	MVS-RP closed: RP.4 accepted with two documented coverage exceptions; README, CURRENT_PHASE, roadmap, build history
+c340b99	edb3729	MVS-S2 S2.1: D41 alarm patterns approved and frozen (ALARM column 25, G = 2/3 quanta, no new sound event, 3-s end pause kept)
+baea879	f8b271e	MVS-S2 S2.2 build green (not installed): ALARM(PATTERN|SINGLE) column 25, PACDISP pattern player + bounded end pause, PACPLAT DLWT; deck S2 JOB 290 (25 TSD runs = model, 21 D41 edges), SINGLE regression RP 291 / GP2 293 / HS 294 PASS
+f993a64	987b7b6	MVS-S2 S2.3 installed (PACMAIN JOB 297/298 checks PASS, CLIST JOB 299 ALARM(PATTERN)); run_step keeps EXEC cards within column 71; S2.4 live kit: scenarios tests/s2live, driver S2A-S2E, analyser c3270_s2_trace.py, checklist
+51f6fe4	e3ac3f1	MVS-S2 closed: S2.4 live PASS (six runs = models byte for byte, S2A run 2 via --aids; bells 300 / 375 ms apart, end pause 3.0 s, user heard 4 distinct win bells, no anomaly elsewhere); README ALARM(PATTERN|SINGLE), CURRENT_PHASE, roadmap, build history
+59efbca	be76691	MVS-G7 closed negative (D42): no host graphics on c3270 / TK4-
+8129f28	d1924cc	MVS-G8 G8.1: D43 approved and frozen (2.0-MVS-MAX release design, release-integrity amendment: R20 artifact installed, JCL audit, minimal installed smoke)
+36d5e3a	c92dafc	MVS-G8 G8.2 build green (not installed): CLIST default RULES(ARCADE), deck REL20 (JOB 303 into PACR20D, 60 steps RC 0000, 1.0 oracle + CLIST PARMs PASS), make_deck --runonly (S2 run-only JOB 304 = 2986 model streams), ALLOC sized for 2.0, JCL audit, bench tool, test_g8, release_check 2.0
+dd528ed	6389e58	MVS-G8 G8.3 complete: fresh R20 build of record (REL20 JOB 307), run-only S2/RP/GP2/GP23/HS on it (JOBs 308-312) PASS, R20 CLIST 313; promotion INST20 JOB 314 (IEBCOPY, SPZAP byte identity), installed checks 315/316 PASS, final CLIST 317 (default RULES(ARCADE))
+94fd6f6	95de0f3	MVS-G8 G8.4 PASS + G8.5 release material: installed-release live smoke (CLIST with no operand, 180/180 writes = model twice, clean QUIT -> READY), benchmarks, final capability matrix, README 2.0, releases/2.0-MVS-MAX (notes, manifest, defaults, decks of record, SHA256SUMS, screenshots)
+0b7d154	e54c597	MVS-G8 complete (tag 2.0-mvs-max on 94fd6f6, post-tag read-only check JOB 318): the MVS branch is complete; z/OS not started
+3f193b8	1e0f540	ZOS plan approved (D44): docs/ZOS-MIGRATION-PLAN.md, branch zos / worktree setup; ZOS-0 not started
+ad68c6f	b9d00a9	ZOS-0 A/B/C: oracle20 frozen, reserved-word scan, codepage check, read-only z/OS and TN3270 discovery
+1e5a9eb	57047bd	ZOS-0 D/E PASS: TSO READY reached directly (no ISPF); IEFBR14 JOB08215 CC 0000, spool read
+e8e8c4b	fd834ec	ZOS-0 recorded PASS (tag zos-0 on 1e5a9eb); open ZOS-1 questions listed; ZOS-1 not started
+5457eb3	3dcbaa0	ZOS-1 parts 1-6: Zowe helpers, Z00000.PACMAN.* allocated (DATA = PDS), 23 sources IBM-037 identical, COBOL 6.5.0
+c2fc1a8	4e49ac9	ZOS-1 J3/J4 PASS: toolchain probe runs in AMODE 24 (JOB08331) and AMODE 31 (JOB08335); DISPLAY SYSOUT FBA 121
+bfdb465	1fd90f9	ZOS-1 complete (D45 build profile A): docs/zos-build.md, toolchain evidence closed
+b0c36cc	c0e439e	ZOS-2 local tooling: make_deck --target zos (zos_target), zos_listing in-stream PROCs, zos_equiv, zos_compile_report, R3 gate PASS, Z2-1 deck PACZ2CMP
+38fd998	01b86f7	ZOS-2 Z2-1 PACZ2CMP JOB08497: compile inventory (C1 not confirmed, C2 ANS-68 01-COPY in 9 modules, C3 ASMA303W benign, PACHSIO cut by site output limit S722); stopped for decisions
+7e65238	fa17cc1	ZOS-2 Z1 (ex C2): 28 ANS-68 01-COPY -> COPY substitutions on branch zos, guarded (tests/zos_c2.py, explicit allowance in test_core_frozen / test_g8, R3 gate on frozen sources); C1 closed; C3 known warning; PACHSIO compact deck; Z2-2..Z2-4 redesigned as small jobs (zos_plan matrix, zos_equiv --subset / clock)
+a72f078	3da18f5	ZOS-2: Z1 members uploaded (9/9 identical, others unchanged); PACZ2HSA JOB08810 PACHSIO RC 0, 266 records, no diagnostics
+71e2221	0bfd5a1	ZOS-2: PACZ2BLD deck of record for review (not submitted), freshness guard in test_zos_tools
+b1473fa	ecc8ef1	ZOS-2: PACZ2BLD binder options LIST,AMODE=24,RMODE=24,RENT (MAP removed, user-approved)
+25f7757	5fe2cbb	ZOS-2 Z2-2 PACZ2BLD JOB08888: LOAD(PACZ2D) built (COBOL 10x RC 0, PACFSIO RC 4 = C3 only, binder RC 0, AMODE 24 RMODE 24 RENT); compile report reads HLASM machine-control lines
+71744ad	1316e4f	ZOS-2: PACZ2C1 deck of record for review (not submitted)
+47c92c3	e17e650	ZOS-2 PACZ2C1 JOB08984: first PACZ2D executions, RUN1..RUN5 RC 0, identical to oracle 307 and models
+0890d79	e170455	ZOS-2: PACZ2C2 deck of record for review (not submitted); C1 scope note
+b2508c8	cb570f6	ZOS-2 PACZ2C2 JOB09000: RUN6..RUN8 RC 0, identical to oracle 307 and models
+5f84a3c	e2f6650	ZOS-2: PACZ2C3 deck of record for review (not submitted)
+01f28d1	e3ac6fc	ZOS-2 PACZ2C3 JOB09015: RUN9 LOST1 RC 0, identical to oracle 307 and model
+4c007b8	cee0d34	ZOS-2: PACZ2C4 deck of record for review (not submitted)
+d34c767	1ad09c2	ZOS-2 PACZ2C4 JOB09023: RUN10 EDGE3 RC 0, identical to oracle 307 and model (WIN, 319 turns, 1000, 2 lives)
+8077ebe	2132116	ZOS-2: PACZ2C5..C7 decks of record, zos_classic_check (oracle + test_mvs8 models, combined CLASSIC), zos_run_precheck
+8c9ff10	e2f140d	ZOS-2 CLASSIC oracle complete on z/OS: PACZ2C5 JOB09027, C6 JOB09030, C7 JOB09031 PASS; combined 25-run validation PASS
+4c0bd92	c82547e	ZOS-2: PACZ2G1 deck of record for review (not submitted), zos_arcade_check (oracle 310 + ref_gp2 as test_gp2)
+85b3c10	91e00ff	ZOS-2 PACZ2G1 JOB09069: 10 ARCADE runs RC 0, identical to oracle 310 and ref_gp2 (levels 1/13/ab, power, fright, tie, deaths, 2-3 ghosts, TSO)
+4ff8b4d	b8f82ad	ZOS-2 tool fix: zos_equiv --subset anchors each step at its own oracle block (step identity + ordinal; program/PARM consistency only; not-anchorable fails, no content search); regression tests; G1 and C1-C7 re-processed locally PASS
+9979fb4	9a36330	ZOS-2: PACZ2G2 deck of record for review (not submitted); zos_arcade_check covers G2R / RTB / S1S (ref_gp2 RT, ref_rt); oracle-309 anchoring issue recorded
+9e3075a	6a1f7af	ZOS-2: PACZ2G2 without S1S2 (redundant with RTB7; sound has later coverage), user-approved
+4fc445d	ac645a2	ZOS-2 PACZ2G2 JOB09114: 8 REALTIME runs RC 0, identical to own oracle 310 blocks and ref_rt / ref_gp2
+6f52ffd	f9cb03f	ZOS-2: PACZ2G3 deck of record for review (not submitted); S1S3 left out (byte-identical to the C7 TSO2 DIE1 block, sound covered later)
+b22a9fd	66b9093	ZOS-2 PACZ2G3 JOB09128: G2B19 level clear in TURN and G2T3 TSO start level 03, RC 0, identical to own oracle 310 blocks and ref_gp2
+1ecefd0	d82914b	ZOS-2: PACZ2DRV deck of record for review (not submitted); checks cover QRY1 (qry_cases) / TSOT1 (RT3 rules) and build steps
+f6ba545	fef8f3d	ZOS-2: PACZ2DRV reuses the JOB08888 objects OBJ(PACQRY) / OBJ(PACTSO) (COBQ2, ASMT removed; user-approved)
+32a011c	50cb7ef	ZOS-2 PACZ2DRV JOB09164: QRY1 = oracle 310 and qry_cases, TSOT1 RT3 PASS; reused JOB08888 objects proven; site retention of older job output recorded
+2fc01d9	5297cc0	ZOS-0..ZOS-2 raw spool evidence preserved: 19 deterministic per-job archives, SHA256SUMS, MANIFEST (site-retention status), secret audit clean
+600f283	d12ab56	ZOS-2: PACZ2ST0 / PACZ2STF decks of record for review (not submitted); precheck CEEOPTS per chunk; arcade check covers GP2-deck CLASSIC runs and an ST0/STF cross-check
+45d196c	220856b	ZOS-2: ST0/STF review hardening: cross_check() isolated and tested (identical / one-character difference / order / missing step), exact CEEOPTS per deck asserted (STORAGE only on ST0/STF)
+68824b2	42e4c20	ZOS-2 Z2-3 PACZ2ST0 JOB09191 / PACZ2STF JOB09195: STORAGE 00 and FF both = oracle 310 and models, SYSOUT identical between them; spool archived
+13774d3	7149bfc	ZOS-2: PACZ2S2 review finding: S2 alarm behaviour exists only in TSD dry runs (outside ZOS-2); the 4 line-mode S2 runs are byte-identical to blocks already PASS on z/OS
+100ad04	2873558	ZOS-2: S2 deferred to the TSD / full-screen phase (user decision); no PACZ2S2
+8bfc3f8	8a9b328	ZOS-2: oracle 309 RP anchoring: one digest-bound known boundary (RPT1 after the RPSEED IEBUPDTE listing), fail-closed checks, tests; every earlier check unchanged (local only, no z/OS job)
+7cfa8c6	6a2ee33	ZOS-2: PACZ2RP deck of record for review (not submitted); zos_arcade_check --oracle 309 with the test_rp RP3 BAT references
+f426858	564d964	ZOS-2 PACZ2RP JOB09245: 7 RP3 speed runs RC 0, anchored at their own oracle 309 blocks, = oracle and test_rp references; spool archived; ZOS-2 result recorded
+7b55b2d	f9b560d	ZOS-2 closed (tag zos-2 on f426858); ZOS-3 platform-layer design / reconnaissance package for review (docs only)
+0387296	683497d	ZOS-3: decisions recorded; PACZ3FS deck of record for review (S1S3 + S2L4, PACFSIO batch contract; not submitted), zos_fs_check, multi-deck chunks (SOURCES), test section 9; CURRENT_PHASE: ZOS-2 complete, ZOS-3 in progress
+2831ad2	7e3ab0f	ZOS-3 PACZ3FS JOB01362 PASS: S1S3 / S2L4 RC 0, own oracle blocks (310 / 308), = DIE1 models and the z/OS TSO2 run, clean line-mode fallback; spool archived (zos3-spool), PACFSIO conclusion recorded
+48ec0ad	0079cf5	ZOS-3: CURRENT_PHASE records PACZ3FS JOB01362 PASS; waiting for review before PACZ3HA
+fee3343	9806de5	ZOS-3: PACZ3HA deck of record for review (HSTEST.T1 / HSFULL.T1 as real PDSs FB 80/80, frozen seed / fill steps, read-only LISTDS; not submitted), zos_hs_setup_check (spool + read-only catalog), test section 10
+6b446cc	0a17e35	ZOS-3: zos_hs_setup_check LISTDS parser bounded per command extent (echo .. READY, final IKJEFT01 END outside every extent; fail closed), explicit HISCORE / M21..M30 absence; regression tests on the real JOB02091 SYSTSPRT fixture; JOB02091 raw spool SHA-256 and the first (false-FAIL) checker run recorded before the fix
+bbc148c	1366a27	ZOS-3 PACZ3HA JOB02091 PASS: T1 HS PDSs allocated, seeded and filled (HSFILL RC 12, IEB813I at M21); spool archived (zos3-spool), actual catalog / member state recorded; audit note: first checker run false FAIL (final IKJEFT01 END parsed as a member), fixed in 6b446cc and re-checked on the same evidence
+c3a1b0e	9ebf2df	ZOS-3: oracle 312 HA1 known boundary (digest-bound, fail closed, 19/19); compare() checks a known-boundary step at its one-empty-line prefix (309 RPT1 / 312 HA1; all ZOS-2 / ZOS-3 evidence re-checked PASS); zos_hs_model (frozen test_hs model, G8); HS T1 pre-submit state gate; test section 11
+7000a9b	ac7a5e1	ZOS-3: PACZ3HS preparation blocked on the site output limit (HA6 5,262 lines, HS total 25,175): options recorded for the user
+c5b263a	542d874	ZOS-3: PACZ3HS1..8 review package (frozen HS order split under the spool budget, HA6 deferred, HSP1..9 -> read-only state checks): decks of record, zos_hs_check (state gates before / after every job from ref_hs, spool + oracle 312 + model + HH1 B14-0C checks), HTSO model = fixed oracle 312 ranges, test section 12, docs/zos3-pacz3hs-review.md; not submitted
+984ae89	1ba4f83	ZOS-3 PACZ3HS1 JOB02401 PASS (HA1-HA3; gate 1 PASS): spool archived, check recorded
+62c3bc9	9b7e250	ZOS-3 PACZ3HS2 JOB02404 PASS (HA4; gate 2 PASS): spool archived, check recorded
+9328d61	17aeaf7	ZOS-3 PACZ3HS3 JOB02411 PASS (HA5; gate 3 PASS): spool archived, check recorded
+cc06e28	54bf9ea	ZOS-3 PACZ3HS4 JOB02416 PASS (HA7, HA8; gate 4 PASS): spool archived, check recorded
+2da1ac1	e7264cd	ZOS-3 PACZ3HS5 JOB02417 PASS (HB1, HC1, HD1; gate 5 PASS): spool archived, check recorded
+487ebe9	03506b0	ZOS-3 PACZ3HS6 JOB02421 PASS (HE1, HE2, HF1, HF2; gate 6 PASS): spool archived, check recorded
+915ed75	24ef88f	ZOS-3 PACZ3HS7 JOB02422 PASS (HG1, HG2, HG3; gate 7 PASS): spool archived, check recorded
+87a584e	fd9954a	ZOS-3 PACZ3HS8 JOB02433: STOPPED on one checker FAIL (HH1 IEC217I criterion); raw spool SHA-256 and the first check output preserved, files read-only; no fix, no archive, waiting for the user
+76c8852	198f3a7	ZOS-3: zos_hs_check HH1 IEC217I rule in the z/OS form (one IEC event; continuation record without message id = HSFULL.T1(HISCORE); fail closed); regression tests on the real JOB02433 JESYSMSG + 12 negative shapes
+04482da	da8058f	ZOS-3 PACZ3HS8 JOB02433 PASS (after checker fix 76c8852; first check false FAIL kept): spool archived; final read-only T1 state = ref_hs.Pds; PACZ3HS1..8 evidence summary; HA6 deferred
+b82cfd8	ecb3e85	ZOS-3: PACZ3TSD review package - minimum ALARM(PATTERN) TSD set (12 S2T runs, all 21 D41 edges; HG2 / HG3 SINGLE already proven) in 4 jobs PACZ3TD1..4; zos_s2_model (frozen test_s2 model), zos_tsd_check (oracle 308 + byte-exact streams), test section 13; not submitted
+1fc2305	c542d76	ZOS-3 PACZ3TD1 JOB02506 PASS (S2T1, S2T3, S2T5, S2T6, S2T7): spool archived, check recorded
+5481674	c7d1f5a	ZOS-3 PACZ3TD2 JOB02511 PASS (S2T8, S2T9, S2T10): spool archived, check recorded
+355610b	28e6186	ZOS-3 PACZ3TD3 JOB02512 PASS (S2T13, S2T17, S2T25): spool archived, check recorded
+879bbf6	6cdeb8c	ZOS-3 PACZ3TD4 JOB02516 PASS (S2T23): spool archived, check recorded
+e624924	04795b6	ZOS-3: PACZ3TD1..4 evidence summary; ZOS-3 coverage summary (all jobs PASS; carried-forward items)
+94093e3	1390e6b	ZOS-3 accepted (tag zos-3 on e624924); ZOS-4 CLASSIC design / reconnaissance package for review (docs only)
+881e9a5	92c8613	ZOS-4: CEEOPTS discovery instructions + read-only SHOWCEE REXX (not uploaded); PACZ4CL review package (CLIST PARM lines + HS CLIST block under the TMP, fresh T1 datasets, no DELETE): deck, zos_clist_check, test section 14; not submitted
+4f3e00c	9c49882	ZOS-4: interactive CEEOPTS discovery STOP (no CEEOPTS DD; logon DBPROCDG enters ISPF - design corrected); read-only analysis of LE option precedence, DBPROCDG / SETUP / STEPLIB, alternatives and recommendation
+6a2a084	8fc24f9	ZOS-4: PACZ4LE LE runtime-option diagnostic for review (ZHELLO31 defaults, ZHELLO24 profile A via CEEOPTS, ZHELLO31 invocation-over-CEEOPTS precedence; argument split verified by the run), zos_le_check, test section 15; precedence corrected (invocation > CEEOPTS, IBM z/OS 3.1); not submitted
+368d489	a85c680	ZOS-4: PACZ4LE correction (user): D3 decided by RPTOPTS only (SAVEA information only, STACK ANYWHERE allows either); D1 = effective no-override LE defaults (evidence, not an observation of the interactive CALL); D1 SAVEA checked only for a BELOW stack; D2 strict; negative tests updated
+d61b710	a7eefac	ZOS-4 PACZ4LE JOB03693: STOPPED on one checker FAIL (D1 source wording); raw spool SHA-256 and first check preserved, files read-only; no fix, no archive
+a800ebf	b9a4804	ZOS-4: zos_le_check D1 recognises the real no-override origin 'IBM-supplied default' (or an installation default) and still fails DD:CEEOPTS / Invocation command / any other origin; regression on the real JOB03693 D1 SYSOUT + negative origins; spool archive --phase 4
+40bef9a	2f63b99	ZOS-4 PACZ4LE JOB03693 PASS (after checker fix a800ebf; first check false FAIL kept): spool archived (zos4-spool), evidence zos4-classic.md
+bd9b026	7c0dbfa	ZOS-4: proposed CLIST Z-entry Z2 (profile A CEEOPTS around the CALL, fail-safe when missing) for review - not installed, not written to src/
+d270a4e	a4aadfe	ZOS-4: Z2 refined (ALLOC without REUSE under an ERROR routine: an existing CEEOPTS DD is never replaced or freed; missing project dataset -> RC 8, no CALL) as candidate src/zos/PACMAN.clist (guarded, not installed); PACZ4CL extended with the three Z2 cases (G8 / HS parts unchanged); checker + tests; not submitted
+9824782	ac3866a	ZOS-4: zos_clist_check - case-3 IKJ diagnostics must name CEEOPTS (the refused ALLOC), none elsewhere; final FREE cleanup criterion; negative tests
+4f80ecd	f508859	ZOS-4 PACZ4CL JOB03750: STOPPED on Z2 case 3 (fail-safe outcome but through the missing-dataset branch, not the refused ALLOC); raw spool SHA-256 + first check preserved, files read-only; no archive
+02cdb16	fc15e37	ZOS-4 PACZ4CL JOB03750 recorded: G8 PASS, HS CLIST PASS, Z2 1-2 PASS, Z2 case 3 SAFE but INCONCLUSIVE (left at &SYSDSN); spool archived as evidence
+3c9caa8	29bdadf	ZOS-4: manifest file count of JOB03750
+db6a951	76eefa1	ZOS-4: Z2 refinement 2 (SYSDSN OK / DATASET NOT FOUND / CHECK FAILED with the result, fail closed); PACZ4Z2 Z2-only attempt T2 for review (DYNAMNBR=200, CONTROL LIST, before/after LISTALC of the pre-existing DD), zos_z2_check, test section 16; PACZ4CL T1 frozen as submitted; not submitted
+945a8cb	2b58fb1	ZOS-4 PACZ4Z2 JOB03829: STOPPED - Z2 case 3 reached the ALLOC and it was refused (IKJ56246I FILE IN USE) but the CLIST ended without the ERROR routine path (no message, no Z2RC, SYSIN/SYSOUT left allocated); original DD unchanged; raw spool SHA-256 + first check preserved, files read-only; no archive, no rerun
+5767d77	57d95da	ZOS-4 PACZ4Z2 JOB03829 recorded: Z2 cases 1-2 PASS, case 3 SAFE but FAIL (ERROR routine did not regain control: no message, no Z2RC, SYSIN/SYSOUT left); spool archived as evidence
+8724464	b132a1d	ZOS-4: Z2 refinement 3 (CONTROL NOFLUSH / FLUSH around the ERROR routine + ALLOC only; Z2 not accepted); PACZ4Z3 Z2-only attempt T3 for review; zos_z2_check per-case extents and one criterion per case-3 requirement (T2 / T3), JOB03829 real output as regression fixture; PACZ4Z2 frozen as submitted; not submitted
+c192a52	18216d2	ZOS-4 PACZ4Z3 JOB03875 PASS 26/26: the definitive Z2 validation (handler regains control under CONTROL NOFLUSH); spool archived; Z2 accepted for installation (ZOS-DIFFS Z2); JOB03750 / JOB03829 kept as partial / failed experiments
+1589551	e161d7e	ZOS-4: PACZ4INS first-promotion review package (PACSRCT template copy, CEEOPTS, PACZ2D -> PACMAIN by IEBCOPY without rebind, RUN1 / TSO2 smoke on PACMAIN; CLIST install by Zowe + binary identity after PASS): deck, zos_ins_check, zos_clist_install, test section 17; gate PASS; not submitted
+2ecb87d	b178cbc	ZOS-4: zos_ins_check - CEEOPTS content checked in binary (exactly one fixed 80-byte IBM-037 record ALL31(OFF),STACK(,,BELOW) + padding), also re-checked by the CLIST installer before writing
+c06946b	616b20e	ZOS-4 PACZ4INS JOB03939 PASS 23/23 + z/OS CLIST installed and verified byte for byte: first promotion done (PACMAIN, CLIST with Z2, CEEOPTS, PACSRCT template); spool archived
+a4b282b	6f350ec	ZOS-4: live TSO acceptance instructions for review (one session, ISPF option 6, DIE1 then LOST0 with the frozen inputs and model milestone screens, STOP, evidence, closure, tag zos-4 proposal); nothing executed
+8fdb78b	eef5366	ZOS-4: live evidence rule (trailing blanks only; *** inside a frame = FAIL, after the program allowed) and the capture comparator zos_live_check; no functional change
+a15ed96	68a737b	ZOS-4 live session 1 STOPPED (DIE1 FAIL before the first frame: SYSIN LRECL 120 vs COMMAND-FILE 80, IGZ0035S status 39, U4038; LOST0 not run); SYSIN analysis and smallest fix proposal Z3 for review; nothing changed
+cb3a655	4dd462f	ZOS-4 Z3 revised per review (ATTRIB + USING for the terminal SYSIN, not inline LRECL): src/zos/PACMAN.clist SYSIN line -> 24-line fail-closed block (list Z3SIATTR freed at once, only if created; RC 8 before SYSOUT / Z2 / CALL), guard Z3_BLOCK, test section 18 (Z2 byte-identical to the installed 8724464, control-flow model 5 outcomes), zos_z3_install (--gate PASS 7/7, read-only); session 1 stays FAIL; live session 2 procedure; NOT installed
+620c45d	5ef8550	ZOS-4 Z3 installed (zos_z3_install --install once: gate PASS 7/7, CLIST(PACMAN) only, binary identity 130 x 80 SHA-256 f8989cfa..., PACSRCT / CEEOPTS / PACMAIN / PACZ2D unchanged); live session 2 next (manual); session 1 stays FAIL
+95b2ad9	a33cf16	ZOS-4 CLASSIC complete: live TSO line-mode acceptance DIE1 / LOST0 PASS on the installed PACMAIN + CLIST (Z3 + Z2), session 2 on the 120-column geometry of the failed session 1 (user attestation); read-only closure check PASS; session 1 kept as FAIL evidence
+cf718a3	654de41	ZOS-5 design for review (no change, nothing executed): one live session on the installed zos-4 baseline, three frozen 2.0 TSD runs (oracle 310 TSD45 / TSD48 / TSD28) played live in the ZOS-4 geometry, trace postcheck against ref_gx_screen (61/61 frozen blocks), real Query Reply captured; no source / CLIST change required
+3ba5553	2113953	ZOS-5 prepared for final review (nothing executed): zos5_live_check (TN3270E framing validated and fail-closed, start-of-trace dumps skipped, cards rebuilt, model = oracle 310 TSD45/48/28 byte for byte), zos5_precheck (read-only), synthetic + real x3270 mid-session trace fixtures, test section 19, live session procedure
+0efe4b5	10edb97	ZOS-5 read-only precheck PASS 7/7 (installed zos-4 state unchanged); live session next (manual)
+38e7ad7	57e3148	ZOS-5 procedure corrected to ISPF option 6 (=X ends the TSO session on this logon procedure; no trace, no game: not a live attempt): checker boundary READY -> the ISPF Command Shell panel, *** only after the end lines, error text outside the games still fails; fixture and tests updated; game streams, PACQRY rules, TSD45/48/28 comparison and TN3270E parsing unchanged; for review
+e047049	19098c8	Close ZOS-5 full-screen live acceptance
+6609b9d	88bcd5b	Approve ZOS-6 realtime design
+e2d92e1	e3aaeaa	Close ZOS-6 REALTIME: ZV-D33 coalesced presentation, R1-T4 / R2 live PASS
+75b3fd5	5de64c9	Close ZOS-7 ARCADE: dry runs PACZ7DR1 / DR2 and live L1 / L2 / L3 PASS, D1 confirmed
+32d99f2	b3a700c	Close ZOS-8 services, recovery, sound and persistence
+885c12b	a1eace8	Close ZOS-9 final MVS/zOS equivalence
+2c99fae	514e4cb	Prepare ZOS-10 release: Z6 CLIST default, release tooling and decks
+ad5fa00	c65a4fd	Release PAC-MAN 2.0 for z/OS
+815c98b	c5e38c7	MVS-10 local: REALTIME Right on PF12 (D46, release 2.1-mvs)
+f797545	c0585cc	MVS-10 closure: release 2.1-mvs (REALTIME Right on PF12, D46)
+35b803e	a37b170	ZOS-11 step 1 (local): REALTIME Right on PF12 for 2.1-zos (D46)
+c9dfc28	0343f90	ZOS-11 step 2A tooling: zos11_release.py (new build prefix RZ21, decks PACZ11AL/BL/C1/C2, D46 object rule), test_zos11 section 5
+60468f2	5521465	ZOS-11 step 2A: 2.1-zos build under RZ21 (JOBs 09441, 09451, 09488, 09491), object gate D46-only, C1/C2 PASS; no promotion
+8d2df86	e5f3811	ZOS-11 step 2B tooling: decks PACZ11PV/IP/IC/ZD/P1 (backup to new PRV20.CLIST, program then CLIST promotion from RZ21, read-only AMASPZAP DUMP, installed P1), audits, checkers, read-only state gates
+544532a	80f1b38	ZOS-11 step 2B: 2.1-zos promoted from RZ21 (JOBs 09545 PV, 09553 IP, 09558 IC, 09560 ZD, 09562 P1); live gate not run, no tag
+55561a7	7f74959	ZOS-11 step 2C attempt 1: live gate FAIL classified as driver Q-probe defect (game behaviour correct); not accepted, no tag
+67dfa21	a3b4626	ZOS-11 step 2C: live driver Q-hold decision reads the game input field (COMMAND ===>), not the cursor; regression tests for attempt 1
+f99576e	fb84143	ZOS-11 step 2C attempt 2: checker FAIL (timing BLOCKED by environment; Q-hold window defect in the checker); behaviour correct; not accepted, no tag
+6d04b6f	a3bbf08	ZOS-11 step 2C: checker Q-hold window ends at the ENTER action's pre-send (unlocked) time; regression test
+6d9906d	1d41222	ZOS-11 step 2C attempt 3: ZOS-11 LIVE GATE PASS (max physical gap 942 ms, controls reject 2.0 / PF12-ignored / PF11-Right); no tag
+737b7a1	3ece7ad	ZOS-11 closure: release 2.1-zos (REALTIME Right on PF12, D46)
